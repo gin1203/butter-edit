@@ -184,6 +184,7 @@ input,textarea,select,button{font-family:inherit}
         <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#E07B39;cursor:pointer"><input type="checkbox" id="flag-limited" onchange="calcUpdate()" style="accent-color:#E07B39"/> 👟 限量款鞋子 (+800，取代一般公式)</label>
         <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#3B82F6;cursor:pointer"><input type="checkbox" id="flag-transparent" onchange="calcUpdate()" style="accent-color:#3B82F6"/> 👗 價格透明品牌（SPAO/GU/MLB/Adidas 等，×1.2）</label>
         <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#E91E8C;cursor:pointer"><input type="checkbox" id="flag-popular" onchange="calcUpdate()" style="accent-color:#E91E8C"/> ✨ 人氣／稀缺商品（食品往上一格）</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#7B5EA7;cursor:pointer"><input type="checkbox" id="flag-giftpack" onchange="calcUpdate()" style="accent-color:#7B5EA7"/> 🎁 禮盒／分裝／大包裝（食品 +80）</label>
       </div>
     </div>
     <!-- 大創面板 -->
@@ -823,6 +824,7 @@ input,textarea,select,button{font-family:inherit}
       <div style="display:flex;flex-direction:column;gap:6px">
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#3D2010;cursor:pointer"><input type="checkbox" id="qa-flag-transparent" onchange="qaCalcPrice()" style="accent-color:#3B82F6"/> 👗 價格透明品牌（SPAO/GU/MLB/Adidas，×1.2）</label>
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#E91E8C;cursor:pointer"><input type="checkbox" id="qa-flag-popular" onchange="qaCalcPrice()" style="accent-color:#E91E8C"/> ✨ 人氣／稀缺商品（食品往上一格）</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#7B5EA7;cursor:pointer"><input type="checkbox" id="qa-flag-giftpack" onchange="qaCalcPrice()" style="accent-color:#7B5EA7"/> 🎁 禮盒／分裝／大包裝（食品 +80）</label>
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#E07B39;cursor:pointer"><input type="checkbox" id="qa-flag-limited" onchange="qaCalcPrice()" style="accent-color:#E07B39"/> 👟 限量款鞋子（+800）</label>
       </div>
     </div>
@@ -1233,25 +1235,53 @@ function suggestPrice(at,cat,flags,twPrice,rawAmt){
   const pt=flags.priceType||"normal";
   if(cat==="food"){
     let baseFood;
-    if(krw<=1000)baseFood=49;
-    else if(krw<=2000)baseFood=69;
-    else if(krw<=3500)baseFood=99;
-    else if(krw<=5000)baseFood=129;
-    else if(krw<=7000)baseFood=169;
-    else if(krw<=10000)baseFood=229;
-    else if(krw<=15000)baseFood=399;
-    else if(krw<=20000)baseFood=499;
+    // 用台幣成本（退稅後）分梯，更精確
+    if(at<=30)baseFood=40;
+    else if(at<=70)baseFood=90;
+    else if(at<=120)baseFood=149;
+    else if(at<=180)baseFood=199;
+    else if(at<=250)baseFood=280;
+    else if(at<=350)baseFood=370;
     else baseFood=roundPrice(at*1.3);
+    // 禮盒/分裝/大包裝 +80
+    if(flags.isGiftPack)baseFood+=80;
+    // 人氣往上一格
     if(flags.isPopular){
-      const popMap={49:69,69:99,99:129,129:169,169:229,229:299,299:399,399:499,499:599};
-      price=popMap[baseFood]||(baseFood+50);
-    } else { price=baseFood; }
+      const popMap={40:90,90:149,149:199,199:280,280:370,370:450};
+      baseFood=popMap[baseFood]||(baseFood+80);
+    }
+    price=baseFood;
   }
   else if(cat==="daiso"){
-    const dp=flags.daisoPrice||0;
-    const vt=flags.daisoType||"cute";
+    const activeBtn=document.querySelector('button.daiso-price-btn.active')
+                  ||document.querySelector('button.qa-daiso-price-btn.active');
+    const dp=activeBtn?parseInt(activeBtn.dataset.price||"0")||0:0;
+    const vt=document.querySelector('input[name="daiso-type"]:checked')?.value
+           ||document.querySelector('input[name="qa-daiso-type"]:checked')?.value
+           ||flags.daisoType||"cute";
     let base=dp;
-    if(!base){const defs={daily:60,stationery:69,food_daiso:89,health:149,cute:99,fabric:99,bulky:149,makeup:69};base=defs[vt]||99;}
+    if(!base){
+      // fallback：依韓幣原價 + 子類型分梯
+      if(vt==="daily"){
+        base=krw<=1000?45:krw<=2000?60:79;
+      } else if(vt==="stationery"){
+        base=krw<=1500?60:krw<=2500?69:79;
+      } else if(vt==="food_daiso"){
+        base=krw<=2000?79:krw<=3500?89:99;
+      } else if(vt==="health"){
+        base=krw<=3000?149:krw<=6000?190:199;
+      } else if(vt==="cute"){
+        base=krw<=1500?79:krw<=2500?99:krw<=4000?129:149;
+      } else if(vt==="fabric"){
+        base=krw<=2000?79:krw<=3500?99:krw<=5000?129:149;
+      } else if(vt==="bulky"){
+        base=krw<=1500?99:krw<=3000?149:199;
+      } else if(vt==="makeup"){
+        base=krw<=1000?49:krw<=2000?69:krw<=3000?89:99;
+      } else {
+        base=79;
+      }
+    }
     if(flags.isBulky)base+=20;
     if(flags.isDaisoHeavy)base+=20;
     if(flags.isFragile)base+=20;
@@ -1513,18 +1543,35 @@ const DAISO_PRICES={
   makeup:     [49,69,89,99],
 };
 window.daisoTypeChange=function(){
-  window.G.calcCat="daiso"; // 確保類別正確
   const vt=document.querySelector('input[name="daiso-type"]:checked')?.value||"cute";
   const prices=DAISO_PRICES[vt]||[99];
   const container=document.getElementById("daiso-price-btns");
   if(!container)return;
-  container.innerHTML=prices.map((p,i)=>`
-    <button class="daiso-price-btn${i===0?" active":""}" data-price="${p}"
+  // 依目前金額自動選最適合的按鈕
+  const amt=parseFloat(document.getElementById("c-amt")?.value)||0;
+  const krw=window.G.currency==="KRW"?amt:0;
+  // 用 fallback 算出建議價，找最接近的按鈕
+  let suggestedPrice=prices[0];
+  if(krw>0){
+    if(vt==="daily") suggestedPrice=krw<=1000?45:krw<=2000?60:79;
+    else if(vt==="stationery") suggestedPrice=krw<=1500?60:krw<=2500?69:79;
+    else if(vt==="food_daiso") suggestedPrice=krw<=2000?79:krw<=3500?89:99;
+    else if(vt==="health") suggestedPrice=krw<=3000?149:krw<=6000?190:199;
+    else if(vt==="cute") suggestedPrice=krw<=1500?79:krw<=2500?99:krw<=4000?129:149;
+    else if(vt==="fabric") suggestedPrice=krw<=2000?79:krw<=3500?99:krw<=5000?129:149;
+    else if(vt==="bulky") suggestedPrice=krw<=1500?99:krw<=3000?149:199;
+    else if(vt==="makeup") suggestedPrice=krw<=1000?49:krw<=2000?69:krw<=3000?89:99;
+  }
+  // 找最接近的按鈕，優先選 >= 建議價的最小值
+  const best=prices.find(p=>p>=suggestedPrice)||prices[prices.length-1];
+  container.innerHTML=prices.map((p)=>{
+    const active=p===best;
+    return `<button class="daiso-price-btn${active?" active":""}" data-price="${p}"
       onclick="daisoPriceBtnClick(this,${p})"
-      style="padding:7px 16px;border-radius:99px;font-size:13px;font-weight:900;border:2px solid ${i===0?"#2E7D32":"#A5D6A7"};background:${i===0?"#2E7D32":"white"};color:${i===0?"white":"#2E7D32"};cursor:pointer">
+      style="padding:7px 16px;border-radius:99px;font-size:13px;font-weight:900;border:2px solid ${active?"#2E7D32":"#A5D6A7"};background:${active?"#2E7D32":"white"};color:${active?"white":"#2E7D32"};cursor:pointer">
       NT$${p}
-    </button>`).join("");
-  // setTimeout 確保 DOM 渲染完再讀 active 按鈕
+    </button>`;
+  }).join("");
   setTimeout(calcUpdate, 0);
 };
 window.daisoPriceBtnClick=function(btn,price){
@@ -1535,7 +1582,6 @@ window.daisoPriceBtnClick=function(btn,price){
   calcUpdate();
 };
 window.qaDaisoTypeChange=function(){
-  window.G.qaCatKey="daiso";
   const vt=document.querySelector('input[name="qa-daiso-type"]:checked')?.value||"cute";
   const prices=DAISO_PRICES[vt]||[99];
   const container=document.getElementById("qa-daiso-price-btns");
@@ -1569,6 +1615,7 @@ window.calcUpdate=function(){
     limitedShoe:document.getElementById("flag-limited")?.checked||false,
     priceType:document.getElementById("flag-transparent")?.checked?"transparent":"normal",
     isPopular:document.getElementById("flag-popular")?.checked||false,
+    isGiftPack:document.getElementById("flag-giftpack")?.checked||false,
     daisoType:document.querySelector('input[name="daiso-type"]:checked')?.value||"cute",
     daisoPrice:parseInt(document.querySelector('button.daiso-price-btn.active')?.dataset.price||"0")||0,
     isBulky:document.getElementById("flag-bulky")?.checked||false,
@@ -1646,8 +1693,20 @@ if(catGrid){
   `).join("");
   document.getElementById("cat-hint").innerHTML=`<span style="font-size:10px;color:#9C7A5A;font-weight:700">定價：</span><span style="font-size:10px;color:#C5A880">${CATS[0].desc}</span><br><span style="font-size:10px;color:#9C7A5A;font-weight:700">包含：</span><span style="font-size:10px;color:#3D2010">${CATS[0].examples||""}</span>`;
 }
-// 初始化大創價格按鈕（頁面載入時就先建好，選到大創時直接顯示）
-setTimeout(()=>{if(typeof daisoTypeChange==="function")daisoTypeChange();},300);
+// 初始化大創價格按鈕（只建內容，不影響 calcCat）
+setTimeout(()=>{
+  const vt="cute";
+  const prices=typeof DAISO_PRICES!=="undefined"?DAISO_PRICES[vt]||[99]:[79,99,129,149];
+  const container=document.getElementById("daiso-price-btns");
+  if(container&&!container.innerHTML){
+    container.innerHTML=prices.map((p,i)=>`
+      <button class="daiso-price-btn${i===0?" active":""}" data-price="${p}"
+        onclick="daisoPriceBtnClick(this,${p})"
+        style="padding:7px 16px;border-radius:99px;font-size:13px;font-weight:900;border:2px solid ${i===0?"#2E7D32":"#A5D6A7"};background:${i===0?"#2E7D32":"white"};color:${i===0?"white":"#2E7D32"};cursor:pointer">
+        NT$${p}
+      </button>`).join("");
+  }
+},300);
 // 定價表
 const pt=document.getElementById("price-table");
 if(pt){
@@ -3396,6 +3455,7 @@ window.qaCalcPrice=function(){
   const flags={
     priceType:document.getElementById("qa-flag-transparent")?.checked?"transparent":"normal",
     isPopular:document.getElementById("qa-flag-popular")?.checked||false,
+    isGiftPack:document.getElementById("qa-flag-giftpack")?.checked||false,
     limitedShoe:document.getElementById("qa-flag-limited")?.checked||false,
     daisoType:document.querySelector('input[name="qa-daiso-type"]:checked')?.value||"cute",
     daisoPrice:parseInt(document.querySelector('button.qa-daiso-price-btn.active')?.dataset.price||"0")||0,
@@ -3553,6 +3613,7 @@ window.saveQuickAdd=async function(){
   const qaFlags={
     priceType:document.getElementById("qa-flag-transparent")?.checked?"transparent":"normal",
     isPopular:document.getElementById("qa-flag-popular")?.checked||false,
+    isGiftPack:document.getElementById("qa-flag-giftpack")?.checked||false,
     limitedShoe:document.getElementById("qa-flag-limited")?.checked||false,
     daisoType:document.querySelector('input[name="qa-daiso-type"]:checked')?.value||"cute",
     daisoPrice:parseInt(document.querySelector('button.qa-daiso-price-btn.active')?.dataset.price||"0")||0,
