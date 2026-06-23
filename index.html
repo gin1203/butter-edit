@@ -426,7 +426,7 @@ input,textarea,select,button{font-family:inherit}
   </div>
   <!-- 結果區 -->
   <div style="margin-bottom:10px">
-    <button onclick="searchMomo()" style="width:100%;background:#E40520;color:white;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">🛒 在 momo 購物搜尋</button>
+    <button onclick="searchMomo()" style="width:100%;background:#F3E8FF;color:#7C3AED;border:1px solid #D8B4FE;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">🛒 在 momo 購物搜尋</button>
   </div>
   <div id="ps-result" style="display:none"></div>
   <!-- 手動填入售價 -->
@@ -1791,14 +1791,8 @@ window.copyBuyerOrder=function(buyerKey){
   });
   const total=orders.reduce((s,o)=>{const dp=o.discountPrice||o.unitPrice||0;return s+dp*o.qty;},0);
   const qty=orders.reduce((s,o)=>s+o.qty,0);
-  const text=`🛍️ ${name}的訂單
-
-${items.join("
-")}
-
-📦 共 ${qty} 件｜💰 總計 NT$${total.toLocaleString()}`;
+  const text="🛍️ "+name+"的訂單\n\n"+items.join("\n")+"\n\n📦 共 "+qty+" 件｜💰 總計 NT$"+total.toLocaleString();
   navigator.clipboard.writeText(text).then(()=>showToast("已複製！")).catch(()=>{
-    // Fallback
     const el=document.createElement("textarea");el.value=text;document.body.appendChild(el);el.select();document.execCommand("copy");document.body.removeChild(el);showToast("已複製！");
   });
 };
@@ -1814,12 +1808,7 @@ window.copyCustOrder=function(custId){
   });
   const total=orders.reduce((s,o)=>{const dp=o.discountPrice||o.unitPrice||0;return s+dp*o.qty;},0);
   const qty=orders.reduce((s,o)=>s+o.qty,0);
-  const text=`🛍️ ${name}的訂單
-
-${items.join("
-")}
-
-📦 共 ${qty} 件｜💰 總計 NT$${total.toLocaleString()}`;
+  const text="🛍️ "+name+"的訂單\n\n"+items.join("\n")+"\n\n📦 共 "+qty+" 件｜💰 總計 NT$"+total.toLocaleString();
   navigator.clipboard.writeText(text).then(()=>showToast("已複製！")).catch(()=>{
     const el=document.createElement("textarea");el.value=text;document.body.appendChild(el);el.select();document.execCommand("copy");document.body.removeChild(el);showToast("已複製！");
   });
@@ -2950,7 +2939,7 @@ window.renderCustomers=function(){
           const dp=o.discountPrice||o.unitPrice||0;
           return `<div style="display:flex;justify-content:space-between;align-items:center;background:#FAF8F5;border-radius:8px;padding:6px 10px">
             <div>
-              <span style="font-size:11px;color:#3D2010;font-weight:600">${o.productEmoji||"📦"} ${o.productName||"商品"} ×${o.qty}</span>
+              <span style="font-size:11px;color:#3D2010;font-weight:600">${o.productName||"商品"} ×${o.qty}</span>
             </div>
             <div style="display:flex;align-items:center;gap:8px">
               <span style="font-size:10px;font-weight:700;color:${sl2[o.status]||"#9C7A5A"}">${stl[o.status]||""}</span>
@@ -3040,7 +3029,7 @@ window.renderInvoice=function(){
           return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #F0E6D0">
             <div style="display:flex;align-items:center;gap:6px">
               <input type="checkbox" ${checked2?"checked":""} onchange="toggleSelectItem('order','${o.id}')" style="width:14px;height:14px;accent-color:#C5A880"/>
-              <span style="font-size:12px;color:#3D2010">${o.productEmoji||"📦"} ${o.productName||"商品"} ×${o.qty}</span>
+              <span style="font-size:12px;color:#3D2010">${o.productName||"商品"} ×${o.qty}</span>
               ${o.discountNote?`<span style="font-size:9px;background:#FDF6EC;color:#A08060;padding:1px 5px;border-radius:4px">${o.discountNote}</span>`:""}
             </div>
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end">
