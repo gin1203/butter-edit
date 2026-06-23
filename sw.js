@@ -1,6 +1,6 @@
 // ── The Butter Edit · Service Worker ────────────────────────────────
 // 每次部署時改這個版本號，舊快取就會被清除
-const VERSION = 'v1';
+const VERSION = "v5"';
 const CACHE = `butter-edit-${VERSION}`;
 
 // 安裝：快取主要資源

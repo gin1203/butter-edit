@@ -55,7 +55,12 @@ input,textarea,select,button{font-family:inherit}
 <div id="app" style="display:none">
 
 <!-- ── Header + Nav 合併固定容器 ── -->
-<div id="top-bar" style="position:fixed;top:0;left:0;right:0;z-index:30;background:#F5E6C8;border-radius:0 0 18px 18px;box-shadow:0 2px 12px rgba(100,60,20,0.08);padding-bottom:10px">
+<div id="top-bar" style="position:fixed;top:0;left:0;right:0;z-index:30;background:#F5E6C8;border-radius:0 0 18px 18px;box-shadow:0 2px 12px rgba(100,60,20,0.08);padding-bottom:10px;overflow:hidden">
+  <!-- 匯率細條 -->
+  <div style="margin:6px 12px 0;background:#F5E6C8;border:1px solid #E8D5B0;border-radius:8px;padding:4px 12px;text-align:center;font-size:10px;color:#9C7A5A;letter-spacing:0.03em">
+    <span style="color:#C5A880">⚡</span>
+    <span id="rate-bar" style="margin-left:3px">載入中...</span>
+  </div>
   <!-- Header row -->
   <div style="max-width:720px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;padding:10px 12px 6px">
     <div style="flex:1;min-width:0">
@@ -91,11 +96,6 @@ input,textarea,select,button{font-family:inherit}
 
 <!-- ═══ 定價換算 ═══ -->
 <div id="tab-calc" class="tab-page active">
-  <!-- 即時匯率 -->
-  <div style="background:#FDF6EC;border:1px solid #E8D5B0;border-radius:12px;padding:10px 16px;margin-bottom:12px;text-align:center">
-    <div style="font-size:10px;color:#9C7A5A;font-weight:700;margin-bottom:4px">⚡ 即時匯率</div>
-    <div id="rate-bar" style="font-size:11px;color:#A08060;display:flex;justify-content:center;gap:20px;flex-wrap:wrap">載入中...</div>
-  </div>
   <!-- 幣別 -->
   <div style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:14px;margin-bottom:12px">
     <div style="font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:8px">選擇幣別</div>
@@ -195,6 +195,7 @@ input,textarea,select,button{font-family:inherit}
           <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12px;color:#3D2010"><input type="radio" name="daiso-type" value="cute" onchange="daisoTypeChange()" style="accent-color:#5C3A1E" checked/>🎀 <b>可愛文創</b><span style="color:#9C7A5A;font-size:10px"> — 鏡子・粉撲・吊飾・聯名小物</span></label>
           <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12px;color:#3D2010"><input type="radio" name="daiso-type" value="fabric" onchange="daisoTypeChange()" style="accent-color:#5C3A1E"/>🧦 <b>布類／衣物</b><span style="color:#9C7A5A;font-size:10px"> — 襪子・行李袋・收納袋</span></label>
           <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12px;color:#3D2010"><input type="radio" name="daiso-type" value="bulky" onchange="daisoTypeChange()" style="accent-color:#5C3A1E"/>🖱️ <b>大型／電子小物</b><span style="color:#9C7A5A;font-size:10px"> — 滑鼠・餐盤・水壺・桌墊</span></label>
+          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12px;color:#3D2010"><input type="radio" name="daiso-type" value="makeup" onchange="daisoTypeChange()" style="accent-color:#5C3A1E"/>💄 <b>平價彩妝</b><span style="color:#9C7A5A;font-size:10px"> — 指甲油・眼線・腮紅・氣墊・唇膏</span></label>
         </div>
       </div>
       <div style="background:#F1F8E9;padding:10px 14px;border-top:1px solid #A5D6A7">
@@ -834,6 +835,7 @@ input,textarea,select,button{font-family:inherit}
           <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:#3D2010"><input type="radio" name="qa-daiso-type" value="cute" onchange="qaCalcPrice()" style="accent-color:#5C3A1E" checked/>🎀 可愛文創<span style="color:#9C7A5A;font-size:10px">（鏡子・粉撲・吊飾）</span></label>
           <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:#3D2010"><input type="radio" name="qa-daiso-type" value="fabric" onchange="qaCalcPrice()" style="accent-color:#5C3A1E"/>🧦 布類／衣物<span style="color:#9C7A5A;font-size:10px">（襪子・行李袋）</span></label>
           <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:#3D2010"><input type="radio" name="qa-daiso-type" value="bulky" onchange="qaCalcPrice()" style="accent-color:#5C3A1E"/>🖱️ 大型／電子<span style="color:#9C7A5A;font-size:10px">（滑鼠・餐盤・水壺）</span></label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:#3D2010"><input type="radio" name="qa-daiso-type" value="makeup" onchange="qaCalcPrice()" style="accent-color:#5C3A1E"/>💄 平價彩妝<span style="color:#9C7A5A;font-size:10px">（指甲油・眼線・腮紅・唇膏）</span></label>
         </div>
       </div>
       <div style="background:#F1F8E9;padding:8px 12px;border-top:1px solid #A5D6A7">
@@ -1191,12 +1193,12 @@ async function fetchRates(){
     }
     if(el){
       const{KRW,JPY,THB}=window.G.rates;
-      el.innerHTML=`<span>🇰🇷 ₩1=NT$${KRW}</span><span>🇯🇵 ¥1=NT$${JPY}</span><span>🇹🇭 ฿1=NT$${THB}</span><span style="font-size:9px;color:#B0906A">（即時）</span>`;
+      el.innerHTML=`🇰🇷 ₩1=NT$${KRW} &nbsp;·&nbsp; 🇯🇵 ¥1=NT$${JPY} &nbsp;·&nbsp; 🇹🇭 ฿1=NT$${THB} &nbsp;<span style="color:#B0906A">（即時）</span>`;
     }
   }catch(e){
     if(el){
       const{KRW,JPY,THB}=window.G.rates;
-      el.innerHTML=`<span>🇰🇷 ₩1=NT$${KRW}</span><span>🇯🇵 ¥1=NT$${JPY}</span><span>🇹🇭 ฿1=NT$${THB}</span><span style="font-size:9px;color:#B0906A">（預設值）</span>`;
+      el.innerHTML=`🇰🇷 ₩1=NT$${KRW} &nbsp;·&nbsp; 🇯🇵 ¥1=NT$${JPY} &nbsp;·&nbsp; 🇹🇭 ฿1=NT$${THB} &nbsp;<span style="color:#B0906A">（預設值）</span>`;
     }
   }
 }
@@ -1228,18 +1230,17 @@ function suggestPrice(at,cat,flags,twPrice,rawAmt){
   const pt=flags.priceType||"normal";
   if(cat==="food"){
     let baseFood;
-    if(krw<=1500)baseFood=49;
-    else if(krw<=2500)baseFood=79;
+    if(krw<=1000)baseFood=49;
+    else if(krw<=2000)baseFood=69;
     else if(krw<=3500)baseFood=99;
     else if(krw<=5000)baseFood=129;
-    else if(krw<=7000)baseFood=149;
-    else if(krw<=9000)baseFood=199;
-    else if(krw<=12000)baseFood=249;
-    else if(krw<=16000)baseFood=299;
-    else if(krw<=20000)baseFood=399;
-    else baseFood=roundPrice(at*1.2);
+    else if(krw<=7000)baseFood=169;
+    else if(krw<=10000)baseFood=229;
+    else if(krw<=15000)baseFood=399;
+    else if(krw<=20000)baseFood=499;
+    else baseFood=roundPrice(at*1.3);
     if(flags.isPopular){
-      const popMap={49:79,79:99,99:129,129:149,149:199,199:249,249:299,299:399,399:499};
+      const popMap={49:69,69:99,99:129,129:169,169:229,229:299,299:399,399:499,499:599};
       price=popMap[baseFood]||(baseFood+50);
     } else { price=baseFood; }
   }
@@ -1247,7 +1248,7 @@ function suggestPrice(at,cat,flags,twPrice,rawAmt){
     const dp=flags.daisoPrice||0;
     const vt=flags.daisoType||"cute";
     let base=dp;
-    if(!base){const defs={daily:60,stationery:69,food_daiso:89,health:149,cute:99,fabric:99,bulky:149};base=defs[vt]||99;}
+    if(!base){const defs={daily:60,stationery:69,food_daiso:89,health:149,cute:99,fabric:99,bulky:149,makeup:69};base=defs[vt]||99;}
     if(flags.isBulky)base+=20;
     if(flags.isDaisoHeavy)base+=20;
     if(flags.isFragile)base+=20;
@@ -1506,8 +1507,10 @@ const DAISO_PRICES={
   cute:       [79,99,129,149],
   fabric:     [79,99,129,149],
   bulky:      [99,149,199],
+  makeup:     [49,69,89,99],
 };
 window.daisoTypeChange=function(){
+  window.G.calcCat="daiso"; // 確保類別正確
   const vt=document.querySelector('input[name="daiso-type"]:checked')?.value||"cute";
   const prices=DAISO_PRICES[vt]||[99];
   const container=document.getElementById("daiso-price-btns");
@@ -1518,7 +1521,8 @@ window.daisoTypeChange=function(){
       style="padding:7px 16px;border-radius:99px;font-size:13px;font-weight:900;border:2px solid ${i===0?"#2E7D32":"#A5D6A7"};background:${i===0?"#2E7D32":"white"};color:${i===0?"white":"#2E7D32"};cursor:pointer">
       NT$${p}
     </button>`).join("");
-  calcUpdate();
+  // setTimeout 確保 DOM 渲染完再讀 active 按鈕
+  setTimeout(calcUpdate, 0);
 };
 window.daisoPriceBtnClick=function(btn,price){
   document.querySelectorAll(".daiso-price-btn").forEach(b=>{
@@ -1528,6 +1532,7 @@ window.daisoPriceBtnClick=function(btn,price){
   calcUpdate();
 };
 window.qaDaisoTypeChange=function(){
+  window.G.qaCatKey="daiso";
   const vt=document.querySelector('input[name="qa-daiso-type"]:checked')?.value||"cute";
   const prices=DAISO_PRICES[vt]||[99];
   const container=document.getElementById("qa-daiso-price-btns");
@@ -1538,7 +1543,7 @@ window.qaDaisoTypeChange=function(){
       style="padding:6px 12px;border-radius:99px;font-size:12px;font-weight:900;border:2px solid ${i===0?"#2E7D32":"#A5D6A7"};background:${i===0?"#2E7D32":"white"};color:${i===0?"white":"#2E7D32"};cursor:pointer">
       NT$${p}
     </button>`).join("");
-  qaCalcPrice();
+  setTimeout(qaCalcPrice, 0);
 };
 window.qaDaisoPriceBtnClick=function(btn,price){
   document.querySelectorAll(".qa-daiso-price-btn").forEach(b=>{
