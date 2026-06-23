@@ -2210,7 +2210,7 @@ const CAT_KEYWORDS={
   home:["香氛蠟燭","擴香","居家","棉被","床單","枕頭","毛巾","杯子","碗盤","收納"],
   device:["美容儀","按摩","吹風機","電動","充電","耳機","喇叭","家電"],
   luxury:["LV","Chanel","Dior","Gucci","Prada","Celine","Hermes","Louis Vuitton","精品"],
-  daiso:["大創","DAISO","daiso","ok繃","OK繃","菜瓜布","去漬筆","棉花棒","濕紙巾","衛生棉","肩頸貼","牙刷","暖暖包","粉撲","吊飾","貼紙","文具","便利貼","筆記本","餐盤","水壺","桌墊","滑鼠"],
+  daiso:["大創","DAISO","daiso","ok繃","OK繃","菜瓜布","去漬筆","棉花棒","濕紙巾","衛生棉","肩頸貼","牙刷","暖暖包","粉撲","吊飾","貼紙","文具","便利貼","筆記本","餐盤","水壺","桌墊","滑鼠","指甲油","眼線","腮紅","氣墊","唇膏","修容","睫毛夾"],
 };
 function detectCatFromName(name){
   const lower=name.toLowerCase();
@@ -2224,13 +2224,32 @@ window.qaAutoDetectCat=function(name){
   const cat=detectCatFromName(name);
   if(cat)qaSelectCat(cat);
 };
+// 關鍵字 → 大創子類型對照
+const DAISO_SUBTYPE_KEYWORDS={
+  makeup:["指甲油","眼線","腮紅","氣墊","唇膏","修容","睫毛夾","彩妝"],
+  daily:["OK繃","ok繃","菜瓜布","去漬筆","棉花棒","濕紙巾"],
+  health:["維他命","膠原蛋白","保健","肩頸貼","暖暖包"],
+  stationery:["筆記本","貼紙","文具","便利貼","資料夾"],
+  fabric:["襪子","行李袋","收納袋","購物袋"],
+  bulky:["餐盤","水壺","桌墊","滑鼠"],
+};
 window.autoDetectCatFromName=function(name){
   if(!name||name.length<2)return;
   const cat=detectCatFromName(name);
   if(!cat)return;
-  // Find and click the category button in main pricing page
   const btn=document.querySelector(`[data-cat="${cat}"]`);
-  if(btn&&window.G.selectedCat!==cat){btn.click();}
+  if(btn&&window.G.calcCat!==cat){btn.click();}
+  // 如果是大創，自動選子類型
+  if(cat==="daiso"){
+    const lower=name.toLowerCase();
+    for(const [subtype,kws] of Object.entries(DAISO_SUBTYPE_KEYWORDS)){
+      if(kws.some(kw=>lower.includes(kw.toLowerCase()))){
+        const radio=document.querySelector(`input[name="daiso-type"][value="${subtype}"]`);
+        if(radio){radio.checked=true;daisoTypeChange();}
+        break;
+      }
+    }
+  }
 };
 
 // ── 自訂常用品牌 ───────────────────────────────────────────────────────
