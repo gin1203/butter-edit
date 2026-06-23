@@ -3298,8 +3298,7 @@ window.qaRecognize=async function(b64){
       throw new Error("No text detected");
     }
     // Clean up text - take first 3 lines as product name
-    const lines=rawText.split("
-").map(l=>l.trim()).filter(l=>l.length>1);
+    const lines=rawText.split("\n").map(l=>l.trim()).filter(l=>l.length>1);
     const koreanText=lines.slice(0,3).join(" ");
 
     // Step 2: Translate to Chinese, Japanese, English
