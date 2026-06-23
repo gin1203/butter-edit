@@ -105,71 +105,21 @@ input,textarea,select,button{font-family:inherit}
       <button data-cur="THB" onclick="switchCur('THB')" style="flex:1;padding:10px 4px;border-radius:10px;font-size:12px;font-weight:700;border:1px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer;text-align:center">🇹🇭<br><span style="font-size:10px">泰銖</span></button>
     </div>
   </div>
-  <!-- 輸入卡：名稱 + 金額 -->
-  <div style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:16px;margin-bottom:10px">
-    <div style="margin-bottom:12px">
+  <!-- 輸入 -->
+  <div style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:18px;margin-bottom:12px">
+    <div style="margin-bottom:14px">
       <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">商品名稱</label>
       <input type="text" id="c-name" oninput="calcUpdate();autoDetectCatFromName(this.value)" placeholder="例如：Matin Kim 短袖" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:12px 14px;font-size:14px;outline:none"/>
     </div>
-    <div>
+    <div style="margin-bottom:16px">
       <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px"><span id="c-sym-label">🇰🇷 韓幣 (₩)</span> 售價</label>
-      <input type="text" inputmode="numeric" id="c-amt" oninput="calcUpdate()" placeholder="請輸入金額" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:12px 14px;font-size:20px;font-weight:700;outline:none"/>
+      <input type="text" inputmode="numeric" id="c-amt" oninput="calcUpdate()" placeholder="請輸入金額" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:12px 14px;font-size:14px;outline:none"/>
     </div>
-  </div>
-
-  <!-- ★ 即時結果卡（輸入金額後馬上顯示，就在金額框正下方） -->
-  <div id="c-welcome" style="background:#FDF6EC;border:1px solid #E8D5B0;border-radius:12px;padding:20px;margin-bottom:10px;text-align:center">
-    <div style="font-size:28px;margin-bottom:6px">✨</div>
-    <div style="font-weight:700;color:#3D2010;font-size:13px">輸入金額開始換算</div>
-    <div style="font-size:11px;color:#9C7A5A;margin-top:3px">系統依商品類別自動建議售價</div>
-  </div>
-  <div id="c-results" style="display:none;margin-bottom:10px">
-    <!-- 兩格：退稅後成本（老闆）+ 建議售價 -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-      <div class="hide-staff" style="background:white;border:1px solid #B2DFDB;border-radius:12px;padding:12px 10px;text-align:center">
-        <div style="font-size:10px;color:#2E7D32;font-weight:700;margin-bottom:4px">退稅後成本</div>
-        <div id="r-after" style="font-size:16px;font-weight:900;color:#2E7D32">-</div>
-      </div>
-      <div style="background:white;border:2px solid #C5A880;border-radius:12px;padding:12px 10px;text-align:center">
-        <div style="font-size:10px;color:#9C7A5A;font-weight:700;margin-bottom:4px">建議售價</div>
-        <div id="r-sugg" style="font-size:24px;font-weight:900;color:#5C3A1E">-</div>
-      </div>
+    <div>
+      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:8px">商品類別</label>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px" id="cat-grid"></div>
+      <div id="cat-hint" style="margin-top:8px;background:#FDF6EC;border-radius:8px;padding:8px 12px;font-size:11px;color:#9C7A5A"></div>
     </div>
-    <!-- 隱藏但保留給 JS 用 -->
-    <div id="r-amt" style="display:none">-</div>
-    <div id="r-before" style="display:none">-</div>
-    <!-- 最終售價卡：置中大字，利潤在下方小字 -->
-    <div style="background:#F5E6C8;border:2px solid #C5A880;border-radius:16px;padding:18px;margin-bottom:8px;text-align:center">
-      <div style="font-size:10px;color:#9C7A5A;font-weight:700;margin-bottom:6px">最終售價</div>
-      <div id="r-final" style="font-size:42px;font-weight:900;color:#3D2010;line-height:1;margin-bottom:10px">-</div>
-      <div class="hide-staff" style="display:flex;justify-content:center;align-items:center;gap:12px;margin-bottom:12px">
-        <span style="font-size:11px;color:#9C7A5A">利潤 <span id="r-profit" style="font-weight:900;color:#2E7D32">-</span></span>
-        <span style="color:#E8D5B0">|</span>
-        <span style="font-size:11px;color:#9C7A5A">毛利率 <span id="r-margin" style="font-weight:900;color:#9C7A5A">-</span></span>
-      </div>
-      <!-- 自訂售價 -->
-      <div style="background:white;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;text-align:left">
-        <label style="display:block;font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:5px">✏️ 自訂售價（留空用建議）</label>
-        <input type="text" inputmode="numeric" id="c-custom" oninput="calcUpdate()" placeholder="NT$ —" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:9px 14px;font-size:16px;font-weight:700;color:#3D2010;outline:none"/>
-      </div>
-    </div>
-    <!-- 台灣差價列 -->
-    <div id="r-tw-row" style="display:none;background:#EEF2FF;border:1px solid #C7D2FE;border-radius:10px;padding:10px 14px;margin-bottom:8px;justify-content:space-between;align-items:center">
-      <span style="font-size:11px;color:#4338CA;font-weight:700">🏷️ 台灣售價</span>
-      <span id="r-tw-price" style="font-size:13px;font-weight:900;color:#4338CA">-</span>
-      <span style="font-size:11px;color:#6366F1">省</span>
-      <span id="r-tw-save" style="font-size:13px;font-weight:900;color:#16A34A">-</span>
-    </div>
-    <!-- JS 用隱藏欄位 -->
-    <div id="r-sugg2" style="display:none">-</div>
-    <div id="r-cost" style="display:none">-</div>
-  </div>
-
-  <!-- 類別 + 旗標 + 台灣售價（可收合的設定區） -->
-  <div style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:14px;margin-bottom:10px">
-    <div style="font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:8px">商品類別</div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px" id="cat-grid"></div>
-    <div id="cat-hint" style="margin-top:8px;background:#FDF6EC;border-radius:8px;padding:8px 12px;font-size:11px;color:#9C7A5A"></div>
     <!-- 加價旗標 -->
     <div style="margin-top:12px;padding:10px 14px;background:#FDF6EC;border-radius:10px;border:1px solid #E8D5B0">
       <div style="font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:8px">📦 加價選項（自動計入建議售價）</div>
@@ -180,40 +130,8 @@ input,textarea,select,button{font-family:inherit}
         <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#3D2010;cursor:pointer"><input type="checkbox" id="flag-large" onchange="calcUpdate()" style="accent-color:#C5A880"/> 📦 大型重貨 (+300)</label>
         <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#E07B39;cursor:pointer"><input type="checkbox" id="flag-limited" onchange="calcUpdate()" style="accent-color:#E07B39"/> 👟 限量款鞋子 (+800，取代一般公式)</label>
         <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#3B82F6;cursor:pointer"><input type="checkbox" id="flag-transparent" onchange="calcUpdate()" style="accent-color:#3B82F6"/> 👗 價格透明品牌（SPAO/GU/MLB/Adidas 等，×1.2）</label>
-        <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#E91E8C;cursor:pointer"><input type="checkbox" id="flag-popular" onchange="calcUpdate()" style="accent-color:#E91E8C"/> ✨ 人氣／稀缺商品（食品往上一格）</label>
-      </div>
-    </div>
-    <!-- 大創面板 -->
-    <div id="daiso-type-panel" style="display:none;margin-top:10px;border-radius:12px;overflow:hidden;border:1.5px solid #A5D6A7">
-      <div style="background:#E8F5E9;padding:10px 14px 6px">
-        <div style="font-size:11px;font-weight:700;color:#2E7D32;margin-bottom:8px">🏪 商品類型</div>
-        <div style="display:flex;flex-direction:column;gap:6px">
-          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12px;color:#3D2010"><input type="radio" name="daiso-type" value="daily" onchange="daisoTypeChange()" style="accent-color:#5C3A1E"/>🧴 <b>消耗型日用品</b><span style="color:#9C7A5A;font-size:10px"> — OK蹦・菜瓜布・棉花棒・去漬筆</span></label>
-          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12px;color:#3D2010"><input type="radio" name="daiso-type" value="stationery" onchange="daisoTypeChange()" style="accent-color:#5C3A1E"/>📚 <b>文具／紙品</b><span style="color:#9C7A5A;font-size:10px"> — 筆記本・貼紙・小卡・資料夾</span></label>
-          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12px;color:#3D2010"><input type="radio" name="daiso-type" value="food_daiso" onchange="daisoTypeChange()" style="accent-color:#5C3A1E"/>🍫 <b>食品／零食</b><span style="color:#9C7A5A;font-size:10px"> — DIY巧克力・糖果・餅乾</span></label>
-          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12px;color:#3D2010"><input type="radio" name="daiso-type" value="health" onchange="daisoTypeChange()" style="accent-color:#5C3A1E"/>💊 <b>保健品</b><span style="color:#9C7A5A;font-size:10px"> — 液體維他命・膠原蛋白・營養品</span></label>
-          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12px;color:#3D2010"><input type="radio" name="daiso-type" value="cute" onchange="daisoTypeChange()" style="accent-color:#5C3A1E" checked/>🎀 <b>可愛文創</b><span style="color:#9C7A5A;font-size:10px"> — 鏡子・粉撲・吊飾・聯名小物</span></label>
-          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12px;color:#3D2010"><input type="radio" name="daiso-type" value="fabric" onchange="daisoTypeChange()" style="accent-color:#5C3A1E"/>🧦 <b>布類／衣物</b><span style="color:#9C7A5A;font-size:10px"> — 襪子・行李袋・收納袋</span></label>
-          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12px;color:#3D2010"><input type="radio" name="daiso-type" value="bulky" onchange="daisoTypeChange()" style="accent-color:#5C3A1E"/>🖱️ <b>大型／電子小物</b><span style="color:#9C7A5A;font-size:10px"> — 滑鼠・餐盤・水壺・桌墊</span></label>
-        </div>
-      </div>
-      <div style="background:#F1F8E9;padding:10px 14px;border-top:1px solid #A5D6A7">
-        <div style="font-size:11px;font-weight:700;color:#2E7D32;margin-bottom:8px">💰 選擇建議售價</div>
-        <div id="daiso-price-btns" style="display:flex;gap:8px;flex-wrap:wrap"></div>
-      </div>
-      <div style="background:#FAFFF8;padding:10px 14px;border-top:1px solid #A5D6A7">
-        <div style="font-size:11px;font-weight:700;color:#2E7D32;margin-bottom:8px">⚙️ 微調（可多選）</div>
-        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px">
-          <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:#3D2010;cursor:pointer"><input type="checkbox" id="flag-bulky" onchange="calcUpdate()" style="accent-color:#5C3A1E"/> 📦 體積大 +20</label>
-          <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:#3D2010;cursor:pointer"><input type="checkbox" id="flag-daiso-heavy" onchange="calcUpdate()" style="accent-color:#5C3A1E"/> ⚖️ 重量重 +20</label>
-          <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:#3D2010;cursor:pointer"><input type="checkbox" id="flag-fragile" onchange="calcUpdate()" style="accent-color:#5C3A1E"/> 🚚 易碎/不好帶 +20</label>
-        </div>
-        <div style="font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:5px">🇰🇷 韓限／聯名</div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#3D2010;cursor:pointer"><input type="radio" name="kr-limited" value="none" checked onchange="calcUpdate()" style="accent-color:#5C3A1E"/> 無</label>
-          <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#E07B39;cursor:pointer"><input type="radio" name="kr-limited" value="normal" onchange="calcUpdate()" style="accent-color:#E07B39"/> 一般聯名 +20</label>
-          <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#C0392B;cursor:pointer"><input type="radio" name="kr-limited" value="hot" onchange="calcUpdate()" style="accent-color:#C0392B"/> 超熱門聯名 +50</label>
-        </div>
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#E91E8C;cursor:pointer"><input type="checkbox" id="flag-popular" onchange="calcUpdate()" style="accent-color:#E91E8C"/> ✨ 人氣／稀缺商品（食品價位往上一格）</label>
+
       </div>
     </div>
     <!-- 台灣售價 & 網址 -->
@@ -229,7 +147,57 @@ input,textarea,select,button{font-family:inherit}
     <summary style="padding:12px 16px;font-size:11px;font-weight:700;color:#9C7A5A;cursor:pointer;background:#FDF6EC">📊 定價公式參考表（點擊展開）</summary>
     <div style="padding:14px;font-size:11px;color:#9C7A5A" id="price-table"></div>
   </details>
-  <!-- 結果已整合至上方即時卡片 -->
+  <!-- 歡迎 -->
+  <div id="c-welcome" style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:40px 20px;text-align:center">
+    <div style="font-size:36px;margin-bottom:10px">✨</div>
+    <div style="font-weight:700;color:#3D2010">輸入金額開始換算</div>
+    <div style="font-size:12px;color:#9C7A5A;margin-top:4px">系統依商品類別自動建議售價</div>
+  </div>
+  <!-- 結果 -->
+  <div id="c-results" style="display:none">
+    <div style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:18px;margin-bottom:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <div class="hide-staff" style="background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:10px;color:#9C7A5A;margin-bottom:4px">原幣售價</div>
+          <div id="r-amt" style="font-size:15px;font-weight:900;color:#3D2010">-</div>
+        </div>
+        <div class="hide-staff" style="background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:10px;color:#9C7A5A;margin-bottom:4px">退稅前台幣</div>
+          <div id="r-before" style="font-size:15px;font-weight:900;color:#3D2010">-</div>
+        </div>
+        <div class="hide-staff" style="background:#EBF7EE;border:1px solid #B2DFDB;border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:10px;color:#2E7D32;margin-bottom:4px">退稅後成本</div>
+          <div id="r-after" style="font-size:15px;font-weight:900;color:#2E7D32">-</div>
+        </div>
+        <div style="background:#FDF6EC;border:1px solid #E8D5B0;border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:10px;color:#A08060;margin-bottom:4px">建議售價</div>
+          <div id="r-sugg" style="font-size:22px;font-weight:900;color:#A08060">-</div>
+        </div>
+      </div>
+      <!-- 台灣差價列 -->
+      <div id="r-tw-row" style="display:none;background:#EEF2FF;border:1px solid #C7D2FE;border-radius:10px;padding:10px 14px;margin-bottom:12px;display:none;justify-content:space-between;align-items:center">
+        <span style="font-size:11px;color:#4338CA;font-weight:700">🏷️ 台灣售價</span>
+        <span id="r-tw-price" style="font-size:13px;font-weight:900;color:#4338CA">-</span>
+        <span style="font-size:11px;color:#6366F1">省</span>
+        <span id="r-tw-save" style="font-size:13px;font-weight:900;color:#16A34A">-</span>
+      </div>
+      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:6px">自訂售價（留空用建議）</label>
+      <input type="text" inputmode="numeric" id="c-custom" oninput="calcUpdate()" placeholder="NT$ 0" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:12px 14px;font-size:14px;outline:none"/>
+    </div>
+    <div style="background:#5C3A1E;border-radius:14px;padding:18px;margin-bottom:12px;color:white">
+      <div style="text-align:center;margin-bottom:12px">
+        <div style="font-size:10px;color:#C5A880;margin-bottom:4px">最終售價</div>
+        <div id="r-final" style="font-size:28px;font-weight:900">-</div>
+      </div>
+      <div class="hide-staff" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px">
+        <div style="text-align:center"><div style="font-size:10px;color:#C5A880;margin-bottom:4px">成本</div><div id="r-cost" style="font-size:20px;font-weight:900;color:#C5A880">-</div></div>
+        <div style="text-align:center"><div style="font-size:10px;color:#C5A880;margin-bottom:4px">建議售價</div><div id="r-sugg2" style="font-size:20px;font-weight:900;color:#C5A880">-</div></div>
+      </div>
+      <div class="hide-staff" style="background:#3D2010;border-radius:10px;padding:14px;display:flex;justify-content:space-between;align-items:center">
+        <div><div style="font-size:10px;color:#C5A880">利潤</div><div id="r-profit" style="font-size:24px;font-weight:900;color:#66BB6A">-</div></div>
+        <div style="text-align:right"><div style="font-size:10px;color:#C5A880">毛利率</div><div id="r-margin" style="font-size:24px;font-weight:900;color:#C5A880">-</div></div>
+      </div>
+    </div>
     <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:6px">📷 商品圖片（選填）</label>
     <div id="c-img-area" style="margin-bottom:12px">
       <label for="c-img-input" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100%;height:100px;border:2px dashed #E8D5B0;border-radius:12px;cursor:pointer;background:#FAF8F5;color:#9C7A5A;font-size:12px;font-weight:700;transition:border-color .2s" id="c-img-label">
@@ -814,43 +782,12 @@ input,textarea,select,button{font-family:inherit}
     <div id="qa-cat-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:16px"></div>
 
     <!-- 加價選項 -->
-    <div style="background:#FDF6EC;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;margin-bottom:10px">
+    <div style="background:#FDF6EC;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;margin-bottom:14px">
       <div style="font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:8px">📦 加價／特殊選項</div>
       <div style="display:flex;flex-direction:column;gap:6px">
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#3D2010;cursor:pointer"><input type="checkbox" id="qa-flag-transparent" onchange="qaCalcPrice()" style="accent-color:#3B82F6"/> 👗 價格透明品牌（SPAO/GU/MLB/Adidas，×1.2）</label>
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#E91E8C;cursor:pointer"><input type="checkbox" id="qa-flag-popular" onchange="qaCalcPrice()" style="accent-color:#E91E8C"/> ✨ 人氣／稀缺商品（食品往上一格）</label>
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#E07B39;cursor:pointer"><input type="checkbox" id="qa-flag-limited" onchange="qaCalcPrice()" style="accent-color:#E07B39"/> 👟 限量款鞋子（+800）</label>
-      </div>
-    </div>
-    <!-- 大創面板（快速上架版，選大創類別時顯示） -->
-    <div id="qa-daiso-panel" style="display:none;margin-bottom:10px;border-radius:12px;overflow:hidden;border:1.5px solid #A5D6A7">
-      <div style="background:#E8F5E9;padding:10px 12px 6px">
-        <div style="font-size:10px;font-weight:700;color:#2E7D32;margin-bottom:7px">🏪 商品類型</div>
-        <div style="display:flex;flex-direction:column;gap:5px">
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:#3D2010"><input type="radio" name="qa-daiso-type" value="daily" onchange="qaCalcPrice()" style="accent-color:#5C3A1E"/>🧴 消耗型日用品<span style="color:#9C7A5A;font-size:10px">（OK蹦・菜瓜布・棉花棒）</span></label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:#3D2010"><input type="radio" name="qa-daiso-type" value="stationery" onchange="qaCalcPrice()" style="accent-color:#5C3A1E"/>📚 文具／紙品<span style="color:#9C7A5A;font-size:10px">（筆記本・貼紙・小卡）</span></label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:#3D2010"><input type="radio" name="qa-daiso-type" value="food_daiso" onchange="qaCalcPrice()" style="accent-color:#5C3A1E"/>🍫 食品／零食<span style="color:#9C7A5A;font-size:10px">（DIY巧克力・糖果）</span></label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:#3D2010"><input type="radio" name="qa-daiso-type" value="health" onchange="qaCalcPrice()" style="accent-color:#5C3A1E"/>💊 保健品<span style="color:#9C7A5A;font-size:10px">（維他命・膠原蛋白）</span></label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:#3D2010"><input type="radio" name="qa-daiso-type" value="cute" onchange="qaCalcPrice()" style="accent-color:#5C3A1E" checked/>🎀 可愛文創<span style="color:#9C7A5A;font-size:10px">（鏡子・粉撲・吊飾）</span></label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:#3D2010"><input type="radio" name="qa-daiso-type" value="fabric" onchange="qaCalcPrice()" style="accent-color:#5C3A1E"/>🧦 布類／衣物<span style="color:#9C7A5A;font-size:10px">（襪子・行李袋）</span></label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:#3D2010"><input type="radio" name="qa-daiso-type" value="bulky" onchange="qaCalcPrice()" style="accent-color:#5C3A1E"/>🖱️ 大型／電子<span style="color:#9C7A5A;font-size:10px">（滑鼠・餐盤・水壺）</span></label>
-        </div>
-      </div>
-      <div style="background:#F1F8E9;padding:8px 12px;border-top:1px solid #A5D6A7">
-        <div style="font-size:10px;font-weight:700;color:#2E7D32;margin-bottom:6px">💰 建議售價</div>
-        <div id="qa-daiso-price-btns" style="display:flex;gap:6px;flex-wrap:wrap"></div>
-      </div>
-      <div style="background:#FAFFF8;padding:8px 12px;border-top:1px solid #A5D6A7">
-        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px">
-          <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#3D2010;cursor:pointer"><input type="checkbox" id="qa-flag-bulky" onchange="qaCalcPrice()" style="accent-color:#5C3A1E"/> 📦 體積大 +20</label>
-          <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#3D2010;cursor:pointer"><input type="checkbox" id="qa-flag-daiso-heavy" onchange="qaCalcPrice()" style="accent-color:#5C3A1E"/> ⚖️ 重量重 +20</label>
-          <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#3D2010;cursor:pointer"><input type="checkbox" id="qa-flag-fragile" onchange="qaCalcPrice()" style="accent-color:#5C3A1E"/> 🚚 易碎 +20</label>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#3D2010;cursor:pointer"><input type="radio" name="qa-kr-limited" value="none" checked onchange="qaCalcPrice()" style="accent-color:#5C3A1E"/> 無聯名</label>
-          <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#E07B39;cursor:pointer"><input type="radio" name="qa-kr-limited" value="normal" onchange="qaCalcPrice()" style="accent-color:#E07B39"/> 聯名+20</label>
-          <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#C0392B;cursor:pointer"><input type="radio" name="qa-kr-limited" value="hot" onchange="qaCalcPrice()" style="accent-color:#C0392B"/> 熱門聯名+50</label>
-        </div>
       </div>
     </div>
 
@@ -875,9 +812,8 @@ const fbUpd=(c,i,d)=>updateDoc(doc(db,c,i),d);
 window.fbSet=fbSet;window.fbDel=fbDel;window.fbUpd=fbUpd;
 
 const CATS=[
-  {key:"food",       label:"超商/超市食品",    emoji:"🍿", desc:"依韓幣原價分梯；人氣往上一格", examples:"零食・泡麵・咖啡糖・餅乾・海苔・飲料粉・調味料"},
+  {key:"food",       label:"超商/超市食品",    emoji:"🍿", desc:"固定帶49～399；禮盒×1.35", examples:"零食・泡麵・咖啡糖・餅乾・海苔・飲料粉・調味料"},
   {key:"beauty",     label:"美妝/保養/藥局",   emoji:"💄", desc:"低價固定帶；高價×1.38",    examples:"面膜・保養品・彩妝・PDRN・維他命・紅蔘・益生菌・藥局商品"},
-  {key:"daiso",      label:"大創/生活雜貨",    emoji:"🏪", desc:"選類型→固定價格帶；體積/韓限可微調", examples:"OK蹦・衛生棉・文具・食品・保健品・可愛小物・布類・大型商品"},
   {key:"accessory",  label:"飾品/文創小物",    emoji:"🎀", desc:"情緒價值，固定帶+倍率",    examples:"耳環・項鍊・戒指・髮夾・DINOTAENG・鑰匙圈・娃娃"},
   {key:"clothes",    label:"衣服",             emoji:"👗", desc:"透明品牌×1.2；一般×1.3（<1000）",  examples:"上衣・褲子・洋裝・外套・帽T"},
   {key:"shoes",      label:"鞋子",             emoji:"👟", desc:"市場優先：<3000×1.25，≥3000+500", examples:"球鞋・涼鞋・拖鞋・靴子（含限量款+800）"},
@@ -1213,47 +1149,39 @@ function calcCost(amt,cur){
 }
 window.calcCost=calcCost;
 function snap(raw,steps){for(const s of steps)if(s>=raw)return s;return Math.ceil(raw/100)*100-1;}
-function suggestPrice(at,cat,flags,twPrice,rawAmt){
+function suggestPrice(at,cat,flags,twPrice){
   flags=flags||{};
-  const krw=rawAmt||0;
+  // roundPrice: 無條件進位到最近的 x99 或 x49
   function roundPrice(p){
     const targets=[49,99,149,199,249,299,349,399,449,499,549,599,649,699,749,799,849,899,949,999,
       1099,1199,1299,1399,1499,1699,1799,1999,2199,2299,2499,2699,2999,
       3299,3499,3999,4299,4499,4999,5499,5999,6499,6999,7499,7999,8499,8999,9499,9999,
       10999,11999,12999,13999,14999,16999,18999,19999,21999,24999,27999,29999,32999,34999,39999];
     for(const t of targets){if(p<=t)return t;}
+    // 超過39999：進位到最近千位-1
     return Math.ceil(p/1000)*1000-1;
   }
   let price;
   const pt=flags.priceType||"normal";
   if(cat==="food"){
+    // 先算一般價，人氣版再往上跳一格
     let baseFood;
-    if(krw<=1500)baseFood=49;
-    else if(krw<=2500)baseFood=79;
-    else if(krw<=3500)baseFood=99;
-    else if(krw<=5000)baseFood=129;
-    else if(krw<=7000)baseFood=149;
-    else if(krw<=9000)baseFood=199;
-    else if(krw<=12000)baseFood=249;
-    else if(krw<=16000)baseFood=299;
-    else if(krw<=20000)baseFood=399;
-    else baseFood=roundPrice(at*1.2);
+    if(at<=70)baseFood=99;
+    else if(at<=120)baseFood=129;
+    else if(at<=180)baseFood=149;
+    else if(at<=250)baseFood=199;
+    else if(at<=350)baseFood=299;
+    else if(at<=500)baseFood=399;
+    else if(at<=750)baseFood=499;
+    else if(at<=1000)baseFood=699;
+    else baseFood=Math.round(at*1.2/100)*100-1;
     if(flags.isPopular){
-      const popMap={49:79,79:99,99:129,129:149,149:199,199:249,249:299,299:399,399:499};
-      price=popMap[baseFood]||(baseFood+50);
-    } else { price=baseFood; }
-  }
-  else if(cat==="daiso"){
-    const dp=flags.daisoPrice||0;
-    const vt=flags.daisoType||"cute";
-    let base=dp;
-    if(!base){const defs={daily:60,stationery:69,food_daiso:89,health:149,cute:99,fabric:99,bulky:149};base=defs[vt]||99;}
-    if(flags.isBulky)base+=20;
-    if(flags.isDaisoHeavy)base+=20;
-    if(flags.isFragile)base+=20;
-    if(flags.krLimitedLevel==="hot")base+=50;
-    else if(flags.krLimitedLevel==="normal")base+=20;
-    price=base;
+      // 固定帶往上一格，倍率區間用 ×1.25
+      const popMap={99:129,129:149,149:199,199:299,299:399,399:499,499:699,699:899};
+      price=popMap[baseFood]||(baseFood<1000?baseFood+100:Math.round(at*1.25/100)*100-1);
+    } else {
+      price=baseFood;
+    }
   }
   else if(cat==="beauty"){
     if(at<=70)price=99;
@@ -1497,57 +1425,6 @@ window.switchCur=function(cur){
 };
 
 // ── 定價換算 ──────────────────────────────────────────────────────────
-// ── 大創固定售價對照表 ────────────────────────────────────────────────────
-const DAISO_PRICES={
-  daily:      [45,60],
-  stationery: [60,69,79],
-  food_daiso: [79,89,99],
-  health:     [149,190,199],
-  cute:       [79,99,129,149],
-  fabric:     [79,99,129,149],
-  bulky:      [99,149,199],
-};
-window.daisoTypeChange=function(){
-  const vt=document.querySelector('input[name="daiso-type"]:checked')?.value||"cute";
-  const prices=DAISO_PRICES[vt]||[99];
-  const container=document.getElementById("daiso-price-btns");
-  if(!container)return;
-  container.innerHTML=prices.map((p,i)=>`
-    <button class="daiso-price-btn${i===0?" active":""}" data-price="${p}"
-      onclick="daisoPriceBtnClick(this,${p})"
-      style="padding:7px 16px;border-radius:99px;font-size:13px;font-weight:900;border:2px solid ${i===0?"#2E7D32":"#A5D6A7"};background:${i===0?"#2E7D32":"white"};color:${i===0?"white":"#2E7D32"};cursor:pointer">
-      NT$${p}
-    </button>`).join("");
-  calcUpdate();
-};
-window.daisoPriceBtnClick=function(btn,price){
-  document.querySelectorAll(".daiso-price-btn").forEach(b=>{
-    b.style.background="white";b.style.borderColor="#A5D6A7";b.style.color="#2E7D32";b.classList.remove("active");
-  });
-  btn.style.background="#2E7D32";btn.style.borderColor="#2E7D32";btn.style.color="white";btn.classList.add("active");
-  calcUpdate();
-};
-window.qaDaisoTypeChange=function(){
-  const vt=document.querySelector('input[name="qa-daiso-type"]:checked')?.value||"cute";
-  const prices=DAISO_PRICES[vt]||[99];
-  const container=document.getElementById("qa-daiso-price-btns");
-  if(!container)return;
-  container.innerHTML=prices.map((p,i)=>`
-    <button class="qa-daiso-price-btn${i===0?" active":""}" data-price="${p}"
-      onclick="qaDaisoPriceBtnClick(this,${p})"
-      style="padding:6px 12px;border-radius:99px;font-size:12px;font-weight:900;border:2px solid ${i===0?"#2E7D32":"#A5D6A7"};background:${i===0?"#2E7D32":"white"};color:${i===0?"white":"#2E7D32"};cursor:pointer">
-      NT$${p}
-    </button>`).join("");
-  qaCalcPrice();
-};
-window.qaDaisoPriceBtnClick=function(btn,price){
-  document.querySelectorAll(".qa-daiso-price-btn").forEach(b=>{
-    b.style.background="white";b.style.borderColor="#A5D6A7";b.style.color="#2E7D32";b.classList.remove("active");
-  });
-  btn.style.background="#2E7D32";btn.style.borderColor="#2E7D32";btn.style.color="white";btn.classList.add("active");
-  qaCalcPrice();
-};
-
 window.calcUpdate=function(){
   const amt=parseFloat(document.getElementById("c-amt")?.value)||0;
   const name=document.getElementById("c-name")?.value||"";
@@ -1561,12 +1438,6 @@ window.calcUpdate=function(){
     limitedShoe:document.getElementById("flag-limited")?.checked||false,
     priceType:document.getElementById("flag-transparent")?.checked?"transparent":"normal",
     isPopular:document.getElementById("flag-popular")?.checked||false,
-    daisoType:document.querySelector('input[name="daiso-type"]:checked')?.value||"cute",
-    daisoPrice:parseInt(document.querySelector('button.daiso-price-btn.active')?.dataset.price||"0")||0,
-    isBulky:document.getElementById("flag-bulky")?.checked||false,
-    isDaisoHeavy:document.getElementById("flag-daiso-heavy")?.checked||false,
-    isFragile:document.getElementById("flag-fragile")?.checked||false,
-    krLimitedLevel:document.querySelector('input[name="kr-limited"]:checked')?.value||"none",
   };
   window.G.calcAmt=amt;window.G.calcName=name;window.G.calcCustom=custom;window.G.calcFlags=flags;window.G.calcTwPrice=twPrice;
   const results=document.getElementById("c-results");
@@ -1576,7 +1447,7 @@ window.calcUpdate=function(){
     const cur=window.G.currency;
     const{beforeTax,afterTax}=calcCost(amt,cur);
     const cat=window.G.calcCat||"food";
-    const sugg=suggestPrice(afterTax,cat,flags,twPrice,amt);
+    const sugg=suggestPrice(afterTax,cat,flags,twPrice);
     const final=custom||sugg;
     const profit=Math.round((final-afterTax)*10)/10;
     const margin=final>0?Math.round((profit/final)*100):0;
@@ -1619,11 +1490,7 @@ window.selectCalcCat=function(key){
   const cat=CATS.find(c=>c.key===key);
   if(hint&&cat)hint.innerHTML=`<span style="font-size:10px;color:#9C7A5A;font-weight:700">定價：</span><span style="font-size:10px;color:#C5A880">${cat.desc}</span><br><span style="font-size:10px;color:#9C7A5A;font-weight:700">包含：</span><span style="font-size:10px;color:#3D2010">${cat.examples||""}</span>`;
   const cb=document.getElementById("c-custom");if(cb)cb.value="";
-  // 大創面板顯示/隱藏
-  const dp=document.getElementById("daiso-type-panel");
-  if(dp)dp.style.display=key==="daiso"?"block":"none";
-  if(key==="daiso")daisoTypeChange();
-  else calcUpdate();
+  calcUpdate();
 };
 
 // 建立類別按鈕
@@ -1638,8 +1505,6 @@ if(catGrid){
   `).join("");
   document.getElementById("cat-hint").innerHTML=`<span style="font-size:10px;color:#9C7A5A;font-weight:700">定價：</span><span style="font-size:10px;color:#C5A880">${CATS[0].desc}</span><br><span style="font-size:10px;color:#9C7A5A;font-weight:700">包含：</span><span style="font-size:10px;color:#3D2010">${CATS[0].examples||""}</span>`;
 }
-// 初始化大創價格按鈕（頁面載入時就先建好，選到大創時直接顯示）
-setTimeout(()=>{if(typeof daisoTypeChange==="function")daisoTypeChange();},300);
 // 定價表
 const pt=document.getElementById("price-table");
 if(pt){
@@ -1722,7 +1587,7 @@ window.saveProduct=async function(){
   const flags=window.G.calcFlags||{};
   const twPrice=window.G.calcTwPrice||0;
   const{beforeTax,afterTax}=calcCost(amt,cur);
-  const sugg=suggestPrice(afterTax,cat,flags,twPrice,amt);
+  const sugg=suggestPrice(afterTax,cat,flags,twPrice);
   const final=window.G.calcCustom||sugg;
   const profit=Math.round((final-afterTax)*10)/10;
   const margin=final>0?Math.round((profit/final)*100):0;
@@ -1805,7 +1670,7 @@ function updateEpCalc(amt,cur,cat,twPrice,flags){
   if(!amt)return;
   twPrice=twPrice||0;flags=flags||{};
   const{beforeTax,afterTax}=calcCost(amt,cur);
-  const sugg=suggestPrice(afterTax,cat,flags,twPrice,amt);
+  const sugg=suggestPrice(afterTax,cat,flags,twPrice);
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
   set("ep-before",`NT$ ${beforeTax}`);
   set("ep-after",`NT$ ${afterTax}`);
@@ -2205,7 +2070,6 @@ const CAT_KEYWORDS={
   home:["香氛蠟燭","擴香","居家","棉被","床單","枕頭","毛巾","杯子","碗盤","收納"],
   device:["美容儀","按摩","吹風機","電動","充電","耳機","喇叭","家電"],
   luxury:["LV","Chanel","Dior","Gucci","Prada","Celine","Hermes","Louis Vuitton","精品"],
-  daiso:["大創","DAISO","daiso","ok繃","OK繃","菜瓜布","去漬筆","棉花棒","濕紙巾","衛生棉","肩頸貼","牙刷","暖暖包","粉撲","吊飾","貼紙","文具","便利貼","筆記本","餐盤","水壺","桌墊","滑鼠"],
 };
 function detectCatFromName(name){
   const lower=name.toLowerCase();
@@ -2231,7 +2095,7 @@ window.autoDetectCatFromName=function(name){
 // ── 自訂常用品牌 ───────────────────────────────────────────────────────
 window.G.customBrands=[];
 function renderCustomBrands(){
-  const catToRow={"sunglasses": "ps-row-sunglasses", "bag": "ps-row-bag", "luxury": "ps-row-luxury", "clothes": "ps-row-clothes", "shoes": "ps-row-clothes", "beauty": "ps-row-beauty", "accessory": "ps-row-accessory", "home": "ps-row-other", "device": "ps-row-other", "food": "ps-row-other", "daiso": "ps-row-other", "other": "ps-row-other"};
+  const catToRow={"sunglasses": "ps-row-sunglasses", "bag": "ps-row-bag", "luxury": "ps-row-luxury", "clothes": "ps-row-clothes", "shoes": "ps-row-clothes", "beauty": "ps-row-beauty", "accessory": "ps-row-accessory", "home": "ps-row-other", "device": "ps-row-other", "food": "ps-row-other", "other": "ps-row-other"};
   // Clear previous custom brand buttons
   document.querySelectorAll(".custom-brand-btn").forEach(el=>el.remove());
   const area=document.getElementById("custom-brands-area");
@@ -3320,9 +3184,6 @@ window.openQuickAdd=function(){
   document.getElementById("qa-loading").style.display="none";
   document.getElementById("qa-img-input").value="";
   ["qa-flag-transparent","qa-flag-popular","qa-flag-limited"].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=false;});
-  const qdp=document.getElementById("qa-daiso-panel");
-  if(qdp)qdp.style.display="none";
-  setTimeout(()=>{if(typeof qaDaisoTypeChange==="function")qaDaisoTypeChange();},150);
   // Reset product photo
   window.G.qaProdPhoto=null;
   window.G.qaProdPhotoPos={x:50,y:50};
@@ -3356,10 +3217,7 @@ window.qaSelectCat=function(key){
     btn.style.boxShadow=active?"0 0 0 1px #E07B39":"none";
     btn.querySelector("span:last-child").style.color=active?"#E07B39":"#9C7A5A";
   });
-  const qdp=document.getElementById("qa-daiso-panel");
-  if(qdp)qdp.style.display=key==="daiso"?"block":"none";
-  if(key==="daiso")qaDaisoTypeChange();
-  else qaCalcPrice();
+  qaCalcPrice();
 };
 
 window.qaCalcPrice=function(){
@@ -3370,14 +3228,8 @@ window.qaCalcPrice=function(){
     priceType:document.getElementById("qa-flag-transparent")?.checked?"transparent":"normal",
     isPopular:document.getElementById("qa-flag-popular")?.checked||false,
     limitedShoe:document.getElementById("qa-flag-limited")?.checked||false,
-    daisoType:document.querySelector('input[name="qa-daiso-type"]:checked')?.value||"cute",
-    daisoPrice:parseInt(document.querySelector('button.qa-daiso-price-btn.active')?.dataset.price||"0")||0,
-    isBulky:document.getElementById("qa-flag-bulky")?.checked||false,
-    isDaisoHeavy:document.getElementById("qa-flag-daiso-heavy")?.checked||false,
-    isFragile:document.getElementById("qa-flag-fragile")?.checked||false,
-    krLimitedLevel:document.querySelector('input[name="qa-kr-limited"]:checked')?.value||"none",
   };
-  const sugg=suggestPrice(afterTax,window.G.qaCatKey,flags,0,amt);
+  const sugg=suggestPrice(afterTax,window.G.qaCatKey,flags,0);
   document.getElementById("qa-price-hint").textContent=`退稅後成本 NT$${afterTax} → 建議售價 NT$${sugg}`;
 };
 
@@ -3520,21 +3372,15 @@ window.saveQuickAdd=async function(){
   if(!name){showToast("請填入商品名稱","error");return;}
   if(!amt){showToast("請填入韓幣金額","error");return;}
   const{afterTax,beforeTax}=calcCost(amt,"KRW");
-  const sugg=suggestPrice(afterTax,cat,{},0,amt);
+  const sugg=suggestPrice(afterTax,cat,{},0);
   const id=genId(cat,"KRW");
   // Use product photo if available, otherwise use recognition photo
   const qaFlags={
     priceType:document.getElementById("qa-flag-transparent")?.checked?"transparent":"normal",
     isPopular:document.getElementById("qa-flag-popular")?.checked||false,
     limitedShoe:document.getElementById("qa-flag-limited")?.checked||false,
-    daisoType:document.querySelector('input[name="qa-daiso-type"]:checked')?.value||"cute",
-    daisoPrice:parseInt(document.querySelector('button.qa-daiso-price-btn.active')?.dataset.price||"0")||0,
-    isBulky:document.getElementById("qa-flag-bulky")?.checked||false,
-    isDaisoHeavy:document.getElementById("qa-flag-daiso-heavy")?.checked||false,
-    isFragile:document.getElementById("qa-flag-fragile")?.checked||false,
-    krLimitedLevel:document.querySelector('input[name="qa-kr-limited"]:checked')?.value||"none",
   };
-  const sugg2=suggestPrice(afterTax,cat,qaFlags,0,amt);
+  const sugg2=suggestPrice(afterTax,cat,qaFlags,0);
   const photo=window.G.qaProdPhoto||"";
   const photoPos=window.G.qaProdPhotoPos?`${window.G.qaProdPhotoPos.x}% ${window.G.qaProdPhotoPos.y}%`:"50% 50%";
   await fbSet("products",id,{

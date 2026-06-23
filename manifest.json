@@ -1,0 +1,14 @@
+{
+  "name": "The Butter Edit 代購管理",
+  "short_name": "Butter Edit",
+  "description": "韓國代購管理系統",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1E1915",
+  "theme_color": "#1E1915",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "https://fav.farm/🧈", "sizes": "192x192", "type": "image/png" },
+    { "src": "https://fav.farm/🧈", "sizes": "512x512", "type": "image/png" }
+  ]
+}
