@@ -57,16 +57,17 @@ input,textarea,select,button{font-family:inherit}
 <!-- ── Header + Nav 合併固定容器 ── -->
 <div id="top-bar" style="position:fixed;top:0;left:0;right:0;z-index:30;background:#F5E6C8;border-radius:0 0 18px 18px;box-shadow:0 2px 12px rgba(100,60,20,0.08);padding-bottom:10px">
   <!-- Header row -->
-  <div style="max-width:720px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;padding:8px 12px 6px">
-    <div>
-      <h1 style="margin:0;font-size:15px;font-weight:900;color:#3D2010;line-height:1.2">The Butter Edit</h1>
+  <div style="max-width:720px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;padding:10px 12px 6px">
+    <div style="flex:1;min-width:0">
+      <div style="font-size:8px;letter-spacing:0.12em;color:#9C7A5A;font-weight:700;text-transform:uppercase;line-height:1">Premium Select</div>
+      <h1 style="margin:2px 0 0;font-size:16px;font-weight:900;color:#3D2010;line-height:1;white-space:nowrap">The Butter Edit</h1>
     </div>
-    <div style="display:flex;align-items:center;gap:6px;flex-wrap:nowrap">
-      <button onclick="openQuickAdd()" style="background:#A5D6A7;color:#2E7D32;border:none;border-radius:99px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap">✨ 快速上架</button>
-      <div id="pending-badge" style="display:none;background:#5C3A1E;color:#F5E6C8;font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;white-space:nowrap"></div>
-      <span id="user-role-badge" style="display:none;font-size:9px;font-weight:700;color:#9C7A5A;background:#FAF8F5;border:1px solid #E8D5B0;padding:2px 6px;border-radius:99px"></span>
+    <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+      <button onclick="openQuickAdd()" style="background:#A5D6A7;color:#2E7D32;border:none;border-radius:99px;padding:5px 10px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap">✨ 快速上架</button>
+      <div id="pending-badge" style="display:none;background:#5C3A1E;color:#F5E6C8;font-size:10px;font-weight:700;padding:3px 7px;border-radius:99px;white-space:nowrap"></div>
+      <span id="user-role-badge" style="display:none;font-size:9px;font-weight:700;color:#9C7A5A;background:#FAF8F5;border:1px solid #E8D5B0;padding:2px 5px;border-radius:99px"></span>
       <button onclick="doLogout()" style="padding:4px 7px;border-radius:8px;border:1px solid #E8D5B0;background:#FAF8F5;color:#9C7A5A;cursor:pointer;font-size:10px;font-weight:700">登出</button>
-      <button onclick="showTab('settings')" style="padding:6px;border-radius:8px;border:none;background:transparent;color:#9C7A5A;cursor:pointer">
+      <button onclick="showTab('settings')" style="padding:5px;border-radius:8px;border:none;background:transparent;color:#9C7A5A;cursor:pointer;flex-shrink:0">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/>
         </svg>
@@ -3274,7 +3275,6 @@ window.qaRecognize=async function(b64,imgSrc){
   if(loading){loading.style.display="block";loading.textContent="🔍 AI辨識中…";}
   if(result)result.style.display="none";
   try{
-    // Cloudflare Workers AI (LLaVA vision model, free tier)
     const resp=await fetch("https://butter-ai.kueigin.workers.dev",{
       method:"POST",
       headers:{"Content-Type":"application/json","X-Service":"cf-vision"},
@@ -3282,11 +3282,10 @@ window.qaRecognize=async function(b64,imgSrc){
     });
     const data=await resp.json();
     if(data.error){throw new Error(data.error);}
-    // Worker returns flat: {en, zhTW, ja, th}
     const clean=t=>{
       if(!t||typeof t!=="string"||t.length>80)return "";
-      if(/(.)\1{4,}/.test(t))return "";
-      if(t.startsWith("{"))return ""; // reject JSON blobs
+      if(/(.){5,}/.test(t))return "";
+      if(t.startsWith("{"))return "";
       return t;
     };
     const en=clean(data.en)||"";
@@ -3308,7 +3307,7 @@ window.qaRecognize=async function(b64,imgSrc){
     ];
 
     if(names){
-      names.innerHTML=nameList.filter(n=>n.text&&n.text!==koreanText||n.lang==="品牌原文").map(n=>`
+      names.innerHTML=nameList.map(n=>`
         <button onclick="document.getElementById('qa-name').value=this.dataset.val" data-val="${n.text.replace(/"/g,'&quot;')}" style="text-align:left;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:12px;color:#3D2010;width:100%;margin-bottom:4px">
           <span style="font-size:9px;color:#9C7A5A;font-weight:700">${n.lang}</span><br>${n.text}
         </button>`).join("")+
@@ -3316,9 +3315,7 @@ window.qaRecognize=async function(b64,imgSrc){
           <span style="font-size:9px;color:#2E7D32;font-weight:700">✨ 建議品名（英+中）</span><br>${combined}
         </button>`;
     }
-    // Auto detect category from translated text
     qaAutoDetectCat(zhTW+" "+en);
-    // Auto fill
     document.getElementById("qa-name").value=combined;
 
   }catch(err){
@@ -3328,12 +3325,11 @@ window.qaRecognize=async function(b64,imgSrc){
     const names2=document.getElementById("qa-ai-names");
     if(result2)result2.style.display="block";
     const errMsg=err.message||"未知錯誤";
-    if(names2)names2.innerHTML=`<div style="color:#C0392B;font-size:12px;margin-bottom:8px">⚠️ 辨識失敗：${errMsg}<br>請確認照片清晰、文字清楚可見</div>
+    if(names2)names2.innerHTML=`<div style="color:#C0392B;font-size:12px;margin-bottom:8px">⚠️ 辨識失敗：${errMsg}</div>
       <button onclick="document.getElementById('qa-img-input').click()" style="background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;font-weight:700">📷 重新拍攝</button>
       <button onclick="document.getElementById('qa-ai-result').style.display='none'" style="margin-left:6px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer">關閉</button>`;
   }
-};
-
+}
 window.G.qaProdPhoto=null;
 window.G.qaProdPhotoPos={x:50,y:50};
 
