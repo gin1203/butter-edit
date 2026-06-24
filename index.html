@@ -24,14 +24,14 @@ input,textarea,select,button{font-family:inherit}
 <script>
 // 品牌搜尋 - 提早定義確保可用
 window.showBrandSuggestions=function(val,isQA){
-  console.log("SBS called",val,isQA,typeof BRAND_DB);
+  console.log("SBS called",val,isQA,typeof window.BRAND_DB);
   var box=document.getElementById(isQA?"qa-brand-suggestions":"brand-suggestions");
   var inp=document.getElementById(isQA?"qa-name":"c-name");
   if(!box||!inp)return;
   if(!val||val.length<1){box.style.display="none";return;}
   var q=val.toLowerCase();
-  if(typeof BRAND_DB==="undefined"){box.style.display="none";return;}
-  var matches=BRAND_DB.filter(function(b){return b.n.toLowerCase().indexOf(q)>=0;}).slice(0,6);
+  if(typeof window.BRAND_DB==="undefined"){box.style.display="none";return;}
+  var matches=window.BRAND_DB.filter(function(b){return b.n.toLowerCase().indexOf(q)>=0;}).slice(0,6);
   if(!matches.length){box.style.display="none";return;}
   var r=inp.getBoundingClientRect();
   box.style.top=(r.bottom+2)+"px";
@@ -215,6 +215,7 @@ window.showBrandSuggestions=function(val,isQA){
         <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#3B82F6;cursor:pointer"><input type="checkbox" id="flag-transparent" onchange="calcUpdate()" style="accent-color:#3B82F6"/> 👗 價格透明品牌（SPAO/GU/MLB/Adidas 等，×1.2）</label>
         <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#E91E8C;cursor:pointer"><input type="checkbox" id="flag-popular" onchange="calcUpdate()" style="accent-color:#E91E8C"/> ✨ 人氣／稀缺商品（食品往上一格）</label>
         <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#7B5EA7;cursor:pointer"><input type="checkbox" id="flag-giftpack" onchange="calcUpdate()" style="accent-color:#7B5EA7"/> 🎁 禮盒／分裝／大包裝（食品 +80）</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#E07B39;cursor:pointer"><input type="checkbox" id="flag-market" onchange="calcUpdate()" style="accent-color:#E07B39"/> 🛒 熱門引流商品（烏龜餅乾・養樂多・Pepero，用市場價格）</label>
       </div>
     </div>
     <!-- 美妝子類型面板（選美妝/保養/藥局時顯示） -->
@@ -880,6 +881,7 @@ window.showBrandSuggestions=function(val,isQA){
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#3D2010;cursor:pointer"><input type="checkbox" id="qa-flag-transparent" onchange="qaCalcPrice()" style="accent-color:#3B82F6"/> 👗 價格透明品牌（SPAO/GU/MLB/Adidas，×1.2）</label>
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#E91E8C;cursor:pointer"><input type="checkbox" id="qa-flag-popular" onchange="qaCalcPrice()" style="accent-color:#E91E8C"/> ✨ 人氣／稀缺商品（食品往上一格）</label>
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#7B5EA7;cursor:pointer"><input type="checkbox" id="qa-flag-giftpack" onchange="qaCalcPrice()" style="accent-color:#7B5EA7"/> 🎁 禮盒／分裝／大包裝（食品 +80）</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#E07B39;cursor:pointer"><input type="checkbox" id="qa-flag-market" onchange="qaCalcPrice()" style="accent-color:#E07B39"/> 🛒 熱門引流商品（市場價格）</label>
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#E07B39;cursor:pointer"><input type="checkbox" id="qa-flag-limited" onchange="qaCalcPrice()" style="accent-color:#E07B39"/> 👟 限量款鞋子（+800）</label>
       </div>
     </div>
@@ -1300,22 +1302,32 @@ function suggestPrice(at,cat,flags,twPrice,rawAmt){
   const pt=flags.priceType||"normal";
   if(cat==="food"){
     let baseFood;
-    // 用台幣成本（退稅後）分梯，更精確
-    if(at<=30)baseFood=40;
-    else if(at<=50)baseFood=60;
-    else if(at<=65)baseFood=79;
-    else if(at<=80)baseFood=90;
-    else if(at<=120)baseFood=149;
-    else if(at<=180)baseFood=220;
-    else if(at<=250)baseFood=280;
-    else if(at<=330)baseFood=370;
-    else baseFood=roundPrice(at*1.3);
-    // 禮盒/分裝/大包裝 +80
-    if(flags.isGiftPack)baseFood+=80;
-    // 人氣往上一格
-    if(flags.isPopular){
-      const popMap={40:60,60:79,79:90,90:149,149:220,220:280,280:370,370:450};
-      baseFood=popMap[baseFood]||(baseFood+80);
+    if(flags.isMarket){
+      // 🛒 熱門引流商品：市場價格（烏龜餅乾・養樂多・Pepero等）
+      if(at<=30)baseFood=40;
+      else if(at<=45)baseFood=49;
+      else if(at<=60)baseFood=59;
+      else if(at<=80)baseFood=79;
+      else if(at<=120)baseFood=99;
+      else baseFood=roundPrice(at*1.2);
+    } else {
+      // 一般食品：正常公式
+      if(at<=30)baseFood=40;
+      else if(at<=50)baseFood=60;
+      else if(at<=65)baseFood=79;
+      else if(at<=80)baseFood=90;
+      else if(at<=120)baseFood=149;
+      else if(at<=180)baseFood=220;
+      else if(at<=250)baseFood=280;
+      else if(at<=330)baseFood=370;
+      else baseFood=roundPrice(at*1.3);
+      // 禮盒/分裝/大包裝 +80
+      if(flags.isGiftPack)baseFood+=80;
+      // 人氣往上一格
+      if(flags.isPopular){
+        const popMap={40:60,60:79,79:90,90:149,149:220,220:280,280:370,370:450};
+        baseFood=popMap[baseFood]||(baseFood+80);
+      }
     }
     price=baseFood;
   }
@@ -1707,7 +1719,7 @@ window.qaDaisoPriceBtnClick=function(btn,price){
 
 
 // ── 品牌資料庫（品牌名 → 類別） ────────────────────────────────────────
-const BRAND_DB=[
+window.BRAND_DB=[
   // 精品
   {n:"Louis Vuitton",cat:"luxury"},{n:"LV",cat:"luxury"},{n:"Chanel",cat:"luxury"},
   {n:"Dior",cat:"luxury"},{n:"Gucci",cat:"luxury"},{n:"Prada",cat:"luxury"},
@@ -1841,6 +1853,7 @@ window.calcUpdate=function(){
     priceType:document.getElementById("flag-transparent")?.checked?"transparent":"normal",
     isPopular:document.getElementById("flag-popular")?.checked||false,
     isGiftPack:document.getElementById("flag-giftpack")?.checked||false,
+    isMarket:document.getElementById("flag-market")?.checked||false,
     beautyType:document.querySelector('input[name="beauty-type"]:checked')?.value||"skincare",
     daisoType:document.querySelector('input[name="daiso-type"]:checked')?.value||"cute",
     daisoPrice:parseInt(document.querySelector('button.daiso-price-btn.active')?.dataset.price||"0")||0,
@@ -3694,6 +3707,7 @@ window.qaCalcPrice=function(){
     priceType:document.getElementById("qa-flag-transparent")?.checked?"transparent":"normal",
     isPopular:document.getElementById("qa-flag-popular")?.checked||false,
     isGiftPack:document.getElementById("qa-flag-giftpack")?.checked||false,
+    isMarket:document.getElementById("qa-flag-market")?.checked||false,
     beautyType:document.querySelector('input[name="qa-beauty-type"]:checked')?.value||"skincare",
     limitedShoe:document.getElementById("qa-flag-limited")?.checked||false,
     daisoType:document.querySelector('input[name="qa-daiso-type"]:checked')?.value||"cute",
@@ -3856,6 +3870,7 @@ window.saveQuickAdd=async function(){
     priceType:document.getElementById("qa-flag-transparent")?.checked?"transparent":"normal",
     isPopular:document.getElementById("qa-flag-popular")?.checked||false,
     isGiftPack:document.getElementById("qa-flag-giftpack")?.checked||false,
+    isMarket:document.getElementById("qa-flag-market")?.checked||false,
     beautyType:document.querySelector('input[name="qa-beauty-type"]:checked')?.value||"skincare",
     limitedShoe:document.getElementById("qa-flag-limited")?.checked||false,
     daisoType:document.querySelector('input[name="qa-daiso-type"]:checked')?.value||"cute",
