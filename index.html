@@ -24,6 +24,7 @@ input,textarea,select,button{font-family:inherit}
 <script>
 // 品牌搜尋 - 提早定義確保可用
 window.showBrandSuggestions=function(val,isQA){
+  console.log("SBS called",val,isQA,typeof BRAND_DB);
   var box=document.getElementById(isQA?"qa-brand-suggestions":"brand-suggestions");
   var inp=document.getElementById(isQA?"qa-name":"c-name");
   if(!box||!inp)return;
