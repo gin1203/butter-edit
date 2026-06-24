@@ -210,18 +210,18 @@ window.showBrandSuggestions=function(val,isQA){
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px" id="cat-grid"></div>
     <div id="cat-hint" style="margin-top:8px;background:#FDF6EC;border-radius:8px;padding:8px 12px;font-size:11px;color:#9C7A5A"></div>
     <!-- 加價旗標 -->
-    <div style="margin-top:12px;padding:10px 14px;background:#FDF6EC;border-radius:10px;border:1px solid #E8D5B0">
-      <div style="font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:8px">📦 加價選項（自動計入建議售價）</div>
-      <div style="display:flex;flex-wrap:wrap;gap:10px">
-        <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#3D2010;cursor:pointer"><input type="checkbox" id="flag-cold" onchange="calcUpdate()" style="accent-color:#C5A880"/> 🧊 冷藏 (+100)</label>
-        <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#3D2010;cursor:pointer"><input type="checkbox" id="flag-coldHigh" onchange="calcUpdate()" style="accent-color:#C5A880"/> ❄️ 高風險冷藏 (+200)</label>
-        <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#3D2010;cursor:pointer"><input type="checkbox" id="flag-heavy" onchange="calcUpdate()" style="accent-color:#C5A880"/> ⚖️ 重貨 (+100)</label>
-        <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#3D2010;cursor:pointer"><input type="checkbox" id="flag-large" onchange="calcUpdate()" style="accent-color:#C5A880"/> 📦 大型重貨 (+300)</label>
-        <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#E07B39;cursor:pointer"><input type="checkbox" id="flag-limited" onchange="calcUpdate()" style="accent-color:#E07B39"/> 👟 限量款鞋子 (+800，取代一般公式)</label>
-        <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#3B82F6;cursor:pointer"><input type="checkbox" id="flag-transparent" onchange="calcUpdate()" style="accent-color:#3B82F6"/> 👗 價格透明品牌（SPAO/GU/MLB/Adidas 等，×1.2）</label>
-        <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#E91E8C;cursor:pointer"><input type="checkbox" id="flag-popular" onchange="calcUpdate()" style="accent-color:#E91E8C"/> ✨ 人氣／稀缺商品（食品往上一格）</label>
-        <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#7B5EA7;cursor:pointer"><input type="checkbox" id="flag-giftpack" onchange="calcUpdate()" style="accent-color:#7B5EA7"/> 🎁 禮盒／分裝／大包裝（食品 +80）</label>
-        <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#E07B39;cursor:pointer"><input type="checkbox" id="flag-market" onchange="calcUpdate()" style="accent-color:#E07B39"/> 🛒 熱門引流商品（烏龜餅乾・養樂多・Pepero，用市場價格）</label>
+    <div style="margin-top:12px;padding:8px 12px;background:#FDF6EC;border-radius:10px;border:1px solid #E8D5B0">
+      <div style="font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:6px">加價選項</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
+        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#3D2010;cursor:pointer"><input type="checkbox" id="flag-cold" onchange="calcUpdate()" style="accent-color:#C5A880"/> 冷藏 (+100)</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#3D2010;cursor:pointer"><input type="checkbox" id="flag-coldHigh" onchange="calcUpdate()" style="accent-color:#C5A880"/> 高風險冷藏 (+200)</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#3D2010;cursor:pointer"><input type="checkbox" id="flag-heavy" onchange="calcUpdate()" style="accent-color:#C5A880"/> 重貨 (+100)</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#3D2010;cursor:pointer"><input type="checkbox" id="flag-large" onchange="calcUpdate()" style="accent-color:#C5A880"/> 大型重貨 (+300)</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#E07B39;cursor:pointer"><input type="checkbox" id="flag-limited" onchange="calcUpdate()" style="accent-color:#E07B39"/> 👟 限量款鞋子（+800，取代一般公式）</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#3B82F6;cursor:pointer"><input type="checkbox" id="flag-transparent" onchange="calcUpdate()" style="accent-color:#3B82F6"/> 👗 價格透明品牌（SPAO/GU/MLB/Adidas 等，×1.2）</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#E91E8C;cursor:pointer"><input type="checkbox" id="flag-popular" onchange="calcUpdate()" style="accent-color:#E91E8C"/> ✨ 人氣／稀缺商品（食品往上一格）</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#7B5EA7;cursor:pointer"><input type="checkbox" id="flag-giftpack" onchange="calcUpdate()" style="accent-color:#7B5EA7"/> 🎁 禮盒／分裝／大包裝（食品 +80）</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#E07B39;cursor:pointer;grid-column:span 2"><input type="checkbox" id="flag-market" onchange="calcUpdate()" style="accent-color:#E07B39"/> 🛒 熱門引流商品（烏龜餅乾・養樂多・Pepero，用市場價格）</label>
       </div>
     </div>
     <!-- 購買通路 -->
