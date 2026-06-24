@@ -442,7 +442,10 @@ window.showBrandSuggestions=function(val,isQA){
   <div id="stats-summary" style="margin-bottom:12px"></div>
   <!-- 出行費用 -->
   <div style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:16px;margin-bottom:12px">
-    <div style="font-size:12px;font-weight:700;color:#3D2010;margin-bottom:10px">✈️ 出行費用（計入淨利計算）</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="font-size:12px;font-weight:700;color:#3D2010">✈️ 出行費用（計入淨利計算）</div>
+      <div id="exp-trip-label" style="font-size:10px;color:#C5A880;font-weight:700;background:#FDF6EC;padding:3px 8px;border-radius:99px;border:1px solid #E8D5B0">目前趟次：載入中</div>
+    </div>
     <div id="trip-expenses-list" style="margin-bottom:10px"></div>
     <!-- 快速套用常見費用 -->
     <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px">
@@ -3037,6 +3040,14 @@ window.renderStats=function(){
   const{products,trips,statsTripFilter}=window.G;
   const orders=getStatsOrders();
   const cur=getCurrentTrip();
+
+  // 更新費用趟次標籤
+  const expLabel=document.getElementById("exp-trip-label");
+  if(expLabel){
+    const tripId=statsTripFilter==="auto"||statsTripFilter==="all"?(cur?.id||"all"):statsTripFilter;
+    const tripName=trips.find(t=>t.id===tripId)?.name||"全部趟次";
+    expLabel.textContent="記錄到："+tripName;
+  }
 
   // 趟次選擇器
   const sel=document.getElementById("stats-trip-selector");
