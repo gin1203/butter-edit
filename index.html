@@ -13,10 +13,12 @@
 body{padding-top:132px}
 *{box-sizing:border-box}
 body{font-family:'Inter','Noto Sans TC',sans-serif;-webkit-tap-highlight-color:transparent;background:#FAF8F5;margin:0}
+#top-bar{max-width:720px !important;left:50% !important;right:auto !important;transform:translateX(-50%) !important;border-radius:0 0 18px 18px !important}
+main{max-width:720px !important;margin:0 auto !important;padding:16px !important}
 .scrollbar-none::-webkit-scrollbar{display:none}
 .scrollbar-none{-ms-overflow-style:none;scrollbar-width:none}
 input,textarea,select,button{font-family:inherit}
-.tab-page{display:none}
+.tab-page{display:none;max-width:720px;margin:0 auto}
 .tab-page.active{display:block}
 </style>
 </head>
@@ -55,7 +57,7 @@ input,textarea,select,button{font-family:inherit}
 <div id="app" style="display:none">
 
 <!-- ── Header + Nav 合併固定容器 ── -->
-<div id="top-bar" style="position:fixed;top:0;left:0;right:0;z-index:30;background:#F5E6C8;border-radius:0 0 18px 18px;box-shadow:0 2px 12px rgba(100,60,20,0.08);padding-bottom:10px;overflow:hidden">
+<div id="top-bar" style="position:fixed;top:0;z-index:30;width:100%;background:#F5E6C8;box-shadow:0 2px 12px rgba(100,60,20,0.08);padding-bottom:10px;overflow:hidden">
   <!-- 匯率細條 -->
   <div style="margin:6px 12px 0;background:#F5E6C8;border:1px solid #E8D5B0;border-radius:8px;padding:4px 12px;text-align:center;font-size:10px;color:#9C7A5A;letter-spacing:0.03em;line-height:1.6">
     <span style="color:#C5A880">⚡</span> <span id="rate-bar" style="margin-left:2px">載入中...</span>
@@ -91,7 +93,7 @@ input,textarea,select,button{font-family:inherit}
   </div>
 </div>
 
-<main style="max-width:720px;margin:0 auto;padding:16px">
+<main>
 
 <!-- ═══ 定價換算 ═══ -->
 <div id="tab-calc" class="tab-page active">
@@ -108,7 +110,7 @@ input,textarea,select,button{font-family:inherit}
   <div style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:16px;margin-bottom:10px">
     <div style="margin-bottom:12px">
       <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">商品名稱</label>
-      <input type="text" id="c-name" oninput="calcUpdate();autoDetectCatFromName(this.value)" placeholder="例如：Matin Kim 短袖" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:12px 14px;font-size:14px;outline:none"/>
+      <input type="text" id="c-name" oninput="calcUpdate();autoDetectCatFromName(this.value);showBrandSuggestions(this.value,false)" placeholder="例如：Matin Kim 短袖" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:12px 14px;font-size:14px;outline:none"/>
     </div>
     <div>
       <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px"><span id="c-sym-label">🇰🇷 韓幣 (₩)</span> 售價</label>
@@ -125,7 +127,7 @@ input,textarea,select,button{font-family:inherit}
   <div id="c-results" style="display:none;margin-bottom:10px">
     <!-- 兩格：退稅後成本（老闆）+ 建議售價 -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-      <div class="hide-staff" style="background:white;border:1px solid #B2DFDB;border-radius:12px;padding:12px 10px;text-align:center">
+      <div style="background:white;border:1px solid #B2DFDB;border-radius:12px;padding:12px 10px;text-align:center">
         <div style="font-size:10px;color:#2E7D32;font-weight:700;margin-bottom:4px">退稅後成本</div>
         <div id="r-after" style="font-size:16px;font-weight:900;color:#2E7D32">-</div>
       </div>
@@ -187,7 +189,22 @@ input,textarea,select,button{font-family:inherit}
         <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#7B5EA7;cursor:pointer"><input type="checkbox" id="flag-giftpack" onchange="calcUpdate()" style="accent-color:#7B5EA7"/> 🎁 禮盒／分裝／大包裝（食品 +80）</label>
       </div>
     </div>
-    <!-- 大創面板 -->
+    <!-- 美妝子類型面板（選美妝/保養/藥局時顯示） -->
+    <div id="beauty-type-panel" style="display:none;margin-top:10px;border-radius:12px;overflow:hidden;border:1.5px solid #F8BBD9">
+      <div style="background:#FCE4EC;padding:10px 14px">
+        <div style="font-size:11px;font-weight:700;color:#C2185B;margin-bottom:8px">💄 美妝類型（影響定價）</div>
+        <div style="display:flex;flex-direction:column;gap:7px">
+          <label style="display:flex;align-items:flex-start;gap:7px;cursor:pointer;font-size:12px;color:#3D2010">
+            <input type="radio" name="beauty-type" value="skincare" checked onchange="calcUpdate()" style="accent-color:#C2185B;margin-top:2px"/>
+            <span>🧴 <b>保養品（預設）</b><br><span style="font-size:10px;color:#9C7A5A">精華・眼霜・面膜組・PDRN・維他命・保健品</span></span>
+          </label>
+          <label style="display:flex;align-items:flex-start;gap:7px;cursor:pointer;font-size:12px;color:#3D2010">
+            <input type="radio" name="beauty-type" value="daily" onchange="calcUpdate()" style="accent-color:#C2185B;margin-top:2px"/>
+            <span>🪷 <b>日用美妝</b><br><span style="font-size:10px;color:#9C7A5A">凍膜・髮香噴霧・護手霜・洗沐・身體乳・防曬</span></span>
+          </label>
+        </div>
+      </div>
+    </div>
     <div id="daiso-type-panel" style="display:none;margin-top:10px;border-radius:12px;overflow:hidden;border:1.5px solid #A5D6A7">
       <div style="background:#E8F5E9;padding:10px 14px 6px">
         <div style="font-size:11px;font-weight:700;color:#2E7D32;margin-bottom:8px">🏪 商品類型</div>
@@ -540,6 +557,8 @@ input,textarea,select,button{font-family:inherit}
   </div>
 </div>
 
+<div id="brand-suggestions" style="display:none;position:fixed;z-index:99999;background:white;border:1.5px solid #C5A880;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.2);max-height:280px;overflow-y:auto;min-width:200px"></div>
+<div id="qa-brand-suggestions" style="display:none;position:fixed;z-index:99999;background:white;border:1.5px solid #C5A880;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.2);max-height:280px;overflow-y:auto;min-width:200px"></div>
 </main>
 </div><!-- #app -->
 
@@ -807,12 +826,20 @@ input,textarea,select,button{font-family:inherit}
 
     <!-- 商品名稱 -->
     <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">商品名稱</label>
-    <input type="text" id="qa-name" placeholder="例如：크레용 신짱 인형 키링 / 蠟筆小新娃娃鑰匙圈" oninput="qaAutoDetectCat(this.value)" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:11px 14px;font-size:14px;outline:none;margin-bottom:12px"/>
+    <div style="margin-bottom:12px">
+      <input type="text" id="qa-name" placeholder="例如：크레용 신짱 인형 키링 / 蠟筆小新娃娃鑰匙圈" oninput="qaAutoDetectCat(this.value);showBrandSuggestions(this.value,true)" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:11px 14px;font-size:14px;outline:none"/>
+    </div>
 
-    <!-- 韓幣金額 -->
+    <!-- 建議售價（左）+ 韓幣金額（右）並排 -->
     <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">🇰🇷 韓幣售價（₩）</label>
-    <input type="text" inputmode="numeric" id="qa-amt" placeholder="例如：12000" oninput="qaCalcPrice()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:11px 14px;font-size:14px;outline:none;margin-bottom:6px"/>
-    <div id="qa-price-hint" style="font-size:11px;color:#A08060;text-align:right;margin-bottom:12px"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <div id="qa-price-hint" style="background:#F5E6C8;border:1.5px solid #C5A880;border-radius:10px;padding:8px 14px;text-align:center;display:flex;flex-direction:column;justify-content:center;min-height:54px">
+        <div style="font-size:9px;color:#9C7A5A;font-weight:700">建議售價</div>
+        <div id="qa-price-hint-val" style="font-size:22px;font-weight:900;color:#3D2010;line-height:1.2">-</div>
+        <div id="qa-price-hint-cost" style="font-size:9px;color:#9C7A5A;margin-top:1px"></div>
+      </div>
+      <input type="text" inputmode="numeric" id="qa-amt" placeholder="例如：12000" oninput="qaCalcPrice()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:11px 14px;font-size:18px;font-weight:700;outline:none"/>
+    </div>
 
     <!-- 類別 -->
     <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:6px">商品類別</label>
@@ -828,7 +855,17 @@ input,textarea,select,button{font-family:inherit}
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#E07B39;cursor:pointer"><input type="checkbox" id="qa-flag-limited" onchange="qaCalcPrice()" style="accent-color:#E07B39"/> 👟 限量款鞋子（+800）</label>
       </div>
     </div>
-    <!-- 大創面板（快速上架版，選大創類別時顯示） -->
+    <!-- 美妝子類型（快速上架版） -->
+    <div id="qa-beauty-panel" style="display:none;margin-bottom:10px;border-radius:12px;overflow:hidden;border:1.5px solid #F8BBD9">
+      <div style="background:#FCE4EC;padding:8px 12px">
+        <div style="font-size:10px;font-weight:700;color:#C2185B;margin-bottom:6px">💄 美妝類型</div>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:#3D2010"><input type="radio" name="qa-beauty-type" value="skincare" checked onchange="qaCalcPrice()" style="accent-color:#C2185B"/>🧴 保養品<span style="color:#9C7A5A;font-size:10px">（精華・眼霜・PDRN・維他命）</span></label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:#3D2010"><input type="radio" name="qa-beauty-type" value="daily" onchange="qaCalcPrice()" style="accent-color:#C2185B"/>🪷 日用美妝<span style="color:#9C7A5A;font-size:10px">（凍膜・髮香・護手霜・洗沐）</span></label>
+        </div>
+      </div>
+    </div>
+    <!-- 大創面板（快速上架版） -->
     <div id="qa-daiso-panel" style="display:none;margin-bottom:10px;border-radius:12px;overflow:hidden;border:1.5px solid #A5D6A7">
       <div style="background:#E8F5E9;padding:10px 12px 6px">
         <div style="font-size:10px;font-weight:700;color:#2E7D32;margin-bottom:7px">🏪 商品類型</div>
@@ -844,7 +881,7 @@ input,textarea,select,button{font-family:inherit}
         </div>
       </div>
       <div style="background:#F1F8E9;padding:8px 12px;border-top:1px solid #A5D6A7">
-        <div style="font-size:10px;font-weight:700;color:#2E7D32;margin-bottom:6px">💰 建議售價</div>
+        <div style="font-size:11px;font-weight:700;color:#2E7D32;margin-bottom:8px">💰 建議售價（點選後自動帶入）</div>
         <div id="qa-daiso-price-btns" style="display:flex;gap:6px;flex-wrap:wrap"></div>
       </div>
       <div style="background:#FAFFF8;padding:8px 12px;border-top:1px solid #A5D6A7">
@@ -1237,28 +1274,33 @@ function suggestPrice(at,cat,flags,twPrice,rawAmt){
     let baseFood;
     // 用台幣成本（退稅後）分梯，更精確
     if(at<=30)baseFood=40;
-    else if(at<=70)baseFood=90;
+    else if(at<=50)baseFood=60;
+    else if(at<=65)baseFood=79;
+    else if(at<=80)baseFood=90;
     else if(at<=120)baseFood=149;
-    else if(at<=180)baseFood=199;
+    else if(at<=180)baseFood=220;
     else if(at<=250)baseFood=280;
-    else if(at<=350)baseFood=370;
+    else if(at<=330)baseFood=370;
     else baseFood=roundPrice(at*1.3);
     // 禮盒/分裝/大包裝 +80
     if(flags.isGiftPack)baseFood+=80;
     // 人氣往上一格
     if(flags.isPopular){
-      const popMap={40:90,90:149,149:199,199:280,280:370,370:450};
+      const popMap={40:60,60:79,79:90,90:149,149:220,220:280,280:370,370:450};
       baseFood=popMap[baseFood]||(baseFood+80);
     }
     price=baseFood;
   }
   else if(cat==="daiso"){
-    const activeBtn=document.querySelector('button.daiso-price-btn.active')
-                  ||document.querySelector('button.qa-daiso-price-btn.active');
-    const dp=activeBtn?parseInt(activeBtn.dataset.price||"0")||0:0;
-    const vt=document.querySelector('input[name="daiso-type"]:checked')?.value
-           ||document.querySelector('input[name="qa-daiso-type"]:checked')?.value
-           ||flags.daisoType||"cute";
+    // flags.daisoPrice 優先（快速上架傳入），DOM 只是 fallback（定價頁用）
+    const dp=flags.daisoPrice||
+             (document.querySelector('button.daiso-price-btn.active')?
+              parseInt(document.querySelector('button.daiso-price-btn.active').dataset.price||"0")||0:0)||
+             (document.querySelector('button.qa-daiso-price-btn.active')?
+              parseInt(document.querySelector('button.qa-daiso-price-btn.active').dataset.price||"0")||0:0);
+    const vt=flags.daisoType||
+             document.querySelector('input[name="daiso-type"]:checked')?.value||
+             document.querySelector('input[name="qa-daiso-type"]:checked')?.value||"cute";
     let base=dp;
     if(!base){
       // fallback：依韓幣原價 + 子類型分梯
@@ -1269,9 +1311,9 @@ function suggestPrice(at,cat,flags,twPrice,rawAmt){
       } else if(vt==="food_daiso"){
         base=krw<=2000?79:krw<=3500?89:99;
       } else if(vt==="health"){
-        base=krw<=3000?149:krw<=6000?190:199;
+        base=krw<=2000?79:krw<=3500?89:krw<=5000?149:krw<=8000?190:199;
       } else if(vt==="cute"){
-        base=krw<=1500?79:krw<=2500?99:krw<=4000?129:149;
+        base=krw<=1000?60:krw<=2000?79:krw<=3000?99:krw<=4500?129:149;
       } else if(vt==="fabric"){
         base=krw<=2000?79:krw<=3500?99:krw<=5000?129:149;
       } else if(vt==="bulky"){
@@ -1290,10 +1332,26 @@ function suggestPrice(at,cat,flags,twPrice,rawAmt){
     price=base;
   }
   else if(cat==="beauty"){
-    if(at<=70)price=99;
-    else if(at<=120)price=149;
-    else if(at<=200)price=199;
-    else price=roundPrice(at*1.3);
+    const bt=flags.beautyType||"skincare";
+    if(bt==="daily"){
+      // 日用美妝：凍膜、髮香、護手霜、洗沐、身體乳
+      if(at<=40)price=69;
+      else if(at<=75)price=99;
+      else if(at<=120)price=149;
+      else if(at<=200)price=199;
+      else if(at<=300)price=260;
+      else price=roundPrice(at*1.2);
+    } else {
+      // 保養品（預設）：精華、面膜組、眼霜、PDRN、維他命
+      if(at<=50)price=99;
+      else if(at<=90)price=149;
+      else if(at<=130)price=199;
+      else if(at<=180)price=249;
+      else if(at<=250)price=329;
+      else if(at<=380)price=499;
+      else if(at<=550)price=699;
+      else price=roundPrice(at*1.3);
+    }
   }
   else if(cat==="accessory"){
     if(at<=120)price=199;
@@ -1536,8 +1594,8 @@ const DAISO_PRICES={
   daily:      [45,60],
   stationery: [60,69,79],
   food_daiso: [79,89,99],
-  health:     [149,190,199],
-  cute:       [79,99,129,149],
+  health:     [79,89,149,190,199],
+  cute:       [60,79,99,129,149],
   fabric:     [79,99,129,149],
   bulky:      [99,149,199],
   makeup:     [49,69,89,99],
@@ -1556,8 +1614,8 @@ window.daisoTypeChange=function(){
     if(vt==="daily") suggestedPrice=krw<=1000?45:krw<=2000?60:79;
     else if(vt==="stationery") suggestedPrice=krw<=1500?60:krw<=2500?69:79;
     else if(vt==="food_daiso") suggestedPrice=krw<=2000?79:krw<=3500?89:99;
-    else if(vt==="health") suggestedPrice=krw<=3000?149:krw<=6000?190:199;
-    else if(vt==="cute") suggestedPrice=krw<=1500?79:krw<=2500?99:krw<=4000?129:149;
+    else if(vt==="health") suggestedPrice=krw<=2000?79:krw<=3500?89:krw<=5000?149:krw<=8000?190:199;
+    else if(vt==="cute") suggestedPrice=krw<=1000?60:krw<=2000?79:krw<=3000?99:krw<=4500?129:149;
     else if(vt==="fabric") suggestedPrice=krw<=2000?79:krw<=3500?99:krw<=5000?129:149;
     else if(vt==="bulky") suggestedPrice=krw<=1500?99:krw<=3000?149:199;
     else if(vt==="makeup") suggestedPrice=krw<=1000?49:krw<=2000?69:krw<=3000?89:99;
@@ -1586,12 +1644,29 @@ window.qaDaisoTypeChange=function(){
   const prices=DAISO_PRICES[vt]||[99];
   const container=document.getElementById("qa-daiso-price-btns");
   if(!container)return;
-  container.innerHTML=prices.map((p,i)=>`
-    <button class="qa-daiso-price-btn${i===0?" active":""}" data-price="${p}"
+  // 依目前金額自動選最適合的按鈕
+  const amt=parseFloat(document.getElementById("qa-amt")?.value)||0;
+  const krw=amt; // 快速上架預設韓幣
+  let suggestedPrice=prices[0];
+  if(krw>0){
+    if(vt==="daily") suggestedPrice=krw<=1000?45:krw<=2000?60:79;
+    else if(vt==="stationery") suggestedPrice=krw<=1500?60:krw<=2500?69:79;
+    else if(vt==="food_daiso") suggestedPrice=krw<=2000?79:krw<=3500?89:99;
+    else if(vt==="health") suggestedPrice=krw<=2000?79:krw<=3500?89:krw<=5000?149:krw<=8000?190:199;
+    else if(vt==="cute") suggestedPrice=krw<=1000?60:krw<=2000?79:krw<=3000?99:krw<=4500?129:149;
+    else if(vt==="fabric") suggestedPrice=krw<=2000?79:krw<=3500?99:krw<=5000?129:149;
+    else if(vt==="bulky") suggestedPrice=krw<=1500?99:krw<=3000?149:199;
+    else if(vt==="makeup") suggestedPrice=krw<=1000?49:krw<=2000?69:krw<=3000?89:99;
+  }
+  const best=prices.find(p=>p>=suggestedPrice)||prices[prices.length-1];
+  container.innerHTML=prices.map(p=>{
+    const active=p===best;
+    return `<button class="qa-daiso-price-btn${active?" active":""}" data-price="${p}"
       onclick="qaDaisoPriceBtnClick(this,${p})"
-      style="padding:6px 12px;border-radius:99px;font-size:12px;font-weight:900;border:2px solid ${i===0?"#2E7D32":"#A5D6A7"};background:${i===0?"#2E7D32":"white"};color:${i===0?"white":"#2E7D32"};cursor:pointer">
+      style="padding:10px 20px;border-radius:99px;font-size:15px;font-weight:900;border:2px solid ${active?"#2E7D32":"#A5D6A7"};background:${active?"#2E7D32":"white"};color:${active?"white":"#2E7D32"};cursor:pointer">
       NT$${p}
-    </button>`).join("");
+    </button>`;
+  }).join("");
   setTimeout(qaCalcPrice, 0);
 };
 window.qaDaisoPriceBtnClick=function(btn,price){
@@ -1601,6 +1676,128 @@ window.qaDaisoPriceBtnClick=function(btn,price){
   btn.style.background="#2E7D32";btn.style.borderColor="#2E7D32";btn.style.color="white";btn.classList.add("active");
   qaCalcPrice();
 };
+
+
+// ── 品牌資料庫（品牌名 → 類別） ────────────────────────────────────────
+const BRAND_DB=[
+  // 精品
+  {n:"Louis Vuitton",cat:"luxury"},{n:"LV",cat:"luxury"},{n:"Chanel",cat:"luxury"},
+  {n:"Dior",cat:"luxury"},{n:"Gucci",cat:"luxury"},{n:"Prada",cat:"luxury"},
+  {n:"Celine",cat:"luxury"},{n:"Hermes",cat:"luxury"},{n:"Loewe",cat:"luxury"},
+  {n:"Saint Laurent",cat:"luxury"},{n:"YSL",cat:"luxury"},{n:"Bottega Veneta",cat:"luxury"},
+  {n:"Fendi",cat:"luxury"},{n:"Burberry",cat:"luxury"},{n:"Valentino",cat:"luxury"},
+  {n:"Givenchy",cat:"luxury"},{n:"Balenciaga",cat:"luxury"},{n:"Miu Miu",cat:"luxury"},
+  {n:"Versace",cat:"luxury"},{n:"Coach",cat:"luxury"},{n:"Kate Spade",cat:"luxury"},
+  {n:"Marc Jacobs",cat:"luxury"},{n:"Longchamp",cat:"luxury"},{n:"Furla",cat:"luxury"},
+  {n:"Matin Kim",cat:"luxury"},{n:"Stand Oil",cat:"luxury"},
+  // 墨鏡
+  {n:"Gentle Monster",cat:"sunglasses"},{n:"Blue Elephant",cat:"sunglasses"},
+  {n:"Tamburins",cat:"sunglasses"},
+  // 鞋子
+  {n:"Nike",cat:"shoes"},{n:"Adidas",cat:"shoes"},{n:"PUMA",cat:"shoes"},
+  {n:"New Balance",cat:"shoes"},{n:"Converse",cat:"shoes"},{n:"Vans",cat:"shoes"},
+  {n:"Asics",cat:"shoes"},{n:"Reebok",cat:"shoes"},{n:"Saucony",cat:"shoes"},
+  {n:"Salomon",cat:"shoes"},{n:"On Running",cat:"shoes"},{n:"Hoka",cat:"shoes"},
+  {n:"Brooks",cat:"shoes"},{n:"Mizuno",cat:"shoes"},{n:"Onitsuka Tiger",cat:"shoes"},
+  // 衣服
+  {n:"SPAO",cat:"clothes"},{n:"GU",cat:"clothes"},{n:"Uniqlo",cat:"clothes"},
+  {n:"MLB",cat:"clothes"},{n:"Musinsa",cat:"clothes"},{n:"Ader Error",cat:"clothes"},
+  {n:"Instantfunk",cat:"clothes"},{n:"Covernat",cat:"clothes"},{n:"Discovery",cat:"clothes"},
+  // 美妝保養（韓系）
+  {n:"COSRX",cat:"beauty"},{n:"Laneige",cat:"beauty"},{n:"蘭芝",cat:"beauty"},
+  {n:"Innisfree",cat:"beauty"},{n:"Etude",cat:"beauty"},{n:"Missha",cat:"beauty"},
+  {n:"rom&nd",cat:"beauty"},{n:"3CE",cat:"beauty"},{n:"Peripera",cat:"beauty"},
+  {n:"Clio",cat:"beauty"},{n:"Dr.Jart",cat:"beauty"},{n:"Medicube",cat:"beauty"},
+  {n:"TIRTIR",cat:"beauty"},{n:"Beauty of Joseon",cat:"beauty"},{n:"朝鮮美女",cat:"beauty"},
+  {n:"Anua",cat:"beauty"},{n:"Torriden",cat:"beauty"},{n:"SOME BY MI",cat:"beauty"},
+  {n:"Skin1004",cat:"beauty"},{n:"isntree",cat:"beauty"},{n:"Round Lab",cat:"beauty"},
+  {n:"Abib",cat:"beauty"},{n:"Sulwhasoo",cat:"beauty"},{n:"雪花秀",cat:"beauty"},
+  {n:"Hera",cat:"beauty"},{n:"Klavuu",cat:"beauty"},{n:"Banila Co",cat:"beauty"},
+  // 美妝（歐美）
+  {n:"MAC",cat:"beauty"},{n:"NARS",cat:"beauty"},{n:"Laura Mercier",cat:"beauty"},
+  {n:"Bobbi Brown",cat:"beauty"},{n:"Urban Decay",cat:"beauty"},
+  {n:"Charlotte Tilbury",cat:"beauty"},{n:"Drunk Elephant",cat:"beauty"},
+  {n:"Paula's Choice",cat:"beauty"},{n:"CeraVe",cat:"beauty"},
+  {n:"La Roche-Posay",cat:"beauty"},{n:"理膚寶水",cat:"beauty"},
+  {n:"Vichy",cat:"beauty"},{n:"薇姿",cat:"beauty"},{n:"Avene",cat:"beauty"},
+  {n:"雅漾",cat:"beauty"},{n:"Bioderma",cat:"beauty"},{n:"貝德瑪",cat:"beauty"},
+  // 包包
+  {n:"Matin Kim",cat:"bag"},{n:"Stand Oil",cat:"bag"},{n:"Longchamp",cat:"bag"},
+  {n:"Coach",cat:"bag"},{n:"Tumi",cat:"bag"},
+  // 食品
+  {n:"HBAF",cat:"food"},{n:"Binggrae",cat:"food"},{n:"Lotte",cat:"food"},
+  {n:"Orion",cat:"food"},{n:"Nongshim",cat:"food"},{n:"農心",cat:"food"},
+  {n:"Crown",cat:"food"},{n:"Haitai",cat:"food"},{n:"海太",cat:"food"},
+  // 大創
+  {n:"DAISO",cat:"daiso"},{n:"大創",cat:"daiso"},
+];
+
+// ── 品牌 Autocomplete ───────────────────────────────────────────────────
+function showBrandSuggestions(val,isQA){
+  console.log("showBrandSuggestions called:",val,isQA);
+  var boxId=isQA?"qa-brand-suggestions":"brand-suggestions";
+  var inputId=isQA?"qa-name":"c-name";
+  var box=document.getElementById(boxId);
+  var inp=document.getElementById(inputId);
+  if(!box||!inp)return;
+  if(!val||val.length<1){box.style.display="none";return;}
+  var q=val.toLowerCase();
+  var matches=BRAND_DB.filter(function(b){return b.n.toLowerCase().indexOf(q)>=0;}).slice(0,6);
+  if(!matches.length){box.style.display="none";return;}
+  var r=inp.getBoundingClientRect();
+  box.style.top=(r.bottom+2)+"px";
+  box.style.left=r.left+"px";
+  box.style.width=r.width+"px";
+  var CL={food:"🍿食品",beauty:"💄美妝",daiso:"🏪大創",shoes:"👟鞋子",clothes:"👗衣服",bag:"👜包包",luxury:"💎精品",sunglasses:"🕶墨鏡",accessory:"🎀飾品",home:"🏠居家",device:"🪄美容儀",other:"📦其他"};
+  var h="";
+  for(var i=0;i<matches.length;i++){
+    var b=matches[i];
+    var nm=b.n.replace(/\\/g,"\\\\").replace(/'/g,"\\'");
+    h+='<div onmousedown="event.preventDefault();selectBrand(\''+nm+'\',\''+b.cat+'\','+(isQA?'true':'false')+')" style="padding:11px 16px;cursor:pointer;font-size:13px;color:#3D2010;border-bottom:1px solid #F5EDE0;display:flex;justify-content:space-between;align-items:center;background:white">';
+    h+='<b>'+b.n+'</b><span style="font-size:11px;color:#C5A880">'+(CL[b.cat]||b.cat)+'</span></div>';
+  }
+  box.innerHTML=h;
+  box.style.display="block";
+}
+window.selectBrand=function(name,cat,isQA){
+  const inputId=isQA?"qa-name":"c-name";
+  const input=document.getElementById(inputId);
+  if(input){
+    input.value=name+" ";
+    input.focus();
+    // 移到字串末尾
+    input.setSelectionRange(input.value.length,input.value.length);
+  }
+  const containerId=isQA?"qa-brand-suggestions":"brand-suggestions";
+  const box=document.getElementById(containerId);
+  if(box)box.style.display="none";
+  if(isQA){
+    window.G.qaCatKey=cat;
+    document.querySelectorAll("[data-qacat]").forEach(btn=>{
+      const active=btn.dataset.qacat===cat;
+      btn.style.border=`1px solid ${active?"#E07B39":"#E8D5B0"}`;
+      btn.style.background=active?"#FEF0E6":"#FAF8F5";
+      btn.style.boxShadow=active?"0 0 0 1px #E07B39":"none";
+      if(btn.querySelector("span:last-child"))btn.querySelector("span:last-child").style.color=active?"#E07B39":"#9C7A5A";
+    });
+    const qdp=document.getElementById("qa-daiso-panel");
+    if(qdp)qdp.style.display=cat==="daiso"?"block":"none";
+    const qbp=document.getElementById("qa-beauty-panel");
+    if(qbp)qbp.style.display=cat==="beauty"?"block":"none";
+    if(cat==="daiso")qaDaisoTypeChange();
+    else qaCalcPrice();
+  } else {
+    selectCalcCat(cat);
+    calcUpdate();
+  }
+};
+// 點外面關閉選單
+document.addEventListener("click",e=>{
+  if(!e.target.closest("#brand-suggestions")&&!e.target.closest("#c-name"))
+    {const b=document.getElementById("brand-suggestions");if(b)b.style.display="none";}
+  if(!e.target.closest("#qa-brand-suggestions")&&!e.target.closest("#qa-name"))
+    {const b=document.getElementById("qa-brand-suggestions");if(b)b.style.display="none";}
+});
 
 window.calcUpdate=function(){
   const amt=parseFloat(document.getElementById("c-amt")?.value)||0;
@@ -1616,6 +1813,7 @@ window.calcUpdate=function(){
     priceType:document.getElementById("flag-transparent")?.checked?"transparent":"normal",
     isPopular:document.getElementById("flag-popular")?.checked||false,
     isGiftPack:document.getElementById("flag-giftpack")?.checked||false,
+    beautyType:document.querySelector('input[name="beauty-type"]:checked')?.value||"skincare",
     daisoType:document.querySelector('input[name="daiso-type"]:checked')?.value||"cute",
     daisoPrice:parseInt(document.querySelector('button.daiso-price-btn.active')?.dataset.price||"0")||0,
     isBulky:document.getElementById("flag-bulky")?.checked||false,
@@ -1677,6 +1875,8 @@ window.selectCalcCat=function(key){
   // 大創面板顯示/隱藏
   const dp=document.getElementById("daiso-type-panel");
   if(dp)dp.style.display=key==="daiso"?"block":"none";
+  const bp=document.getElementById("beauty-type-panel");
+  if(bp)bp.style.display=key==="beauty"?"block":"none";
   if(key==="daiso")daisoTypeChange();
   else calcUpdate();
 };
@@ -2263,15 +2463,15 @@ window.G._editTripId=null;
 // ── 品名自動偵測類別 ───────────────────────────────────────────────────
 const CAT_KEYWORDS={
   food:["糖","餅乾","零食","泡麵","咖啡","飲料","點心","韓菓","海苔","辣條","蠟燭糖","巧克力","軟糖","果凍","洋芋片"],
-  beauty:["面膜","精華","乳液","保濕","美白","防曬","粉底","口紅","眼影","睫毛","卸妝","洗面","護膚","保養","香水","perfume","香氛","沐浴","身體乳","護手霜"],
+  beauty:["面膜","精華","乳液","保濕","美白","防曬","粉底","口紅","眼影","睫毛","卸妝","洗面","護膚","保養","香水","perfume","香氛","沐浴","身體乳","護手霜","眼霜","眼部","眼周","抗老","緊緻","BB霜","CC霜","氣墊","精華液","安瓶","COSRX","Laneige","蘭芝","Innisfree","悅詩風吟","Etude","Missha","The Ordinary","SKII","SK-II","Sulwhasoo","雪花秀","Hera","赫拉","rom&nd","3CE","Peripera","Clio","Espoir","Too Cool for School","Dr.Jart","Medicube","TIRTIR","Beauty of Joseon","朝鮮美女","Anua","Torriden","SOME BY MI","Abib","Round Lab","Skin1004","isntree","iUNIK","Klavuu","Banila Co","A'pieu","Mamonde","夢妝","Nature Republic","自然樂園","The Face Shop","臉部小舖","Holika Holika","Etude House","CNP","Dr.G","Make P:rem","Mary Kay","MAC","Dior Beauty","Chanel Beauty","YSL Beauty","Givenchy Beauty","Armani Beauty","NARS","Laura Mercier","Bobbi Brown","Urban Decay","Fenty Beauty","Charlotte Tilbury","Drunk Elephant","Paula's Choice","CeraVe","La Roche-Posay","理膚寶水","Vichy","薇姿","Avene","雅漾","Bioderma","貝德瑪"],
   clothes:["上衣","T恤","外套","洋裝","褲","裙","衛衣","帽T","jacket","shirt","dress","pants","hoodie","coat","jumper"],
-  shoes:["鞋","sneaker","shoes","boots","拖鞋","涼鞋","運動鞋","球鞋"],
+  shoes:["鞋","sneaker","shoes","boots","拖鞋","涼鞋","運動鞋","球鞋","Nike","nike","Adidas","adidas","PUMA","Puma","puma","New Balance","NB","Converse","converse","Vans","vans","Asics","ASICS","Reebok","Saucony","Salomon","On Running","Hoka","Brooks","Mizuno","Onitsuka","鬼塚虎","Air Force","Jordan","Dunk","Yeezy","Stan Smith","Gel-Kayano","Fresh Foam","靴","涼鞋","穆勒"],
   bag:["包","bag","tote","後背包","手提包","肩背包","側背包","clutch","pouch","錢包"],
   sunglasses:["墨鏡","太陽眼鏡","sunglasses","glasses","眼鏡"],
   accessory:["鑰匙圈","吊飾","髮夾","髮圈","耳環","項鍊","手環","戒指","別針","brooch","keyring","charm","娃娃","玩偶","公仔","貼紙","文具","筆記本","資料夾"],
   home:["香氛蠟燭","擴香","居家","棉被","床單","枕頭","毛巾","杯子","碗盤","收納"],
   device:["美容儀","按摩","吹風機","電動","充電","耳機","喇叭","家電"],
-  luxury:["LV","Chanel","Dior","Gucci","Prada","Celine","Hermes","Louis Vuitton","精品"],
+  luxury:["LV","Chanel","Dior","Gucci","Prada","Celine","Hermes","Louis Vuitton","精品","Loewe","Saint Laurent","YSL","Bottega","Fendi","Burberry","Valentino","Givenchy","Balenciaga","Alexander McQueen","Miu Miu","Versace","Bulgari","Tiffany","Cartier","Coach","Kate Spade","Marc Jacobs","Michael Kors","Longchamp","Furla","Matin Kim","Stand Oil","Gentle Monster","GM"],
   daiso:["大創","DAISO","daiso","ok繃","OK繃","菜瓜布","去漬筆","棉花棒","濕紙巾","衛生棉","肩頸貼","牙刷","暖暖包","粉撲","吊飾","貼紙","文具","便利貼","筆記本","餐盤","水壺","桌墊","滑鼠","指甲油","眼線","腮紅","氣墊","唇膏","修容","睫毛夾"],
 };
 function detectCatFromName(name){
@@ -3399,7 +3599,8 @@ window.openQuickAdd=function(){
   if(el)el.style.display="flex";
   document.getElementById("qa-name").value="";
   document.getElementById("qa-amt").value="";
-  document.getElementById("qa-price-hint").textContent="";
+  const hv=document.getElementById("qa-price-hint-val");if(hv)hv.textContent="-";
+  const hc=document.getElementById("qa-price-hint-cost");if(hc)hc.textContent="";
   document.getElementById("qa-img-preview").style.display="none";
   document.getElementById("qa-img-label").style.display="flex";
   document.getElementById("qa-ai-result").style.display="none";
@@ -3444,18 +3645,28 @@ window.qaSelectCat=function(key){
   });
   const qdp=document.getElementById("qa-daiso-panel");
   if(qdp)qdp.style.display=key==="daiso"?"block":"none";
+  const qbp=document.getElementById("qa-beauty-panel");
+  if(qbp)qbp.style.display=key==="beauty"?"block":"none";
   if(key==="daiso")qaDaisoTypeChange();
   else qaCalcPrice();
 };
 
 window.qaCalcPrice=function(){
   const amt=parseFloat(document.getElementById("qa-amt")?.value)||0;
-  if(!amt){document.getElementById("qa-price-hint").textContent="";return;}
+  if(!amt){
+    const hintVal=document.getElementById("qa-price-hint-val");
+    const hintCost=document.getElementById("qa-price-hint-cost");
+    if(hintVal)hintVal.textContent="-";
+    if(hintCost)hintCost.textContent="";
+    return;
+  }
+  const cat=window.G.qaCatKey||"food"; // 預設食品類
   const{afterTax}=calcCost(amt,"KRW");
   const flags={
     priceType:document.getElementById("qa-flag-transparent")?.checked?"transparent":"normal",
     isPopular:document.getElementById("qa-flag-popular")?.checked||false,
     isGiftPack:document.getElementById("qa-flag-giftpack")?.checked||false,
+    beautyType:document.querySelector('input[name="qa-beauty-type"]:checked')?.value||"skincare",
     limitedShoe:document.getElementById("qa-flag-limited")?.checked||false,
     daisoType:document.querySelector('input[name="qa-daiso-type"]:checked')?.value||"cute",
     daisoPrice:parseInt(document.querySelector('button.qa-daiso-price-btn.active')?.dataset.price||"0")||0,
@@ -3464,8 +3675,11 @@ window.qaCalcPrice=function(){
     isFragile:document.getElementById("qa-flag-fragile")?.checked||false,
     krLimitedLevel:document.querySelector('input[name="qa-kr-limited"]:checked')?.value||"none",
   };
-  const sugg=suggestPrice(afterTax,window.G.qaCatKey,flags,0,amt);
-  document.getElementById("qa-price-hint").textContent=`退稅後成本 NT$${afterTax} → 建議售價 NT$${sugg}`;
+  const sugg=suggestPrice(afterTax,cat,flags,0,amt);
+  const hintVal=document.getElementById("qa-price-hint-val");
+  const hintCost=document.getElementById("qa-price-hint-cost");
+  if(hintVal)hintVal.textContent=`NT$ ${sugg}`;
+  if(hintCost)hintCost.textContent=`成本 NT$${afterTax}`;
 };
 
 window.qaImgPick=async function(input){
@@ -3614,6 +3828,7 @@ window.saveQuickAdd=async function(){
     priceType:document.getElementById("qa-flag-transparent")?.checked?"transparent":"normal",
     isPopular:document.getElementById("qa-flag-popular")?.checked||false,
     isGiftPack:document.getElementById("qa-flag-giftpack")?.checked||false,
+    beautyType:document.querySelector('input[name="qa-beauty-type"]:checked')?.value||"skincare",
     limitedShoe:document.getElementById("qa-flag-limited")?.checked||false,
     daisoType:document.querySelector('input[name="qa-daiso-type"]:checked')?.value||"cute",
     daisoPrice:parseInt(document.querySelector('button.qa-daiso-price-btn.active')?.dataset.price||"0")||0,
@@ -3640,6 +3855,7 @@ window.saveQuickAdd=async function(){
 
 
 </script>
+
 <!-- ── 更新提示 Banner ── -->
 <div id="sw-update-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:999;background:#3D2010;color:#F5E6C8;padding:12px 16px;display:none;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 -2px 12px rgba(0,0,0,0.2)">
   <span style="font-size:13px;font-weight:700">🧈 有新版本可用！</span>
