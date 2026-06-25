@@ -349,7 +349,7 @@ window.showBrandSuggestions=function(val,isQA){
       </div>
     </div>
     <!-- 趟次切換 -->
-    <div id="trip-filter-bar" style="margin-bottom:10px;display:flex;gap:5px;flex-wrap:wrap"></div>
+    <select id="trip-filter-bar" onchange="setTripFilter(this.value)" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;color:#3D2010;outline:none;margin-bottom:10px;cursor:pointer"></select>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center">
       <div style="background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px"><div style="font-size:9px;color:#9C7A5A">已接單</div><div id="s-qty" style="font-size:13px;font-weight:900;color:#3D2010">0件</div></div>
       <div style="background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px"><div style="font-size:9px;color:#9C7A5A">預期營收</div><div id="s-rev" style="font-size:13px;font-weight:900;color:#A08060">NT$0</div></div>
@@ -387,7 +387,7 @@ window.showBrandSuggestions=function(val,isQA){
     <input type="text" id="cust-search" oninput="window.G.custSearch=this.value;renderCustomers()" placeholder="🔍 搜尋社群名、LINE名或電話..." style="flex:1;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none"/>
     <button onclick="openModal('modal-cust',{});" style="background:#C5A880;color:white;border:none;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer">＋</button>
   </div>
-  <div id="cust-trip-bar" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px"></div>
+  <select id="cust-trip-bar" onchange="setTripFilter(this.value)" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;color:#3D2010;outline:none;margin-bottom:8px;cursor:pointer"></select>
   <!-- 批次 -->
   <div id="cust-batch-bar" style="display:none;background:#FDF6EC;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;margin-bottom:8px;align-items:center;justify-content:space-between">
     <span id="cust-sel-count" style="font-size:12px;font-weight:700;color:#9C7A5A">已選 0 筆</span>
@@ -403,7 +403,7 @@ window.showBrandSuggestions=function(val,isQA){
 <!-- ═══ 對帳單 ═══ -->
 <div id="tab-invoice" class="tab-page" style="padding:16px 16px 80px">
   <input type="text" id="inv-search" oninput="window.G.invSearch=this.value;renderInvoice()" placeholder="🔍 搜尋買家姓名、商品名稱或編號..." style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none;margin-bottom:8px"/>
-  <div id="inv-trip-bar" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px"></div>
+  <select id="inv-trip-bar" onchange="setTripFilter(this.value)" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;color:#3D2010;outline:none;margin-bottom:8px;cursor:pointer"></select>
   <div style="display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap">
     <button data-invf="all"        onclick="setInvFilter('all')"        style="flex:1;min-width:60px;padding:8px 2px;border-radius:10px;font-size:10px;font-weight:700;border:1px solid #C5A880;background:#C5A880;color:white;cursor:pointer">全部</button>
     <button data-invf="pending"    onclick="setInvFilter('pending')"    style="flex:1;min-width:60px;padding:8px 2px;border-radius:10px;font-size:10px;font-weight:700;border:1px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">待訂金</button>
@@ -443,7 +443,7 @@ window.showBrandSuggestions=function(val,isQA){
   <!-- 趟次選擇 -->
   <div style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:14px;margin-bottom:12px">
     <div style="font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:8px">✈️ 選擇趟次</div>
-    <div id="stats-trip-selector" style="display:flex;gap:5px;flex-wrap:wrap"></div>
+    <select id="stats-trip-selector" onchange="setStatsTripFilter(this.value)" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;color:#3D2010;outline:none;cursor:pointer"></select>
   </div>
   <!-- 核心數字 -->
   <div id="stats-summary" style="margin-bottom:12px"></div>
@@ -3051,11 +3051,12 @@ function getLatestTrip(){
   // 1. 今天正在進行中
   const active=window.G.trips.find(t=>t.startDate<=today&&t.endDate>=today);
   if(active)return active;
-  // 2. 最近的未來趟次
-  const future=window.G.trips.filter(t=>t.startDate>today).sort((a,b)=>a.startDate>b.startDate?1:-1);
-  if(future.length)return future[0];
-  // 3. 最近的過去趟次
-  return window.G.trips[0]||null;
+  // 2. 最近結束的過去趟次（離今天最近）
+  const past=window.G.trips.filter(t=>t.endDate<today).sort((a,b)=>b.endDate.localeCompare(a.endDate));
+  if(past.length)return past[0];
+  // 3. 最近的未來趟次（還沒出發）
+  const future=window.G.trips.filter(t=>t.startDate>today).sort((a,b)=>a.startDate.localeCompare(b.startDate));
+  return future[0]||null;
 }
 
 function getTripOrders(){
@@ -3091,7 +3092,6 @@ function renderTripBars(){
   const latest=getLatestTrip();
   const today=new Date().toISOString().split("T")[0];
 
-  // 本趟按鈕名稱：趟次名 + 狀態小標
   let autoLabel="本趟";
   if(latest){
     const isActive=latest.startDate<=today&&latest.endDate>=today;
@@ -3100,15 +3100,13 @@ function renderTripBars(){
     autoLabel="✈️ "+latest.name+tag;
   }
 
-  const mkBtn=(f,label,active)=>"<button onclick='setTripFilter(\""+f+"\")'  style='flex-shrink:0;padding:5px 10px;border-radius:99px;font-size:11px;font-weight:700;border:1px solid "+(active?"#C5A880":"#E8D5B0")+";background:"+(active?"#C5A880":"white")+";color:"+(active?"white":"#9C7A5A")+";cursor:pointer'>"+label+"</button>";
-
-  // 歷史趟次 = 排除最新那趟（避免重複）
-  const historyTrips=trips.filter(t=>!latest||t.id!==latest.id);
-  const html=[
-    mkBtn("auto",autoLabel,tripFilter==="auto"),
-    mkBtn("all","全部",tripFilter==="all"),
-    ...historyTrips.map(t=>mkBtn(t.id,t.name,tripFilter===t.id)),
-  ].join("");
+  const historyTrips=[...trips].sort((a,b)=>b.startDate.localeCompare(a.startDate)).filter(t=>!latest||t.id!==latest.id);
+  const options=[
+    {val:"all",label:"全部趟次"},
+    {val:"auto",label:autoLabel},
+    ...historyTrips.map(t=>({val:t.id,label:"✈️ "+t.name})),
+  ];
+  const html=options.map(o=>"<option value='"+o.val+"'"+(tripFilter===o.val?" selected":"")+">"+o.label+"</option>").join("");
 
   ["trip-filter-bar","inv-trip-bar","cust-trip-bar"].forEach(id=>{
     const el=document.getElementById(id);if(el)el.innerHTML=html;
@@ -3221,13 +3219,17 @@ window.renderStats=function(){
   // 趟次選擇器
   const sel=document.getElementById("stats-trip-selector");
   if(sel){
-    const mkBtn=(f,label,active)=>"<button onclick='setStatsTripFilter(\""+f+"\")'  style='flex-shrink:0;padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1px solid "+(active?"#5C3A1E":"#E8D5B0")+";background:"+(active?"#5C3A1E":"white")+";color:"+(active?"#F5E6C8":"#9C7A5A")+";cursor:pointer'>"+label+"</button>";
-    sel.innerHTML=[
-      mkBtn("all","全部",statsTripFilter==="all"||statsTripFilter==="auto"),
-      ...trips.map(t=>mkBtn(t.id,t.name,statsTripFilter===t.id)),
-    ].join("");
-    // 預設選全部
-    if(statsTripFilter==="auto")window.G.statsTripFilter="all";
+    const latest2=getLatestTrip();
+    const today2=new Date().toISOString().split("T")[0];
+    let autoLabel2="本趟";
+    if(latest2){const isA=latest2.startDate<=today2&&latest2.endDate>=today2;const isF=latest2.startDate>today2;autoLabel2="✈️ "+latest2.name+(isA?" 🟢":isF?" ("+latest2.startDate+" 出發)":" (已結束)");}
+    const histTrips=[...trips].sort((a,b)=>b.startDate.localeCompare(a.startDate)).filter(t=>!latest2||t.id!==latest2.id);
+    const opts=[
+      {val:"all",label:"全部趟次"},
+      {val:"auto",label:autoLabel2},
+      ...histTrips.map(t=>({val:t.id,label:"✈️ "+t.name})),
+    ];
+    sel.innerHTML=opts.map(o=>"<option value='"+o.val+"'"+(statsTripFilter===o.val?" selected":"")+">"+o.label+"</option>").join("");
   }
 
   // 計算數字
@@ -3817,7 +3819,7 @@ window.renderCustomers=function(){
               <span style="font-size:11px;font-weight:700;color:#3D2010">NT$${(dp*o.qty).toLocaleString()}</span>
               ${dp>=1000?`<button data-oid="${o.id}" onclick="copySingleDeposit(this.dataset.oid)" style="font-size:9px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:2px 6px;border-radius:5px;cursor:pointer;font-weight:700">訂金</button>`:""}
               ${o.tracking?`<span style="font-size:9px;color:#6090B0;background:#EAF4FD;border:1px solid #BDD9F0;padding:2px 6px;border-radius:5px">📦 ${o.tracking}</span>`:""}
-              <button data-oid="${o.id}" onclick="deleteSingleOrder(this.dataset.oid)" style="font-size:10px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:2px 5px;border-radius:5px;cursor:pointer">🗑️</button>
+              <button data-oid="${o.id}" onclick="deleteOrder(this.dataset.oid)" style="font-size:10px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:2px 5px;border-radius:5px;cursor:pointer">🗑️</button>
             </div>
           </div>`;}).join("")}</div>`:""}
       </div>
@@ -3959,7 +3961,7 @@ window.renderInvoice=function(){
             <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
               ${purchasedBtn}
               <span style="font-size:12px;font-weight:700;color:#3D2010">NT$${(dp*o.qty).toLocaleString()}</span>
-              <button data-oid="${o.id}" onclick="deleteSingleOrder(this.dataset.oid)" style="font-size:10px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:2px 5px;border-radius:5px;cursor:pointer">🗑️</button>
+              <button data-oid="${o.id}" onclick="deleteOrder(this.dataset.oid)" style="font-size:10px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:2px 5px;border-radius:5px;cursor:pointer">🗑️</button>
             </div>
           </div>`;}).join("")}
       </div>
