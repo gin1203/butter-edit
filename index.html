@@ -711,8 +711,8 @@ window.showBrandSuggestions=function(val,isQA){
 </div>
 <!-- 修改商品 -->
 <!-- 客戶歷史消費 -->
-<div id="modal-cust-history" class="modal-overlay" style="display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,0.35);align-items:flex-end;justify-content:center">
-  <div style="background:white;border-radius:20px 20px 0 0;width:100%;max-width:720px;max-height:92vh;display:flex;flex-direction:column">
+<div id="modal-cust-history" class="modal-overlay" style="display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,0.35);align-items:center;justify-content:center;padding:20px">
+  <div style="background:white;border-radius:20px;width:100%;max-width:720px;max-height:85vh;display:flex;flex-direction:column">
     <div style="padding:16px 20px 12px;border-bottom:1px solid #F0E6D0;flex-shrink:0;display:flex;justify-content:space-between;align-items:center">
       <div>
         <h3 id="ch-title" style="margin:0;font-size:15px;font-weight:900;color:#3D2010"></h3>
@@ -4014,16 +4014,24 @@ window.openCustHistory=function(cid){
   body.innerHTML=Object.values(tripMap).map(g=>{
     const trip=window.G.trips.find(t=>t.id===g.tripId);
     const tripName=trip?trip.name:"未分趟次";
+    // 判斷整趟狀態
+    const allStatuses=[...new Set(g.orders.map(o=>o.status))];
+    const tripStatus=allStatuses.length===1?allStatuses[0]:"mixed";
+    const tripStatusLabel={pending:"待訂金",deposit:"已付訂金",settled:"已付尾款",shipped:"已寄出",mixed:"狀態不一"}[tripStatus]||"";
+    const tripStatusColor={pending:"#E07B39",deposit:"#9333EA",settled:"#2E7D32",shipped:"#2980B9",mixed:"#9C7A5A"}[tripStatus]||"#9C7A5A";
     return `<div style="margin-bottom:16px">
-      <div style="font-size:12px;font-weight:900;color:#5C3A1E;margin-bottom:6px;padding-bottom:4px;border-bottom:2px solid #F5EDE0">✈️ ${tripName} · NT$${g.total.toLocaleString()}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;padding-bottom:6px;border-bottom:2px solid #F5EDE0">
+        <span style="font-size:12px;font-weight:900;color:#5C3A1E">✈️ ${tripName}</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:10px;font-weight:700;color:${tripStatusColor}">${tripStatusLabel}</span>
+          <span style="font-size:12px;font-weight:700;color:#A08060">NT$${g.total.toLocaleString()}</span>
+        </div>
+      </div>
       ${g.orders.map(o=>{
         const dp=o.discountPrice||o.unitPrice||0;
         return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #FAF8F5">
           <span style="font-size:12px;color:#3D2010">${o.productName||"商品"} ×${o.qty}</span>
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:10px;font-weight:700;color:${scol[o.status]||"#9C7A5A"}">${sl[o.status]||""}</span>
-            <span style="font-size:12px;font-weight:700;color:#A08060">NT$${(dp*o.qty).toLocaleString()}</span>
-          </div>
+          <span style="font-size:12px;font-weight:700;color:#A08060">NT$${(dp*o.qty).toLocaleString()}</span>
         </div>`;
       }).join("")}
     </div>`;
