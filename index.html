@@ -190,6 +190,10 @@ window.showBrandSuggestions=function(val,isQA){
         <input type="text" inputmode="numeric" id="c-custom" oninput="calcUpdate()" placeholder="NT$ —" style="flex:1;background:transparent;border:none;font-size:15px;font-weight:700;color:#3D2010;outline:none"/>
       </div>
     </div>
+    <!-- 低於成本警示 -->
+    <div id="r-cost-warn" style="display:none;background:#FDEDEC;border:1px solid #F1948A;border-radius:10px;padding:8px 14px;margin-bottom:8px;font-size:12px;font-weight:700;color:#C0392B;text-align:center">
+      ⚠️ 建議售價低於成本，請手動調整售價
+    </div>
     <!-- 台灣差價列 -->
     <div id="r-tw-row" style="display:none;background:#EEF2FF;border:1px solid #C7D2FE;border-radius:10px;padding:10px 14px;margin-bottom:8px;justify-content:space-between;align-items:center">
       <span style="font-size:11px;color:#4338CA;font-weight:700">🏷️ 台灣售價</span>
@@ -565,6 +569,7 @@ window.showBrandSuggestions=function(val,isQA){
     <div style="font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:8px">最近查詢</div>
     <div id="ps-history-list"></div>
   </div>
+
 </div>
 
 <!-- ═══ 設定 ═══ -->
@@ -1417,8 +1422,21 @@ function suggestPrice(at,cat,flags,twPrice,rawAmt){
       if(at<=30)baseFood=49;
       else if(at<=60)baseFood=79;
       else if(at<=100)baseFood=99;
-      else if(at<=180)baseFood=149;
-      else baseFood=roundPrice(at*1.4);
+      else if(at<=120)baseFood=149;
+      else if(at<=150)baseFood=199;
+      else if(at<=180)baseFood=249;
+      else if(at<=220)baseFood=299;
+      else if(at<=270)baseFood=349;
+      else if(at<=330)baseFood=399;
+      else if(at<=400)baseFood=469;
+      else if(at<=480)baseFood=549;
+      else if(at<=570)baseFood=649;
+      else if(at<=680)baseFood=769;
+      else if(at<=800)baseFood=899;
+      else if(at<=950)baseFood=1049;
+      else if(at<=1100)baseFood=1199;
+      else if(at<=1200)baseFood=1349;
+      else baseFood=roundPrice(at*1.3);
       if(flags.isGiftPack)baseFood+=20;   // 禮盒／限定 +20
       if(flags.isMarket)baseFood+=80;     // 大型／占空間 +80
     }
@@ -1436,25 +1454,25 @@ function suggestPrice(at,cat,flags,twPrice,rawAmt){
              document.querySelector('input[name="qa-daiso-type"]:checked')?.value||"cute";
     let base=dp;
     if(!base){
-      // fallback：依韓幣原價 + 子類型分梯
+      // fallback：依退稅後成本(at)分梯，確保不虧錢
       if(vt==="daily"){
-        base=krw<=1000?45:krw<=2000?60:79;
+        base=at<=30?45:at<=50?60:at<=80?79:at<=120?99:roundPrice(at*1.3);
       } else if(vt==="stationery"){
-        base=krw<=1500?60:krw<=2500?69:79;
+        base=at<=40?60:at<=60?69:at<=80?79:at<=120?99:roundPrice(at*1.3);
       } else if(vt==="food_daiso"){
-        base=krw<=2000?79:krw<=3500?89:99;
+        base=at<=60?79:at<=80?89:at<=100?99:at<=150?149:roundPrice(at*1.3);
       } else if(vt==="health"){
-        base=krw<=2000?79:krw<=3500?89:krw<=5000?149:krw<=8000?190:krw<=10000?249:299;
+        base=at<=60?79:at<=80?89:at<=120?149:at<=180?199:at<=250?249:roundPrice(at*1.3);
       } else if(vt==="cute"){
-        base=krw<=1000?60:krw<=2000?79:krw<=3000?99:krw<=4500?129:149;
+        base=at<=45?60:at<=60?79:at<=80?99:at<=110?129:at<=150?149:roundPrice(at*1.3);
       } else if(vt==="fabric"){
-        base=krw<=2000?79:krw<=3500?99:krw<=5000?129:149;
+        base=at<=60?79:at<=90?99:at<=120?129:at<=160?149:roundPrice(at*1.3);
       } else if(vt==="bulky"){
-        base=krw<=1500?99:krw<=3000?149:199;
+        base=at<=80?99:at<=130?149:at<=180?199:roundPrice(at*1.3);
       } else if(vt==="makeup"){
-        base=krw<=1000?49:krw<=2000?69:krw<=3000?89:krw<=4000?129:krw<=6000?179:199;
+        base=at<=40?49:at<=55?69:at<=75?89:at<=110?129:at<=150?179:roundPrice(at*1.3);
       } else {
-        base=79;
+        base=at<=80?79:at<=120?99:roundPrice(at*1.3);
       }
     }
     if(flags.isBulky)base+=20;
@@ -1985,6 +2003,7 @@ window.calcUpdate=function(){
     set("r-final",`NT$ ${final.toLocaleString()}`);
     set("r-cost",`NT$ ${afterTax.toLocaleString()}`);
     const pe=document.getElementById("r-profit");if(pe){pe.textContent=`NT$ ${profit}`;pe.style.color=profit>=0?"#66BB6A":"#EF5350";}
+    const warnEl=document.getElementById("r-cost-warn");if(warnEl)warnEl.style.display=sugg<afterTax?"block":"none";
     set("r-margin",`${margin}%`);
     const cb=document.getElementById("c-custom");if(cb&&!cb.value)cb.placeholder=`NT$ ${sugg}`;
     const sb=document.getElementById("btn-save");
@@ -2900,6 +2919,7 @@ window.applyPriceToCalc=function(krw,cost,twdOfficial){
   setTimeout(()=>calcUpdate(),50);
   showToast("已帶入定價換算頁！");
 };
+
 
 function renderPsHistory(){
   const hist=window.G.psHistory;
