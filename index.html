@@ -20,6 +20,8 @@ main{max-width:720px !important;margin:0 auto !important;padding:0 !important}
 input,textarea,select,button{font-family:inherit}
 .tab-page{display:none;max-width:720px;margin:0 auto;padding:16px 16px 80px}
 .tab-page.active{display:block}
+/* 連線模式：隱藏定價/成本/修改/刪除，只保留喊單相關 */
+body.live-mode .hide-live { display: none !important; }
 </style>
 <script>
 // 品牌搜尋 - 提早定義確保可用
@@ -99,6 +101,7 @@ window.showBrandSuggestions=function(val,isQA){
     <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
       <div id="pending-badge" style="display:none;background:#5C3A1E;color:#F5E6C8;font-size:10px;font-weight:700;padding:3px 7px;border-radius:99px;white-space:nowrap"></div>
       <span id="user-role-badge" style="display:none;font-size:9px;font-weight:700;color:#9C7A5A;background:#FAF8F5;border:1px solid #E8D5B0;padding:2px 5px;border-radius:99px"></span>
+      <button id="live-mode-btn" onclick="toggleLiveMode()" style="padding:5px 9px;border-radius:8px;border:1px solid #E8D5B0;background:#FAF8F5;color:#9C7A5A;cursor:pointer;font-size:11px;font-weight:700">🏪 連線</button>
       <button onclick="doLogout()" style="padding:6px 9px;border-radius:8px;border:1px solid #E8D5B0;background:#FAF8F5;color:#9C7A5A;cursor:pointer;font-size:11px;font-weight:700">登出</button>
       <button onclick="showTab('settings')" style="padding:6px;border-radius:8px;border:none;background:transparent;color:#9C7A5A;cursor:pointer;flex-shrink:0">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
@@ -337,32 +340,17 @@ window.showBrandSuggestions=function(val,isQA){
 
 <!-- ═══ 商品清單 ═══ -->
 <div id="tab-list" class="tab-page" style="padding:16px 16px 80px">
-  <div id="stats-block" style="display:none;background:white;border:1px solid #E8D5B0;border-radius:14px;padding:14px;margin-bottom:12px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #FAF8F5">
-      <div>
-        <span style="font-size:12px;font-weight:700;color:#9C7A5A">📊 接單績效</span>
-        <span id="stats-trip-label" style="font-size:10px;color:#C5A880;margin-left:6px"></span>
-      </div>
-      <div style="display:flex;gap:6px">
-        <button onclick="exportProductCSV()" style="font-size:10px;background:#EBF5FB;color:#2980B9;border:1px solid #AED6F1;padding:5px 10px;border-radius:8px;font-weight:700;cursor:pointer">匯出商品庫</button>
-        <button onclick="exportShippingCSV()" style="font-size:10px;background:#EBF5FB;color:#2980B9;border:1px solid #AED6F1;padding:5px 10px;border-radius:8px;font-weight:700;cursor:pointer">買家出貨單</button>
-      </div>
-    </div>
-    <!-- 趟次切換 -->
-    <select id="trip-filter-bar" onchange="setTripFilter(this.value)" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;color:#3D2010;outline:none;margin-bottom:10px;cursor:pointer"></select>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center">
-      <div style="background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px"><div style="font-size:9px;color:#9C7A5A">已接單</div><div id="s-qty" style="font-size:13px;font-weight:900;color:#3D2010">0件</div></div>
-      <div style="background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px"><div style="font-size:9px;color:#9C7A5A">預期營收</div><div id="s-rev" style="font-size:13px;font-weight:900;color:#A08060">NT$0</div></div>
-      <div class="hide-staff" style="background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px"><div style="font-size:9px;color:#9C7A5A">採購成本</div><div id="s-cost" style="font-size:13px;font-weight:900;color:#3D2010">NT$0</div></div>
-      <div id="s-profit-box" class="hide-staff" style="background:#EBF7EE;border:1px solid #B2DFDB;border-radius:8px;padding:10px;grid-column:span 3;display:flex;justify-content:space-between">
-        <div class="hide-staff"><div style="font-size:10px;color:#1B7A5A">預估毛利潤</div><div id="s-profit" style="font-size:15px;font-weight:900;color:#1B7A5A">NT$0</div></div>
-        <div class="hide-staff" style="text-align:right"><div style="font-size:10px;color:#9C7A5A">毛利率</div><div id="s-margin" style="font-size:15px;font-weight:900;color:#1B7A5A">0%</div></div>
-      </div>
-    </div>
-  </div>
-  <div style="display:flex;gap:8px;margin-bottom:8px">
+  <!-- 趟次切換 -->
+  <select id="trip-filter-bar" onchange="setTripFilter(this.value)" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;color:#3D2010;outline:none;margin-bottom:8px;cursor:pointer"></select>
+  <!-- 搜尋 + 按鈕列 -->
+  <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center">
     <input type="text" id="list-search" oninput="window.G.listSearch=this.value;renderList()" placeholder="🔍 搜尋商品名稱、編號、通路..." style="flex:1;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none"/>
-    <button onclick="showTab('calc')" style="background:#C5A880;color:white;border:none;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer">＋</button>
+    <button onclick="showTab('calc')" style="background:#C5A880;color:white;border:none;border-radius:10px;padding:10px 14px;font-size:18px;font-weight:700;cursor:pointer">＋</button>
+  </div>
+  <!-- 匯出按鈕 + 連線模式 (非連線模式才顯示匯出) -->
+  <div id="product-toolbar" style="display:flex;gap:6px;margin-bottom:8px">
+    <button onclick="exportProductCSV()" style="flex:1;font-size:11px;background:#EBF5FB;color:#2980B9;border:1px solid #AED6F1;padding:7px 4px;border-radius:8px;font-weight:700;cursor:pointer">匯出商品庫</button>
+    <button onclick="exportShippingCSV()" style="flex:1;font-size:11px;background:#EBF5FB;color:#2980B9;border:1px solid #AED6F1;padding:7px 4px;border-radius:8px;font-weight:700;cursor:pointer">買家出貨單</button>
   </div>
   <!-- 批次操作列 -->
   <div id="list-batch-bar" style="display:none;background:#FDF6EC;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;margin-bottom:8px;display:none;align-items:center;justify-content:space-between">
@@ -1308,6 +1296,34 @@ window.doCreateOwner=async function(){
     if(err){err.textContent="建立失敗："+e2.message;err.style.display="block";}
   }
 };
+// ── 連線模式 ──────────────────────────────────────────────────────────
+window.G.liveMode = false;
+window.toggleLiveMode=function(){
+  window.G.liveMode=!window.G.liveMode;
+  applyLiveMode();
+};
+function applyLiveMode(){
+  const on=window.G.liveMode;
+  const btn=document.getElementById("live-mode-btn");
+  if(btn){
+    btn.textContent=on?"🟢 連線中":"🏪 連線";
+    btn.style.background=on?"#D1FAE5":"#FAF8F5";
+    btn.style.color=on?"#065F46":"#9C7A5A";
+    btn.style.borderColor=on?"#6EE7B7":"#E8D5B0";
+  }
+  // 連線模式：隱藏匯出按鈕、定價/統計/查價分頁
+  const toolbar=document.getElementById("product-toolbar");
+  if(toolbar)toolbar.style.display=on?"none":"flex";
+  // 隱藏不需要的分頁
+  ["calc","stats","pricesearch"].forEach(tab=>{
+    const el=document.querySelector(`[onclick="showTab('${tab}')"]`);
+    if(el)el.style.display=on?"none":"";
+  });
+  // 連線模式：商品卡只顯示喊單相關
+  document.body.classList.toggle("live-mode",on);
+  renderList();
+}
+
 window.doLogout=async function(){await signOut(auth);};
 
 function applyRoleUI(role){
@@ -3508,8 +3524,8 @@ window.renderList=function(){
       <!-- Row 2: action buttons -->
       <div style="display:flex;gap:6px;margin-bottom:10px">
         <button onclick="copyLineFormat('${p.id}')" style="flex:1;font-size:11px;color:#9C7A5A;background:#FAF8F5;border:1px solid #E8D5B0;padding:6px 0;border-radius:8px;cursor:pointer;font-weight:600">報價</button>
-        <button data-pid="${p.id}" onclick="openEditProd(this.dataset.pid)" style="flex:1;font-size:11px;color:#C5A880;background:#FDF6EC;border:1px solid #E8D5B0;padding:6px 0;border-radius:8px;cursor:pointer;font-weight:600">修改</button>
-        <button onclick="deleteProduct('${p.id}')" style="flex:1;font-size:11px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:6px 0;border-radius:8px;cursor:pointer;font-weight:600">刪除</button>
+        <button data-pid="${p.id}" onclick="openEditProd(this.dataset.pid)" class="hide-live" style="flex:1;font-size:11px;color:#C5A880;background:#FDF6EC;border:1px solid #E8D5B0;padding:6px 0;border-radius:8px;cursor:pointer;font-weight:600">修改</button>
+        <button onclick="deleteProduct('${p.id}')" class="hide-live" style="flex:1;font-size:11px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:6px 0;border-radius:8px;cursor:pointer;font-weight:600">刪除</button>
       </div>
       <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:10px">
         ${p.photo?`<div onclick="openLightbox('${p.id}')" style="flex-shrink:0;width:80px;height:80px;border-radius:10px;overflow:hidden;background:#FAF8F5;cursor:zoom-in;border:1px solid #E8D5B0"><img src="${p.photo}" style="width:100%;height:100%;object-fit:cover;object-position:${p.photoPos||'50% 50%'};display:block" loading="lazy"/></div>`:""}
@@ -3787,20 +3803,19 @@ window.renderCustomers=function(){
       ${c.address?`<div style="font-size:11px;color:#9C7A5A;margin-bottom:3px">📍 ${c.address}</div>`:""}
       ${c.note?`<div style="font-size:11px;color:#9C7A5A;background:#FAF8F5;border-radius:8px;padding:6px 10px;margin-bottom:6px">📝 ${c.note}</div>`:""}
       <div style="padding-top:8px;border-top:1px solid #FAF8F5">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${cO.length?"6px":"0"}">
-          <div style="display:flex;gap:10px;font-size:11px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${cO.length?"8px":"0"}">
+          <div style="display:flex;gap:8px;font-size:11px;align-items:center">
             <span style="font-weight:700;color:#3D2010">訂單 ${cO.length} 筆</span>
             ${cP>0?`<span style="font-weight:700;color:#E07B39">待對帳 ${cP}</span>`:""}
             ${cT>0?`<span style="font-weight:700;color:#A08060">NT$${cT.toLocaleString()}</span>`:""}
           </div>
-          <div style="display:flex;gap:5px">
-            ${cO.length>0?`<button data-oid="${cO[0].id}" onclick="openEditOrd(this.dataset.oid)" style="font-size:10px;background:#FDF6EC;color:#C5A880;border:1px solid #E8D5B0;padding:3px 8px;border-radius:6px;cursor:pointer;font-weight:700">✏️ 修改訂單</button>`:""}
-            <div style="display:flex;gap:5px">
-            ${cO.length>0&&cO.some(o=>(o.discountPrice||o.unitPrice||0)>=1000)?`<button data-cid="${c.id}" onclick="copyDepositOrder(this.dataset.cid)" style="font-size:10px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:3px 8px;border-radius:6px;cursor:pointer;font-weight:700">複製訂金</button>`:""}
-            ${cO.length>0?`<button data-cid="${c.id}" onclick="copyCustOrder(this.dataset.cid)" style="font-size:10px;background:#EAF4FD;color:#0277BD;border:1px solid #90D7FF;padding:3px 8px;border-radius:6px;cursor:pointer;font-weight:700">複製結清</button>`:""}
-          </div>
-          </div>
         </div>
+        ${(()=>{
+          const hasHigh=cO.some(o=>(o.discountPrice||o.unitPrice||0)>=1000);
+          const cols=hasHigh?"1fr 1fr 1fr":"1fr 1fr";
+          const depositBtn=hasHigh?`<button data-cid="${c.id}" onclick="copyDepositOrder(this.dataset.cid)" style="font-size:11px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">複製訂金</button>`:"";
+          return cO.length>0?`<div style="display:grid;grid-template-columns:${cols};gap:5px;margin-bottom:8px"><button data-oid="${cO[0].id}" onclick="openEditOrd(this.dataset.oid)" style="font-size:11px;background:#FDF6EC;color:#C5A880;border:1px solid #E8D5B0;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">✏️ 修改</button>${depositBtn}<button data-cid="${c.id}" onclick="copyCustOrder(this.dataset.cid)" style="font-size:11px;background:#EAF4FD;color:#0277BD;border:1px solid #90D7FF;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">複製結清</button></div>`:"";
+        })()}
         ${cO.length?`<div style="display:flex;flex-direction:column;gap:4px">${cO.map(o=>{
           const sl2={pending:"#E07B39",settled:"#2E7D32",shipped:"#2980B9"};
           const stl={pending:"待訂金",deposit:"已付訂金",settled:"已付尾款",shipped:"已寄出"};
@@ -3811,14 +3826,14 @@ window.renderCustomers=function(){
           const rowBorder=isPreorder?(isPurchased?"transparent":"#FCD34D"):"transparent";
           const purchasedBtn=isPreorder?`<button data-oid="${o.id}" onclick="togglePurchased(this.dataset.oid)" style="font-size:9px;font-weight:700;padding:2px 0;border-radius:5px;cursor:pointer;width:58px;text-align:center;border:1px solid ${isPurchased?"#6EE7B7":"#FCD34D"};background:${isPurchased?"#D1FAE5":"#FEF3C7"};color:${isPurchased?"#065F46":"#92400E"}">${isPurchased?"已買到":"待購入"}</button>`:"";
           return `<div style="display:flex;justify-content:space-between;align-items:center;background:${rowBg};border-radius:8px;padding:6px 10px;border:1px solid ${rowBorder}">
-            <div style="display:flex;align-items:center;gap:6px">
-              <span style="font-size:11px;color:#3D2010;font-weight:600">${o.productName||"商品"} ×${o.qty}</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+            <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0">
               ${purchasedBtn}
+              <span style="font-size:11px;color:#3D2010;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.productName||"商品"} ×${o.qty}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;margin-left:6px">
               <span style="font-size:11px;font-weight:700;color:#3D2010">NT$${(dp*o.qty).toLocaleString()}</span>
-              ${dp>=1000?`<button data-oid="${o.id}" onclick="copySingleDeposit(this.dataset.oid)" style="font-size:9px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:2px 6px;border-radius:5px;cursor:pointer;font-weight:700">訂金</button>`:""}
-              ${o.tracking?`<span style="font-size:9px;color:#6090B0;background:#EAF4FD;border:1px solid #BDD9F0;padding:2px 6px;border-radius:5px">📦 ${o.tracking}</span>`:""}
+              ${dp>=1000?`<button data-oid="${o.id}" onclick="copySingleDeposit(this.dataset.oid)" style="font-size:9px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:2px 5px;border-radius:5px;cursor:pointer;font-weight:700">訂金</button>`:""}
+              ${o.tracking?`<span style="font-size:9px;color:#6090B0;background:#EAF4FD;border:1px solid #BDD9F0;padding:2px 5px;border-radius:5px">📦</span>`:""}
               <button data-oid="${o.id}" onclick="deleteOrder(this.dataset.oid)" style="font-size:10px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:2px 5px;border-radius:5px;cursor:pointer">🗑️</button>
             </div>
           </div>`;}).join("")}</div>`:""}
