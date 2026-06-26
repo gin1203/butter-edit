@@ -282,6 +282,44 @@ window.showBrandSuggestions=function(val,isQA){
         <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#5C3A1E;cursor:pointer"><input type="checkbox" id="flag-market" onchange="calcUpdate()" style="accent-color:#5C3A1E"/> 📦 大型／占空間（食品 +80）</label>
       </div>
     </div>
+    <!-- 美妝子類型面板（選美妝/保養/藥局時顯示） -->
+    <div id="beauty-type-panel" style="display:none;margin-top:10px;border-radius:12px;overflow:hidden;border:1.5px solid #F8BBD9">
+      <div style="background:#FCE4EC;padding:10px 14px">
+        <div style="font-size:11px;font-weight:700;color:#C2185B;margin-bottom:8px">💄 美妝類型（影響定價）</div>
+        <div style="display:flex;flex-direction:column;gap:7px">
+          <label style="display:flex;align-items:flex-start;gap:7px;cursor:pointer;font-size:12px;color:#3D2010">
+            <input type="radio" name="beauty-type" value="skincare" checked onchange="calcUpdate()" style="accent-color:#C2185B;margin-top:2px"/>
+            <span>🧴 <b>保養品（預設）</b><br><span style="font-size:10px;color:#9C7A5A">精華・眼霜・面膜組・PDRN・維他命・保健品</span></span>
+          </label>
+          <label style="display:flex;align-items:flex-start;gap:7px;cursor:pointer;font-size:12px;color:#3D2010">
+            <input type="radio" name="beauty-type" value="daily" onchange="calcUpdate()" style="accent-color:#C2185B;margin-top:2px"/>
+            <span>🪷 <b>日用美妝</b><br><span style="font-size:10px;color:#9C7A5A">凍膜・髮香噴霧・護手霜・洗沐・身體乳・防曬</span></span>
+          </label>
+        </div>
+      </div>
+    </div>
+    <!-- 購買通路 -->
+    <div style="margin-top:10px">
+      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:6px">🏪 購買通路（選填）</label>
+      <div id="calc-channel-btns" style="display:flex;flex-wrap:wrap;gap:6px">
+        <button class="calc-ch-btn active" data-ch="" onclick="calcSelectChannel(this,'')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #5C3A1E;background:#5C3A1E;color:white;cursor:pointer">未指定</button>
+        <button class="calc-ch-btn" data-ch="OLIVE YOUNG" onclick="calcSelectChannel(this,'OLIVE YOUNG')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧴 OLIVE YOUNG</button>
+        <button class="calc-ch-btn" data-ch="樂天超市" onclick="calcSelectChannel(this,'樂天超市')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛒 樂天超市</button>
+        <button class="calc-ch-btn" data-ch="No Brand" onclick="calcSelectChannel(this,'No Brand')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 No Brand</button>
+        <button class="calc-ch-btn" data-ch="GS25" onclick="calcSelectChannel(this,'GS25')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 GS25</button>
+        <button class="calc-ch-btn" data-ch="CU" onclick="calcSelectChannel(this,'CU')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 CU</button>
+        <button class="calc-ch-btn" data-ch="大創 DAISO" onclick="calcSelectChannel(this,'大創 DAISO')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 大創 DAISO</button>
+        <button class="calc-ch-btn" data-ch="MIMILINE" onclick="calcSelectChannel(this,'MIMILINE')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎀 MIMILINE</button>
+        <button class="calc-ch-btn" data-ch="ARTBOX" onclick="calcSelectChannel(this,'ARTBOX')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 ARTBOX</button>
+        <button class="calc-ch-btn" data-ch="29CM" onclick="calcSelectChannel(this,'29CM')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">💻 29CM</button>
+        <button class="calc-ch-btn" data-ch="Object" onclick="calcSelectChannel(this,'Object')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Object</button>
+        <button class="calc-ch-btn" data-ch="Point of View" onclick="calcSelectChannel(this,'Point of View')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Point of View</button>
+        <button class="calc-ch-btn" data-ch="BUTTER" onclick="calcSelectChannel(this,'BUTTER')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧈 BUTTER</button>
+        <button class="calc-ch-btn" data-ch="新世界/樂天百貨" onclick="calcSelectChannel(this,'新世界/樂天百貨')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏢 百貨/免稅</button>
+        <button class="calc-ch-btn" data-ch="廣藏市場" onclick="calcSelectChannel(this,'廣藏市場')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏮 廣藏市場</button>
+        <button class="calc-ch-btn" data-ch="其他" onclick="calcSelectChannel(this,'其他')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">📦 其他</button>
+      </div>
+    </div>
     <!-- 台灣售價 & 網址 -->
     <div style="margin-top:12px">
       <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">🏷️ 台灣官方售價（NT$，選填）</label>
@@ -915,75 +953,24 @@ window.showBrandSuggestions=function(val,isQA){
 
     <!-- 建議售價（左）+ 韓幣金額（右）並排 -->
     <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">🇰🇷 韓幣售價（₩）</label>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;align-items:stretch">
       <div id="qa-price-hint" style="background:#F5E6C8;border:1.5px solid #C5A880;border-radius:10px;padding:8px 14px;text-align:center;display:flex;flex-direction:column;justify-content:center;min-height:54px">
         <div style="font-size:9px;color:#9C7A5A;font-weight:700">建議售價</div>
-        <div id="qa-price-hint-val" style="font-size:22px;font-weight:900;color:#3D2010;line-height:1.2">-</div>
+        <div id="qa-price-hint-val" style="font-size:18px;font-weight:900;color:#3D2010;line-height:1.2">-</div>
         <div id="qa-price-hint-cost" style="font-size:9px;color:#9C7A5A;margin-top:1px"></div>
       </div>
-      <div style="position:relative">
+      <div style="position:relative;display:flex;align-items:stretch">
         <input type="text" inputmode="numeric" id="qa-amt" placeholder="例如：12000" oninput="qaCalcPrice()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:11px 40px 11px 14px;font-size:18px;font-weight:700;outline:none"/>
         <button onclick="document.getElementById('qa-amt').value='';qaCalcPrice();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
       </div>
     </div>
 
+    <!-- 快速選價 -->
+    <div id="qa-quick-btns" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px"></div>
+
     <!-- 類別 -->
     <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:6px">商品類別</label>
     <div id="qa-cat-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px"></div>
-
-    <!-- 加價旗標 -->
-    <div style="margin-top:12px;padding:8px 12px;background:#FDF6EC;border-radius:10px;border:1px solid #E8D5B0">
-      <div style="font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:6px">加價選項</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
-        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#3D2010;cursor:pointer"><input type="checkbox" id="flag-cold" onchange="calcUpdate()" style="accent-color:#C5A880"/> 冷藏 (+100)</label>
-        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#3D2010;cursor:pointer"><input type="checkbox" id="flag-coldHigh" onchange="calcUpdate()" style="accent-color:#C5A880"/> 高風險冷藏 (+200)</label>
-        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#3D2010;cursor:pointer"><input type="checkbox" id="flag-heavy" onchange="calcUpdate()" style="accent-color:#C5A880"/> 重貨 (+100)</label>
-        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#3D2010;cursor:pointer"><input type="checkbox" id="flag-large" onchange="calcUpdate()" style="accent-color:#C5A880"/> 大型重貨 (+300)</label>
-        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#E07B39;cursor:pointer"><input type="checkbox" id="flag-limited" onchange="calcUpdate()" style="accent-color:#E07B39"/> 👟 限量款鞋子（+800，取代一般公式）</label>
-        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#3B82F6;cursor:pointer"><input type="checkbox" id="flag-transparent" onchange="calcUpdate()" style="accent-color:#3B82F6"/> 👗 價格透明品牌（SPAO/GU/MLB/Adidas 等，×1.2）</label>
-        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#E07B39;cursor:pointer"><input type="checkbox" id="flag-popular" onchange="calcUpdate()" style="accent-color:#E07B39"/> 🛒 引流商品（烏龜餅乾・Pepero・養樂多軟糖，成本≤45才有效）</label>
-        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#7B5EA7;cursor:pointer"><input type="checkbox" id="flag-giftpack" onchange="calcUpdate()" style="accent-color:#7B5EA7"/> 🎁 禮盒／限定包裝（食品 +20）</label>
-        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:#5C3A1E;cursor:pointer"><input type="checkbox" id="flag-market" onchange="calcUpdate()" style="accent-color:#5C3A1E"/> 📦 大型／占空間（食品 +80）</label>
-      </div>
-    </div>
-    <!-- 購買通路 -->
-    <div style="margin-top:10px">
-      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:6px">🏪 購買通路（選填）</label>
-      <div id="calc-channel-btns" style="display:flex;flex-wrap:wrap;gap:6px">
-        <button class="calc-ch-btn active" data-ch="" onclick="calcSelectChannel(this,'')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #5C3A1E;background:#5C3A1E;color:white;cursor:pointer">未指定</button>
-        <button class="calc-ch-btn" data-ch="OLIVE YOUNG" onclick="calcSelectChannel(this,'OLIVE YOUNG')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧴 OLIVE YOUNG</button>
-        <button class="calc-ch-btn" data-ch="樂天超市" onclick="calcSelectChannel(this,'樂天超市')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛒 樂天超市</button>
-        <button class="calc-ch-btn" data-ch="No Brand" onclick="calcSelectChannel(this,'No Brand')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 No Brand</button>
-        <button class="calc-ch-btn" data-ch="GS25" onclick="calcSelectChannel(this,'GS25')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 GS25</button>
-        <button class="calc-ch-btn" data-ch="CU" onclick="calcSelectChannel(this,'CU')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 CU</button>
-        <button class="calc-ch-btn" data-ch="大創 DAISO" onclick="calcSelectChannel(this,'大創 DAISO')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 大創 DAISO</button>
-        <button class="calc-ch-btn" data-ch="MIMILINE" onclick="calcSelectChannel(this,'MIMILINE')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎀 MIMILINE</button>
-        <button class="calc-ch-btn" data-ch="ARTBOX" onclick="calcSelectChannel(this,'ARTBOX')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 ARTBOX</button>
-        <button class="calc-ch-btn" data-ch="29CM" onclick="calcSelectChannel(this,'29CM')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">💻 29CM</button>
-        <button class="calc-ch-btn" data-ch="Object" onclick="calcSelectChannel(this,'Object')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Object</button>
-        <button class="calc-ch-btn" data-ch="Point of View" onclick="calcSelectChannel(this,'Point of View')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Point of View</button>
-        <button class="calc-ch-btn" data-ch="BUTTER" onclick="calcSelectChannel(this,'BUTTER')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧈 BUTTER</button>
-        <button class="calc-ch-btn" data-ch="新世界/樂天百貨" onclick="calcSelectChannel(this,'新世界/樂天百貨')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏢 百貨/免稅</button>
-        <button class="calc-ch-btn" data-ch="廣藏市場" onclick="calcSelectChannel(this,'廣藏市場')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏮 廣藏市場</button>
-        <button class="calc-ch-btn" data-ch="其他" onclick="calcSelectChannel(this,'其他')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">📦 其他</button>
-      </div>
-    </div>
-    <!-- 美妝子類型面板（選美妝/保養/藥局時顯示） -->
-    <div id="beauty-type-panel" style="display:none;margin-top:10px;border-radius:12px;overflow:hidden;border:1.5px solid #F8BBD9">
-      <div style="background:#FCE4EC;padding:10px 14px">
-        <div style="font-size:11px;font-weight:700;color:#C2185B;margin-bottom:8px">💄 美妝類型（影響定價）</div>
-        <div style="display:flex;flex-direction:column;gap:7px">
-          <label style="display:flex;align-items:flex-start;gap:7px;cursor:pointer;font-size:12px;color:#3D2010">
-            <input type="radio" name="beauty-type" value="skincare" checked onchange="calcUpdate()" style="accent-color:#C2185B;margin-top:2px"/>
-            <span>🧴 <b>保養品（預設）</b><br><span style="font-size:10px;color:#9C7A5A">精華・眼霜・面膜組・PDRN・維他命・保健品</span></span>
-          </label>
-          <label style="display:flex;align-items:flex-start;gap:7px;cursor:pointer;font-size:12px;color:#3D2010">
-            <input type="radio" name="beauty-type" value="daily" onchange="calcUpdate()" style="accent-color:#C2185B;margin-top:2px"/>
-            <span>🪷 <b>日用美妝</b><br><span style="font-size:10px;color:#9C7A5A">凍膜・髮香噴霧・護手霜・洗沐・身體乳・防曬</span></span>
-          </label>
-        </div>
-      </div>
-    </div>
 
     <!-- 購買通路 -->
     <div style="margin-bottom:10px">
@@ -1011,12 +998,16 @@ window.showBrandSuggestions=function(val,isQA){
     <!-- 加價選項 -->
     <div style="background:#FDF6EC;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;margin-bottom:10px">
       <div style="font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:8px">📦 加價／特殊選項</div>
-      <div style="display:flex;flex-direction:column;gap:6px">
-        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#3D2010;cursor:pointer"><input type="checkbox" id="qa-flag-transparent" onchange="qaCalcPrice()" style="accent-color:#3B82F6"/> 👗 價格透明品牌（SPAO/GU/MLB/Adidas，×1.2）</label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#E07B39;cursor:pointer"><input type="checkbox" id="qa-flag-popular" onchange="qaCalcPrice()" style="accent-color:#E07B39"/> 🛒 引流商品（成本≤45才有效）</label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#7B5EA7;cursor:pointer"><input type="checkbox" id="qa-flag-giftpack" onchange="qaCalcPrice()" style="accent-color:#7B5EA7"/> 🎁 禮盒／限定包裝（食品 +20）</label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#5C3A1E;cursor:pointer"><input type="checkbox" id="qa-flag-market" onchange="qaCalcPrice()" style="accent-color:#5C3A1E"/> 📦 大型／占空間（食品 +80）</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#3D2010;cursor:pointer"><input type="checkbox" id="qa-flag-cold" onchange="qaCalcPrice()" style="accent-color:#C5A880"/> ❄️ 冷藏 (+100)</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#3D2010;cursor:pointer"><input type="checkbox" id="qa-flag-coldHigh" onchange="qaCalcPrice()" style="accent-color:#C5A880"/> 🧊 高風險冷藏 (+200)</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#3D2010;cursor:pointer"><input type="checkbox" id="qa-flag-heavy" onchange="qaCalcPrice()" style="accent-color:#C5A880"/> ⚖️ 重貨 (+100)</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#3D2010;cursor:pointer"><input type="checkbox" id="qa-flag-large" onchange="qaCalcPrice()" style="accent-color:#C5A880"/> 📦 大型重貨 (+300)</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#3B82F6;cursor:pointer"><input type="checkbox" id="qa-flag-transparent" onchange="qaCalcPrice()" style="accent-color:#3B82F6"/> 👗 價格透明品牌（×1.2）</label>
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#E07B39;cursor:pointer"><input type="checkbox" id="qa-flag-limited" onchange="qaCalcPrice()" style="accent-color:#E07B39"/> 👟 限量款鞋子（+800）</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#E07B39;cursor:pointer"><input type="checkbox" id="qa-flag-popular" onchange="qaCalcPrice()" style="accent-color:#E07B39"/> 🛒 引流商品（成本≤45）</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#7B5EA7;cursor:pointer"><input type="checkbox" id="qa-flag-giftpack" onchange="qaCalcPrice()" style="accent-color:#7B5EA7"/> 🎁 禮盒／限定包裝（+20）</label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#5C3A1E;cursor:pointer"><input type="checkbox" id="qa-flag-market" onchange="qaCalcPrice()" style="accent-color:#5C3A1E"/> 📦 大型／占空間（+80）</label>
       </div>
     </div>
     <!-- 美妝子類型（快速上架版） -->
@@ -4325,7 +4316,9 @@ window.openQuickAdd=function(){
   document.getElementById("qa-ai-result").style.display="none";
   document.getElementById("qa-loading").style.display="none";
   document.getElementById("qa-img-input").value="";
-  ["qa-flag-transparent","qa-flag-popular","qa-flag-limited"].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=false;});
+  window.G.qaSelectedPrice=null;
+  const qb=document.getElementById("qa-quick-btns");if(qb)qb.innerHTML="";
+  ["qa-flag-cold","qa-flag-coldHigh","qa-flag-heavy","qa-flag-large","qa-flag-transparent","qa-flag-popular","qa-flag-limited","qa-flag-giftpack","qa-flag-market"].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=false;});
   const qdp=document.getElementById("qa-daiso-panel");
   if(qdp)qdp.style.display="none";
   setTimeout(()=>{if(typeof qaDaisoTypeChange==="function")qaDaisoTypeChange();},150);
@@ -4383,6 +4376,10 @@ window.qaCalcPrice=function(){
   const{afterTax}=calcCost(amt,"KRW");
   const flags={
     priceType:document.getElementById("qa-flag-transparent")?.checked?"transparent":"normal",
+    isCold:document.getElementById("qa-flag-cold")?.checked||false,
+    coldHigh:document.getElementById("qa-flag-coldHigh")?.checked||false,
+    isHeavy:document.getElementById("qa-flag-heavy")?.checked||false,
+    isLarge:document.getElementById("qa-flag-large")?.checked||false,
     isPopular:document.getElementById("qa-flag-popular")?.checked||false,
     isGiftPack:document.getElementById("qa-flag-giftpack")?.checked||false,
     isMarket:document.getElementById("qa-flag-market")?.checked||false,
@@ -4398,7 +4395,22 @@ window.qaCalcPrice=function(){
   const sugg=suggestPrice(afterTax,cat,flags,0,amt);
   const hintVal=document.getElementById("qa-price-hint-val");
   const hintCost=document.getElementById("qa-price-hint-cost");
-  if(hintVal)hintVal.textContent=`NT$ ${sugg}`;
+  // 快速選價按鈕
+  const qEl=document.getElementById("qa-quick-btns");
+  if(qEl){
+    const prices=[...new Set([sugg-50,sugg,sugg+50,sugg+100,sugg+150,sugg+200].filter(p=>p>0&&p>=afterTax))].slice(0,6);
+    const sel=window.G.qaSelectedPrice||sugg;
+    qEl.innerHTML=prices.map(p=>{
+      const isSugg=p===sugg;
+      const isSel=p===sel;
+      const bg=isSel?"#C5A880":isSugg?"#ECFDF5":"white";
+      const color=isSel?"white":isSugg?"#065F46":"#9C7A5A";
+      const border=isSel?"#C5A880":isSugg?"#6EE7B7":"#E8D5B0";
+      return `<button onclick="window.G.qaSelectedPrice=${p};qaCalcPrice();" style="padding:5px 12px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid ${border};background:${bg};color:${color}">NT$${p}</button>`;
+    }).join("");
+  }
+  const finalPrice=window.G.qaSelectedPrice||sugg;
+  if(hintVal)hintVal.textContent=`NT$ ${finalPrice}`;
   if(hintCost)hintCost.textContent=`成本 NT$${afterTax}`;
 };
 
@@ -4561,6 +4573,10 @@ window.saveQuickAdd=async function(){
   // Use product photo if available, otherwise use recognition photo
   const qaFlags={
     priceType:document.getElementById("qa-flag-transparent")?.checked?"transparent":"normal",
+    isCold:document.getElementById("qa-flag-cold")?.checked||false,
+    coldHigh:document.getElementById("qa-flag-coldHigh")?.checked||false,
+    isHeavy:document.getElementById("qa-flag-heavy")?.checked||false,
+    isLarge:document.getElementById("qa-flag-large")?.checked||false,
     isPopular:document.getElementById("qa-flag-popular")?.checked||false,
     isGiftPack:document.getElementById("qa-flag-giftpack")?.checked||false,
     isMarket:document.getElementById("qa-flag-market")?.checked||false,
@@ -4575,23 +4591,25 @@ window.saveQuickAdd=async function(){
   };
   const catObj=CATS.find(x=>x.key===cat);
   const sugg2=suggestPrice(afterTax,cat,qaFlags,0,amt);
-  const profit=Math.round((sugg2-afterTax)*10)/10;
-  const margin=sugg2>0?Math.round((profit/sugg2)*100):0;
+  const finalPrice=window.G.qaSelectedPrice||sugg2;
+  const profit=Math.round((finalPrice-afterTax)*10)/10;
+  const margin=finalPrice>0?Math.round((profit/finalPrice)*100):0;
   const photo=window.G.qaProdPhoto||"";
   const photoPos=window.G.qaProdPhotoPos?`${window.G.qaProdPhotoPos.x}% ${window.G.qaProdPhotoPos.y}%`:"50% 50%";
   await fbSet("products",id,{
     id,name,catKey:cat,category:catObj?.label||"其他",emoji:catObj?.emoji||"📦",
     currency:"KRW",currencySymbol:"₩",foreignAmount:amt,
-    beforeTax,afterTax,suggested:sugg2,finalPrice:sugg2,profit,margin,
+    beforeTax,afterTax,suggested:sugg2,finalPrice,profit,margin,
     flags:qaFlags,twPrice:0,url:"",
     channel:window.G.qaChannel||"",
     photo,photoPos,
     createdAt:Date.now()
   });
   closeModal("modal-quick");
-  showToast(`✨ ${name} 已建立！售價 NT$${sugg}`);
+  showToast(`✨ ${name} 已建立！售價 NT$${finalPrice}`);
   window.G.qaPhoto=null;
   window.G.qaPhotoFull=null;
+  window.G.qaSelectedPrice=null;
 };
 
 
