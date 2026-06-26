@@ -101,7 +101,6 @@ window.showBrandSuggestions=function(val,isQA){
     <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
       <div id="pending-badge" style="display:none;background:#5C3A1E;color:#F5E6C8;font-size:10px;font-weight:700;padding:3px 7px;border-radius:99px;white-space:nowrap"></div>
       <span id="user-role-badge" style="display:none;font-size:9px;font-weight:700;color:#9C7A5A;background:#FAF8F5;border:1px solid #E8D5B0;padding:2px 5px;border-radius:99px"></span>
-      <button id="live-mode-btn" onclick="toggleLiveMode()" style="padding:5px 9px;border-radius:8px;border:1px solid #E8D5B0;background:#FAF8F5;color:#9C7A5A;cursor:pointer;font-size:11px;font-weight:700">🏪 連線</button>
       <button onclick="doLogout()" style="padding:6px 9px;border-radius:8px;border:1px solid #E8D5B0;background:#FAF8F5;color:#9C7A5A;cursor:pointer;font-size:11px;font-weight:700">登出</button>
       <button onclick="showTab('settings')" style="padding:6px;border-radius:8px;border:none;background:transparent;color:#9C7A5A;cursor:pointer;flex-shrink:0">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
@@ -200,7 +199,7 @@ window.showBrandSuggestions=function(val,isQA){
       <!-- 最終售價 + 自訂 -->
       <div style="background:#FFF0F0;border:2px solid #FF6B6B;border-radius:10px;padding:8px 10px">
         <div style="font-size:9px;color:#C0392B;font-weight:700;margin-bottom:2px">最終售價</div>
-        <div id="r-final" style="font-size:15px;font-weight:900;color:#C0392B;line-height:1;margin-bottom:5px">-</div>
+        <div id="r-final" style="font-size:13px;font-weight:900;color:#C0392B;line-height:1;margin-bottom:5px;white-space:nowrap">-</div>
         <div style="background:white;border:1px solid #FF6B6B;border-radius:6px;padding:3px 7px;display:flex;align-items:center;gap:5px">
           <span style="font-size:9px;color:#9C7A5A;white-space:nowrap">✏️</span>
           <input type="text" inputmode="numeric" id="c-custom" oninput="calcUpdate()" placeholder="自訂" style="flex:1;background:transparent;border:none;font-size:12px;font-weight:700;color:#3D2010;outline:none;width:100%"/>
