@@ -381,7 +381,7 @@ window.showBrandSuggestions=function(val,isQA){
     <span id="cust-sel-count" style="font-size:12px;font-weight:700;color:#9C7A5A">已選 0 筆</span>
     <button onclick="batchDeleteCustomers()" style="font-size:11px;background:#FDEDEC;color:#C0392B;border:1px solid #F1948A;padding:5px 10px;border-radius:8px;font-weight:700;cursor:pointer">🗑️ 批次刪除</button>
   </div>
-  <button id="cust-unpurchased-btn" onclick="toggleCustUnpurchased()" style="width:100%;margin-bottom:8px;padding:9px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #FCD34D;background:#FFFBEB;color:#92400E;cursor:pointer">🛒 查看尚未購買的代買單</button>
+  <button id="cust-unpurchased-btn" onclick="toggleCustUnpurchased()" style="width:100%;margin-bottom:8px;padding:9px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #C4B5FD;background:#F3F0FF;color:#6D28D9;cursor:pointer">🛒 查看尚未購買的代買單</button>
   <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#9C7A5A;margin-bottom:8px;cursor:pointer">
     <input type="checkbox" id="cust-select-all" onchange="toggleSelectAll('customer')" style="width:16px;height:16px;accent-color:#C5A880"/> 全選
   </label>
@@ -399,7 +399,7 @@ window.showBrandSuggestions=function(val,isQA){
     <button data-invf="settled"    onclick="setInvFilter('settled')"    style="flex:1;min-width:60px;padding:8px 2px;border-radius:10px;font-size:10px;font-weight:700;border:1px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">已付尾款</button>
     <button data-invf="shipped"    onclick="setInvFilter('shipped')"    style="flex:1;min-width:60px;padding:8px 2px;border-radius:10px;font-size:10px;font-weight:700;border:1px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">已寄出</button>
   </div>
-  <button id="inv-unpurchased-btn" data-invf="unpurchased" onclick="toggleInvUnpurchased()" style="width:100%;margin-bottom:10px;padding:9px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #FCD34D;background:#FFFBEB;color:#92400E;cursor:pointer">🛒 查看尚未購買的代買單</button>
+  <button id="inv-unpurchased-btn" data-invf="unpurchased" onclick="toggleInvUnpurchased()" style="width:100%;margin-bottom:10px;padding:9px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #C4B5FD;background:#F3F0FF;color:#6D28D9;cursor:pointer">🛒 查看尚未購買的代買單</button>
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px">
     <div style="background:white;border:1px solid #E8D5B0;border-radius:10px;padding:8px;text-align:center"><div style="font-size:8px;color:#9C7A5A">待訂金</div><div id="inv-pending" style="font-size:16px;font-weight:900;color:#E07B39">0</div></div>
     <div style="background:white;border:1px solid #E8D5B0;border-radius:10px;padding:8px;text-align:center"><div style="font-size:8px;color:#9C7A5A">已付訂金</div><div id="inv-deposit" style="font-size:16px;font-weight:900;color:#9C7A5A">0</div></div>
@@ -2288,6 +2288,14 @@ window.saveEditProd=async function(){
     upd.photoPos=`${pp.x}% ${pp.y}%`;
   }
   await fbUpd("products",m.id,upd);
+  // 記錄歷史價格（只有價格或韓幣原價變動才記錄）
+  if(m.finalPrice!==price||m.foreignAmount!==fa){
+    const tripName=(getLatestTrip()||{}).name||"";
+    const histEntry={krw:fa,price,date:new Date().toISOString().split("T")[0],trip:tripName};
+    const existing=m.priceHistory||[];
+    const newHist=[...existing,histEntry].slice(-10); // 最多保留10筆
+    await fbUpd("products",m.id,{priceHistory:newHist});
+  }
   closeModal("modal-eprod");showToast("商品已更新");
 };
 
@@ -3197,7 +3205,7 @@ window.addExpense=function(){
   const label=document.getElementById("exp-label")?.value.trim();
   const amount=parseFloat(document.getElementById("exp-amount")?.value)||0;
   if(!label||!amount){showToast("請填寫項目和金額","warning");return;}
-  const tripId=window.G.statsTripFilter==="auto"?(getCurrentTrip()?.id||"all"):window.G.statsTripFilter;
+  const tripId=window.G.statsTripFilter==="all"?"all":window.G.statsTripFilter==="auto"?(getLatestTrip()?.id||"all"):window.G.statsTripFilter;
   if(!window.G.expenses[tripId])window.G.expenses[tripId]=[];
   window.G.expenses[tripId].push({label,amount,id:"E"+Date.now()});
   document.getElementById("exp-label").value="";
@@ -3227,8 +3235,8 @@ window.renderStats=function(){
   // 更新費用趟次標籤
   const expLabel=document.getElementById("exp-trip-label");
   if(expLabel){
-    const tripId=statsTripFilter==="auto"||statsTripFilter==="all"?(cur?.id||"all"):statsTripFilter;
-    const tripName=trips.find(t=>t.id===tripId)?.name||"全部趟次";
+    const tripId=statsTripFilter==="all"?"all":statsTripFilter==="auto"?(getLatestTrip()?.id||"all"):statsTripFilter;
+    const tripName=tripId==="all"?"全部趟次":(trips.find(t=>t.id===tripId)?.name||"全部趟次");
     expLabel.textContent="記錄到："+tripName;
   }
 
@@ -3539,6 +3547,15 @@ window.renderList=function(){
         </div>
       </div>
       ${p.url?`<a href="${p.url}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#2980B9;background:#EBF5FB;border:1px solid #AED6F1;padding:3px 10px;border-radius:99px;text-decoration:none;margin-bottom:8px;font-weight:600">🔗 官網/販售頁面</a>`:""}
+      ${(p.priceHistory&&p.priceHistory.length>0)?`<details style="margin-bottom:8px">
+        <summary style="font-size:10px;font-weight:700;color:#9C7A5A;cursor:pointer;list-style:none;display:flex;align-items:center;gap:4px">📋 歷史價格（${p.priceHistory.length}筆）</summary>
+        <div style="margin-top:6px;display:flex;flex-direction:column;gap:3px">
+          ${[...p.priceHistory].reverse().map(h=>`<div style="display:flex;justify-content:space-between;font-size:10px;padding:4px 8px;background:#FAF8F5;border-radius:6px">
+            <span style="color:#9C7A5A">${h.date}${h.trip?" · "+h.trip:""}</span>
+            <span style="color:#3D2010;font-weight:700">${cur?.symbol||"₩"}${(h.krw||0).toLocaleString()} → NT$${(h.price||0).toLocaleString()}</span>
+          </div>`).join("")}
+        </div>
+      </details>`:""}
       <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:4px;background:#FAF8F5;padding:8px;border-radius:10px;text-align:center;margin-bottom:10px" class="show-staff-only">
         <div><div style="font-size:8px;color:#9C7A5A">${cur?.symbol||"₩"} 原幣</div><div style="font-size:11px;font-weight:700;color:#3D2010">${fa.toLocaleString()}</div></div>
         ${p.twPrice>0?`<div><div style="font-size:8px;color:#4338CA">台灣售價</div><div style="font-size:11px;font-weight:700;color:#4338CA">NT$${p.twPrice.toLocaleString()}</div></div>`:`<div><div style="font-size:8px;color:#9C7A5A">建議售價</div><div style="font-size:11px;font-weight:700;color:#A08060">NT$${p.finalPrice.toLocaleString()}</div></div>`}
@@ -3554,7 +3571,7 @@ window.renderList=function(){
           <span style="font-size:12px;font-weight:700;color:#3D2010">🛒 已喊單 <span style="${(()=>{const hot={food:10,daiso:10,beauty:5,clothes:5,accessory:5,home:5,sunglasses:5,shoes:3,bag:3,luxury:3,device:3,other:5};const threshold=hot[p.catKey]||5;return pTotal>=threshold?"color:#E07B39;font-weight:900":"color:#C5A880";})()}">${pTotal} 件${(()=>{const hot={food:10,daiso:10,beauty:5,clothes:5,accessory:5,home:5,sunglasses:5,shoes:3,bag:3,luxury:3,device:3,other:5};const threshold=hot[p.catKey]||5;return pTotal>=threshold?" 🔥":"";})()}</span></span>
           <button onclick="openModal('modal-order',{productId:'${p.id}'})" style="background:#FDF6EC;color:#A08060;border:1px solid #E8D5B0;padding:4px 12px;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer">＋ 登記喊單</button>
         </div>
-        ${pOrders.length>0?`<div style="display:flex;flex-wrap:wrap;gap:5px">${pOrders.map(o=>{return`<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;background:#EBF7EE;color:#2E7D32;border:1px solid #C8E6C9;padding:2px 4px 2px 8px;border-radius:99px">👤 ${o.communityName||o.buyerName} ×${o.qty}<button onclick="deleteOrder('${o.id}')" style="color:#E53935;background:none;border:none;cursor:pointer;font-weight:900;font-size:14px;line-height:1;margin-left:2px">×</button></span>`;}).join("")}</div>`:`<div style="font-size:10px;color:#9C7A5A;font-style:italic">尚無喊單</div>`}
+        ${pOrders.length>0?`<div style="display:flex;flex-wrap:wrap;gap:5px">${pOrders.map(o=>{return`<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;background:#EBF7EE;color:#2E7D32;border:1px solid #C8E6C9;padding:3px 6px 3px 10px;border-radius:99px">${o.communityName||o.buyerName} ×${o.qty}<button onclick="deleteOrder('${o.id}')" style="color:#E53935;background:none;border:none;cursor:pointer;font-weight:900;font-size:14px;line-height:1;margin-left:2px">×</button></span>`;}).join("")}</div>`:`<div style="font-size:10px;color:#9C7A5A;font-style:italic">尚無喊單</div>`}
       </div>
     </div>`;
   }).join("");
@@ -3794,7 +3811,7 @@ window.renderCustomers=function(){
           </div>
         </div>
         <div style="display:flex;gap:8px">
-          <button data-cid="${c.id}" onclick="openCustHistory(this.dataset.cid)" style="font-size:11px;color:#9C7A5A;background:#FAF8F5;border:1px solid #E8D5B0;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600">📊 歷史</button>
+          <button data-cid="${c.id}" onclick="openCustHistory(this.dataset.cid)" style="font-size:11px;color:#9C7A5A;background:#FAF8F5;border:1px solid #E8D5B0;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600">歷史</button>
           <button data-cid="${c.id}" onclick="openEditCust(this.dataset.cid)" style="font-size:11px;color:#C5A880;background:#FDF6EC;border:1px solid #E8D5B0;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600">修改</button>
           <button onclick="deleteCustomer('${c.id}')" style="font-size:11px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600">刪除</button>
         </div>
@@ -3814,7 +3831,7 @@ window.renderCustomers=function(){
           const hasHigh=cO.some(o=>(o.discountPrice||o.unitPrice||0)>=1000);
           const cols=hasHigh?"1fr 1fr 1fr":"1fr 1fr";
           const depositBtn=hasHigh?`<button data-cid="${c.id}" onclick="copyDepositOrder(this.dataset.cid)" style="font-size:11px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">複製訂金</button>`:"";
-          return cO.length>0?`<div style="display:grid;grid-template-columns:${cols};gap:5px;margin-bottom:8px"><button data-oid="${cO[0].id}" onclick="openEditOrd(this.dataset.oid)" style="font-size:11px;background:#FDF6EC;color:#C5A880;border:1px solid #E8D5B0;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">✏️ 修改</button>${depositBtn}<button data-cid="${c.id}" onclick="copyCustOrder(this.dataset.cid)" style="font-size:11px;background:#EAF4FD;color:#0277BD;border:1px solid #90D7FF;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">複製結清</button></div>`:"";
+          return cO.length>0?`<div style="display:grid;grid-template-columns:${cols};gap:5px;margin-bottom:8px"><button data-oid="${cO[0].id}" onclick="openEditOrd(this.dataset.oid)" style="font-size:11px;background:#FDF6EC;color:#C5A880;border:1px solid #E8D5B0;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">修改</button>${depositBtn}<button data-cid="${c.id}" onclick="copyCustOrder(this.dataset.cid)" style="font-size:11px;background:#EAF4FD;color:#0277BD;border:1px solid #90D7FF;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">複製結清</button></div>`:"";
         })()}
         ${cO.length?`<div style="display:flex;flex-direction:column;gap:4px">${cO.map(o=>{
           const sl2={pending:"#E07B39",settled:"#2E7D32",shipped:"#2980B9"};
@@ -3822,12 +3839,10 @@ window.renderCustomers=function(){
           const dp=o.discountPrice||o.unitPrice||0;
           const isPreorder=o.orderType==="preorder";
           const isPurchased=o.purchased===true;
-          const rowBg=isPreorder?(isPurchased?"#FAF8F5":"#FFF9EC"):"#FAF8F5";
-          const rowBorder=isPreorder?(isPurchased?"transparent":"#FCD34D"):"transparent";
-          const purchasedBtn=isPreorder?`<button data-oid="${o.id}" onclick="togglePurchased(this.dataset.oid)" style="font-size:9px;font-weight:700;padding:2px 0;border-radius:5px;cursor:pointer;width:58px;text-align:center;border:1px solid ${isPurchased?"#6EE7B7":"#FCD34D"};background:${isPurchased?"#D1FAE5":"#FEF3C7"};color:${isPurchased?"#065F46":"#92400E"}">${isPurchased?"已買到":"待購入"}</button>`:"";
-          return `<div style="display:flex;justify-content:space-between;align-items:center;background:${rowBg};border-radius:8px;padding:6px 10px;border:1px solid ${rowBorder}">
+          const rowBg=isPreorder?(isPurchased?"#FAF8F5":"#F3F0FF"):"#FAF8F5";
+          const leftBar=isPreorder?`border-left:4px solid ${isPurchased?"#A7F3D0":"#9333EA"}`:"border-left:4px solid transparent";
+          return `<div data-oid="${o.id}" onclick="${isPreorder?`togglePurchased(this.dataset.oid)`:''}" style="display:flex;justify-content:space-between;align-items:center;background:${rowBg};border-radius:8px;padding:6px 10px;${leftBar};${isPreorder?"cursor:pointer;":""}" title="${isPreorder?(isPurchased?"已買到，點擊切換":"待購入，點擊切換已買到"):""}">
             <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0">
-              ${purchasedBtn}
               <span style="font-size:11px;color:#3D2010;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.productName||"商品"} ×${o.qty}</span>
             </div>
             <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;margin-left:6px">
@@ -3848,9 +3863,9 @@ window.toggleCustUnpurchased=function(){
   const btn=document.getElementById("cust-unpurchased-btn");
   if(btn){
     const on=window.G.custUnpurchased;
-    btn.style.background=on?"#F59E0B":"#FFFBEB";
-    btn.style.color=on?"white":"#92400E";
-    btn.style.borderColor=on?"#F59E0B":"#FCD34D";
+    btn.style.background=on?"#7C3AED":"#F3F0FF";
+    btn.style.color=on?"white":"#6D28D9";
+    btn.style.borderColor=on?"#7C3AED":"#C4B5FD";
     btn.textContent=on?"🛒 尚未購買的代買單（篩選中）":"🛒 查看尚未購買的代買單";
   }
   renderCustomers();
@@ -3862,10 +3877,10 @@ window.toggleInvUnpurchased=function(){
   const isOn=window.G.orderFilter==="unpurchased";
   if(isOn){
     setInvFilter("all");
-    if(btn){btn.style.background="#FFFBEB";btn.style.color="#92400E";btn.style.borderColor="#FCD34D";btn.textContent="🛒 查看尚未購買的代買單";}
+    if(btn){btn.style.background="#F3F0FF";btn.style.color="#6D28D9";btn.style.borderColor="#C4B5FD";btn.textContent="🛒 查看尚未購買的代買單";}
   } else {
     setInvFilter("unpurchased");
-    if(btn){btn.style.background="#F59E0B";btn.style.color="white";btn.style.borderColor="#F59E0B";btn.textContent="🛒 尚未購買的代買單（篩選中）";}
+    if(btn){btn.style.background="#7C3AED";btn.style.color="white";btn.style.borderColor="#7C3AED";btn.textContent="🛒 尚未購買的代買單（篩選中）";}
   }
 };
 
@@ -3874,7 +3889,7 @@ window.setInvFilter=function(f){
   // 切到其他篩選時重置代買按鈕
   if(f!=="unpurchased"){
     const btn=document.getElementById("inv-unpurchased-btn");
-    if(btn){btn.style.background="#FFFBEB";btn.style.color="#92400E";btn.style.borderColor="#FCD34D";btn.textContent="🛒 查看尚未購買的代買單";}
+    if(btn){btn.style.background="#F3F0FF";btn.style.color="#6D28D9";btn.style.borderColor="#C4B5FD";btn.textContent="🛒 查看尚未購買的代買單";}
   }
   document.querySelectorAll("[data-invf]").forEach(btn=>{
     const a=btn.dataset.invf===f;
@@ -4082,6 +4097,7 @@ window.copySingleDeposit=function(oid){
   const total=dp*o.qty;
   const deposit=Math.ceil(total*0.5);
   const text=`【${o.productName||"商品"} ×${o.qty}】\n\n• 總金額 NT$${total.toLocaleString()}\n• 訂金 NT$${deposit.toLocaleString()}\n\n請匯款後告知後五碼，收到訂金後才會進行購買🙏`;
+  if(!confirm(`複製訂金請款並記錄訂金 NT$${deposit.toLocaleString()}？\n（${o.productName||"商品"} ×${o.qty}）`))return;
   // 自動記錄訂金
   fbUpd("orders",oid,{depositAmt:deposit,status:o.status==="pending"?"deposit":o.status});
   navigator.clipboard?.writeText(text).then(()=>showToast("訂金請款已複製！")).catch(()=>{
@@ -4124,6 +4140,7 @@ window.copyDepositOrder=function(cid,buyerKey){
   const totalDepositAmt=highOrders.reduce((s,o)=>s+Math.ceil((o.discountPrice||o.unitPrice||0)*o.qty*0.5),0);
   const totalLine=highOrders.length>1?`\n\n合計訂金 NT$${totalDepositAmt.toLocaleString()}`:"";
   const text=`${itemLines}${totalLine}\n\n請匯款後告知後五碼，收到訂金後才會進行購買🙏`;
+  if(!confirm(`複製訂金請款並記錄訂金 NT$${totalDepositAmt.toLocaleString()}？\n（${productNames}）`))return;
   // 自動把訂金金額寫入每筆高單價訂單（各自 50%），避免手動填錯
   highOrders.forEach(o=>{
     const dep=Math.ceil((o.discountPrice||o.unitPrice||0)*o.qty*0.5);
