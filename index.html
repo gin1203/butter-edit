@@ -155,7 +155,7 @@ window.showBrandSuggestions=function(val,isQA){
       <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px"><span id="c-sym-label">🇰🇷 韓幣 (₩)</span> 售價</label>
       <div style="position:relative">
         <input type="text" inputmode="numeric" id="c-amt" oninput="calcUpdate()" placeholder="請輸入金額" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:12px 40px 12px 14px;font-size:20px;font-weight:700;outline:none"/>
-        <button onclick="document.getElementById('c-amt').value='';calcUpdate();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
+        <button onclick="document.getElementById('c-amt').value='';const cc=document.getElementById('c-custom');if(cc)cc.value='';calcUpdate();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
       </div>
     </div>
   </div>
@@ -189,6 +189,7 @@ window.showBrandSuggestions=function(val,isQA){
         <div style="background:white;border:1px solid #FF6B6B;border-radius:6px;padding:3px 7px;display:flex;align-items:center;gap:5px">
           <span style="font-size:9px;color:#9C7A5A;white-space:nowrap">✏️</span>
           <input type="text" inputmode="numeric" id="c-custom" oninput="calcUpdate()" placeholder="自訂" style="flex:1;background:transparent;border:none;font-size:12px;font-weight:700;color:#3D2010;outline:none;width:100%"/>
+          <button onclick="document.getElementById('c-custom').value='';calcUpdate();" style="background:none;border:none;cursor:pointer;color:#FF6B6B;font-size:13px;line-height:1;padding:0;flex-shrink:0">✕</button>
         </div>
       </div>
     </div>
@@ -783,9 +784,9 @@ window.showBrandSuggestions=function(val,isQA){
     <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">📷 商品圖片（選填）</label>
     <div id="ep-img-area" style="margin-bottom:14px">
       <div id="ep-img-preview" style="display:none;margin-bottom:8px">
-        <div style="font-size:10px;color:#9C7A5A;margin-bottom:5px;text-align:center">👆 拖曳圖片調整焦點位置</div>
-        <div id="ep-crop-box" style="width:100%;aspect-ratio:1/1;border-radius:10px;overflow:hidden;background:#FAF8F5;position:relative;cursor:grab;touch-action:none;border:2px solid #C5A880">
-          <img id="ep-img-thumb" style="position:absolute;width:100%;height:100%;object-fit:cover;object-position:50% 50%;display:block;pointer-events:none" draggable="false"/>
+        <div style="font-size:10px;color:#9C7A5A;margin-bottom:5px;text-align:center">📷 商品圖片預覽</div>
+        <div id="ep-crop-box" style="width:100%;border-radius:10px;overflow:hidden;background:#FAF8F5;border:2px solid #C5A880;text-align:center">
+          <img id="ep-img-thumb" style="width:100%;height:auto;display:block;object-fit:contain" draggable="false"/>
         </div>
         <div style="display:flex;gap:8px;margin-top:8px">
           <label for="ep-img-input" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:8px;border:1px solid #E8D5B0;border-radius:8px;cursor:pointer;font-size:11px;font-weight:700;color:#9C7A5A;background:#FAF8F5">📷 重新選擇</label>
@@ -813,16 +814,21 @@ window.showBrandSuggestions=function(val,isQA){
     <!-- 共用訂金 + 物流 -->
     <div style="padding:10px 16px;background:#FDF6EC;border-bottom:1px solid #F0E6D0;flex-shrink:0">
       <div style="font-size:10px;font-weight:700;color:#A08060;margin-bottom:8px">整批設定（套用到此客戶所有訂單）</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
         <div>
           <div style="font-size:10px;color:#9C7A5A;margin-bottom:3px">💰 訂金 (NT$)</div>
           <input type="text" inputmode="numeric" id="eo-shared-deposit" placeholder="留空不收" style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:13px;outline:none"/>
+        </div>
+        <div>
+          <div style="font-size:10px;color:#9C7A5A;margin-bottom:3px">🏷️ 折扣 (NT$)</div>
+          <input type="text" inputmode="numeric" id="eo-shared-discount" placeholder="例如：50" oninput="eoUpdateDiscountPreview()" style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:13px;outline:none"/>
         </div>
         <div>
           <div style="font-size:10px;color:#9C7A5A;margin-bottom:3px">📦 物流單號</div>
           <input type="text" id="eo-shared-tracking" placeholder="選填" style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:13px;outline:none"/>
         </div>
       </div>
+      <div id="eo-discount-preview" style="display:none;margin-top:8px;background:#FFF9F0;border:1px solid #FCD34D;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;color:#92400E"></div>
     </div>
     <div id="eo-order-list" style="overflow-y:auto;flex:1;padding:12px 16px 8px"></div>
     <div style="padding:10px 16px 32px;border-top:1px solid #F0E6D0;flex-shrink:0">
@@ -979,7 +985,7 @@ window.showBrandSuggestions=function(val,isQA){
       </div>
       <div style="position:relative;display:flex;align-items:stretch">
         <input type="text" inputmode="numeric" id="qa-amt" placeholder="例如：12000" oninput="qaCalcPrice()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:11px 40px 11px 14px;font-size:18px;font-weight:700;outline:none"/>
-        <button onclick="document.getElementById('qa-amt').value='';qaCalcPrice();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
+        <button onclick="document.getElementById('qa-amt').value='';window.G.qaSelectedPrice=null;qaCalcPrice();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
       </div>
     </div>
 
@@ -2665,17 +2671,42 @@ window.batchDeleteOrders=async function(){
   for(const id of ids)await fbDel("orders",id);
   window.G.selectedOrders.clear();showToast(`已刪除 ${ids.length} 筆訂單`);
 };
+window.eoUpdateDiscountPreview=function(){
+  const disc=parseFloat(document.getElementById("eo-shared-discount")?.value)||0;
+  const preview=document.getElementById("eo-discount-preview");
+  if(!preview)return;
+  if(disc>0){
+    const rows=document.querySelectorAll("#eo-order-list .eo-row");
+    let total=0;
+    rows.forEach(row=>{
+      const qty=parseInt(row.querySelector(".eo-qty")?.value)||1;
+      const price=parseFloat(row.querySelector(".eo-price")?.value)||0;
+      total+=price*qty;
+    });
+    preview.style.display="block";
+    preview.textContent=`原總價 NT$${total.toLocaleString()} → 折扣後 NT$${(total-disc).toLocaleString()}（折 NT$${disc}）`;
+  } else {
+    preview.style.display="none";
+  }
+};
+
 window.saveAllEditOrders=async function(){
   const rows=document.querySelectorAll("#eo-order-list [data-oid]");
   const sharedDeposit=parseFloat(document.getElementById("eo-shared-deposit")?.value)||0;
   const sharedTracking=document.getElementById("eo-shared-tracking")?.value.trim()||"";
+  const sharedDiscount=parseFloat(document.getElementById("eo-shared-discount")?.value)||0;
   let count=0;
-  for(const row of rows){
+  const rowArr=[...rows];
+  for(let i=0;i<rowArr.length;i++){
+    const row=rowArr[i];
     const oid=row.dataset.oid;
     const qty=parseInt(row.querySelector(".eo-qty")?.value)||1;
     const price=parseFloat(row.querySelector(".eo-price")?.value)||0;
-    const upd={qty,discountPrice:price,total:price*qty,depositAmt:sharedDeposit,tracking:sharedTracking};
-    // 有訂金且狀態還是 pending → 升為 deposit
+    const discountNote=row.querySelector(".eo-discount-note")?.value.trim()||"";
+    // 折扣只記在第一筆
+    const upd={qty,discountPrice:price,total:price*qty,depositAmt:sharedDeposit,tracking:sharedTracking,discountNote};
+    if(i===0&&sharedDiscount>0){upd.sharedDiscount=sharedDiscount;}
+    else if(i===0){upd.sharedDiscount=0;}
     if(sharedDeposit>0){
       const o=window.G.orders.find(x=>x.id===oid);
       if(o&&o.status==="pending")upd.status="deposit";
@@ -3701,7 +3732,7 @@ window.renderList=function(){
         <button onclick="deleteProduct('${p.id}')" class="hide-live" style="flex:1;font-size:11px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:6px 0;border-radius:8px;cursor:pointer;font-weight:600">刪除</button>
       </div>
       <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:10px">
-        ${p.photo?`<div onclick="openLightbox('${p.id}')" style="flex-shrink:0;width:80px;height:80px;border-radius:10px;overflow:hidden;background:#FAF8F5;cursor:zoom-in;border:1px solid #E8D5B0"><img src="${p.photo}" style="width:100%;height:100%;object-fit:cover;object-position:${p.photoPos||'50% 50%'};display:block" loading="lazy"/></div>`:""}
+        ${p.photo?`<div onclick="openLightbox('${p.id}')" style="flex-shrink:0;width:80px;height:80px;border-radius:10px;overflow:hidden;background:#FAF8F5;cursor:zoom-in;border:1px solid #E8D5B0"><img src="${p.photo}" style="width:100%;height:100%;object-fit:contain;object-position:${p.photoPos||'50% 50%'};display:block" loading="lazy"/></div>`:""}
         <div style="flex:1;min-width:0">
           <div style="font-weight:700;font-size:15px;color:#3D2010;line-height:1.3;margin-bottom:4px">${p.name}</div>
           <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap">
@@ -3781,10 +3812,15 @@ window.openEditOrd=function(oid){
   // 共用訂金：取第一筆有訂金的值
   const existingDeposit=cOrders.find(x=>x.depositAmt>0)?.depositAmt||"";
   const existingTracking=cOrders.find(x=>x.tracking)?.tracking||"";
+  const existingDiscount=cOrders.find(x=>x.sharedDiscount>0)?.sharedDiscount||"";
   const depEl=document.getElementById("eo-shared-deposit");
   const trkEl=document.getElementById("eo-shared-tracking");
+  const discEl=document.getElementById("eo-shared-discount");
   if(depEl)depEl.value=existingDeposit;
   if(trkEl)trkEl.value=existingTracking;
+  if(discEl)discEl.value=existingDiscount;
+  const prevEl=document.getElementById("eo-discount-preview");
+  if(prevEl)prevEl.style.display="none";
 
   const list=document.getElementById("eo-order-list");
   list.innerHTML=cOrders.map(x=>{
@@ -3808,6 +3844,10 @@ window.openEditOrd=function(oid){
           <div style="font-size:10px;color:#9C7A5A;margin-bottom:3px">售價 (NT$)</div>
           <input type="text" inputmode="numeric" class="eo-price" value="${dp}" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:14px;font-weight:700;outline:none"/>
         </div>
+      </div>
+      <div style="margin-top:6px">
+        <div style="font-size:10px;color:#9C7A5A;margin-bottom:3px">🏷️ 折扣／備註（選填）</div>
+        <input type="text" class="eo-discount-note" value="${x.discountNote||""}" placeholder="例如：折50、贈品、會員優惠..." style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:12px;outline:none"/>
       </div>
     </div>`;
   }).join("");
@@ -4333,14 +4373,17 @@ window.copyCustOrder=function(cid){
   if(!cO.length){showToast("此客戶沒有訂單","warning");return;}
   const name=c.communityName||c.lineName||"客戶";
   const total=cO.reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0);
+  const sharedDiscount=cO.find(o=>o.sharedDiscount>0)?.sharedDiscount||0;
+  const discountedTotal=total-sharedDiscount;
   const totalDeposit=cO.filter(o=>(o.discountPrice||o.unitPrice||0)>=1000).reduce((s,o)=>s+(o.depositAmt||0),0);
-  const payNow=Math.max(0,total-totalDeposit-100);
-  const lines=cO.map(o=>{const dp=o.discountPrice||o.unitPrice||0;return "• "+(o.productName||"商品")+" ×"+o.qty+"  NT$"+(dp*o.qty).toLocaleString();});
-  const remainder=total-totalDeposit;
+  const payNow=Math.max(0,discountedTotal-totalDeposit-100);
+  const lines=cO.map(o=>{const dp=o.discountPrice||o.unitPrice||0;return "• "+(o.productName||"商品")+(o.spec?" ("+o.spec+")":"")+" ×"+o.qty+"  NT$"+(dp*o.qty).toLocaleString();});
+  const discountLine=sharedDiscount>0?`\n折扣：-NT$${sharedDiscount.toLocaleString()}\n折後總額：NT$${discountedTotal.toLocaleString()}`:"";
+  const remainder=discountedTotal-totalDeposit;
   const summaryBlock=totalDeposit>0
-    ?`\n\n總金額 NT$${total.toLocaleString()}\n已付訂金：NT$${totalDeposit.toLocaleString()}\n尾款：NT$${remainder.toLocaleString()}\n\n匯款金額 NT$${payNow.toLocaleString()}（保留 NT$100 交貨便貨到付款）`
-    :`\n\n總金額 NT$${total.toLocaleString()}\n\n匯款金額 NT$${payNow.toLocaleString()}（保留 NT$100 交貨便貨到付款）`;
-  const text=`【${name} 訂單明細】\n${lines.join("\n")}${summaryBlock}`;
+    ?`\n\n總金額 NT$${total.toLocaleString()}${discountLine}\n已付訂金：NT$${totalDeposit.toLocaleString()}\n尾款：NT$${remainder.toLocaleString()}\n\n匯款金額 NT$${payNow.toLocaleString()}（保留 NT$100 交貨便貨到付款）`
+    :`\n\n總金額 NT$${total.toLocaleString()}${discountLine}\n\n匯款金額 NT$${payNow.toLocaleString()}（保留 NT$100 交貨便貨到付款）`;
+  const text=`【訂單明細】\n${lines.join("\n")}${summaryBlock}`;
 
 
 
@@ -4368,7 +4411,7 @@ window.copyBuyerOrder=function(buyerKey){
   const summaryBlock=totalDeposit>0
     ?`\n\n總金額 NT$${total.toLocaleString()}\n已付訂金：NT$${totalDeposit.toLocaleString()}\n尾款：NT$${remainder.toLocaleString()}\n\n匯款金額 NT$${payNow.toLocaleString()}（保留 NT$100 交貨便貨到付款）`
     :`\n\n總金額 NT$${total.toLocaleString()}\n\n匯款金額 NT$${payNow.toLocaleString()}（保留 NT$100 交貨便貨到付款）`;
-  const text=`【${name} 訂單明細】\n${lines.join("\n")}${summaryBlock}`;
+  const text=`【訂單明細】\n${lines.join("\n")}${summaryBlock}`;
 
 
 
