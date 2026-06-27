@@ -138,11 +138,17 @@ window.showBrandSuggestions=function(val,isQA){
   </div>
   <!-- 輸入卡：名稱 + 金額 -->
   <div style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:16px;margin-bottom:10px">
-    <div style="margin-bottom:12px">
-      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">商品名稱</label>
-      <div style="position:relative">
-        <input type="text" id="c-name" oninput="calcUpdate();autoDetectCatFromName(this.value);(function(v){setTimeout(function(){showBrandSuggestions(v,false);},0);})(this.value)" placeholder="例如：Matin Kim 短袖" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:12px 40px 12px 14px;font-size:14px;outline:none"/>
-        <button onclick="document.getElementById('c-name').value='';calcUpdate();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
+    <div style="display:grid;grid-template-columns:4fr 1fr;gap:8px;margin-bottom:12px;align-items:start">
+      <div>
+        <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">商品名稱</label>
+        <div style="position:relative">
+          <input type="text" id="c-name" oninput="calcUpdate();autoDetectCatFromName(this.value);(function(v){setTimeout(function(){showBrandSuggestions(v,false);},0);})(this.value)" placeholder="例如：Matin Kim 短袖" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:12px 40px 12px 14px;font-size:14px;outline:none"/>
+          <button onclick="document.getElementById('c-name').value='';calcUpdate();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
+        </div>
+      </div>
+      <div>
+        <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:6px">📐 規格</label>
+        <input type="text" id="c-specs" placeholder="S,M,L" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:12px 8px;font-size:12px;outline:none"/>
       </div>
     </div>
     <div>
@@ -325,8 +331,6 @@ window.showBrandSuggestions=function(val,isQA){
     <div style="margin-top:12px">
       <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">🏷️ 台灣官方售價（NT$，選填）</label>
       <input type="text" inputmode="numeric" id="c-twprice" oninput="calcUpdate()" placeholder="例如：4900" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none;margin-bottom:10px"/>
-      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">📐 規格選項（選填，用逗號分隔）</label>
-      <input type="text" id="c-specs" placeholder="例如：S,M,L,XL 或 黑色,白色,藍色" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none;margin-bottom:10px"/>
       <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">🔗 官網或販售平台網址（選填）</label>
       <input type="url" id="c-url" placeholder="https://..." style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none"/>
     </div>
@@ -970,12 +974,18 @@ window.showBrandSuggestions=function(val,isQA){
       </div>
     </div>
 
-    <!-- 商品名稱 -->
-    <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">商品名稱</label>
-    <div style="margin-bottom:12px">
-      <div style="position:relative">
-        <input type="text" id="qa-name" placeholder="例如：크레용 신짱 인형 키링 / 蠟筆小新娃娃鑰匙圈" oninput="qaAutoDetectCat(this.value);(function(v){setTimeout(function(){showBrandSuggestions(v,true);},0);})(this.value)" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:11px 40px 11px 14px;font-size:14px;outline:none"/>
-        <button onclick="document.getElementById('qa-name').value='';" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
+    <!-- 商品名稱 + 規格並排 8:2 -->
+    <div style="display:grid;grid-template-columns:4fr 1fr;gap:8px;margin-bottom:12px;align-items:start">
+      <div>
+        <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">商品名稱</label>
+        <div style="position:relative">
+          <input type="text" id="qa-name" placeholder="例如：크레용 신짱 인형 키링 / 蠟筆小新娃娃鑰匙圈" oninput="qaAutoDetectCat(this.value);(function(v){setTimeout(function(){showBrandSuggestions(v,true);},0);})(this.value)" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:11px 40px 11px 14px;font-size:14px;outline:none"/>
+          <button onclick="document.getElementById('qa-name').value='';" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
+        </div>
+      </div>
+      <div>
+        <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">📐 規格</label>
+        <input type="text" id="qa-specs" placeholder="S,M,L" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:11px 8px;font-size:12px;outline:none"/>
       </div>
     </div>
 
@@ -4711,11 +4721,12 @@ window.saveQuickAdd=async function(){
   const margin=finalPrice>0?Math.round((profit/finalPrice)*100):0;
   const photo=window.G.qaProdPhoto||"";
   const photoPos=window.G.qaProdPhotoPos?`${window.G.qaProdPhotoPos.x}% ${window.G.qaProdPhotoPos.y}%`:"50% 50%";
+  const qaSpecs=(document.getElementById("qa-specs")?.value.trim()||"").split(",").map(s=>s.trim()).filter(Boolean);
   await fbSet("products",id,{
     id,name,catKey:cat,category:catObj?.label||"其他",emoji:catObj?.emoji||"📦",
     currency:"KRW",currencySymbol:"₩",foreignAmount:amt,
     beforeTax,afterTax,suggested:sugg2,finalPrice,profit,margin,
-    flags:qaFlags,twPrice:0,url:"",
+    flags:qaFlags,twPrice:0,url:"",specs:qaSpecs,
     channel:window.G.qaChannel||"",
     photo,photoPos,
     createdAt:Date.now()
@@ -4725,6 +4736,7 @@ window.saveQuickAdd=async function(){
   window.G.qaPhoto=null;
   window.G.qaPhotoFull=null;
   window.G.qaSelectedPrice=null;
+  const qaSpecEl=document.getElementById("qa-specs");if(qaSpecEl)qaSpecEl.value="";
 };
 
 
