@@ -221,6 +221,7 @@ window.showBrandSuggestions=function(val,isQA){
       <span style="font-size:11px;color:#6366F1">省</span>
       <span id="r-tw-save" style="font-size:13px;font-weight:900;color:#16A34A">-</span>
     </div>
+    <!-- 同行比較列（已移至商品頁顯示） -->
     <!-- JS 用隱藏欄位 -->
     <div id="r-amt" style="display:none">-</div>
     <div id="r-before" style="display:none">-</div>
@@ -324,6 +325,8 @@ window.showBrandSuggestions=function(val,isQA){
     <div style="margin-top:12px">
       <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">🏷️ 台灣官方售價（NT$，選填）</label>
       <input type="text" inputmode="numeric" id="c-twprice" oninput="calcUpdate()" placeholder="例如：4900" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none;margin-bottom:10px"/>
+      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">📐 規格選項（選填，用逗號分隔）</label>
+      <input type="text" id="c-specs" placeholder="例如：S,M,L,XL 或 黑色,白色,藍色" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none;margin-bottom:10px"/>
       <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">🔗 官網或販售平台網址（選填）</label>
       <input type="url" id="c-url" placeholder="https://..." style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none"/>
     </div>
@@ -679,6 +682,12 @@ window.showBrandSuggestions=function(val,isQA){
       <input type="text" inputmode="numeric" id="mo-qty" value="1" oninput="moQtyClamp()" style="flex:1;border:none;background:transparent;text-align:center;font-size:20px;font-weight:900;color:#3D2010;outline:none;padding:10px 0"/>
       <button onclick="moQtyAdj(1)" style="width:48px;height:48px;font-size:22px;font-weight:700;border:none;background:transparent;color:#9C7A5A;cursor:pointer;flex-shrink:0">＋</button>
     </div>
+    <!-- 規格備註 -->
+    <div id="mo-spec-area" style="margin-bottom:12px;display:none">
+      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">📐 規格／尺寸</label>
+      <div id="mo-spec-btns" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px"></div>
+      <input type="text" id="mo-spec" placeholder="或自行輸入..." style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 14px;font-size:13px;outline:none"/>
+    </div>
     <!-- 喊單類型 -->
     <div style="margin-bottom:12px">
       <div style="font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:7px">📌 喊單類型</div>
@@ -692,6 +701,7 @@ window.showBrandSuggestions=function(val,isQA){
           style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 6px;border-radius:12px;border:2px solid #E8D5B0;background:white;color:#9C7A5A;font-size:12px;font-weight:700;cursor:pointer">
           <span style="font-size:18px">📱</span>記事本 +1
           <span style="font-size:9px;font-weight:400;opacity:.8">已離開、照片喊單代買</span>
+          <span style="font-size:9px;font-weight:700;color:#E07B39">尚未購買</span>
         </button>
       </div>
     </div>
@@ -753,7 +763,7 @@ window.showBrandSuggestions=function(val,isQA){
       <span>建議售價：<b id="ep-sugg" style="color:#A08060">-</b></span>
     </div>
     <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">台幣售價 (NT$)</label>
-    <input type="text" inputmode="numeric" id="ep-price" onfocus="this.dataset.manual='1'" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none;margin-bottom:10px"/>
+    <input type="text" inputmode="numeric" id="ep-price" onfocus="this.dataset.manual='1'" oninput="epRivalCheck()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none;margin-bottom:10px"/>
     <!-- 加價選項 -->
     <div style="background:#FDF6EC;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;margin-bottom:10px">
       <div style="font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:8px">📦 加價選項（勾選後自動更新建議售價）</div>
@@ -765,10 +775,28 @@ window.showBrandSuggestions=function(val,isQA){
         <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#E07B39;cursor:pointer"><input type="checkbox" id="ep-flag-limited" onchange="epFlagChange()" style="accent-color:#E07B39"/> 👟 限量款鞋子 (+800)</label>
       </div>
     </div>
-    <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">🏷️ 台灣官方售價 (NT$)（選填）</label>
-    <input type="text" inputmode="numeric" id="ep-twprice" placeholder="例如：4900" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none;margin-bottom:10px"/>
+    <!-- 台灣官方售價 & 同行參考價 並排 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <div>
+        <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">🏷️ 台灣官方售價 (NT$)</label>
+        <input type="text" inputmode="numeric" id="ep-twprice" placeholder="例如：4900" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none"/>
+      </div>
+      <div>
+        <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">👥 同行參考價 (NT$)</label>
+        <input type="text" inputmode="numeric" id="ep-rival" placeholder="例如：149" oninput="epRivalCheck()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none"/>
+      </div>
+    </div>
+    <!-- 同行比較提示 -->
+    <div id="ep-rival-msg" style="display:none;border-radius:10px;padding:8px 14px;margin-bottom:10px;font-size:12px;font-weight:700"></div>
+    <!-- 規格選項 -->
+    <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">📐 規格選項（選填，用逗號分隔）</label>
+    <input type="text" id="ep-specs" placeholder="例如：S,M,L,XL 或 黑色,白色,藍色" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none;margin-bottom:10px"/>
+    <!-- 官網網址：右側icon可點選 -->
     <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">🔗 官網或販售平台網址（選填）</label>
-    <input type="url" id="ep-url" placeholder="https://..." style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none;margin-bottom:10px"/>
+    <div style="position:relative;margin-bottom:10px">
+      <input type="url" id="ep-url" placeholder="https://..." oninput="epUrlPreview()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 44px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
+      <a id="ep-url-link" href="#" target="_blank" rel="noopener" onclick="return !!(document.getElementById('ep-url').value.startsWith('http'))" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:20px;text-decoration:none;opacity:0.3;pointer-events:none" title="開啟連結">🔗</a>
+    </div>
     <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">📷 商品圖片（選填）</label>
     <div id="ep-img-area" style="margin-bottom:14px">
       <div id="ep-img-preview" style="display:none;margin-bottom:8px">
@@ -1658,6 +1686,9 @@ window.openModal=function(id,data){
       document.getElementById("ep-price").value=data.finalPrice||0;
       document.getElementById("ep-price").dataset.manual="";
       document.getElementById("ep-twprice").value=data.twPrice||"";
+      document.getElementById("ep-rival").value=data.rivalPrice||"";
+      document.getElementById("ep-specs").value=(data.specs||[]).join(",");
+      setTimeout(()=>{epUrlPreview();epRivalCheck();},50);
       document.getElementById("ep-url").value=data.url||"";
       // 類別選擇格
       window.G.editCatKey=data.catKey||"food";
@@ -1753,6 +1784,21 @@ window.openModal=function(id,data){
       if(lst)lst.style.display="none";
       // 重置喊單類型為「現場購買」
       moSetType("onsite");
+      // 規格按鈕
+      const specArea=document.getElementById("mo-spec-area");
+      const specBtns=document.getElementById("mo-spec-btns");
+      const specInput=document.getElementById("mo-spec");
+      if(specInput)specInput.value="";
+      const specs=p?.specs||[];
+      if(specArea&&specBtns){
+        if(specs.length>0){
+          specArea.style.display="block";
+          specBtns.innerHTML=specs.map(s=>`<button onclick="moSelectSpec('${s}',this)" style="padding:6px 14px;border-radius:8px;font-size:13px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">${s}</button>`).join("");
+        } else {
+          specArea.style.display="none";
+          specBtns.innerHTML="";
+        }
+      }
     },20);
   }
 };
@@ -2083,8 +2129,23 @@ window.calcUpdate=function(){
       document.getElementById("r-tw-save").textContent=`NT$ ${save.toLocaleString()}`;
       twRow.style.display="flex";
     } else if(twRow){twRow.style.display="none";}
+    // 同行比較
+    const rivalPrice=parseFloat(document.getElementById("c-rival")?.value)||0;
+    const rivalRow=document.getElementById("r-rival-row");
+    if(rivalPrice>0&&rivalRow){
+      const diff=final-rivalPrice;
+      let bg,border,color,msg;
+      if(diff===0){bg="#F0FDF4";border="#86EFAC";color="#15803D";msg="✅ 與同行持平";}
+      else if(diff>0){bg="#FEF9EC";border="#FCD34D";color="#92400E";msg=`⚠️ 高於同行 NT$${diff}`;}
+      else{bg="#FFF1F2";border="#FDA4AF";color="#9F1239";msg=`👀 低於同行 NT$${Math.abs(diff)}`;}
+      rivalRow.style.cssText=`display:flex;background:${bg};border:1px solid ${border};border-radius:10px;padding:10px 14px;margin-bottom:8px;align-items:center;gap:8px;flex-wrap:wrap`;
+      document.getElementById("r-rival-price").style.color=color;
+      document.getElementById("r-rival-price").textContent=`NT$ ${rivalPrice}`;
+      document.getElementById("r-rival-msg").style.color=color;
+      document.getElementById("r-rival-msg").textContent=msg;
+    } else if(rivalRow){rivalRow.style.display="none";}
   } else {
-    results.style.display="none";welcome.style.display="grid";
+    if(results.style.display==="none"){welcome.style.display="grid";}
   }
 };
 
@@ -2228,12 +2289,14 @@ window.saveProduct=async function(){
   const margin=final>0?Math.round((profit/final)*100):0;
   const id=genId(cat,cur);
   const catObj=CATS.find(x=>x.key===cat);
+  const rivalPrice=parseFloat(document.getElementById("c-rival")?.value)||0;
   const url=document.getElementById("c-url")?.value.trim()||"";
+  const specs=(document.getElementById("c-specs")?.value.trim()||"").split(",").map(s=>s.trim()).filter(Boolean);
   const photo=window.G.calcPhoto||"";
   const photoPos=photo?(window.G.calcPhotoPos||{x:50,y:50}):{x:50,y:50};
   const photoPosCss=`${photoPos.x}% ${photoPos.y}%`;
-  await fbSet("products",id,{name:name.trim(),catKey:cat,category:catObj?.label||"其他",emoji:catObj?.emoji||"📦",currency:cur,currencySymbol:CURR[cur]?.symbol||"₩",foreignAmount:amt,beforeTax,afterTax,suggested:sugg,finalPrice:final,profit,margin,twPrice,url,photo,photoPos:photoPosCss,flags,channel:window.G.calcChannel||"",createdAt:Date.now()});
-  ["c-name","c-amt","c-custom","c-twprice","c-url"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
+  await fbSet("products",id,{name:name.trim(),catKey:cat,category:catObj?.label||"其他",emoji:catObj?.emoji||"📦",currency:cur,currencySymbol:CURR[cur]?.symbol||"₩",foreignAmount:amt,beforeTax,afterTax,suggested:sugg,finalPrice:final,profit,margin,twPrice,rivalPrice,url,specs,photo,photoPos:photoPosCss,flags,channel:window.G.calcChannel||"",createdAt:Date.now()});
+  ["c-name","c-amt","c-custom","c-twprice","c-rival","c-specs","c-url"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
   ["flag-cold","flag-coldHigh","flag-heavy","flag-large","flag-limited"].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=false;});
   window.G.calcChannel="";
   document.querySelectorAll(".calc-ch-btn").forEach(b=>{b.style.background="white";b.style.borderColor="#E8D5B0";b.style.color="#9C7A5A";b.classList.remove("active");});
@@ -2275,6 +2338,40 @@ function epGetFlags(){
   };
 }
 
+window.epUrlPreview=function(){
+  const val=document.getElementById("ep-url")?.value.trim()||"";
+  const link=document.getElementById("ep-url-link");
+  if(link){
+    if(val.startsWith("http")){
+      link.href=val;
+      link.style.opacity="1";
+      link.style.pointerEvents="auto";
+    } else {
+      link.href="#";
+      link.style.opacity="0.3";
+      link.style.pointerEvents="none";
+    }
+  }
+};
+
+window.epRivalCheck=function(){
+  const rival=parseFloat(document.getElementById("ep-rival")?.value)||0;
+  const price=parseFloat(document.getElementById("ep-price")?.value)||0;
+  const msgEl=document.getElementById("ep-rival-msg");
+  if(!msgEl)return;
+  if(rival>0&&price>0){
+    const diff=price-rival;
+    let bg,border,color,msg;
+    if(diff===0){bg="#F0FDF4";border="#86EFAC";color="#15803D";msg="✅ 與同行持平（NT$"+rival+"）";}
+    else if(diff>0){bg="#FEF9EC";border="#FCD34D";color="#92400E";msg="⚠️ 高於同行 NT$"+diff+"（同行 NT$"+rival+"）";}
+    else{bg="#FFF1F2";border="#FDA4AF";color="#9F1239";msg="👀 低於同行 NT$"+Math.abs(diff)+"（同行 NT$"+rival+"）";}
+    msgEl.style.cssText=`display:block;background:${bg};border:1px solid ${border};border-radius:10px;padding:8px 14px;margin-bottom:10px;font-size:12px;font-weight:700;color:${color}`;
+    msgEl.textContent=msg;
+  } else {
+    msgEl.style.display="none";
+  }
+};
+
 window.epFlagChange=function(){
   const m=window.G.activeModalData;if(!m)return;
   const fa=parseFloat(document.getElementById("ep-foreign")?.value)||m.foreignAmount||0;
@@ -2301,6 +2398,7 @@ window.epSelectCat=function(key){
 window.epForeignChange=function(){
   const m=window.G.activeModalData;if(!m)return;
   const amt=parseFloat(document.getElementById("ep-foreign")?.value)||0;
+  const rivalPrice=parseFloat(document.getElementById("ep-rival")?.value)||0;
   const twPrice=parseFloat(document.getElementById("ep-twprice")?.value)||0;
   const cat=window.G.editCatKey||m.catKey||"food";
   updateEpCalc(amt,m.currency||"KRW",cat,twPrice,epGetFlags());
@@ -2323,6 +2421,7 @@ window.saveEditProd=async function(){
   const name=document.getElementById("ep-name")?.value.trim();
   const fa=parseFloat(document.getElementById("ep-foreign")?.value)||m.foreignAmount;
   const price=parseFloat(document.getElementById("ep-price")?.value)||0;
+  const rivalPrice=parseFloat(document.getElementById("ep-rival")?.value)||0;
   const twPrice=parseFloat(document.getElementById("ep-twprice")?.value)||0;
   const url=document.getElementById("ep-url")?.value.trim()||"";
   if(!name){showToast("名稱不能空白","error");return;}
@@ -2333,8 +2432,8 @@ window.saveEditProd=async function(){
   const newCatKey=window.G.editCatKey||m.catKey||"food";
   const newCatObj=CATS.find(x=>x.key===newCatKey)||CATS[0];
   const newFlags=epGetFlags();
-  // 圖片：null=不改，""=刪除，base64=新圖
-  const upd={name,foreignAmount:fa,beforeTax,afterTax,finalPrice:price,profit,margin,twPrice,url,catKey:newCatKey,category:newCatObj.label,emoji:newCatObj.emoji,flags:newFlags};
+  const newSpecs=(document.getElementById("ep-specs")?.value.trim()||"").split(",").map(s=>s.trim()).filter(Boolean);
+  const upd={name,foreignAmount:fa,beforeTax,afterTax,finalPrice:price,profit,margin,twPrice,rivalPrice,url,specs:newSpecs,catKey:newCatKey,category:newCatObj.label,emoji:newCatObj.emoji,flags:newFlags};
   if(window.G.editPhoto===null){/* 不動圖片 */}
   else if(window.G.editPhoto===""){upd.photo="";upd.photoPos="50% 50%";}
   else{
@@ -2393,6 +2492,20 @@ window.batchDeleteCustomers=async function(){
 // ── 訂單 ──────────────────────────────────────────────────────────────
 // ── 可搜尋客戶下拉 ────────────────────────────────────────────────────
 window.G.moOrderType="onsite"; // 預設現場購買
+
+window.moSelectSpec=function(spec,btn){
+  const input=document.getElementById("mo-spec");
+  if(input){
+    if(input.value===spec){
+      input.value="";
+      btn.style.background="white";btn.style.color="#9C7A5A";btn.style.borderColor="#E8D5B0";
+    } else {
+      input.value=spec;
+      document.querySelectorAll("#mo-spec-btns button").forEach(b=>{b.style.background="white";b.style.color="#9C7A5A";b.style.borderColor="#E8D5B0";});
+      btn.style.background="#5C3A1E";btn.style.color="white";btn.style.borderColor="#5C3A1E";
+    }
+  }
+};
 
 window.moSetType=function(type){
   window.G.moOrderType=type;
@@ -2467,7 +2580,7 @@ window.moSelectCust=function(id,community,line){
   const histList=document.getElementById("mo-history-list");
   if(hist&&histList){
     if(tripOrds.length){
-      histList.innerHTML=tripOrds.map(o=>`• ${o.productName||"商品"} ×${o.qty}  NT$${((o.discountPrice||o.unitPrice||0)*o.qty).toLocaleString()}`).join("<br>");
+      histList.innerHTML=tripOrds.map(o=>`• ${o.productName||"商品"}${o.spec?" ("+o.spec+")":""} ×${o.qty}  NT$${((o.discountPrice||o.unitPrice||0)*o.qty).toLocaleString()}`).join("<br>");
       hist.style.display="block";
     } else {
       hist.style.display="none";
@@ -2513,12 +2626,13 @@ window.addOrder=async function(){
   } else {showToast("請輸入客人名字","error");return;}
   const prod=window.G.products.find(p=>p.id===productId);if(!prod)return;
   const id="O"+Date.now();
-  // 趟次：直接用 modal 選定的
   const tripId=window.G.moSelectedTripId||"";
   const orderType=window.G.moOrderType||"onsite";
   const orderTypeLabel=orderType==="onsite"?"🛍️現場":"📱代買";
-  await fbSet("orders",id,{productId,productName:prod.name,productEmoji:prod.emoji,customerId,communityName,lineName,buyerName:communityName||lineName,qty,unitPrice:prod.finalPrice,total:prod.finalPrice*qty,status:"pending",tripId,orderType,createdAt:Date.now()});
-  closeModal("modal-order");showToast(`${orderTypeLabel} 已為 ${communityName||lineName} 登記`);
+  const spec=document.getElementById("mo-spec")?.value.trim()||"";
+  await fbSet("orders",id,{productId,productName:prod.name,productEmoji:prod.emoji,customerId,communityName,lineName,buyerName:communityName||lineName,qty,unitPrice:prod.finalPrice,total:prod.finalPrice*qty,status:"pending",tripId,orderType,spec,createdAt:Date.now()});
+  const specEl=document.getElementById("mo-spec");if(specEl)specEl.value="";
+  closeModal("modal-order");showToast(`${orderTypeLabel} 已為 ${communityName||lineName} 登記${spec?" ("+spec+")":""}`);
 };
 // ── 數量 ± 按鈕 ───────────────────────────────────────────────────────
 window.moQtyAdj=function(delta){
@@ -3598,6 +3712,7 @@ window.renderList=function(){
             <div style="font-size:18px;font-weight:900;color:#A08060">NT$ ${p.finalPrice.toLocaleString()}</div>
             ${p.twPrice>0?`<div style="font-size:10px;color:#4338CA;font-weight:700">台灣 NT$${p.twPrice.toLocaleString()} (省${(p.twPrice-p.finalPrice).toLocaleString()})</div>`:""}
           </div>
+          ${p.rivalPrice>0?(()=>{const diff=p.finalPrice-p.rivalPrice;if(diff===0)return`<div style="font-size:10px;font-weight:700;color:#15803D;margin-top:3px">✅ 與同行持平（NT$${p.rivalPrice}）</div>`;if(diff>0)return`<div style="font-size:10px;font-weight:700;color:#92400E;margin-top:3px">⚠️ 高於同行 NT$${diff}（同行 NT$${p.rivalPrice}）</div>`;return`<div style="font-size:10px;font-weight:700;color:#9F1239;margin-top:3px">👀 低於同行 NT$${Math.abs(diff)}（同行 NT$${p.rivalPrice}）</div>`;})():""}
           ${costChanged?`<div style="font-size:9px;color:#E07B39;font-weight:700;margin-top:2px">⚡ 匯率已變動</div>`:""}
         </div>
       </div>
@@ -3626,7 +3741,7 @@ window.renderList=function(){
           <span style="font-size:12px;font-weight:700;color:#3D2010">🛒 已喊單 <span style="${(()=>{const hot={food:10,daiso:10,beauty:5,clothes:5,accessory:5,home:5,sunglasses:5,shoes:3,bag:3,luxury:3,device:3,other:5};const threshold=hot[p.catKey]||5;return pTotal>=threshold?"color:#E07B39;font-weight:900":"color:#C5A880";})()}">${pTotal} 件${(()=>{const hot={food:10,daiso:10,beauty:5,clothes:5,accessory:5,home:5,sunglasses:5,shoes:3,bag:3,luxury:3,device:3,other:5};const threshold=hot[p.catKey]||5;return pTotal>=threshold?" 🔥":"";})()}</span></span>
           <button onclick="openModal('modal-order',{productId:'${p.id}'})" style="background:#FDF6EC;color:#A08060;border:1px solid #E8D5B0;padding:4px 12px;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer">＋ 登記喊單</button>
         </div>
-        ${pOrders.length>0?`<div style="display:flex;flex-wrap:wrap;gap:5px">${pOrders.map(o=>{return`<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;background:#EBF7EE;color:#2E7D32;border:1px solid #C8E6C9;padding:3px 6px 3px 10px;border-radius:99px">${o.communityName||o.buyerName} ×${o.qty}<button onclick="deleteOrder('${o.id}')" style="color:#E53935;background:none;border:none;cursor:pointer;font-weight:900;font-size:14px;line-height:1;margin-left:2px">×</button></span>`;}).join("")}</div>`:`<div style="font-size:10px;color:#9C7A5A;font-style:italic">尚無喊單</div>`}
+        ${pOrders.length>0?`<div style="display:flex;flex-wrap:wrap;gap:5px">${pOrders.map(o=>{return`<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;background:#EBF7EE;color:#2E7D32;border:1px solid #C8E6C9;padding:3px 6px 3px 10px;border-radius:99px">${o.communityName||o.buyerName}${o.spec?` <span style="background:#C8E6C9;border-radius:4px;padding:0 4px;font-size:10px">${o.spec}</span>`:""} ×${o.qty}<button onclick="deleteOrder('${o.id}')" style="color:#E53935;background:none;border:none;cursor:pointer;font-weight:900;font-size:14px;line-height:1;margin-left:2px">×</button></span>`;}).join("")}</div>`:`<div style="font-size:10px;color:#9C7A5A;font-style:italic">尚無喊單</div>`}
       </div>
     </div>`;
   }).join("");
@@ -3898,7 +4013,7 @@ window.renderCustomers=function(){
           const leftBar=isPreorder?`border-left:4px solid ${isPurchased?"#A7F3D0":"#9333EA"}`:"border-left:4px solid transparent";
           return `<div data-oid="${o.id}" onclick="${isPreorder?`togglePurchased(this.dataset.oid)`:''}" style="display:flex;justify-content:space-between;align-items:center;background:${rowBg};border-radius:8px;padding:6px 10px;${leftBar};${isPreorder?"cursor:pointer;":""}" title="${isPreorder?(isPurchased?"已買到，點擊切換":"待購入，點擊切換已買到"):""}">
             <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0">
-              <span style="font-size:11px;color:#3D2010;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.productName||"商品"} ×${o.qty}</span>
+              <span style="font-size:11px;color:#3D2010;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.productName||"商品"}${o.spec?" ("+o.spec+")":""} ×${o.qty}</span>
             </div>
             <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;margin-left:6px">
               <span style="font-size:11px;font-weight:700;color:#3D2010">NT$${(dp*o.qty).toLocaleString()}</span>
@@ -4040,7 +4155,7 @@ window.renderInvoice=function(){
           return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 4px;border-bottom:1px solid #F5EDE0;background:${rowBg};border-radius:4px;margin:1px 0">
             <div style="display:flex;align-items:center;gap:6px;min-width:0">
               <input type="checkbox" ${checked2?"checked":""} onchange="toggleSelectItem('order','${o.id}')" style="width:14px;height:14px;accent-color:#C5A880;flex-shrink:0"/>
-              <span style="font-size:12px;color:#3D2010;font-weight:600;white-space:nowrap">${o.productName||"商品"} ×${o.qty}</span>
+              <span style="font-size:12px;color:#3D2010;font-weight:600;white-space:nowrap">${o.productName||"商品"}${o.spec?" ("+o.spec+")":""} ×${o.qty}</span>
               ${o.discountNote?`<span style="font-size:9px;background:#FDF6EC;color:#A08060;padding:1px 5px;border-radius:4px">${o.discountNote}</span>`:""}
             </div>
             <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
@@ -4137,7 +4252,7 @@ window.openCustHistory=function(cid){
       ${g.orders.map(o=>{
         const dp=o.discountPrice||o.unitPrice||0;
         return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #FAF8F5">
-          <span style="font-size:12px;color:#3D2010">${o.productName||"商品"} ×${o.qty}</span>
+          <span style="font-size:12px;color:#3D2010">${o.productName||"商品"}${o.spec?" ("+o.spec+")":""} ×${o.qty}</span>
           <span style="font-size:12px;font-weight:700;color:#A08060">NT$${(dp*o.qty).toLocaleString()}</span>
         </div>`;
       }).join("")}
@@ -4151,8 +4266,8 @@ window.copySingleDeposit=function(oid){
   const dp=o.discountPrice||o.unitPrice||0;
   const total=dp*o.qty;
   const deposit=Math.ceil(total*0.5);
-  const text=`【${o.productName||"商品"} ×${o.qty}】\n\n• 總金額 NT$${total.toLocaleString()}\n• 訂金 NT$${deposit.toLocaleString()}\n\n請匯款後告知後五碼，收到訂金後才會進行購買🙏`;
-  if(!confirm(`複製訂金請款並記錄訂金 NT$${deposit.toLocaleString()}？\n（${o.productName||"商品"} ×${o.qty}）`))return;
+  const text=`【${o.productName||"商品"}${o.spec?" ("+o.spec+")":""} ×${o.qty}】\n\n• 總金額 NT$${total.toLocaleString()}\n• 訂金 NT$${deposit.toLocaleString()}\n\n請匯款後告知後五碼，收到訂金後才會進行購買🙏`;
+  if(!confirm(`複製訂金請款並記錄訂金 NT$${deposit.toLocaleString()}？\n（${o.productName||"商品"}${o.spec?" ("+o.spec+")":""} ×${o.qty}）`))return;
   // 自動記錄訂金
   fbUpd("orders",oid,{depositAmt:deposit,status:o.status==="pending"?"deposit":o.status});
   navigator.clipboard?.writeText(text).then(()=>showToast("訂金請款已複製！")).catch(()=>{
@@ -4191,7 +4306,7 @@ window.copyDepositOrder=function(cid,buyerKey){
   const depositTotal=highOrders.reduce((s,o)=>s+Math.ceil((o.discountPrice||o.unitPrice||0)*o.qty*0.5),0);
   const productNames=highOrders.map(o=>o.productName||"商品").join("、");
   const highTotal=highOrders.reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0);
-  const itemLines=highOrders.map(o=>`【${o.productName||"商品"} ×${o.qty}】\n\n• 總金額 NT$${((o.discountPrice||o.unitPrice||0)*o.qty).toLocaleString()}\n• 訂金 NT$${Math.ceil((o.discountPrice||o.unitPrice||0)*o.qty*0.5).toLocaleString()}`).join("\n\n");
+  const itemLines=highOrders.map(o=>`【${o.productName||"商品"}${o.spec?" ("+o.spec+")":""} ×${o.qty}】\n\n• 總金額 NT$${((o.discountPrice||o.unitPrice||0)*o.qty).toLocaleString()}\n• 訂金 NT$${Math.ceil((o.discountPrice||o.unitPrice||0)*o.qty*0.5).toLocaleString()}`).join("\n\n");
   const totalDepositAmt=highOrders.reduce((s,o)=>s+Math.ceil((o.discountPrice||o.unitPrice||0)*o.qty*0.5),0);
   const totalLine=highOrders.length>1?`\n\n合計訂金 NT$${totalDepositAmt.toLocaleString()}`:"";
   const text=`${itemLines}${totalLine}\n\n請匯款後告知後五碼，收到訂金後才會進行購買🙏`;
