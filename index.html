@@ -848,7 +848,15 @@ window.showBrandSuggestions=function(val,isQA){
       <div id="eo-discount-preview" style="display:none;margin-top:8px;background:#FFF9F0;border:1px solid #FCD34D;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;color:#92400E"></div>
     </div>
     <div id="eo-order-list" style="overflow-y:auto;flex:1;padding:12px 16px 8px"></div>
-    <div style="padding:10px 16px 32px;border-top:1px solid #F0E6D0;flex-shrink:0">
+    <div style="padding:10px 16px 32px;border-top:1px solid #F0E6D0;flex-shrink:0;position:relative;overflow:visible">
+      <!-- 新增商品到訂單 -->
+      <div style="margin-bottom:10px">
+        <div style="font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:6px">＋ 新增商品到此訂單</div>
+        <div style="position:relative">
+          <input type="text" id="eo-prod-search" placeholder="🔍 搜尋商品名稱..." oninput="eoSearchProducts(this.value)" onblur="setTimeout(()=>{const r=document.getElementById('eo-prod-results');if(r)r.style.display='none';},200)" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px 12px;font-size:13px;outline:none"/>
+          <div id="eo-prod-results" style="display:none;position:absolute;left:0;right:0;bottom:calc(100% + 4px);background:white;border:1px solid #E8D5B0;border-radius:8px;max-height:200px;overflow-y:auto;z-index:200;box-shadow:0 -4px 16px rgba(0,0,0,0.12)"></div>
+        </div>
+      </div>
       <button onclick="saveAllEditOrders()" style="width:100%;background:#C5A880;color:white;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:700;cursor:pointer">💾 儲存全部修改</button>
     </div>
   </div>
@@ -2495,7 +2503,7 @@ window.saveEditProd=async function(){
     const newHist=[...existing,histEntry].slice(-10); // 最多保留10筆
     await fbUpd("products",m.id,{priceHistory:newHist});
   }
-  closeModal("modal-eprod");showToast("商品已更新");
+  closeModal("modal-eprod");showToast("商品已更新");renderCustomers();renderInvoice();
 };
 
 window.copyLineFormat=function(id){
@@ -2637,7 +2645,7 @@ window.moSelectCust=function(id,community,line){
   const histList=document.getElementById("mo-history-list");
   if(hist&&histList){
     if(tripOrds.length){
-      histList.innerHTML=tripOrds.map(o=>`• ${o.productName||"商品"}${o.spec?" ("+o.spec+")":""} ×${o.qty}  NT$${((o.discountPrice||o.unitPrice||0)*o.qty).toLocaleString()}`).join("<br>");
+      histList.innerHTML=tripOrds.map(o=>`• ${((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品")}${o.spec?" ("+o.spec+")":""} ×${o.qty}  NT$${((o.discountPrice||o.unitPrice||0)*o.qty).toLocaleString()}`).join("<br>");
       hist.style.display="block";
     } else {
       hist.style.display="none";
@@ -2726,6 +2734,75 @@ window.batchDeleteOrders=async function(){
   for(const id of ids)await fbDel("orders",id);
   window.G.selectedOrders.clear();showToast(`已刪除 ${ids.length} 筆訂單`);
 };
+window.eoSearchProducts=function(q){
+  const res=document.getElementById("eo-prod-results");
+  if(!res)return;
+  if(!q.trim()){res.style.display="none";return;}
+  const kw=q.trim().toLowerCase();
+  const matches=window.G.products.filter(p=>(p.name||"").toLowerCase().includes(kw)||(p.id||"").toLowerCase().includes(kw)).slice(0,8);
+  if(!matches.length){res.style.display="none";return;}
+  res.style.display="block";
+  res.innerHTML=matches.map(p=>`
+    <div onclick="eoAddProduct('${p.id}')" style="padding:10px 12px;cursor:pointer;border-bottom:1px solid #F5EFE6;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <span style="font-size:13px;font-weight:700;color:#3D2010">${p.name}</span>
+        <span style="font-size:10px;color:#9C7A5A;margin-left:6px">${p.id}</span>
+      </div>
+      <span style="font-size:13px;font-weight:700;color:#A08060">NT$${p.finalPrice}</span>
+    </div>`).join("");
+};
+
+window.eoAddProduct=async function(productId){
+  if(window.G.eoAdding)return;
+  window.G.eoAdding=true;
+  setTimeout(()=>{window.G.eoAdding=false;},1500);
+  const p=window.G.products.find(x=>x.id===productId);
+  if(!p){showToast("找不到商品","error");window.G.eoAdding=false;return;}
+  const cid=window.G.activeEordCustId;
+  const c=window.G.customers.find(x=>x.id===cid);
+  if(!c){showToast("找不到客戶","error");window.G.eoAdding=false;return;}
+  const tripId=window.G.moSelectedTripId||getLatestTrip()?.id||"";
+  const id="O"+Date.now();
+  const newOrder={id,productId,productName:p.name,productEmoji:p.emoji||"📦",
+    customerId:cid,communityName:c.communityName||"",lineName:c.lineName||"",
+    buyerName:c.communityName||c.lineName||"",
+    qty:1,unitPrice:p.finalPrice,discountPrice:p.finalPrice,total:p.finalPrice,
+    status:"pending",tripId,orderType:"onsite",spec:"",createdAt:Date.now()};
+  await fbSet("orders",id,newOrder);
+  // 不手動 push，讓 Firebase listener 自動同步
+  const search=document.getElementById("eo-prod-search");if(search)search.value="";
+  const res=document.getElementById("eo-prod-results");if(res)res.style.display="none";
+  // 等 Firebase 更新後再重開
+  setTimeout(()=>openEditOrd(id),300);
+  showToast(`已新增 ${p.name}`);
+};
+
+window.eoDeleteOrder=async function(oid){
+  if(!confirm("確定刪除這筆訂單？"))return;
+  await fbDel("orders",oid);
+  window.G.orders=window.G.orders.filter(x=>x.id!==oid);
+  const cid=window.G.activeEordCustId;
+  const remain=window.G.orders.filter(x=>x.customerId===cid);
+  if(remain.length>0){openEditOrd(remain[0].id);}
+  else{closeModal("modal-eord");showToast("已刪除，無剩餘訂單");}
+  renderCustomers();renderInvoice();
+};
+
+window.eoRenderPending=function(){
+  const list=document.getElementById("eo-order-list");
+  if(!list)return;
+  const pending=window.G.eoPendingAdd||[];
+  // 移除之前的暫存顯示
+  list.querySelectorAll(".eo-pending-row").forEach(el=>el.remove());
+  pending.forEach((item,i)=>{
+    const div=document.createElement("div");
+    div.className="eo-pending-row";
+    div.style.cssText="background:#F0FDF4;border:1px dashed #86EFAC;border-radius:10px;padding:10px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center";
+    div.innerHTML=`<span style="font-size:12px;font-weight:700;color:#166534">＋ ${item.productName} NT$${item.finalPrice} <span style="font-size:10px;font-weight:400;color:#4ADE80">（待儲存）</span></span><button onclick="window.G.eoPendingAdd.splice(${i},1);eoRenderPending();" style="color:#DC2626;background:none;border:none;cursor:pointer;font-size:14px;font-weight:900">×</button>`;
+    list.appendChild(div);
+  });
+};
+
 window.eoUpdateDiscountPreview=function(){
   const disc=parseFloat(document.getElementById("eo-shared-discount")?.value)||0;
   const preview=document.getElementById("eo-discount-preview");
@@ -2769,6 +2846,23 @@ window.saveAllEditOrders=async function(){
     await fbUpd("orders",oid,upd);
     count++;
   }
+  // 新增暫存商品
+  const cid=window.G.activeEordCustId;
+  const c=window.G.customers.find(x=>x.id===cid);
+  const tripId=window.G.moSelectedTripId||getLatestTrip()?.id||"";
+  const pending=window.G.eoPendingAdd||[];
+  for(const item of pending){
+    const id="O"+Date.now()+Math.random().toString(36).slice(2,6);
+    const newOrder={id,productId:item.productId,productName:item.productName,productEmoji:item.productEmoji,
+      customerId:cid,communityName:c?.communityName||"",lineName:c?.lineName||"",
+      buyerName:c?.communityName||c?.lineName||"",
+      qty:1,unitPrice:item.finalPrice,discountPrice:item.finalPrice,total:item.finalPrice,
+      status:"pending",tripId,orderType:"onsite",spec:"",createdAt:Date.now()};
+    await fbSet("orders",id,newOrder);
+    window.G.orders.push(newOrder);
+    count++;
+  }
+  window.G.eoPendingAdd=[];
   closeModal("modal-eord");
   showToast(`已更新 ${count} 筆訂單`);
 };
@@ -2876,7 +2970,7 @@ window.exportShippingCSV=function(){
     if(!bMap[buyer])bMap[buyer]={name:buyer,lineName:o.lineName||"",qty:0,price:0,items:[]};
     const price=o.discountPrice||o.unitPrice||(p?.finalPrice)||0;
     bMap[buyer].qty+=o.qty;bMap[buyer].price+=price*o.qty;
-    bMap[buyer].items.push({emoji:p?.emoji||"📦",name:o.productName||p?.name||"",qty:o.qty,price,status:o.status});
+    bMap[buyer].items.push({emoji:p?.emoji||"📦",name:(window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||p?.name||"",qty:o.qty,price,status:o.status});
   });
   const sl={pending:"待對帳",settled:"已結單",shipped:"已寄出"};
   const buyers=Object.values(bMap).sort((a,b)=>a.name.localeCompare(b.name,"zh-Hant"));
@@ -3519,6 +3613,15 @@ window.renderStats=function(){
   const catMap={};
   const prodMap={};
   const custMap={};
+  // 先計算每個客戶的折扣
+  const custDiscountMap={};
+  orders.forEach(o=>{
+    if(o.sharedDiscount>0){
+      const key=o.customerId||o.communityName||o.buyerName||"";
+      custDiscountMap[key]=(custDiscountMap[key]||0)+o.sharedDiscount;
+    }
+  });
+  const totalDiscount=Object.values(custDiscountMap).reduce((s,v)=>s+v,0);
   orders.forEach(o=>{
     const p=products.find(x=>x.id===o.productId);
     const price=(o.discountPrice||o.unitPrice||0);
@@ -3540,6 +3643,7 @@ window.renderStats=function(){
     if(!custMap[cname])custMap[cname]={name:cname,rev:0,qty:0};
     custMap[cname].rev+=total; custMap[cname].qty+=o.qty;
   });
+  rev=rev-totalDiscount;
   const grossProfit=Math.round(rev-cost);
   const margin=rev>0?Math.round((grossProfit/rev)*100):0;
 
@@ -3852,6 +3956,10 @@ window.openEditOrd=function(oid){
   const o=window.G.orders.find(x=>x.id===oid);
   if(!o){showToast("找不到訂單","error");return;}
   const cid=o.customerId||"";
+  window.G.activeEordCustId=cid;
+  window.G.eoPendingAdd=[];
+  const sr=document.getElementById("eo-prod-search");if(sr)sr.value="";
+  const rr=document.getElementById("eo-prod-results");if(rr)rr.style.display="none";
   const cname=(o.communityName||o.buyerName||"").trim().toLowerCase();
   const cline=(o.lineName||"").trim().toLowerCase();
   const cOrders=window.G.orders.filter(x=>{
@@ -3864,7 +3972,8 @@ window.openEditOrd=function(oid){
     return false;
   });
   const custName=o.communityName||o.buyerName||"未知買家";
-  const total=cOrders.reduce((s,x)=>s+(x.discountPrice||x.unitPrice||0)*x.qty,0);
+  const sharedDiscountAmt=cOrders.find(x=>x.sharedDiscount>0)?.sharedDiscount||0;
+  const total=cOrders.reduce((s,x)=>s+(x.discountPrice||x.unitPrice||0)*x.qty,0)-sharedDiscountAmt;
   const sl={pending:"待訂金",deposit:"已付訂金",settled:"已付尾款",shipped:"已寄出"};
   const scol={pending:"#E07B39",deposit:"#9333EA",settled:"#2E7D32",shipped:"#2980B9"};
 
@@ -3892,10 +4001,13 @@ window.openEditOrd=function(oid){
     return `<div style="background:${rowBg};border:1px solid #E8D5B0;border-radius:12px;padding:12px 14px;margin-bottom:8px" data-oid="${x.id}">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <div style="display:flex;align-items:center;gap:6px">
-          <span style="font-size:13px;font-weight:700;color:#3D2010">${x.productName||"商品"}</span>
+          <span style="font-size:13px;font-weight:700;color:#3D2010">${(window.G.products.find(p=>p.id===x.productId)?.name)||x.productName||"商品"}</span>
           ${purchasedTag}
         </div>
-        <span style="font-size:10px;font-weight:700;color:${scol[x.status]||"#9C7A5A"}">${sl[x.status]||""}</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:10px;font-weight:700;color:${scol[x.status]||"#9C7A5A"}">${sl[x.status]||""}</span>
+          <button onclick="eoDeleteOrder('${x.id}')" style="color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;border-radius:6px;padding:2px 7px;font-size:11px;cursor:pointer;font-weight:700">刪除</button>
+        </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
         <div>
@@ -4065,7 +4177,8 @@ window.renderCustomers=function(){
       if(cLine&&oLine&&cLine===oLine)return true;
       return false;
     });
-    const cT=cO.reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0);
+    const cDisc=cO.find(o=>o.sharedDiscount>0)?.sharedDiscount||0;
+    const cT=cO.reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0)-cDisc;
     const cP=cO.filter(o=>o.status==="pending").length;
     const checked=selectedCustomers.has(c.id);
     const safeC={id:c.id};
@@ -4111,7 +4224,7 @@ window.renderCustomers=function(){
           const leftBar=isPreorder?`border-left:4px solid ${isPurchased?"#A7F3D0":"#9333EA"}`:"border-left:4px solid transparent";
           return `<div data-oid="${o.id}" onclick="${isPreorder?`togglePurchased(this.dataset.oid)`:''}" style="display:flex;justify-content:space-between;align-items:center;background:${rowBg};border-radius:8px;padding:6px 10px;${leftBar};${isPreorder?"cursor:pointer;":""}" title="${isPreorder?(isPurchased?"已買到，點擊切換":"待購入，點擊切換已買到"):""}">
             <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0">
-              <span style="font-size:11px;color:#3D2010;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.productName||"商品"}${o.spec?" ("+o.spec+")":""} ×${o.qty}</span>
+              <span style="font-size:11px;color:#3D2010;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品")}${o.spec?" ("+o.spec+")":""} ×${o.qty}</span>
             </div>
             <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;margin-left:6px">
               <span style="font-size:11px;font-weight:700;color:#3D2010">NT$${(dp*o.qty).toLocaleString()}</span>
@@ -4221,7 +4334,8 @@ window.renderInvoice=function(){
     const statusColor={pending:"#F59E0B",deposit:"#9333EA",settled:"#10B981",shipped:"#3B82F6",mixed:"#9C7A5A"};
     const statusLabel={pending:"待訂金",deposit:"已付訂金",settled:"已付尾款",shipped:"已寄出",mixed:"狀態不一"};
     const totalDeposit=b.orders.reduce((s,o)=>s+(o.depositAmt||0),0);
-    const totalAmt=b.total;
+    const bDisc=b.orders.find(o=>o.sharedDiscount>0)?.sharedDiscount||0;
+    const totalAmt=b.total-bDisc;
     const remaining=totalAmt-totalDeposit;
     return `<div style="background:white;border-radius:14px;border:1px solid ${allChecked?"#C5A880":"#E8D5B0"};margin-bottom:10px;overflow:hidden">
       <!-- 客戶標題列 -->
@@ -4253,7 +4367,7 @@ window.renderInvoice=function(){
           return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 4px;border-bottom:1px solid #F5EDE0;background:${rowBg};border-radius:4px;margin:1px 0">
             <div style="display:flex;align-items:center;gap:6px;min-width:0">
               <input type="checkbox" ${checked2?"checked":""} onchange="toggleSelectItem('order','${o.id}')" style="width:14px;height:14px;accent-color:#C5A880;flex-shrink:0"/>
-              <span style="font-size:12px;color:#3D2010;font-weight:600;white-space:nowrap">${o.productName||"商品"}${o.spec?" ("+o.spec+")":""} ×${o.qty}</span>
+              <span style="font-size:12px;color:#3D2010;font-weight:600;white-space:nowrap">${((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品")}${o.spec?" ("+o.spec+")":""} ×${o.qty}</span>
               ${o.discountNote?`<span style="font-size:9px;background:#FDF6EC;color:#A08060;padding:1px 5px;border-radius:4px">${o.discountNote}</span>`:""}
             </div>
             <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
@@ -4350,7 +4464,7 @@ window.openCustHistory=function(cid){
       ${g.orders.map(o=>{
         const dp=o.discountPrice||o.unitPrice||0;
         return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #FAF8F5">
-          <span style="font-size:12px;color:#3D2010">${o.productName||"商品"}${o.spec?" ("+o.spec+")":""} ×${o.qty}</span>
+          <span style="font-size:12px;color:#3D2010">${((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品")}${o.spec?" ("+o.spec+")":""} ×${o.qty}</span>
           <span style="font-size:12px;font-weight:700;color:#A08060">NT$${(dp*o.qty).toLocaleString()}</span>
         </div>`;
       }).join("")}
@@ -4364,8 +4478,8 @@ window.copySingleDeposit=function(oid){
   const dp=o.discountPrice||o.unitPrice||0;
   const total=dp*o.qty;
   const deposit=Math.ceil(total*0.5);
-  const text=`【${o.productName||"商品"}${o.spec?" ("+o.spec+")":""} ×${o.qty}】\n\n• 總金額 NT$${total.toLocaleString()}\n• 訂金 NT$${deposit.toLocaleString()}\n\n請匯款後告知後五碼，收到訂金後才會進行購買🙏`;
-  if(!confirm(`複製訂金請款並記錄訂金 NT$${deposit.toLocaleString()}？\n（${o.productName||"商品"}${o.spec?" ("+o.spec+")":""} ×${o.qty}）`))return;
+  const text=`【${((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品")}${o.spec?" ("+o.spec+")":""} ×${o.qty}】\n\n• 總金額 NT$${total.toLocaleString()}\n• 訂金 NT$${deposit.toLocaleString()}\n\n請匯款後告知後五碼，收到訂金後才會進行購買🙏`;
+  if(!confirm(`複製訂金請款並記錄訂金 NT$${deposit.toLocaleString()}？\n（${((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品")}${o.spec?" ("+o.spec+")":""} ×${o.qty}）`))return;
   // 自動記錄訂金
   fbUpd("orders",oid,{depositAmt:deposit,status:o.status==="pending"?"deposit":o.status});
   navigator.clipboard?.writeText(text).then(()=>showToast("訂金請款已複製！")).catch(()=>{
@@ -4402,9 +4516,9 @@ window.copyDepositOrder=function(cid,buyerKey){
   const highOrders=orders.filter(o=>(o.discountPrice||o.unitPrice||0)>=1000);
   if(!highOrders.length){showToast("沒有高單價商品","warning");return;}
   const depositTotal=highOrders.reduce((s,o)=>s+Math.ceil((o.discountPrice||o.unitPrice||0)*o.qty*0.5),0);
-  const productNames=highOrders.map(o=>o.productName||"商品").join("、");
+  const productNames=highOrders.map(o=>((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品")).join("、");
   const highTotal=highOrders.reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0);
-  const itemLines=highOrders.map(o=>`【${o.productName||"商品"}${o.spec?" ("+o.spec+")":""} ×${o.qty}】\n\n• 總金額 NT$${((o.discountPrice||o.unitPrice||0)*o.qty).toLocaleString()}\n• 訂金 NT$${Math.ceil((o.discountPrice||o.unitPrice||0)*o.qty*0.5).toLocaleString()}`).join("\n\n");
+  const itemLines=highOrders.map(o=>`【${((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品")}${o.spec?" ("+o.spec+")":""} ×${o.qty}】\n\n• 總金額 NT$${((o.discountPrice||o.unitPrice||0)*o.qty).toLocaleString()}\n• 訂金 NT$${Math.ceil((o.discountPrice||o.unitPrice||0)*o.qty*0.5).toLocaleString()}`).join("\n\n");
   const totalDepositAmt=highOrders.reduce((s,o)=>s+Math.ceil((o.discountPrice||o.unitPrice||0)*o.qty*0.5),0);
   const totalLine=highOrders.length>1?`\n\n合計訂金 NT$${totalDepositAmt.toLocaleString()}`:"";
   const text=`${itemLines}${totalLine}\n\n請匯款後告知後五碼，收到訂金後才會進行購買🙏`;
@@ -4439,7 +4553,7 @@ window.copyCustOrder=function(cid){
   const discountedTotal=total-sharedDiscount;
   const totalDeposit=cO.filter(o=>(o.discountPrice||o.unitPrice||0)>=1000).reduce((s,o)=>s+(o.depositAmt||0),0);
   const payNow=Math.max(0,discountedTotal-totalDeposit-100);
-  const lines=cO.map(o=>{const dp=o.discountPrice||o.unitPrice||0;return "• "+(o.productName||"商品")+(o.spec?" ("+o.spec+")":"")+" ×"+o.qty+"  NT$"+(dp*o.qty).toLocaleString();});
+  const lines=cO.map(o=>{const dp=o.discountPrice||o.unitPrice||0;return "• "+(((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品"))+(o.spec?" ("+o.spec+")":"")+" ×"+o.qty+"  NT$"+(dp*o.qty).toLocaleString();});
   const discountLine=sharedDiscount>0?`\n折扣：-NT$${sharedDiscount.toLocaleString()}\n折後總額：NT$${discountedTotal.toLocaleString()}`:"";
   const remainder=discountedTotal-totalDeposit;
   const summaryBlock=totalDeposit>0
@@ -4468,7 +4582,7 @@ window.copyBuyerOrder=function(buyerKey){
   const total=buyerOrders.reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0);
   const totalDeposit=buyerOrders.filter(o=>(o.discountPrice||o.unitPrice||0)>=1000).reduce((s,o)=>s+(o.depositAmt||0),0);
   const payNow=Math.max(0,total-totalDeposit-100);
-  const lines=buyerOrders.map(o=>{const dp=o.discountPrice||o.unitPrice||0;return "• "+(o.productName||"商品")+" ×"+o.qty+"  NT$"+(dp*o.qty).toLocaleString();});
+  const lines=buyerOrders.map(o=>{const dp=o.discountPrice||o.unitPrice||0;return "• "+(((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品"))+" ×"+o.qty+"  NT$"+(dp*o.qty).toLocaleString();});
   const remainder=total-totalDeposit;
   const summaryBlock=totalDeposit>0
     ?`\n\n總金額 NT$${total.toLocaleString()}\n已付訂金：NT$${totalDeposit.toLocaleString()}\n尾款：NT$${remainder.toLocaleString()}\n\n匯款金額 NT$${payNow.toLocaleString()}（保留 NT$100 交貨便貨到付款）`
