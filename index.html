@@ -163,28 +163,7 @@ window.showBrandSuggestions=function(val,isQA){
 
   <!-- ★ 即時結果卡（輸入金額後馬上顯示，就在金額框正下方） -->
 
-  <div id="c-welcome" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:10px;opacity:0.4;align-items:stretch">
-    <div style="background:#FFF0E0;border:1px solid #FFD4A8;border-radius:10px;padding:8px 10px;min-height:80px">
-      <div style="font-size:9px;color:#A0522D;font-weight:700;margin-bottom:2px">退稅後成本</div>
-      <div style="font-size:13px;font-weight:900;color:#A0522D">—</div>
-    </div>
-    <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:8px 10px;min-height:80px">
-      <div style="font-size:9px;color:#92400E;font-weight:700;margin-bottom:2px">利潤/毛利率</div>
-      <div style="font-size:13px;font-weight:900;color:#92400E">—</div>
-    </div>
-    <div style="background:#EAF4FD;border:1px solid #90D7FF;border-radius:10px;padding:8px 10px;min-height:80px">
-      <div style="font-size:9px;color:#0277BD;font-weight:700;margin-bottom:2px">建議售價</div>
-      <div style="font-size:13px;font-weight:900;color:#0277BD">—</div>
-    </div>
-    <div style="background:#FFF0F0;border:2px solid #FF6B6B;border-radius:10px;padding:8px 10px">
-      <div style="font-size:9px;color:#C0392B;font-weight:700;margin-bottom:2px">最終售價</div>
-      <div style="font-size:15px;font-weight:900;color:#C0392B;line-height:1;margin-bottom:5px">—</div>
-      <div style="background:white;border:1px solid #FF6B6B;border-radius:6px;padding:3px 7px">
-        <span style="font-size:9px;color:#9C7A5A">✏️ 自訂</span>
-      </div>
-    </div>
-  </div>
-  <div id="c-results" style="display:none;margin-bottom:10px">
+  <div id="c-results" style="display:block;margin-bottom:10px">
     <!-- 合併卡片 -->
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:8px">
       <!-- 成本 -->
@@ -214,7 +193,7 @@ window.showBrandSuggestions=function(val,isQA){
       </div>
     </div>
     <!-- 快速選價 -->
-    <div id="r-quick-btns" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px"></div>
+    <div id="r-quick-btns" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px;min-height:34px"></div>
 
     <!-- 低於成本警示 -->
     <div id="r-cost-warn" style="display:none;background:#FDEDEC;border:1px solid #F1948A;border-radius:10px;padding:8px 14px;margin-bottom:8px;font-size:12px;font-weight:700;color:#C0392B;text-align:center">
@@ -2088,7 +2067,8 @@ window.calcUpdate=function(){
   const results=document.getElementById("c-results");
   const welcome=document.getElementById("c-welcome");
   if(amt>0){
-    results.style.display="block";welcome.style.display="none";
+    if(results)results.style.display="block";
+    if(welcome)welcome.style.display="none";
     const cur=window.G.currency;
     const{beforeTax,afterTax}=calcCost(amt,cur);
     const cat=window.G.calcCat||"food";
@@ -2155,7 +2135,12 @@ window.calcUpdate=function(){
       document.getElementById("r-rival-msg").textContent=msg;
     } else if(rivalRow){rivalRow.style.display="none";}
   } else {
-    if(results.style.display==="none"){welcome.style.display="grid";}
+    // 金額清空時維持結果區，只清空數字顯示
+    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+    set("r-after","—");set("r-sugg","—");set("r-final","—");set("r-profit","—");set("r-margin","—");
+    const qEl=document.getElementById("r-quick-btns");if(qEl)qEl.innerHTML="";
+    const twRow=document.getElementById("r-tw-row");if(twRow)twRow.style.display="none";
+    const rivalRow=document.getElementById("r-rival-row");if(rivalRow)rivalRow.style.display="none";
   }
 };
 
