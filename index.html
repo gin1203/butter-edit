@@ -974,7 +974,8 @@ window.showBrandSuggestions=function(val,isQA){
       <div id="qa-price-hint" style="background:#F5E6C8;border:1.5px solid #C5A880;border-radius:10px;padding:8px 14px;text-align:center;display:flex;flex-direction:column;justify-content:center;min-height:54px">
         <div style="font-size:9px;color:#9C7A5A;font-weight:700">建議售價</div>
         <div id="qa-price-hint-val" style="font-size:18px;font-weight:900;color:#3D2010;line-height:1.2">-</div>
-        <div id="qa-price-hint-cost" style="font-size:9px;color:#9C7A5A;margin-top:1px"></div>
+        <div id="qa-price-hint-cost" style="font-size:11px;font-weight:700;color:#7A5C3A;margin-top:2px"></div>
+        <div id="qa-price-hint-profit" style="font-size:9px;font-weight:700;margin-top:2px"></div>
       </div>
       <div style="position:relative;display:flex;align-items:stretch">
         <input type="text" inputmode="numeric" id="qa-amt" placeholder="例如：12000" oninput="qaCalcPrice()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:11px 40px 11px 14px;font-size:18px;font-weight:700;outline:none"/>
@@ -4520,8 +4521,11 @@ window.qaCalcPrice=function(){
     }).join("");
   }
   const finalPrice=window.G.qaSelectedPrice||sugg;
+  const profit=Math.round((finalPrice-afterTax)*10)/10;
   if(hintVal)hintVal.textContent=`NT$ ${finalPrice}`;
   if(hintCost)hintCost.textContent=`成本 NT$${afterTax}`;
+  const hp=document.getElementById("qa-price-hint-profit");
+  if(hp){hp.textContent=profit>=0?`利潤 NT$${profit}`:`虧損 NT$${Math.abs(profit)}`;hp.style.color=profit>=0?"#66BB6A":"#EF5350";}
 };
 
 window.qaImgPick=async function(input){
