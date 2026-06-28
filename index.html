@@ -737,11 +737,33 @@ window.showBrandSuggestions=function(val,isQA){
     </div>
     <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">商品類別</label>
     <div id="ep-cat-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:12px"></div>
+    <!-- 購買通路 -->
+    <div style="margin-bottom:12px">
+      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:6px">🏪 購買通路（選填）</label>
+      <div id="ep-channel-btns" style="display:flex;flex-wrap:wrap;gap:6px">
+        <button class="ep-ch-btn  active" data-ch="" onclick="epSelectChannel(this,'')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #5C3A1E;background:#5C3A1E;color:white;cursor:pointer">未指定</button>
+        <button class="ep-ch-btn" data-ch="OLIVE YOUNG" onclick="epSelectChannel(this,'OLIVE YOUNG')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧴 OLIVE YOUNG</button>
+        <button class="ep-ch-btn" data-ch="樂天超市" onclick="epSelectChannel(this,'樂天超市')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛒 樂天超市</button>
+        <button class="ep-ch-btn" data-ch="No Brand" onclick="epSelectChannel(this,'No Brand')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 No Brand</button>
+        <button class="ep-ch-btn" data-ch="GS25" onclick="epSelectChannel(this,'GS25')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 GS25</button>
+        <button class="ep-ch-btn" data-ch="CU" onclick="epSelectChannel(this,'CU')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 CU</button>
+        <button class="ep-ch-btn" data-ch="大創 DAISO" onclick="epSelectChannel(this,'大創 DAISO')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 大創 DAISO</button>
+        <button class="ep-ch-btn" data-ch="MIMILINE" onclick="epSelectChannel(this,'MIMILINE')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎀 MIMILINE</button>
+        <button class="ep-ch-btn" data-ch="ARTBOX" onclick="epSelectChannel(this,'ARTBOX')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 ARTBOX</button>
+        <button class="ep-ch-btn" data-ch="29CM" onclick="epSelectChannel(this,'29CM')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">💻 29CM</button>
+        <button class="ep-ch-btn" data-ch="Object" onclick="epSelectChannel(this,'Object')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Object</button>
+        <button class="ep-ch-btn" data-ch="Point of View" onclick="epSelectChannel(this,'Point of View')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Point of View</button>
+        <button class="ep-ch-btn" data-ch="BUTTER" onclick="epSelectChannel(this,'BUTTER')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧈 BUTTER</button>
+        <button class="ep-ch-btn" data-ch="新世界/樂天百貨" onclick="epSelectChannel(this,'新世界/樂天百貨')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏢 百貨/免稅</button>
+        <button class="ep-ch-btn" data-ch="廣藏市場" onclick="epSelectChannel(this,'廣藏市場')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏮 廣藏市場</button>
+        <button class="ep-ch-btn" data-ch="其他" onclick="epSelectChannel(this,'其他')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">📦 其他</button>
+      </div>
+    </div>
     <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">商品名稱</label>
     <input type="text" id="ep-name" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none;margin-bottom:10px"/>
     <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">原幣金額 <span id="ep-sym" style="color:#C5A880"></span></label>
     <input type="text" inputmode="numeric" id="ep-foreign" oninput="epForeignChange()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none;margin-bottom:6px"/>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:6px">
       <div style="background:#FFF0E0;border:1px solid #FFD4A8;border-radius:10px;padding:8px 10px">
         <div style="font-size:9px;color:#A0522D;font-weight:700;margin-bottom:2px">退稅後成本</div>
         <div id="ep-after" style="font-size:13px;font-weight:900;color:#A0522D">-</div>
@@ -754,16 +776,19 @@ window.showBrandSuggestions=function(val,isQA){
         <div style="font-size:9px;color:#166534;font-weight:700;margin-bottom:2px">利潤</div>
         <div id="ep-profit-display" style="font-size:13px;font-weight:900;color:#166534">-</div>
       </div>
-      <div style="background:#FFF0F0;border:1.5px solid #FF6B6B;border-radius:10px;padding:8px 10px">
-        <div style="font-size:9px;color:#C0392B;font-weight:700;margin-bottom:2px">最終售價</div>
-        <div id="ep-final-display" style="font-size:13px;font-weight:900;color:#C0392B;margin-bottom:4px">-</div>
-        <div style="background:white;border:1px solid #FF6B6B;border-radius:6px;padding:3px 7px;display:flex;align-items:center;gap:4px">
-          <span style="font-size:9px;color:#9C7A5A">✏️</span>
-          <input type="text" inputmode="numeric" id="ep-price" onfocus="this.dataset.manual='1'" oninput="epRivalCheck()" placeholder="自訂" style="flex:1;background:transparent;border:none;font-size:12px;font-weight:700;color:#3D2010;outline:none;width:100%"/>
-          <button onclick="const el=document.getElementById('ep-price');if(el){el.value='';el.dataset.manual='';epRivalCheck();}" style="background:none;border:none;cursor:pointer;color:#FF6B6B;font-size:12px;line-height:1;padding:0">✕</button>
+      <div id="ep-before" style="display:none">-</div>
+    </div>
+    <!-- 最終售價獨立一列，避免手機被截斷 -->
+    <div style="background:#FFF0F0;border:1.5px solid #FF6B6B;border-radius:10px;padding:10px 14px;margin-bottom:10px">
+      <div style="font-size:9px;color:#C0392B;font-weight:700;margin-bottom:4px">最終售價</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div id="ep-final-display" style="font-size:16px;font-weight:900;color:#C0392B;min-width:80px">-</div>
+        <div style="flex:1;background:white;border:1px solid #FF6B6B;border-radius:8px;padding:6px 10px;display:flex;align-items:center;gap:6px">
+          <span style="font-size:11px;color:#9C7A5A">✏️ 自訂</span>
+          <input type="text" inputmode="numeric" id="ep-price" onfocus="this.dataset.manual='1'" oninput="epRivalCheck()" placeholder="輸入金額" style="flex:1;background:transparent;border:none;font-size:14px;font-weight:700;color:#3D2010;outline:none;min-width:0"/>
+          <button onclick="const el=document.getElementById('ep-price');if(el){el.value='';el.dataset.manual='';epRivalCheck();}" style="background:none;border:none;cursor:pointer;color:#FF6B6B;font-size:16px;line-height:1;padding:0;flex-shrink:0">✕</button>
         </div>
       </div>
-      <div id="ep-before" style="display:none">-</div>
     </div>
     <!-- 加價選項 -->
     <div style="background:#FDF6EC;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;margin-bottom:10px">
@@ -1719,6 +1744,17 @@ window.openModal=function(id,data){
       document.getElementById("ep-url").value=data.url||"";
       // 類別選擇格
       window.G.editCatKey=data.catKey||"food";
+      // 通路選擇還原
+      window.G.editChannel=data.channel||"";
+      setTimeout(()=>{
+        document.querySelectorAll(".ep-ch-btn").forEach(b=>{
+          const active=b.dataset.ch===(data.channel||"");
+          b.style.background=active?"#5C3A1E":"white";
+          b.style.borderColor=active?"#5C3A1E":"#E8D5B0";
+          b.style.color=active?"white":"#9C7A5A";
+          active?b.classList.add("active"):b.classList.remove("active");
+        });
+      },30);
       // 加價選項填入
       const f=data.flags||{};
       [["ep-flag-cold","isCold"],["ep-flag-coldHigh","coldHigh"],["ep-flag-heavy","isHeavy"],["ep-flag-large","isLarge"],["ep-flag-limited","limitedShoe"]].forEach(([id,key])=>{
@@ -1973,45 +2009,20 @@ window.BRAND_DB=[
   {n:"Givenchy",cat:"luxury"},{n:"Balenciaga",cat:"luxury"},{n:"Miu Miu",cat:"luxury"},
   {n:"Versace",cat:"luxury"},{n:"Coach",cat:"luxury"},{n:"Kate Spade",cat:"luxury"},
   {n:"Marc Jacobs",cat:"luxury"},{n:"Longchamp",cat:"luxury"},{n:"Furla",cat:"luxury"},
-  {n:"Matin Kim",cat:"luxury",url:"https://matinkim.shop/"},{n:"Stand Oil",cat:"luxury",url:"https://en.standoil.kr/"},
+  {n:"Matin Kim",cat:"luxury"},{n:"Stand Oil",cat:"luxury"},
   // 墨鏡
   {n:"Gentle Monster",cat:"sunglasses"},{n:"Blue Elephant",cat:"sunglasses"},
-  {n:"Tamburins",cat:"beauty",url:"https://www.tamburins.com/en/"},
-  // 配件飾品
-  {n:"NYUNYU",cat:"accessory",url:"https://www.en-nyunyu.com/"},{n:"뉴뉴",cat:"accessory",url:"https://www.en-nyunyu.com/"},
-  {n:"MUCENT",cat:"accessory",url:"https://mucent.kr/"},{n:"무센트",cat:"accessory",url:"https://mucent.kr/"},
+  {n:"Tamburins",cat:"sunglasses"},
   // 鞋子
-  {n:"Nike",cat:"shoes"},{n:"Adidas",cat:"shoes"},{n:"愛迪達",cat:"shoes"},
-  {n:"PUMA",cat:"shoes"},
+  {n:"Nike",cat:"shoes"},{n:"Adidas",cat:"shoes"},{n:"PUMA",cat:"shoes"},
   {n:"New Balance",cat:"shoes"},{n:"Converse",cat:"shoes"},{n:"Vans",cat:"shoes"},
   {n:"Asics",cat:"shoes"},{n:"Reebok",cat:"shoes"},{n:"Saucony",cat:"shoes"},
   {n:"Salomon",cat:"shoes"},{n:"On Running",cat:"shoes"},{n:"Hoka",cat:"shoes"},
   {n:"Brooks",cat:"shoes"},{n:"Mizuno",cat:"shoes"},{n:"Onitsuka Tiger",cat:"shoes"},
-  {n:"Chaakan",cat:"shoes",url:"https://chaakan.co.kr/"},{n:"착한구두",cat:"shoes",url:"https://chaakan.co.kr/"},
-  {n:"EPT",cat:"shoes",url:"https://eastpacifictrade.com/"},{n:"이피티",cat:"shoes",url:"https://eastpacifictrade.com/"},
   // 衣服
   {n:"SPAO",cat:"clothes"},{n:"GU",cat:"clothes"},{n:"Uniqlo",cat:"clothes"},
-  {n:"MLB",cat:"clothes",url:"https://en.mlb-korea.com/"},{n:"Musinsa",cat:"clothes"},{n:"Ader Error",cat:"clothes"},
-  {n:"Instantfunk",cat:"clothes"},{n:"Covernat",cat:"clothes",url:"https://en.covernat.co.kr/"},{n:"Discovery",cat:"clothes"},
-  {n:"Wacky Willy",cat:"clothes",url:"https://wackywilly.co.kr/"},{n:"와키윌리",cat:"clothes",url:"https://wackywilly.co.kr/"},
-  {n:"The North Face",cat:"clothes",url:"https://www.thenorthfacekorea.co.kr/"},
-  {n:"노스페이스",cat:"clothes",url:"https://www.thenorthfacekorea.co.kr/"},
-  {n:"Alo",cat:"clothes",url:"https://www.aloyoga.com/"},
-  {n:"JUUNEEDU",cat:"clothes",url:"https://juuneedu.com/"},{n:"쥬니쥬",cat:"clothes",url:"https://juuneedu.com/"},
-  {n:"Verish",cat:"clothes",url:"https://verishshop.com/"},{n:"베리시",cat:"clothes",url:"https://verishshop.com/"},
-  {n:"Mardi Mercredi",cat:"clothes",url:"https://global.mardimercredi.com/"},
-  {n:"마르디 메크르디",cat:"clothes",url:"https://global.mardimercredi.com/"},
-  {n:"MARITHÉ",cat:"clothes",url:"https://en.marithe-official.com/"},
-  {n:"마리떼",cat:"clothes",url:"https://en.marithe-official.com/"},
-  {n:"EMIS",cat:"clothes",url:"https://en.emis.kr/"},
-  {n:"aeae",cat:"clothes",url:"https://ae-ae.kr/"},
-  {n:"GLOWNY",cat:"clothes",url:"https://en.glowny.co.kr/"},{n:"글로니",cat:"clothes",url:"https://en.glowny.co.kr/"},
-  {n:"Rest & Recreation",cat:"clothes",url:"https://restandrecreation.com/"},
-  {n:"레스트앤레크레이션",cat:"clothes",url:"https://restandrecreation.com/"},
-  {n:"SATUR",cat:"clothes",url:"https://satur.co.kr/"},{n:"세터",cat:"clothes",url:"https://satur.co.kr/"},
-  {n:"KODAK",cat:"clothes",url:"https://hilightbrands-kodak.co.kr/"},
-  {n:"8 SECONDS",cat:"clothes",url:"https://www.ssfshop.com/8Seconds"},
-  {n:"에잇세컨즈",cat:"clothes",url:"https://www.ssfshop.com/8Seconds"},
+  {n:"MLB",cat:"clothes"},{n:"Musinsa",cat:"clothes"},{n:"Ader Error",cat:"clothes"},
+  {n:"Instantfunk",cat:"clothes"},{n:"Covernat",cat:"clothes"},{n:"Discovery",cat:"clothes"},
   // 美妝保養（韓系）
   {n:"COSRX",cat:"beauty"},{n:"Laneige",cat:"beauty"},{n:"蘭芝",cat:"beauty"},
   {n:"Innisfree",cat:"beauty"},{n:"Etude",cat:"beauty"},{n:"Missha",cat:"beauty"},
@@ -2022,13 +2033,6 @@ window.BRAND_DB=[
   {n:"Skin1004",cat:"beauty"},{n:"isntree",cat:"beauty"},{n:"Round Lab",cat:"beauty"},
   {n:"Abib",cat:"beauty"},{n:"Sulwhasoo",cat:"beauty"},{n:"雪花秀",cat:"beauty"},
   {n:"Hera",cat:"beauty"},{n:"Klavuu",cat:"beauty"},{n:"Banila Co",cat:"beauty"},
-  {n:"NONFICTION",cat:"beauty",url:"https://nonfiction.com/"},
-  {n:"Olive Young",cat:"beauty",url:"https://global.oliveyoung.com/"},
-  {n:"HARNN",cat:"beauty",url:"https://www.harnn.com/"},
-  {n:"LOE",cat:"beauty",url:"https://loe-cosmetics-us.com/"},{n:"로에",cat:"beauty",url:"https://loe-cosmetics-us.com/"},
-  {n:"KINFOLK Notes",cat:"beauty",url:"https://kinfolknotes.com/"},
-  {n:"킨포크노츠",cat:"beauty",url:"https://kinfolknotes.com/"},
-  {n:"hetras",cat:"beauty",url:"https://hetras.co.kr/"},{n:"헤트라스",cat:"beauty",url:"https://hetras.co.kr/"},
   // 美妝（歐美）
   {n:"MAC",cat:"beauty"},{n:"NARS",cat:"beauty"},{n:"Laura Mercier",cat:"beauty"},
   {n:"Bobbi Brown",cat:"beauty"},{n:"Urban Decay",cat:"beauty"},
@@ -2038,24 +2042,8 @@ window.BRAND_DB=[
   {n:"Vichy",cat:"beauty"},{n:"薇姿",cat:"beauty"},{n:"Avene",cat:"beauty"},
   {n:"雅漾",cat:"beauty"},{n:"Bioderma",cat:"beauty"},{n:"貝德瑪",cat:"beauty"},
   // 包包
-  {n:"Matin Kim",cat:"bag",url:"https://matinkim.shop/"},{n:"Stand Oil",cat:"bag",url:"https://en.standoil.kr/"},
-  {n:"Longchamp",cat:"bag"},{n:"Coach",cat:"bag"},{n:"Tumi",cat:"bag"},
-  {n:"Fennec",cat:"bag",url:"https://en.fennec.co.kr/"},{n:"페넥",cat:"bag",url:"https://en.fennec.co.kr/"},
-  {n:"Ason",cat:"bag",url:"https://ason.kr/"},{n:"에이슨",cat:"bag",url:"https://ason.kr/"},
-  {n:"Carlyn",cat:"bag",url:"https://carlynmall.net/"},{n:"칼린",cat:"bag",url:"https://carlynmall.net/"},
-  {n:"The Barnnet",cat:"bag",url:"https://the-barnnet.com/"},{n:"더바넷",cat:"bag",url:"https://the-barnnet.com/"},
-  {n:"SATUR",cat:"bag",url:"https://satur.co.kr/"},
-  // 文創/療癒
-  {n:"DINOTAENG",cat:"accessory",url:"https://en.dinotaeng.com/"},
-  {n:"다이노탱",cat:"accessory",url:"https://en.dinotaeng.com/"},
-  {n:"Muzik Tiger",cat:"accessory",url:"https://en.muziktiger.com/"},
-  {n:"무직타이거",cat:"accessory",url:"https://en.muziktiger.com/"},
-  {n:"TETEUM",cat:"accessory",url:"https://teteum.com/"},{n:"테튬",cat:"accessory",url:"https://teteum.com/"},
-  {n:"Be My Guest",cat:"other",url:"http://www.bemyguest.co.kr/"},
-  {n:"29CM",cat:"other",url:"https://www.29cm.co.kr/"},
-  // 泰國
-  {n:"Naraya",cat:"bag",url:"https://www.naraya.com/"},
-  {n:"Harnn",cat:"beauty",url:"https://www.harnn.com/"},
+  {n:"Matin Kim",cat:"bag"},{n:"Stand Oil",cat:"bag"},{n:"Longchamp",cat:"bag"},
+  {n:"Coach",cat:"bag"},{n:"Tumi",cat:"bag"},
   // 食品
   {n:"HBAF",cat:"food"},{n:"Binggrae",cat:"food"},{n:"Lotte",cat:"food"},
   {n:"Orion",cat:"food"},{n:"Nongshim",cat:"food"},{n:"農心",cat:"food"},
@@ -2103,14 +2091,6 @@ window.selectBrand=function(name,cat,isQA){
   const containerId=isQA?"qa-brand-suggestions":"brand-suggestions";
   const box=document.getElementById(containerId);
   if(box)box.style.display="none";
-  // 自動帶入官網連結（定價頁）
-  if(!isQA){
-    const brandData=window.BRAND_DB.find(b=>b.n===name);
-    if(brandData&&brandData.url){
-      const urlEl=document.getElementById("c-url");
-      if(urlEl&&!urlEl.value)urlEl.value=brandData.url;
-    }
-  }
   if(isQA){
     window.G.qaCatKey=cat;
     document.querySelectorAll("[data-qacat]").forEach(btn=>{
@@ -2351,6 +2331,17 @@ onSnapshot(collection(db,"products"),s=>{
 onSnapshot(collection(db,"customers"),s=>{
   window.G.customers=s.docs.map(d=>({id:d.id,...d.data()}));renderCustomers();
 });
+// 載入 LINE 綁定資料
+(async()=>{
+  try{
+    const {getDocs,collection:col}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    const snap=await getDocs(col(db,"line_users"));
+    const map={};
+    snap.docs.forEach(d=>{const data=d.data();map[(data.displayName||"").trim().toLowerCase()]=data;});
+    window.G.lineUserMap=map;
+    renderCustomers();
+  }catch(e){console.warn("line_users載入失敗",e);}
+})();
 onSnapshot(collection(db,"trips"),s=>{
   window.G.trips=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>b.startDate>a.startDate?1:-1);
   renderTripList();renderTripBars();renderTripHistory();
@@ -2542,7 +2533,7 @@ window.saveEditProd=async function(){
   const newCatObj=CATS.find(x=>x.key===newCatKey)||CATS[0];
   const newFlags=epGetFlags();
   const newSpecs=(document.getElementById("ep-specs")?.value.trim()||"").split(",").map(s=>s.trim()).filter(Boolean);
-  const upd={name,foreignAmount:fa,beforeTax,afterTax,finalPrice:price,profit,margin,twPrice,rivalPrice,url,specs:newSpecs,catKey:newCatKey,category:newCatObj.label,emoji:newCatObj.emoji,flags:newFlags};
+  const upd={name,foreignAmount:fa,beforeTax,afterTax,finalPrice:price,profit,margin,twPrice,rivalPrice,url,specs:newSpecs,catKey:newCatKey,category:newCatObj.label,emoji:newCatObj.emoji,flags:newFlags,channel:window.G.editChannel||""};
   if(window.G.editPhoto===null){/* 不動圖片 */}
   else if(window.G.editPhoto===""){upd.photo="";upd.photoPos="50% 50%";}
   else{
@@ -4244,12 +4235,22 @@ window.renderCustomers=function(){
           <input type="checkbox" ${checked?"checked":""} onchange="toggleSelectItem('customer','${c.id}')" style="width:16px;height:16px;accent-color:#C5A880"/>
           <div>
             <div style="font-weight:700;font-size:14px;color:#3D2010">👤 ${c.communityName||"（無社群名）"}</div>
-            ${c.lineName?`<div style="font-size:12px;color:#9C7A5A">LINE：${c.lineName}</div>`:""}
+            ${(()=>{
+              if(!c.lineName)return "";
+              const map=window.G.lineUserMap||{};
+              const key=(c.lineName||c.communityName||"").trim().toLowerCase();
+              const bound=!!map[key];
+              const badge=bound
+                ?'<span style="background:#06C755;color:white;font-size:9px;font-weight:700;padding:1px 6px;border-radius:99px;margin-left:4px">✓ 已綁定</span>'
+                :'<span style="background:#E8D5B0;color:#9C7A5A;font-size:9px;font-weight:700;padding:1px 6px;border-radius:99px;margin-left:4px">未綁定</span>';
+              return "<div style=\"font-size:12px;color:#9C7A5A;display:flex;align-items:center\">LINE："+c.lineName+badge+"</div>";
+            })()}
           </div>
         </div>
         <div style="display:flex;gap:8px">
           <button data-cid="${c.id}" onclick="openCustHistory(this.dataset.cid)" style="font-size:11px;color:#9C7A5A;background:#FAF8F5;border:1px solid #E8D5B0;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600">歷史</button>
           <button data-cid="${c.id}" onclick="openEditCust(this.dataset.cid)" style="font-size:11px;color:#C5A880;background:#FDF6EC;border:1px solid #E8D5B0;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600">修改</button>
+          <button data-cid="${c.id}" onclick="openLineNotify(this.dataset.cid)" style="font-size:11px;color:#06C755;background:#F0FFF4;border:1px solid #86EFAC;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600">📣 出貨</button>
           <button onclick="deleteCustomer('${c.id}')" style="font-size:11px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600">刪除</button>
         </div>
       </div>
@@ -4936,6 +4937,87 @@ window.qaProdImgClear=function(){
   if(input)input.value="";
 };
 
+window.epSelectChannel=function(btn,ch){
+  document.querySelectorAll(".ep-ch-btn").forEach(b=>{
+    b.style.background="white";b.style.borderColor="#E8D5B0";b.style.color="#9C7A5A";b.classList.remove("active");
+  });
+  btn.style.background="#5C3A1E";btn.style.borderColor="#5C3A1E";btn.style.color="white";btn.classList.add("active");
+  window.G.editChannel=ch;
+};
+window.openLineNotify=async function(custId){
+  const c=window.G.customers.find(x=>x.id===custId);
+  if(!c){showToast("找不到客人資料","error");return;}
+  const modal=document.getElementById("modal-line-notify");
+  const nameEl=document.getElementById("ln-cust-name");
+  const statusEl=document.getElementById("ln-line-id-status");
+  const trackingEl=document.getElementById("ln-tracking");
+  const previewEl=document.getElementById("ln-tracking-preview");
+  const sendBtn=document.getElementById("ln-send-btn");
+  // 顯示客人名稱
+  nameEl.textContent=`👤 ${c.communityName||c.lineName||"未命名客人"}`;
+  trackingEl.value="";
+  previewEl.textContent="（輸入後顯示）";
+  trackingEl.oninput=()=>{previewEl.textContent=trackingEl.value||"（輸入後顯示）";};
+  // 查詢 Firebase line_users 取得 LINE User ID
+  statusEl.textContent="🔍 查詢中...";
+  statusEl.style.color="#9C7A5A";
+  sendBtn.disabled=true;
+  window.G._lineNotifyCustId=custId;
+  window.G._lineUserId=null;
+  try {
+    // 用客人的 lineName 或 communityName 比對 line_users
+    const {getDocs,collection:col}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    const snap=await getDocs(col(db,"line_users"));
+    const lineUsers=snap.docs.map(d=>d.data());
+    // 嘗試比對 displayName
+    const lineName=(c.lineName||c.communityName||"").trim().toLowerCase();
+    const found=lineUsers.find(u=>(u.displayName||"").trim().toLowerCase()===lineName);
+    if(found){
+      window.G._lineUserId=found.userId;
+      statusEl.textContent=`✅ LINE 帳號：${found.displayName}`;
+      statusEl.style.color="#16A34A";
+      sendBtn.disabled=false;
+    } else {
+      statusEl.innerHTML=`⚠️ 找不到此客人的 LINE ID<br><span style="font-size:10px;color:#9C7A5A">請確認客人曾傳訊息給官方帳號</span>`;
+      statusEl.style.color="#D97706";
+      sendBtn.disabled=true;
+    }
+  } catch(e){
+    statusEl.textContent="❌ 查詢失敗："+e.message;
+    statusEl.style.color="#C0392B";
+    sendBtn.disabled=true;
+  }
+  modal.style.display="flex";
+};
+
+window.sendLineNotify=async function(){
+  const tracking=document.getElementById("ln-tracking")?.value.trim();
+  const userId=window.G._lineUserId;
+  const sendBtn=document.getElementById("ln-send-btn");
+  if(!tracking){showToast("請填入物流單號","error");return;}
+  if(!userId){showToast("找不到客人 LINE ID","error");return;}
+  sendBtn.disabled=true;
+  sendBtn.textContent="傳送中...";
+  try{
+    const resp=await fetch("https://butter-ai.kueigin.workers.dev",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","X-Service":"line-notify"},
+      body:JSON.stringify({userId,trackingNumber:tracking}),
+    });
+    const result=await resp.json();
+    if(result.success){
+      showToast("✅ 出貨通知已傳送！");
+      document.getElementById("modal-line-notify").style.display="none";
+    } else {
+      showToast("傳送失敗："+JSON.stringify(result.error),"error");
+    }
+  } catch(e){
+    showToast("傳送失敗："+e.message,"error");
+  }
+  sendBtn.disabled=false;
+  sendBtn.textContent="傳送給客人";
+};
+
 window.qaSelectChannel=function(btn,ch){
   document.querySelectorAll(".qa-ch-btn").forEach(b=>{
     b.style.background="white";b.style.borderColor="#E8D5B0";b.style.color="#9C7A5A";b.classList.remove("active");
@@ -5046,5 +5128,22 @@ window.swUpdate = function(){
   window.location.reload(true);
 };
 </script>
+<!-- LINE 出貨通知 Modal -->
+<div id="modal-line-notify" class="modal-overlay" style="display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;padding:20px">
+  <div style="background:white;border-radius:20px;width:100%;max-width:400px;padding:24px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 style="margin:0;font-size:16px;font-weight:900;color:#3D2010">📣 LINE 出貨通知</h3>
+      <button onclick="document.getElementById('modal-line-notify').style.display='none'" style="font-size:24px;color:#9C7A5A;background:none;border:none;cursor:pointer">×</button>
+    </div>
+    <div id="ln-cust-name" style="font-size:13px;font-weight:700;color:#9C7A5A;margin-bottom:4px"></div>
+    <div id="ln-line-id-status" style="font-size:11px;margin-bottom:16px"></div>
+    <label style="display:block;font-size:12px;font-weight:700;color:#9C7A5A;margin-bottom:6px">物流單號</label>
+    <input type="text" id="ln-tracking" placeholder="請輸入物流單號" style="width:100%;background:#FAF8F5;border:1.5px solid #E8D5B0;border-radius:10px;padding:12px 14px;font-size:15px;outline:none;box-sizing:border-box;margin-bottom:16px"/>
+    <div style="background:#F0FFF4;border:1px solid #86EFAC;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#166534">
+      🚛出貨通知<br><br>物流單號：<span id="ln-tracking-preview">（輸入後顯示）</span>
+    </div>
+    <button id="ln-send-btn" onclick="sendLineNotify()" style="width:100%;background:#06C755;color:white;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer">傳送給客人</button>
+  </div>
+</div>
 </body>
 </html>
