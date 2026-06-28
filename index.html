@@ -186,10 +186,9 @@ window.showBrandSuggestions=function(val,isQA){
       <div style="background:#FFF0F0;border:2px solid #FF6B6B;border-radius:10px;padding:8px 10px">
         <div style="font-size:9px;color:#C0392B;font-weight:700;margin-bottom:2px">最終售價</div>
         <div id="r-final" style="font-size:13px;font-weight:900;color:#C0392B;line-height:1;margin-bottom:5px;white-space:nowrap">-</div>
-        <div style="background:white;border:1px solid #FF6B6B;border-radius:6px;padding:3px 7px;display:flex;align-items:center;gap:5px">
-          <span style="font-size:9px;color:#9C7A5A;white-space:nowrap">✏️</span>
-          <input type="text" inputmode="numeric" id="c-custom" oninput="calcUpdate()" placeholder="自訂" style="flex:1;background:transparent;border:none;font-size:12px;font-weight:700;color:#3D2010;outline:none;width:100%"/>
-          <button onclick="document.getElementById('c-custom').value='';calcUpdate();" style="background:none;border:none;cursor:pointer;color:#FF6B6B;font-size:13px;line-height:1;padding:0;flex-shrink:0">✕</button>
+        <div style="position:relative">
+          <input type="text" inputmode="numeric" id="c-custom" oninput="calcUpdate()" placeholder="✏️ 自訂" style="width:100%;background:white;border:1.5px solid #FF6B6B;border-radius:8px;padding:7px 32px 7px 10px;font-size:14px;font-weight:700;color:#3D2010;outline:none;box-sizing:border-box"/>
+          <button onclick="document.getElementById('c-custom').value='';calcUpdate();" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#FF6B6B;font-size:14px;line-height:1;padding:0">✕</button>
         </div>
       </div>
     </div>
@@ -2813,13 +2812,14 @@ window.eoAddProduct=async function(productId){
     buyerName:c.communityName||c.lineName||"",
     qty:1,unitPrice:p.finalPrice,discountPrice:p.finalPrice,total:p.finalPrice,
     status:"pending",tripId,orderType:"onsite",spec:"",createdAt:Date.now()};
-  await fbSet("orders",id,newOrder);
-  // 不手動 push，讓 Firebase listener 自動同步
+  // 暫存，不立即寫入 Firebase
+  if(!window.G.eoPendingAdd)window.G.eoPendingAdd=[];
+  window.G.eoPendingAdd.push(newOrder);
   const search=document.getElementById("eo-prod-search");if(search)search.value="";
   const res=document.getElementById("eo-prod-results");if(res)res.style.display="none";
-  // 等 Firebase 更新後再重開
-  setTimeout(()=>openEditOrd(id),300);
-  showToast(`已新增 ${p.name}`);
+  eoRenderPending();
+  showToast(`已加入「${p.name}」，請按儲存`);
+  window.G.eoAdding=false;
 };
 
 window.eoDeleteOrder=async function(oid){
@@ -2897,14 +2897,11 @@ window.saveAllEditOrders=async function(){
   const tripId=window.G.moSelectedTripId||getLatestTrip()?.id||"";
   const pending=window.G.eoPendingAdd||[];
   for(const item of pending){
-    const id="O"+Date.now()+Math.random().toString(36).slice(2,6);
-    const newOrder={id,productId:item.productId,productName:item.productName,productEmoji:item.productEmoji,
-      customerId:cid,communityName:c?.communityName||"",lineName:c?.lineName||"",
-      buyerName:c?.communityName||c?.lineName||"",
-      qty:1,unitPrice:item.finalPrice,discountPrice:item.finalPrice,total:item.finalPrice,
-      status:"pending",tripId,orderType:"onsite",spec:"",createdAt:Date.now()};
-    await fbSet("orders",id,newOrder);
-    window.G.orders.push(newOrder);
+    const saveOrder={...item,customerId:cid,
+      communityName:c?.communityName||"",lineName:c?.lineName||"",
+      buyerName:c?.communityName||c?.lineName||"",tripId};
+    await fbSet("orders",item.id,saveOrder);
+    window.G.orders.push(saveOrder);
     count++;
   }
   window.G.eoPendingAdd=[];
@@ -4247,7 +4244,7 @@ window.renderCustomers=function(){
         </div>
         <div style="display:flex;gap:8px">
           <button data-cid="${c.id}" onclick="openCustHistory(this.dataset.cid)" style="font-size:11px;color:#9C7A5A;background:#FAF8F5;border:1px solid #E8D5B0;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600">歷史</button>
-          <button data-cid="${c.id}" onclick="openEditCust(this.dataset.cid)" style="font-size:11px;color:#C5A880;background:#FDF6EC;border:1px solid #E8D5B0;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600">修改</button>
+          <button data-cid="${c.id}" data-cname="${c.communityName||c.lineName||''}" onclick="openEditCustOrOrder(this.dataset.cid,this.dataset.cname)" style="font-size:11px;color:#C5A880;background:#FDF6EC;border:1px solid #E8D5B0;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600">修改</button>
           <button data-cid="${c.id}" onclick="openLineNotify(this.dataset.cid)" style="font-size:11px;color:#06C755;background:#F0FFF4;border:1px solid #86EFAC;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600">出貨</button>
           <button onclick="deleteCustomer('${c.id}')" style="font-size:11px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600">刪除</button>
         </div>
@@ -4942,6 +4939,120 @@ window.epSelectChannel=function(btn,ch){
   btn.style.background="#5C3A1E";btn.style.borderColor="#5C3A1E";btn.style.color="white";btn.classList.add("active");
   window.G.editChannel=ch;
 };
+window.openEditCustOrOrder=function(custId, custName){
+  // 顯示選擇：修改資料 or 新增訂單
+  const c=window.G.customers.find(x=>x.id===custId);
+  if(!c)return;
+  // 建立選擇 popup
+  const existing=document.getElementById("modal-edit-or-order");
+  if(existing)existing.remove();
+  const div=document.createElement("div");
+  div.id="modal-edit-or-order";
+  div.style.cssText="position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;padding:20px";
+  div.innerHTML=`
+    <div style="background:white;border-radius:20px;width:100%;max-width:340px;padding:24px">
+      <div style="font-size:15px;font-weight:900;color:#3D2010;margin-bottom:6px">👤 ${c.communityName||c.lineName||"客人"}</div>
+      <div style="font-size:12px;color:#9C7A5A;margin-bottom:20px">請選擇要執行的動作</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+        <button onclick="document.getElementById('modal-edit-or-order').remove();openEditCust('${custId}')"
+          style="padding:16px 10px;border-radius:14px;border:2px solid #E8D5B0;background:white;font-size:13px;font-weight:700;color:#9C7A5A;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px">
+          <span style="font-size:26px">✏️</span>修改資料
+        </button>
+        <button onclick="document.getElementById('modal-edit-or-order').remove();doQuickAddOrder('${custId}','${custName}')"
+          style="padding:16px 10px;border-radius:14px;border:2px solid #AED6F1;background:#EBF5FB;font-size:13px;font-weight:700;color:#2980B9;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px">
+          <span style="font-size:26px">＋</span>新增訂單
+        </button>
+      </div>
+      <button onclick="document.getElementById('modal-edit-or-order').remove()"
+        style="width:100%;padding:10px;border-radius:10px;border:1px solid #E8D5B0;background:white;font-size:13px;color:#9C7A5A;cursor:pointer;font-weight:600">取消</button>
+    </div>`;
+  document.body.appendChild(div);
+};
+
+window.doQuickAddOrder=function(custId, custName){
+  // 直接開啟修改訂單 modal（即使沒有訂單也能新增）
+  window.G.activeEordCustId=custId;
+  window.G.eoPendingAdd=[];
+  const sr=document.getElementById("eo-prod-search");if(sr)sr.value="";
+  const rr=document.getElementById("eo-prod-results");if(rr)rr.style.display="none";
+  const c=window.G.customers.find(x=>x.id===custId);
+  const cOrders=window.G.orders.filter(x=>x.customerId===custId);
+  const total=cOrders.reduce((s,x)=>s+(x.discountPrice||x.unitPrice||0)*x.qty,0);
+  document.getElementById("eo-title").textContent=`✏️ ${custName} 的訂單`;
+  document.getElementById("eo-subtitle").textContent=`共 ${cOrders.length} 筆・合計 NT$${total.toLocaleString()}`;
+  const depEl=document.getElementById("eo-shared-deposit");
+  const trkEl=document.getElementById("eo-shared-tracking");
+  const discEl=document.getElementById("eo-shared-discount");
+  if(depEl)depEl.value="";if(trkEl)trkEl.value="";if(discEl)discEl.value="";
+  const sl={pending:"待訂金",deposit:"已付訂金",settled:"已付尾款",shipped:"已寄出"};
+  const scol={pending:"#E07B39",deposit:"#9333EA",settled:"#2E7D32",shipped:"#2980B9"};
+  const list=document.getElementById("eo-order-list");
+  list.innerHTML=cOrders.length===0
+    ?'<div style="text-align:center;color:#9C7A5A;padding:20px;font-size:13px">尚無訂單，請在下方搜尋商品新增</div>'
+    :cOrders.map(x=>{
+      const dp=x.discountPrice||x.unitPrice||0;
+      const rowBg=x.orderType==="preorder"&&!x.purchased?"#FFFBEB":"white";
+      return `<div style="background:${rowBg};border:1px solid #E8D5B0;border-radius:12px;padding:12px 14px;margin-bottom:8px" data-oid="${x.id}">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:13px;font-weight:700;color:#3D2010">${(window.G.products.find(p=>p.id===x.productId)?.name)||x.productName||"商品"}</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:10px;font-weight:700;color:${scol[x.status]||"#9C7A5A"}">${sl[x.status]||""}</span>
+            <button onclick="eoDeleteOrder('${x.id}')" style="color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;border-radius:6px;padding:2px 7px;font-size:11px;cursor:pointer;font-weight:700">刪除</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div><div style="font-size:10px;color:#9C7A5A;margin-bottom:3px">數量</div>
+            <input type="text" inputmode="numeric" class="eo-qty" value="${x.qty}" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:14px;font-weight:700;outline:none"/></div>
+          <div><div style="font-size:10px;color:#9C7A5A;margin-bottom:3px">售價 (NT$)</div>
+            <input type="text" inputmode="numeric" class="eo-price" value="${dp}" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:14px;font-weight:700;outline:none"/></div>
+        </div>
+        <div style="margin-top:6px"><div style="font-size:10px;color:#9C7A5A;margin-bottom:3px">🏷️ 折扣／備註（選填）</div>
+          <input type="text" class="eo-discount-note" value="${x.discountNote||""}" placeholder="例如：折50、贈品、會員優惠..." style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:12px;outline:none"/></div>
+      </div>`;
+    }).join("");
+  const el=document.getElementById("modal-eord");
+  if(el)el.style.display="flex";
+};
+
+window.quickAddOrder=function(custId, custName){
+  // 切換到商品頁
+  showTab('products');
+  // 稍等 DOM 更新後，找到商品頁搜尋欄或直接開登記喊單
+  // 直接開「登記喊單」modal 並預填客人
+  setTimeout(()=>{
+    // 找到第一個商品的登記按鈕開始，但更好的方式是直接設定 mo-cust
+    const custSearch=document.getElementById("mo-cust-search");
+    const custHidden=document.getElementById("mo-cust");
+    const custClear=document.getElementById("mo-cust-clear");
+    if(custSearch&&custHidden){
+      custSearch.value=custName;
+      custHidden.value=custId;
+      if(custClear)custClear.style.display="block";
+    }
+    showToast("請選擇要新增的商品，客人已預設為「"+custName+"」");
+  },300);
+};
+
+window.lnSelectType=function(type){
+  const faceBtn=document.getElementById("ln-btn-face");
+  const delivBtn=document.getElementById("ln-btn-delivery");
+  const section=document.getElementById("ln-delivery-section");
+  if(type==="face"){
+    faceBtn.style.background="#3D2010";faceBtn.style.color="white";faceBtn.style.borderColor="#3D2010";
+    delivBtn.style.background="white";delivBtn.style.color="#9C7A5A";delivBtn.style.borderColor="#E8D5B0";
+    section.style.display="none";
+    // 面交直接確認出貨，關閉 modal
+    if(confirm("確認面交出貨？")){
+      document.getElementById("modal-line-notify").style.display="none";
+      showToast("✅ 已標記面交出貨！");
+    }
+  } else {
+    delivBtn.style.background="#3D2010";delivBtn.style.color="white";delivBtn.style.borderColor="#3D2010";
+    faceBtn.style.background="white";faceBtn.style.color="#9C7A5A";faceBtn.style.borderColor="#E8D5B0";
+    section.style.display="block";
+  }
+};
+
 window.openLineNotify=async function(custId){
   const c=window.G.customers.find(x=>x.id===custId);
   if(!c){showToast("找不到客人資料","error");return;}
@@ -4955,6 +5066,10 @@ window.openLineNotify=async function(custId){
   nameEl.textContent=`👤 ${c.communityName||c.lineName||"未命名客人"}`;
   trackingEl.value="";
   previewEl.textContent="（輸入後顯示）";
+  // 重置選擇
+  document.getElementById("ln-btn-face").style.cssText="padding:16px 10px;border-radius:14px;border:2px solid #E8D5B0;background:white;font-size:14px;font-weight:700;color:#9C7A5A;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px";
+  document.getElementById("ln-btn-delivery").style.cssText="padding:16px 10px;border-radius:14px;border:2px solid #E8D5B0;background:white;font-size:14px;font-weight:700;color:#9C7A5A;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px";
+  document.getElementById("ln-delivery-section").style.display="none";
   trackingEl.oninput=()=>{previewEl.textContent=trackingEl.value||"（輸入後顯示）";};
   // 查詢 Firebase line_users 取得 LINE User ID
   statusEl.textContent="🔍 查詢中...";
@@ -5130,17 +5245,29 @@ window.swUpdate = function(){
 <div id="modal-line-notify" class="modal-overlay" style="display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;padding:20px">
   <div style="background:white;border-radius:20px;width:100%;max-width:400px;padding:24px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <h3 style="margin:0;font-size:16px;font-weight:900;color:#3D2010">📣 LINE 出貨通知</h3>
+      <h3 style="margin:0;font-size:16px;font-weight:900;color:#3D2010">🚛 出貨方式</h3>
       <button onclick="document.getElementById('modal-line-notify').style.display='none'" style="font-size:24px;color:#9C7A5A;background:none;border:none;cursor:pointer">×</button>
     </div>
-    <div id="ln-cust-name" style="font-size:13px;font-weight:700;color:#9C7A5A;margin-bottom:4px"></div>
-    <div id="ln-line-id-status" style="font-size:11px;margin-bottom:16px"></div>
-    <label style="display:block;font-size:12px;font-weight:700;color:#9C7A5A;margin-bottom:6px">物流單號</label>
-    <input type="text" id="ln-tracking" placeholder="請輸入物流單號" style="width:100%;background:#FAF8F5;border:1.5px solid #E8D5B0;border-radius:10px;padding:12px 14px;font-size:15px;outline:none;box-sizing:border-box;margin-bottom:16px"/>
-    <div style="background:#F0FFF4;border:1px solid #86EFAC;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#166534">
-      🚛出貨通知<br><br>物流單號：<span id="ln-tracking-preview">（輸入後顯示）</span>
+    <div id="ln-cust-name" style="font-size:13px;font-weight:700;color:#9C7A5A;margin-bottom:16px"></div>
+    <!-- 面交 / 物流 選擇 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+      <button onclick="lnSelectType('face')" id="ln-btn-face" style="padding:16px 10px;border-radius:14px;border:2px solid #E8D5B0;background:white;font-size:14px;font-weight:700;color:#9C7A5A;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px">
+        <span style="font-size:28px">🤝</span>面交
+      </button>
+      <button onclick="lnSelectType('delivery')" id="ln-btn-delivery" style="padding:16px 10px;border-radius:14px;border:2px solid #E8D5B0;background:white;font-size:14px;font-weight:700;color:#9C7A5A;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px">
+        <span style="font-size:28px">📦</span>物流
+      </button>
     </div>
-    <button id="ln-send-btn" onclick="sendLineNotify()" style="width:100%;background:#06C755;color:white;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer">傳送給客人</button>
+    <!-- 物流區塊（預設隱藏）-->
+    <div id="ln-delivery-section" style="display:none">
+      <div id="ln-line-id-status" style="font-size:11px;margin-bottom:12px"></div>
+      <label style="display:block;font-size:12px;font-weight:700;color:#9C7A5A;margin-bottom:6px">物流單號</label>
+      <input type="text" id="ln-tracking" placeholder="請輸入物流單號" style="width:100%;background:#FAF8F5;border:1.5px solid #E8D5B0;border-radius:10px;padding:12px 14px;font-size:15px;outline:none;box-sizing:border-box;margin-bottom:12px"/>
+      <div style="background:#F0FFF4;border:1px solid #86EFAC;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#166534">
+        🚛出貨通知<br><br>物流單號：<span id="ln-tracking-preview">（輸入後顯示）</span>
+      </div>
+      <button id="ln-send-btn" onclick="sendLineNotify()" style="width:100%;background:#06C755;color:white;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer">傳送通知給客人</button>
+    </div>
   </div>
 </div>
 </body>
