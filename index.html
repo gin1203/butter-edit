@@ -974,11 +974,7 @@ window.showBrandSuggestions=function(val,isQA){
           <input type="file" id="qa-live-img" accept="image/*" style="display:none" onchange="qaLiveImgPick(this)"/>
           <div id="qa-live-img-preview" style="display:none;margin-top:6px;border-radius:8px;overflow:hidden;text-align:center">
             <img id="qa-live-img-thumb" style="max-width:100%;max-height:140px;object-fit:contain;border-radius:8px"/>
-            <div style="display:flex;gap:6px;margin-top:6px">
-              <button onclick="qaAskGemini()" id="qa-gemini-btn" style="flex:1;background:#4285F4;color:white;border:none;border-radius:8px;padding:8px;font-size:12px;font-weight:700;cursor:pointer">🔍 問 Gemini 這是什麼</button>
-              <button onclick="qaLiveImgClear()" style="background:#FDEDEC;color:#C0392B;border:1px solid #F1948A;border-radius:8px;padding:8px;font-size:12px;font-weight:700;cursor:pointer">✕</button>
-            </div>
-            <div id="qa-gemini-result" style="display:none;margin-top:8px;background:#EEF2FF;border:1px solid #C7D2FE;border-radius:8px;padding:10px;font-size:12px;color:#3730A3;text-align:left;line-height:1.6"></div>
+            <button onclick="qaLiveImgClear()" style="display:block;width:100%;margin-top:4px;background:#FDEDEC;color:#C0392B;border:1px solid #F1948A;border-radius:8px;padding:6px;font-size:12px;font-weight:700;cursor:pointer">✕ 移除圖片</button>
           </div>
         </div>
         <!-- 品名 -->
@@ -5379,20 +5375,41 @@ window.qaAskGemini=async function(){
   btn.textContent="辨識中...";btn.disabled=true;
   result.style.display="none";
   try{
-    const resp=await fetch("https://butter-ai.kueigin.workers.dev",{
-      method:"POST",
-      headers:{"Content-Type":"application/json","X-Service":"gemini-vision"},
-      body:JSON.stringify({b64,mimeType:"image/jpeg"}),
-    });
+    // 直接從瀏覽器呼叫 Gemini API
+    const GEMINI_KEY="";// key 已移除
+    const resp=await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_KEY}`,
+      {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          contents:[{parts:[
+            {inline_data:{mime_type:"image/jpeg",data:b64}},
+            {text:"請用繁體中文描述這個商品。包含：1) 品牌名稱（如有）2) 商品名稱 3) 主要功能或用途（一句話）。格式：品牌：xxx\n商品：xxx\n說明：xxx。如果看不出品牌就不要寫品牌。請直接回答，不要多餘說明。"}
+          ]}],
+          generationConfig:{maxOutputTokens:300,temperature:0.1}
+        })
+      }
+    );
     const data=await resp.json();
-    if(data.result){
-      result.textContent=data.result;
+    console.log("Gemini response:", JSON.stringify(data));
+    const text=data?.candidates?.[0]?.content?.parts?.[0]?.text||"";
+    if(text){
+      result.textContent=text.trim();
       result.style.display="block";
     } else {
-      showToast("辨識失敗："+JSON.stringify(data.error),"error");
+      const errMsg=data?.error?.message||data?.error?.status||JSON.stringify(data).slice(0,100);
+      result.textContent="❌ "+errMsg;
+      result.style.display="block";
+      result.style.background="#FDEDEC";
+      result.style.color="#C0392B";
     }
   }catch(e){
-    showToast("辨識失敗："+e.message,"error");
+    const result2=document.getElementById("qa-gemini-result");
+    result2.textContent="❌ "+e.message;
+    result2.style.display="block";
+    result2.style.background="#FDEDEC";
+    result2.style.color="#C0392B";
   }
   btn.textContent="🔍 問 Gemini 這是什麼";btn.disabled=false;
 };
