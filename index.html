@@ -954,10 +954,62 @@ window.showBrandSuggestions=function(val,isQA){
   <div style="background:white;border-radius:20px 20px 0 0;width:100%;max-width:720px;max-height:92vh;overflow-y:auto;padding:20px;padding-bottom:36px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <div>
-        <div style="font-size:16px;font-weight:900;color:#3D2010">✨ 快速上架</div>
-        <div style="font-size:11px;color:#9C7A5A;margin-top:2px">拍照辨識品名，三步驟建好商品</div>
+        <div style="font-size:16px;font-weight:900;color:#3D2010" id="qa-modal-title">✨ 快速上架</div>
+        <div style="font-size:11px;color:#9C7A5A;margin-top:2px" id="qa-modal-subtitle">拍照辨識品名，三步驟建好商品</div>
       </div>
-      <button onclick="closeModal('modal-quick')" style="font-size:24px;font-weight:900;color:#9C7A5A;background:none;border:none;cursor:pointer">×</button>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button onclick="qaToggleLiveMode()" id="qa-live-toggle" style="font-size:11px;font-weight:700;padding:5px 10px;border-radius:99px;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">⚡ 連線模式</button>
+        <button onclick="closeModal('modal-quick')" style="font-size:24px;font-weight:900;color:#9C7A5A;background:none;border:none;cursor:pointer">×</button>
+      </div>
+    </div>
+    <!-- 連線模式極速區塊 -->
+    <div id="qa-live-section" style="display:none">
+      <div style="background:#FFF9E6;border:2px solid #F59E0B;border-radius:14px;padding:16px;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:900;color:#B45309;margin-bottom:12px">⚡ 連線極速模式</div>
+        <!-- 商品圖（簡化版） -->
+        <div style="margin-bottom:12px">
+          <label for="qa-live-img" style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;height:70px;border:2px dashed #F59E0B;border-radius:10px;cursor:pointer;background:white;color:#B45309;font-size:12px;font-weight:700" id="qa-live-img-label">
+            <span style="font-size:24px">📷</span>商品圖（選填）
+          </label>
+          <input type="file" id="qa-live-img" accept="image/*" style="display:none" onchange="qaLiveImgPick(this)"/>
+          <div id="qa-live-img-preview" style="display:none;margin-top:6px;border-radius:8px;overflow:hidden;max-height:140px;text-align:center">
+            <img id="qa-live-img-thumb" style="max-width:100%;max-height:140px;object-fit:contain"/>
+            <button onclick="qaLiveImgClear()" style="display:block;width:100%;margin-top:4px;background:#FDEDEC;color:#C0392B;border:1px solid #F1948A;border-radius:6px;padding:4px;font-size:11px;font-weight:700;cursor:pointer">✕ 移除圖片</button>
+          </div>
+        </div>
+        <!-- 品名 -->
+        <input type="text" id="qa-live-name" placeholder="品名（例如：農心 쫄병 안성탕면）" oninput="qaLiveCalc()" style="width:100%;background:white;border:1.5px solid #F59E0B;border-radius:10px;padding:12px 14px;font-size:15px;font-weight:700;outline:none;box-sizing:border-box;margin-bottom:10px"/>
+        <!-- 韓幣 -->
+        <input type="text" inputmode="numeric" id="qa-live-amt" placeholder="韓幣金額 ₩" oninput="qaLiveCalc()" style="width:100%;background:white;border:1.5px solid #F59E0B;border-radius:10px;padding:12px 14px;font-size:20px;font-weight:900;outline:none;box-sizing:border-box;margin-bottom:10px"/>
+        <!-- 成本/售價顯示 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+          <div style="background:white;border:1px solid #F59E0B;border-radius:10px;padding:8px;text-align:center">
+            <div style="font-size:9px;color:#B45309;font-weight:700">退稅後成本</div>
+            <div id="qa-live-cost" style="font-size:14px;font-weight:900;color:#B45309">-</div>
+          </div>
+          <div style="background:white;border:1px solid #F59E0B;border-radius:10px;padding:8px;text-align:center">
+            <div style="font-size:9px;color:#B45309;font-weight:700">建議售價</div>
+            <div id="qa-live-sugg" style="font-size:14px;font-weight:900;color:#B45309">-</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
+          <div style="background:#F0FDF4;border:1px solid #86EFAC;border-radius:10px;padding:8px;text-align:center">
+            <div style="font-size:9px;color:#166534;font-weight:700">利潤</div>
+            <div id="qa-live-profit" style="font-size:14px;font-weight:900;color:#166534">-</div>
+          </div>
+          <div style="background:#FFF0E0;border:2px solid #F59E0B;border-radius:10px;padding:8px;text-align:center">
+            <div style="font-size:9px;color:#B45309;font-weight:700">最終售價</div>
+            <div id="qa-live-final" style="font-size:14px;font-weight:900;color:#C0392B">-</div>
+          </div>
+        </div>
+        <!-- 自訂售價 -->
+        <div style="position:relative;margin-bottom:12px">
+          <input type="text" inputmode="numeric" id="qa-live-custom" placeholder="✏️ 自訂售價" oninput="window.G.qaLiveCustomPrice=parseFloat(this.value)||null;qaLiveCalc();" style="width:100%;background:white;border:1.5px solid #F1948A;border-radius:10px;padding:10px 36px 10px 14px;font-size:15px;font-weight:700;color:#3D2010;outline:none;box-sizing:border-box"/>
+          <button onclick="document.getElementById('qa-live-custom').value='';window.G.qaLiveCustomPrice=null;qaLiveCalc();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#F1948A;font-size:16px">✕</button>
+        </div>
+        <!-- 上架按鈕 -->
+        <button onclick="qaLiveSave()" style="width:100%;background:#F59E0B;color:white;border:none;border-radius:12px;padding:14px;font-size:16px;font-weight:900;cursor:pointer">⚡ 立即上架</button>
+      </div>
     </div>
 
     <!-- 拍照區 -->
@@ -2016,10 +2068,27 @@ window.BRAND_DB=[
   {n:"Asics",cat:"shoes"},{n:"Reebok",cat:"shoes"},{n:"Saucony",cat:"shoes"},
   {n:"Salomon",cat:"shoes"},{n:"On Running",cat:"shoes"},{n:"Hoka",cat:"shoes"},
   {n:"Brooks",cat:"shoes"},{n:"Mizuno",cat:"shoes"},{n:"Onitsuka Tiger",cat:"shoes"},
+  {n:"Rockfish",cat:"shoes",url:"https://en.rockfish-weatherwear.co.kr/"},
+  {n:"Rockfish Weatherwear",cat:"shoes",url:"https://en.rockfish-weatherwear.co.kr/"},
+  {n:"락피쉬",cat:"shoes",url:"https://en.rockfish-weatherwear.co.kr/"},
+  {n:"EPT",cat:"shoes",url:"https://eastpacifictrade.com/"},{n:"이피티",cat:"shoes",url:"https://eastpacifictrade.com/"},
   // 衣服
   {n:"SPAO",cat:"clothes"},{n:"GU",cat:"clothes"},{n:"Uniqlo",cat:"clothes"},
   {n:"MLB",cat:"clothes"},{n:"Musinsa",cat:"clothes"},{n:"Ader Error",cat:"clothes"},
   {n:"Instantfunk",cat:"clothes"},{n:"Covernat",cat:"clothes"},{n:"Discovery",cat:"clothes"},
+  {n:"Marmot",cat:"clothes",url:"https://www.marmotkorea.com/"},{n:"마모트",cat:"clothes",url:"https://www.marmotkorea.com/"},
+  {n:"Marmot Capital",cat:"clothes",url:"https://www.marmotkorea.com/"},
+  {n:"ADLV",cat:"clothes"},{n:"에이디엘브이",cat:"clothes"},
+  {n:"NERDY",cat:"clothes"},{n:"너디",cat:"clothes"},
+  {n:"KIRSH",cat:"clothes"},{n:"키르시",cat:"clothes"},
+  {n:"87MM",cat:"clothes"},{n:"에이티세븐엠엠",cat:"clothes"},
+  {n:"SCULPTOR",cat:"clothes"},{n:"스컬프터",cat:"clothes"},
+  {n:"AMBLER",cat:"clothes"},{n:"앰블러",cat:"clothes"},
+  {n:"FCMM",cat:"clothes"},
+  {n:"STUDIO TOMBOY",cat:"clothes"},{n:"스튜디오 톰보이",cat:"clothes"},
+  {n:"DUNST",cat:"clothes"},{n:"던스트",cat:"clothes"},
+  {n:"ROLAROLA",cat:"clothes"},{n:"롤라롤라",cat:"clothes"},
+  {n:"O!Oi",cat:"clothes"},{n:"오오아이",cat:"clothes"},
   // 美妝保養（韓系）
   {n:"COSRX",cat:"beauty"},{n:"Laneige",cat:"beauty"},{n:"蘭芝",cat:"beauty"},
   {n:"Innisfree",cat:"beauty"},{n:"Etude",cat:"beauty"},{n:"Missha",cat:"beauty"},
@@ -2041,12 +2110,27 @@ window.BRAND_DB=[
   // 包包
   {n:"Matin Kim",cat:"bag"},{n:"Stand Oil",cat:"bag"},{n:"Longchamp",cat:"bag"},
   {n:"Coach",cat:"bag"},{n:"Tumi",cat:"bag"},
+  {n:"OSOI",cat:"bag",url:"https://en.osoi.co.kr/"},{n:"오소이",cat:"bag",url:"https://en.osoi.co.kr/"},
+  {n:"FIND KAPOOR",cat:"bag",url:"https://en.findkapoor.com/"},{n:"파인드카푸어",cat:"bag",url:"https://en.findkapoor.com/"},
+  {n:"mondemonde",cat:"bag",url:"https://en.mondemonde.com/"},{n:"몽드몽드",cat:"bag",url:"https://en.mondemonde.com/"},
+  {n:"NOTHING WRITTEN",cat:"bag",url:"https://en.nothing-written.com/"},{n:"낫띵리튼",cat:"bag",url:"https://en.nothing-written.com/"},
+  {n:"SAMO ONDOH",cat:"bag",url:"https://samoondoh.com/"},{n:"세이모온도",cat:"bag",url:"https://samoondoh.com/"},
+  {n:"Fallett",cat:"bag",url:"https://fallett.com/"},{n:"팔렛",cat:"bag",url:"https://fallett.com/"},
+  {n:"Ason",cat:"bag",url:"https://ason.kr/"},{n:"에이슨",cat:"bag",url:"https://ason.kr/"},
+  {n:"Fennec",cat:"bag",url:"https://en.fennec.co.kr/"},{n:"페넥",cat:"bag",url:"https://en.fennec.co.kr/"},
+  {n:"Carlyn",cat:"bag",url:"https://carlynmall.net/"},{n:"칼린",cat:"bag",url:"https://carlynmall.net/"},
+  {n:"The Barnnet",cat:"bag",url:"https://the-barnnet.com/"},{n:"더바넷",cat:"bag",url:"https://the-barnnet.com/"},
+  {n:"Matin Kim",cat:"bag",url:"https://matinkim.shop/"},{n:"Stand Oil",cat:"bag",url:"https://en.standoil.kr/"},
   // 食品
   {n:"HBAF",cat:"food"},{n:"Binggrae",cat:"food"},{n:"Lotte",cat:"food"},
   {n:"Orion",cat:"food"},{n:"Nongshim",cat:"food"},{n:"農心",cat:"food"},
   {n:"Crown",cat:"food"},{n:"Haitai",cat:"food"},{n:"海太",cat:"food"},
   // 大創
   {n:"DAISO",cat:"daiso"},{n:"大創",cat:"daiso"},
+  // 泰國
+  {n:"Naraya",cat:"bag",url:"https://www.naraya.com/"},
+  {n:"Harnn",cat:"beauty",url:"https://www.harnn.com/"},
+  {n:"Marmoris",cat:"shoes",url:"https://marmoris.com/"},
 ];
 
 // ── 品牌 Autocomplete ───────────────────────────────────────────────────
@@ -4264,7 +4348,9 @@ window.renderCustomers=function(){
           const hasHigh=cO.some(o=>(o.discountPrice||o.unitPrice||0)>=1000);
           const cols=hasHigh?"1fr 1fr 1fr":"1fr 1fr";
           const depositBtn=hasHigh?`<button data-cid="${c.id}" onclick="copyDepositOrder(this.dataset.cid)" style="font-size:11px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">複製訂金</button>`:"";
-          return cO.length>0?`<div style="display:grid;grid-template-columns:${cols};gap:5px;margin-bottom:8px"><button data-oid="${cO[0].id}" onclick="openEditOrd(this.dataset.oid)" style="font-size:11px;background:#FDF6EC;color:#C5A880;border:1px solid #E8D5B0;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">修改</button>${depositBtn}<button data-cid="${c.id}" onclick="copyCustOrder(this.dataset.cid)" style="font-size:11px;background:#EAF4FD;color:#0277BD;border:1px solid #90D7FF;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">複製結清</button></div>`:"";
+          const shopBtn=`<button data-cid="${c.id}" onclick="openShopModal(this.dataset.cid)" style="font-size:11px;background:#FFF3E0;color:#E65100;border:1px solid #FFCC80;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">🏪 開賣場</button>`;
+          const colsNew=hasHigh?"1fr 1fr 1fr 1fr":"1fr 1fr 1fr";
+          return cO.length>0?`<div style="display:grid;grid-template-columns:${colsNew};gap:5px;margin-bottom:8px"><button data-oid="${cO[0].id}" onclick="openEditOrd(this.dataset.oid)" style="font-size:11px;background:#FDF6EC;color:#C5A880;border:1px solid #E8D5B0;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">修改</button>${depositBtn}<button data-cid="${c.id}" onclick="copyCustOrder(this.dataset.cid)" style="font-size:11px;background:#EAF4FD;color:#0277BD;border:1px solid #90D7FF;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">複製結清</button>${shopBtn}</div>`:"";
         })()}
         ${cO.length?`<div style="display:flex;flex-direction:column;gap:4px">${cO.map(o=>{
           const sl2={pending:"#E07B39",settled:"#2E7D32",shipped:"#2980B9"};
@@ -5033,6 +5119,62 @@ window.quickAddOrder=function(custId, custName){
   },300);
 };
 
+window.openShopModal=function(custId){
+  const c=window.G.customers.find(x=>x.id===custId);
+  if(!c)return;
+  const lineName=c.lineName||c.communityName||"客人";
+  const shopName=lineName+"專屬賣場";
+  // 取得訂單商品清單
+  const cOrders=window.G.orders.filter(x=>x.customerId===custId&&x.status!=="shipped");
+  const productList=cOrders.map(o=>{
+    const name=o.productName||(window.G.products.find(p=>p.id===o.productId)?.name)||"商品";
+    const qty=o.qty>1?` x${o.qty}`:"";
+    return name+qty;
+  }).join("、")||"商品";
+  // 建立 modal
+  const existing=document.getElementById("modal-shop");
+  if(existing)existing.remove();
+  const div=document.createElement("div");
+  div.id="modal-shop";
+  div.style.cssText="position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;padding:20px";
+  div.innerHTML=`
+    <div style="background:white;border-radius:20px;width:100%;max-width:380px;padding:24px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h3 style="margin:0;font-size:16px;font-weight:900;color:#E65100">🏪 開賣場資料</h3>
+        <button onclick="document.getElementById('modal-shop').remove()" style="font-size:24px;color:#9C7A5A;background:none;border:none;cursor:pointer">×</button>
+      </div>
+      <div style="font-size:11px;color:#9C7A5A;margin-bottom:14px">點各欄位右邊的複製按鈕，依序貼到賣貨便</div>
+      
+      <!-- 賣場名稱 -->
+      <div style="margin-bottom:10px">
+        <div style="font-size:10px;color:#9C7A5A;font-weight:700;margin-bottom:4px">① 賣場名稱</div>
+        <div style="display:flex;align-items:center;gap:8px;background:#FFF8F0;border:1.5px solid #FFCC80;border-radius:10px;padding:10px 12px">
+          <div style="flex:1;font-size:15px;font-weight:700;color:#3D2010" id="shop-name-text">${shopName}</div>
+          <button onclick="navigator.clipboard.writeText(document.getElementById('shop-name-text').textContent);this.textContent='✅';setTimeout(()=>this.textContent='📋',1500)" style="background:#E65100;color:white;border:none;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer;font-weight:700;flex-shrink:0">📋</button>
+        </div>
+      </div>
+      
+      <!-- 商品名稱 -->
+      <div style="margin-bottom:10px">
+        <div style="font-size:10px;color:#9C7A5A;font-weight:700;margin-bottom:4px">② 商品名稱</div>
+        <div style="display:flex;align-items:center;gap:8px;background:#FFF8F0;border:1.5px solid #FFCC80;border-radius:10px;padding:10px 12px">
+          <div style="flex:1;font-size:13px;font-weight:700;color:#3D2010" id="shop-prod-text">${productList}</div>
+          <button onclick="navigator.clipboard.writeText(document.getElementById('shop-prod-text').textContent);this.textContent='✅';setTimeout(()=>this.textContent='📋',1500)" style="background:#E65100;color:white;border:none;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer;font-weight:700;flex-shrink:0">📋</button>
+        </div>
+      </div>
+      
+      <!-- 說明 -->
+      <div style="background:#FFF3E0;border-radius:10px;padding:10px 12px;margin-bottom:16px;font-size:11px;color:#E65100">
+        💡 價格請依實際收款金額自行填寫
+      </div>
+      
+      <!-- 開啟賣貨便 -->
+      <a href="https://myship.7-11.com.tw/fast/add" target="_blank" style="display:block;width:100%;background:#E65100;color:white;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:900;cursor:pointer;text-align:center;text-decoration:none">🔗 開啟賣貨便快速結帳賣場</a>
+      <button onclick="document.getElementById('modal-shop').remove()" style="width:100%;margin-top:8px;background:white;color:#9C7A5A;border:1px solid #E8D5B0;border-radius:12px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">關閉</button>
+    </div>`;
+  document.body.appendChild(div);
+};
+
 window.lnSelectType=function(type){
   const faceBtn=document.getElementById("ln-btn-face");
   const delivBtn=document.getElementById("ln-btn-delivery");
@@ -5129,6 +5271,156 @@ window.sendLineNotify=async function(){
   }
   sendBtn.disabled=false;
   sendBtn.textContent="傳送給客人";
+};
+
+window.G.qaLiveMode=false;
+window.G.qaLiveCustomPrice=null;
+window.G.qaLiveImgB64=null;
+
+window.qaToggleLiveMode=function(){
+  window.G.qaLiveMode=!window.G.qaLiveMode;
+  const liveSection=document.getElementById("qa-live-section");
+  const normalSections=["qa-img-area","qa-ai-result","qa-loading","qa-prod-img-area"];
+  const toggle=document.getElementById("qa-live-toggle");
+  const title=document.getElementById("qa-modal-title");
+  const subtitle=document.getElementById("qa-modal-subtitle");
+  // 找所有正常模式的欄位（品名之後的）
+  const normalFields=document.querySelectorAll("#modal-quick .tab-page-normal");
+  if(window.G.qaLiveMode){
+    liveSection.style.display="block";
+    toggle.style.background="#F59E0B";toggle.style.color="white";toggle.style.borderColor="#F59E0B";
+    toggle.textContent="⚡ 連線中";
+    title.textContent="⚡ 連線極速模式";
+    subtitle.textContent="只填品名和韓幣，一鍵上架";
+    // 隱藏正常模式的複雜區塊
+    ["qa-img-area","qa-prod-img-area","qa-cat-grid","qa-channel-btns","qa-quick-btns","qa-beauty-panel","qa-daiso-panel"].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el)el.closest("div[style]")||el;
+    });
+    document.querySelectorAll("#modal-quick > div > div:not(#qa-live-section)").forEach((el,i)=>{
+      if(i>1)el.dataset.hiddenByLive="1",el.style.display="none";
+    });
+  } else {
+    liveSection.style.display="none";
+    toggle.style.background="white";toggle.style.color="#9C7A5A";toggle.style.borderColor="#E8D5B0";
+    toggle.textContent="⚡ 連線模式";
+    title.textContent="✨ 快速上架";
+    subtitle.textContent="拍照辨識品名，三步驟建好商品";
+    document.querySelectorAll("#modal-quick > div > div[data-hidden-by-live]").forEach(el=>{
+      el.style.display="";el.removeAttribute("data-hidden-by-live");
+    });
+  }
+};
+
+window.qaLiveCalc=function(){
+  const amt=parseFloat(document.getElementById("qa-live-amt")?.value)||0;
+  if(!amt){
+    document.getElementById("qa-live-cost").textContent="-";
+    document.getElementById("qa-live-sugg").textContent="-";
+    document.getElementById("qa-live-final").textContent="-";
+    return;
+  }
+  const s=window.G.settings||{};
+  const rate=s.rate||0.024;
+  const tax=s.taxRefund||0.07;
+  const card=s.cardFee||0.015;
+  const rebate=s.cardRebate||0.033;
+  const cost=amt*rate*(1-tax)*(1+card)*(1-rebate);
+  const costRounded=Math.round(cost);
+  // 用 food 類別算建議售價（最通用）
+  let sugg=costRounded;
+  if(cost<=45)sugg=99;
+  else if(cost<=75)sugg=149;
+  else if(cost<=100)sugg=199;
+  else if(cost<=130)sugg=249;
+  else if(cost<=160)sugg=299;
+  else if(cost<=200)sugg=349;
+  else if(cost<=240)sugg=399;
+  else if(cost<=280)sugg=449;
+  else if(cost<=320)sugg=499;
+  else if(cost<=380)sugg=599;
+  else if(cost<=450)sugg=699;
+  else if(cost<=550)sugg=849;
+  else if(cost<=650)sugg=999;
+  else sugg=Math.ceil(cost*1.4/50)*50;
+  const finalPrice=window.G.qaLiveCustomPrice||sugg;
+  const profit=finalPrice-costRounded;
+  document.getElementById("qa-live-cost").textContent="NT$"+costRounded;
+  document.getElementById("qa-live-sugg").textContent="NT$"+sugg;
+  document.getElementById("qa-live-profit").textContent="NT$"+profit;
+  document.getElementById("qa-live-final").textContent="NT$"+finalPrice;
+};
+
+window.qaLiveImgPick=async function(input){
+  if(!input.files||!input.files[0])return;
+  const file=input.files[0];
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const thumb=document.getElementById("qa-live-img-thumb");
+    const preview=document.getElementById("qa-live-img-preview");
+    const label=document.getElementById("qa-live-img-label");
+    thumb.src=e.target.result;
+    preview.style.display="block";
+    label.style.display="none";
+    window.G.qaLiveImgB64=e.target.result.split(",")[1];
+  };
+  reader.readAsDataURL(file);
+};
+
+window.qaLiveImgClear=function(){
+  document.getElementById("qa-live-img-preview").style.display="none";
+  document.getElementById("qa-live-img-label").style.display="flex";
+  document.getElementById("qa-live-img").value="";
+  window.G.qaLiveImgB64=null;
+};
+
+window.qaLiveSave=async function(){
+  const name=document.getElementById("qa-live-name")?.value.trim();
+  const amt=parseFloat(document.getElementById("qa-live-amt")?.value)||0;
+  if(!name){showToast("請填入品名","error");return;}
+  if(!amt){showToast("請填入韓幣金額","error");return;}
+  const s=window.G.settings||{};
+  const rate=s.rate||0.024;
+  const tax=s.taxRefund||0.07;
+  const card=s.cardFee||0.015;
+  const rebate=s.cardRebate||0.033;
+  const cost=amt*rate*(1-tax)*(1+card)*(1-rebate);
+  const costRounded=Math.round(cost);
+  let sugg=costRounded;
+  if(cost<=45)sugg=99;
+  else if(cost<=75)sugg=149;
+  else if(cost<=100)sugg=199;
+  else if(cost<=130)sugg=249;
+  else if(cost<=160)sugg=299;
+  else if(cost<=200)sugg=349;
+  else if(cost<=240)sugg=399;
+  else if(cost<=280)sugg=449;
+  else if(cost<=320)sugg=499;
+  else if(cost<=380)sugg=599;
+  else if(cost<=450)sugg=699;
+  else if(cost<=550)sugg=849;
+  else if(cost<=650)sugg=999;
+  else sugg=Math.ceil(cost*1.4/50)*50;
+  const finalPrice=window.G.qaLiveCustomPrice||sugg;
+  const tripId=window.G.moSelectedTripId||getLatestTrip()?.id||"";
+  const id="P"+Date.now();
+  const prod={id,name,foreignAmount:amt,currency:"KRW",
+    beforeTax:Math.round(amt*rate),afterTax:costRounded,
+    finalPrice,profit:finalPrice-costRounded,
+    margin:Math.round((finalPrice-costRounded)/finalPrice*100),
+    catKey:"food",category:"超商/超市食品",emoji:"🍿",
+    channel:"",flags:{},specs:"",
+    imgB64:window.G.qaLiveImgB64||null,
+    tripId,createdAt:Date.now()};
+  await fbSet("products",id,prod);
+  // 清空欄位
+  document.getElementById("qa-live-name").value="";
+  document.getElementById("qa-live-amt").value="";
+  document.getElementById("qa-live-custom").value="";
+  window.G.qaLiveCustomPrice=null;
+  qaLiveImgClear();
+  qaLiveCalc();
+  showToast("⚡ 已上架："+name);
 };
 
 window.qaSelectChannel=function(btn,ch){
