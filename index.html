@@ -377,7 +377,7 @@ window.showBrandSuggestions=function(val,isQA){
   <div id="product-toolbar" style="display:flex;gap:6px;margin-bottom:8px;align-items:center">
     <button id="list-view-toggle" onclick="toggleListView()" style="background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:7px 12px;font-size:16px;cursor:pointer" title="切換顯示模式">☰</button>
     <button onclick="exportProductCSV()" style="flex:1;font-size:11px;background:#EBF5FB;color:#2980B9;border:1px solid #AED6F1;padding:7px 4px;border-radius:8px;font-weight:700;cursor:pointer">匯出商品庫</button>
-    <button onclick="exportShippingCSV()" style="flex:1;font-size:11px;background:#EBF5FB;color:#2980B9;border:1px solid #AED6F1;padding:7px 4px;border-radius:8px;font-weight:700;cursor:pointer">買家出貨單</button>
+    <button onclick="showStockPlan()" style="flex:1;font-size:11px;background:#FFF3E0;color:#E07B39;border:1px solid #FFCC80;padding:7px 4px;border-radius:8px;font-weight:700;cursor:pointer">📦 備貨清單</button>
   </div>
   <!-- 批次操作列 -->
   <div id="list-batch-bar" style="display:none;background:#FDF6EC;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;margin-bottom:8px;display:none;align-items:center;justify-content:space-between">
@@ -1309,7 +1309,7 @@ window.G={
   listSearch:"",listFilterCat:"all",listFilterCurrency:"all",
   custSearch:"",custUnpurchased:false,
   invSearch:"",orderFilter:"all",
-  tripFilter:"auto",  // "auto"=依時間自動, "all"=全部, 或 tripId
+  tripFilter:"all",  // "auto"=依時間自動, "all"=全部, 或 tripId
   selectedProducts:new Set(),
   selectedCustomers:new Set(),
   selectedOrders:new Set(),
@@ -3266,6 +3266,7 @@ function updateEpCalc(amt,cur,cat,twPrice,flags){
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
   set("ep-before",`NT$ ${beforeTax}`);
   set("ep-after",`NT$ ${afterTax}`);
+  set("ep-cost",`NT$ ${afterTax}`);
   set("ep-sugg",`NT$ ${sugg}`);
   const pr=document.getElementById("ep-price");
   if(pr&&!pr.dataset.manual)pr.value=sugg;
@@ -3523,6 +3524,8 @@ window.addOrder=async function(){
   await fbSet("orders",id,{productId,productName:cleanProductName(prod.name),productEmoji:prod.emoji,customerId,communityName,lineName,buyerName:communityName||lineName,qty,unitPrice:prod.finalPrice,total:prod.finalPrice*qty,status:"pending",tripId,orderType,spec,createdAt:Date.now()});
   const specEl=document.getElementById("mo-spec");if(specEl)specEl.value="";
   closeModal("modal-order");showToast(`${orderTypeLabel} 已為 ${communityName||lineName} 登記${spec?" ("+spec+")":""}`);
+  // 強制刷新避免 Firebase onSnapshot 延遲導致畫面未更新
+  setTimeout(()=>{renderList();renderCustomers();renderInvoice();},600);
 };
 // ── 數量 ± 按鈕 ───────────────────────────────────────────────────────
 window.moQtyAdj=function(delta){
@@ -3805,6 +3808,90 @@ window.exportShippingCSV=function(){
     return[`"${b.name.replace(/"/g,'""')}"`,`"${b.lineName.replace(/"/g,'""')}"`,b.qty,b.price,`"${detail.replace(/"/g,'""')}"`,`"${lt.replace(/"/g,'""')}"`];
   });
   dlCSV([h,...rows],`ButterEdit_買家對帳單_${today()}.csv`);showToast("買家對帳單已下載");
+};
+
+window.showStockPlan=function(){
+  const tripOrders=getTripOrders().filter(o=>o.status==="pending");
+  const products=window.G.products;
+  if(!tripOrders.length){showToast("目前沒有待購買的喊單","warning");return;}
+  window.renderStockPlanContent();
+  const m=document.getElementById("modal-stock-plan");
+  m.style.display="flex";
+};
+
+window.renderStockPlanContent=function(){
+  const tripOrders=getTripOrders().filter(o=>o.status==="pending");
+  const products=window.G.products;
+  const prodMap={};
+  tripOrders.forEach(o=>{
+    if(!prodMap[o.productId])prodMap[o.productId]=[];
+    prodMap[o.productId].push(o);
+  });
+  if(!Object.keys(prodMap).length){
+    document.getElementById("stock-plan-content").innerHTML=`<div style="text-align:center;padding:32px;color:#9C7A5A;font-size:13px">🎉 全部都分配完了！</div>`;
+    return;
+  }
+  let html="";
+  Object.keys(prodMap).forEach(pid=>{
+    const p=products.find(x=>x.id===pid);
+    if(!p)return;
+    const orders=[...prodMap[pid]].sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+    const total=orders.reduce((s,o)=>s+o.qty,0);
+    const specGroups={};
+    orders.forEach(o=>{
+      const key=o.spec||"";
+      if(!specGroups[key])specGroups[key]=[];
+      specGroups[key].push(o);
+    });
+    html+=`<div style="background:#FAF8F5;border:1px solid #E8D5B0;border-radius:14px;padding:14px;margin-bottom:12px">`;
+    html+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">`;
+    html+=`<div style="font-size:13px;font-weight:900;color:#3D2010">${p.emoji||"📦"} ${p.name}</div>`;
+    html+=`<div style="font-size:12px;font-weight:700;color:#E07B39;background:#FFF3E0;border:1px solid #FFCC80;padding:3px 10px;border-radius:99px">共 ${total} 個</div>`;
+    html+=`</div>`;
+    Object.keys(specGroups).forEach(spec=>{
+      const sOrders=specGroups[spec];
+      const sTotal=sOrders.reduce((s,o)=>s+o.qty,0);
+      if(spec){
+        html+=`<div style="font-size:13px;font-weight:900;color:#E07B39;margin-bottom:8px;margin-top:8px;padding:6px 12px;background:#FFF3E0;border-left:3px solid #E07B39;border-radius:0 8px 8px 0">🏷️ ${spec} <span style="font-size:11px;font-weight:700;color:#C5A880">— ${sTotal}個</span></div>`;
+      }
+      let cum=0;
+      sOrders.forEach((o,i)=>{
+        cum+=o.qty;
+        const buyer=o.communityName||o.buyerName||"?";
+        html+=`<div id="sp-row-${o.id}" style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:8px 10px;background:white;border-radius:10px;border:1px solid #E8D5B0">`;
+        html+=`<span style="font-size:10px;font-weight:900;color:#C5A880;min-width:20px">#${i+1}</span>`;
+        html+=`<span style="flex:1;font-size:13px;font-weight:700;color:#3D2010">${buyer}</span>`;
+        html+=`<span style="font-size:12px;color:#9C7A5A">×${o.qty}</span>`;
+        html+=`<span style="font-size:10px;color:#C5A880;min-width:44px;text-align:right">累計${cum}</span>`;
+        html+=`<button class="sp-give-btn" onclick="stockPlanGive('${o.id}',this)" style="flex-shrink:0;background:#FDEDEC;color:#C0392B;border:1.5px solid #F1948A;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer">未給</button>`;
+        html+=`</div>`;
+      });
+    });
+    html+=`</div>`;
+  });
+  document.getElementById("stock-plan-content").innerHTML=html;
+};
+
+window.stockPlanGive=async function(oid,btn){
+  const row=document.getElementById("sp-row-"+oid);
+  const isGiven=btn.dataset.given==="1";
+  if(isGiven){
+    btn.dataset.given="0";
+    btn.textContent="未給";
+    btn.style.background="#FDEDEC";
+    btn.style.color="#C0392B";
+    btn.style.border="1.5px solid #F1948A";
+    if(row){row.style.background="white";row.style.borderColor="#E8D5B0";}
+    await fbUpd("orders",oid,{status:"pending"});
+  } else {
+    btn.dataset.given="1";
+    btn.textContent="已給";
+    btn.style.background="#A5D6A7";
+    btn.style.color="#1B5E20";
+    btn.style.border="1.5px solid #A5D6A7";
+    if(row){row.style.background="#F0FFF4";row.style.borderColor="#A5D6A7";}
+    await fbUpd("orders",oid,{status:"settled"});
+  }
 };
 
 // ── 統計 ──────────────────────────────────────────────────────────────
@@ -4698,7 +4785,7 @@ window.renderList=function(){
       const curSub=window.G.listFilterSubcat||null;
       if(subcats.length>0){
         sf.style.display="flex";
-        sf.innerHTML=subcats.map(s=>`<button onclick="window.G.listFilterSubcat=window.G.listFilterSubcat==='${s.key}'?null:'${s.key}';renderList()" style="flex-shrink:0;padding:4px 10px;border-radius:99px;font-size:10px;font-weight:700;border:1px solid ${curSub===s.key?"#9C7A5A":"#E8D5B0"};background:${curSub===s.key?"#9C7A5A":"white"};color:${curSub===s.key?"white":"#9C7A5A"};cursor:pointer">${s.label}(${catProds.filter(p=>window.getSubcat(p.name,listFilterCat)?.key===s.key).length})</button>`).join("");
+        sf.innerHTML=subcats.map(s=>`<button onclick="window.G.listFilterSubcat=window.G.listFilterSubcat==='${s.key}'?null:'${s.key}';renderList()" style="flex-shrink:0;padding:4px 10px;border-radius:99px;font-size:10px;font-weight:700;border:1px solid ${curSub===s.key?"#E07B39":"#FFCC80"};background:${curSub===s.key?"#E07B39":"#FFF3E0"};color:${curSub===s.key?"white":"#C76B25"};cursor:pointer">${s.label}(${catProds.filter(p=>window.getSubcat(p.name,listFilterCat)?.key===s.key).length})</button>`).join("");
       } else {
         sf.innerHTML="";
       }
@@ -4801,7 +4888,7 @@ window.renderList=function(){
           <span style="font-size:12px;font-weight:700;color:#3D2010">🛒 已喊單 <span style="${(()=>{const hot={food:10,daiso:10,beauty:5,clothes:5,accessory:5,home:5,sunglasses:5,shoes:3,bag:3,luxury:3,device:3,other:5};const threshold=hot[p.catKey]||5;return pTotal>=threshold?"color:#E07B39;font-weight:900":"color:#C5A880";})()}">${pTotal} 件${(()=>{const hot={food:10,daiso:10,beauty:5,clothes:5,accessory:5,home:5,sunglasses:5,shoes:3,bag:3,luxury:3,device:3,other:5};const threshold=hot[p.catKey]||5;return pTotal>=threshold?" 🔥":"";})()}</span></span>
           <button onclick="openModal('modal-order',{productId:'${p.id}'})" style="background:#FDF6EC;color:#A08060;border:1px solid #E8D5B0;padding:4px 12px;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer">＋ 登記喊單</button>
         </div>
-        ${pOrders.length>0?`<div style="display:flex;flex-wrap:wrap;gap:5px">${pOrders.map(o=>{return`<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;background:#EBF7EE;color:#2E7D32;border:1px solid #C8E6C9;padding:3px 6px 3px 10px;border-radius:99px">${o.communityName||o.buyerName}${o.spec?` <span style="background:#C8E6C9;border-radius:4px;padding:0 4px;font-size:10px">${o.spec}</span>`:""} ×${o.qty}<button onclick="deleteOrder('${o.id}')" style="color:#E53935;background:none;border:none;cursor:pointer;font-weight:900;font-size:14px;line-height:1;margin-left:2px">×</button></span>`;}).join("")}</div>`:`<div style="font-size:10px;color:#9C7A5A;font-style:italic">尚無喊單</div>`}
+        ${pOrders.length>0?`<div style="display:flex;flex-direction:column;gap:4px">${(()=>{const sorted=[...pOrders].sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));let cum=0;return sorted.map((o,i)=>{cum+=o.qty;return`<div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="flex-shrink:0;font-size:10px;font-weight:900;color:#9C7A5A;min-width:18px">#${i+1}</span><span style="flex:1;display:inline-flex;align-items:center;gap:4px;font-weight:700;background:#EBF7EE;color:#2E7D32;border:1px solid #C8E6C9;padding:3px 8px;border-radius:99px">${o.communityName||o.buyerName}${o.spec?` <span style="background:#C8E6C9;border-radius:4px;padding:0 4px;font-size:10px">${o.spec}</span>`:""} ×${o.qty}</span><span style="flex-shrink:0;font-size:10px;color:#C5A880;font-weight:700">累計${cum}</span><button onclick="deleteOrder('${o.id}')" style="color:#E53935;background:none;border:none;cursor:pointer;font-weight:900;font-size:14px;line-height:1;flex-shrink:0">×</button></div>`;}).join("");})()}</div>`:`<div style="font-size:10px;color:#9C7A5A;font-style:italic">尚無喊單</div>`}
       </div>
     </div>`;
   }).join("");
@@ -6392,6 +6479,18 @@ window.swUpdate = function(){
   window.location.reload(true);
 };
 </script>
+<!-- 備貨清單 Modal -->
+<div id="modal-stock-plan" style="display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0.45);align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
+  <div style="background:white;border-radius:20px;width:100%;max-width:480px;padding:24px;margin:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 style="margin:0;font-size:16px;font-weight:900;color:#3D2010">📦 備貨清單</h3>
+      <button onclick="document.getElementById('modal-stock-plan').style.display='none'" style="font-size:24px;color:#9C7A5A;background:none;border:none;cursor:pointer">×</button>
+    </div>
+    <div style="font-size:11px;color:#9C7A5A;margin-bottom:14px">依喊單時間排序，方便確認缺貨截止點</div>
+    <div id="stock-plan-content"></div>
+  </div>
+</div>
+
 <!-- LINE 出貨通知 Modal -->
 <div id="modal-line-notify" class="modal-overlay" style="display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;padding:20px">
   <div style="background:white;border-radius:20px;width:100%;max-width:400px;padding:24px">
