@@ -3203,10 +3203,12 @@ window.epUrlPreview=function(){
 window.epRivalCheck=function(){
   const rival=parseFloat(document.getElementById("ep-rival")?.value)||0;
   const price=parseFloat(document.getElementById("ep-price")?.value)||0;
-  // 更新利潤
+  // 更新利潤（ep-after 隱藏版 或 ep-cost 顯示版都試）
   const afterEl=document.getElementById("ep-after");
-  if(afterEl&&afterEl.textContent&&afterEl.textContent!=="-"){
-    const afterTax=parseFloat(afterEl.textContent.replace("NT$ ",""))||0;
+  const costEl=document.getElementById("ep-cost");
+  const afterText=(afterEl?.textContent||costEl?.textContent||"").replace("NT$ ","").trim();
+  if(afterText&&afterText!=="-"){
+    const afterTax=parseFloat(afterText)||0;
     const profit=Math.round((price-afterTax)*10)/10;
     const pd=document.getElementById("ep-profit-display");
     if(pd){pd.textContent=`NT$${profit}`;pd.style.color=profit>=0?"#2E7D32":"#EF5350";}
