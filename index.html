@@ -370,7 +370,7 @@ window.showBrandSuggestions=function(val,isQA){
   <select id="trip-filter-bar" onchange="setTripFilter(this.value)" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;color:#3D2010;outline:none;margin-bottom:8px;cursor:pointer"></select>
   <!-- 搜尋 + 按鈕列 -->
   <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center">
-    <input type="text" id="list-search" oninput="window.G.listSearch=this.value;renderList()" placeholder="🔍 搜尋商品名稱、編號、通路..." style="flex:1;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none"/>
+    <input type="text" id="list-search" oninput="window.G.listSearch=this.value;renderList()" placeholder="🔍 搜尋商品名稱、編號、通路、規格..." style="flex:1;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none"/>
     <button onclick="showTab('calc')" style="background:#C5A880;color:white;border:none;border-radius:10px;padding:10px 14px;font-size:18px;font-weight:700;cursor:pointer">＋</button>
   </div>
   <!-- 匯出按鈕 + 連線模式 (非連線模式才顯示匯出) -->
@@ -388,7 +388,8 @@ window.showBrandSuggestions=function(val,isQA){
     </div>
   </div>
   <div id="cur-filters" class="scrollbar-none" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:6px"></div>
-  <div id="cat-filters" class="scrollbar-none" style="display:flex;flex-wrap:wrap;gap:6px;padding-bottom:4px;margin-bottom:10px"></div>
+  <div id="cat-filters" class="scrollbar-none" style="display:flex;flex-wrap:wrap;gap:6px;padding-bottom:4px;margin-bottom:6px"></div>
+  <div id="subcat-filters" class="scrollbar-none" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;min-height:0"></div>
   <!-- 全選 -->
   <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#9C7A5A;margin-bottom:8px;cursor:pointer">
     <input type="checkbox" id="list-select-all" onchange="toggleSelectAll('product')" style="width:16px;height:16px;accent-color:#C5A880"/> 全選
@@ -619,6 +620,18 @@ window.showBrandSuggestions=function(val,isQA){
       </div>
     </div>
   </div>
+
+  <!-- 子分類管理 -->
+  <div style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:20px;margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #E8D5B0">
+      <h3 style="margin:0;font-size:15px;font-weight:700;color:#3D2010">🏷️ 子分類管理</h3>
+      <button onclick="openAddSubcat()" style="background:#C5A880;color:white;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer">＋ 新增</button>
+    </div>
+    <div style="background:#FDF6EC;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:11px;color:#9C7A5A">
+      設定關鍵字後，商品品名包含關鍵字時自動歸入該子分類。多個關鍵字用逗號分隔。
+    </div>
+    <div id="subcat-list"></div>
+  </div>
   <div style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:20px;margin-bottom:12px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #E8D5B0">
       <h3 style="margin:0;font-size:15px;font-weight:700;color:#3D2010">✈️ 趟次管理</h3>
@@ -637,6 +650,11 @@ window.showBrandSuggestions=function(val,isQA){
     <p style="font-size:12px;color:#9C7A5A;margin-bottom:16px">即時匯率已自動載入，可手動覆蓋。儲存後同步給所有人。</p>
     <div id="settings-fields"></div>
     <button onclick="saveSettings()" style="width:100%;background:#5C3A1E;color:#F5E6C8;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;cursor:pointer">確認儲存並同步給所有人</button>
+    <div style="margin-top:10px;padding:10px 14px;background:#FEF3C7;border:1px solid #FDE68A;border-radius:10px">
+      <div style="font-size:11px;color:#92400E;font-weight:700;margin-bottom:6px">🔧 一次性修復工具</div>
+      <div style="font-size:10px;color:#92400E;margin-bottom:8px">修復已建立的活動商品（1+1/2+1/3+1）的原始金額記錄，讓修改時能正確顯示原價。</div>
+      <button onclick="fixOriginalAmounts()" style="width:100%;background:#F59E0B;color:white;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">🔧 修復活動商品原始金額</button>
+    </div>
   </div>
 </div>
 
@@ -757,111 +775,7 @@ window.showBrandSuggestions=function(val,isQA){
       <h3 style="margin:0;font-size:15px;font-weight:900;color:#3D2010">修改商品</h3>
       <button onclick="closeModal('modal-eprod')" style="font-size:24px;font-weight:900;color:#9C7A5A;background:none;border:none;cursor:pointer">×</button>
     </div>
-    <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">商品類別</label>
-    <div id="ep-cat-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:12px"></div>
-    <!-- 購買通路 -->
-    <div style="margin-bottom:12px">
-      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:6px">🏪 購買通路（選填）</label>
-      <div id="ep-channel-btns" style="display:flex;flex-wrap:wrap;gap:6px">
-        <button class="ep-ch-btn  active" data-ch="" onclick="epSelectChannel(this,'')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #5C3A1E;background:#5C3A1E;color:white;cursor:pointer">未指定</button>
-        <button class="ep-ch-btn" data-ch="OLIVE YOUNG" onclick="epSelectChannel(this,'OLIVE YOUNG')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧴 OLIVE YOUNG</button>
-        <button class="ep-ch-btn" data-ch="樂天超市" onclick="epSelectChannel(this,'樂天超市')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛒 樂天超市</button>
-        <button class="ep-ch-btn" data-ch="No Brand" onclick="epSelectChannel(this,'No Brand')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 No Brand</button>
-        <button class="ep-ch-btn" data-ch="GS25" onclick="epSelectChannel(this,'GS25')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 GS25</button>
-        <button class="ep-ch-btn" data-ch="CU" onclick="epSelectChannel(this,'CU')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 CU</button>
-        <button class="ep-ch-btn" data-ch="大創 DAISO" onclick="epSelectChannel(this,'大創 DAISO')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 大創 DAISO</button>
-        <button class="ep-ch-btn" data-ch="MIMILINE" onclick="epSelectChannel(this,'MIMILINE')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎀 MIMILINE</button>
-        <button class="ep-ch-btn" data-ch="ARTBOX" onclick="epSelectChannel(this,'ARTBOX')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 ARTBOX</button>
-        <button class="ep-ch-btn" data-ch="29CM" onclick="epSelectChannel(this,'29CM')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">💻 29CM</button>
-        <button class="ep-ch-btn" data-ch="Object" onclick="epSelectChannel(this,'Object')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Object</button>
-        <button class="ep-ch-btn" data-ch="Point of View" onclick="epSelectChannel(this,'Point of View')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Point of View</button>
-        <button class="ep-ch-btn" data-ch="BUTTER" onclick="epSelectChannel(this,'BUTTER')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧈 BUTTER</button>
-        <button class="ep-ch-btn" data-ch="新世界/樂天百貨" onclick="epSelectChannel(this,'新世界/樂天百貨')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏢 百貨/免稅</button>
-        <button class="ep-ch-btn" data-ch="廣藏市場" onclick="epSelectChannel(this,'廣藏市場')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏮 廣藏市場</button>
-        <button class="ep-ch-btn" data-ch="其他" onclick="epSelectChannel(this,'其他')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">📦 其他</button>
-      </div>
-    </div>
-    <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">商品名稱</label>
-    <div style="position:relative;margin-bottom:10px">
-      <input type="text" id="ep-name" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 40px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
-      <button onclick="document.getElementById('ep-name').value=''" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
-    </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
-      <label style="font-size:11px;font-weight:700;color:#9C7A5A">原幣金額 <span id="ep-sym" style="color:#C5A880"></span></label>
-      <div style="display:flex;gap:4px">
-        <button onclick="epApplyPromo(2)" style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:700;color:#92400E;cursor:pointer">1+1</button>
-        <button onclick="epApplyPromo(3)" style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:700;color:#166534;cursor:pointer">2+1</button>
-        <button onclick="epApplyPromo(4)" style="background:#EDE9FE;border:1px solid #C4B5FD;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:700;color:#5B21B6;cursor:pointer">3+1</button>
-      </div>
-    </div>
-    <div style="position:relative;margin-bottom:6px">
-      <input type="text" inputmode="numeric" id="ep-foreign" oninput="window.G.epPromoOriginal=null;epForeignChange()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 40px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
-      <button onclick="document.getElementById('ep-foreign').value='';window.G.epPromoOriginal=null;epForeignChange();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:6px">
-      <div style="background:#FFF0E0;border:1px solid #FFD4A8;border-radius:10px;padding:8px 10px">
-        <div style="font-size:9px;color:#A0522D;font-weight:700;margin-bottom:2px">退稅後成本</div>
-        <div id="ep-after" style="font-size:13px;font-weight:900;color:#A0522D">-</div>
-      </div>
-      <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:8px 10px">
-        <div style="font-size:9px;color:#92400E;font-weight:700;margin-bottom:2px">建議售價</div>
-        <div id="ep-sugg" style="font-size:13px;font-weight:900;color:#92400E">-</div>
-      </div>
-      <div style="background:#F0FDF4;border:1px solid #86EFAC;border-radius:10px;padding:8px 10px">
-        <div style="font-size:9px;color:#166534;font-weight:700;margin-bottom:2px">利潤</div>
-        <div id="ep-profit-display" style="font-size:13px;font-weight:900;color:#166534">-</div>
-      </div>
-      <div id="ep-before" style="display:none">-</div>
-    </div>
-    <!-- 最終售價獨立一列，避免手機被截斷 -->
-    <div style="background:#FFF0F0;border:1.5px solid #FF6B6B;border-radius:10px;padding:10px 14px;margin-bottom:10px">
-      <div style="font-size:9px;color:#C0392B;font-weight:700;margin-bottom:4px">最終售價</div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <div id="ep-final-display" style="font-size:16px;font-weight:900;color:#C0392B;min-width:80px">-</div>
-        <div style="flex:1;position:relative">
-          <input type="text" inputmode="numeric" id="ep-price" onfocus="this.dataset.manual='1'" oninput="epRivalCheck()" placeholder="✏️ 自訂金額" style="width:100%;background:white;border:1.5px solid #FF6B6B;border-radius:8px;padding:8px 36px 8px 12px;font-size:16px;font-weight:700;color:#3D2010;outline:none;box-sizing:border-box"/>
-          <button onclick="const el=document.getElementById('ep-price');if(el){el.value='';el.dataset.manual='';epRivalCheck();}" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#FF6B6B;font-size:16px;line-height:1;padding:0">✕</button>
-        </div>
-      </div>
-    </div>
-    <!-- 加價選項 -->
-    <div style="background:#FDF6EC;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;margin-bottom:10px">
-      <div style="font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:8px">📦 加價選項（勾選後自動更新建議售價）</div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px">
-        <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#3D2010;cursor:pointer"><input type="checkbox" id="ep-flag-cold" onchange="epFlagChange()" style="accent-color:#C5A880"/> 🧊 冷藏 (+100)</label>
-        <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#3D2010;cursor:pointer"><input type="checkbox" id="ep-flag-coldHigh" onchange="epFlagChange()" style="accent-color:#C5A880"/> ❄️ 高風險冷藏 (+200)</label>
-        <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#3D2010;cursor:pointer"><input type="checkbox" id="ep-flag-heavy" onchange="epFlagChange()" style="accent-color:#C5A880"/> ⚖️ 重貨 (+100)</label>
-        <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#3D2010;cursor:pointer"><input type="checkbox" id="ep-flag-large" onchange="epFlagChange()" style="accent-color:#C5A880"/> 📦 大型重貨 (+300)</label>
-        <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#E07B39;cursor:pointer"><input type="checkbox" id="ep-flag-limited" onchange="epFlagChange()" style="accent-color:#E07B39"/> 👟 限量款鞋子 (+800)</label>
-      </div>
-    </div>
-    <!-- 台灣官方售價 & 同行參考價 並排 -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-      <div>
-        <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">🏷️ 台灣官方售價 (NT$)</label>
-        <input type="text" inputmode="numeric" id="ep-twprice" placeholder="例如：4900" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none"/>
-      </div>
-      <div>
-        <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">👥 同行參考價 (NT$)</label>
-        <input type="text" inputmode="numeric" id="ep-rival" placeholder="例如：149" oninput="epRivalCheck()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none"/>
-      </div>
-    </div>
-    <!-- 同行比較提示 -->
-    <div id="ep-rival-msg" style="display:none;border-radius:10px;padding:8px 14px;margin-bottom:10px;font-size:12px;font-weight:700"></div>
-    <!-- 規格選項 -->
-    <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">📐 規格選項（選填，用逗號分隔）</label>
-    <input type="text" id="ep-specs" placeholder="例如：S,M,L,XL 或 黑色,白色,藍色" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none;margin-bottom:10px"/>
-    <!-- 官網網址：支援多筆 -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
-      <label style="font-size:11px;font-weight:700;color:#9C7A5A">🔗 官網或販售平台網址（選填）</label>
-      <button onclick="epAddUrlRow()" style="background:#EDE9FE;border:1px solid #C4B5FD;border-radius:6px;padding:2px 10px;font-size:13px;font-weight:700;color:#5B21B6;cursor:pointer">＋</button>
-    </div>
-    <div id="ep-url-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px">
-      <div style="position:relative">
-        <input type="url" id="ep-url" placeholder="https://..." oninput="epUrlPreview()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 44px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
-        <a id="ep-url-link" href="#" target="_blank" rel="noopener" onclick="return !!(document.getElementById('ep-url').value.startsWith('http'))" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:20px;text-decoration:none;opacity:0.3;pointer-events:none" title="開啟連結">🔗</a>
-      </div>
-    </div>
+    <!-- 1. 商品圖片 -->
     <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">📷 商品圖片（選填）</label>
     <div id="ep-img-area" style="margin-bottom:14px">
       <div id="ep-img-preview" style="display:none;margin-bottom:8px">
@@ -879,7 +793,120 @@ window.showBrandSuggestions=function(val,isQA){
       </label>
       <input type="file" id="ep-img-input" accept="image/*" style="display:none" onchange="epImgPick(this)"/>
     </div>
-    <button onclick="saveEditProd()" style="width:100%;background:#C5A880;color:white;border:none;border-radius:10px;padding:14px;font-size:14px;font-weight:700;cursor:pointer">💾 確認儲存</button>
+    <!-- 2. 品名 + 規格 -->
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <div style="flex:3">
+        <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">商品名稱</label>
+        <div style="position:relative">
+          <input type="text" id="ep-name" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 40px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
+          <button onclick="document.getElementById('ep-name').value=''" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
+        </div>
+      </div>
+      <div style="flex:1.5">
+        <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">📐 規格</label>
+        <input type="text" id="ep-specs" placeholder="黑色,金色" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
+      </div>
+    </div>
+    <!-- 3. 官網 -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+      <label style="font-size:11px;font-weight:700;color:#9C7A5A">🔗 官網或販售平台網址（選填）</label>
+      <button onclick="epAddUrlRow()" style="background:#EDE9FE;border:1px solid #C4B5FD;border-radius:6px;padding:2px 10px;font-size:13px;font-weight:700;color:#5B21B6;cursor:pointer">＋</button>
+    </div>
+    <div id="ep-url-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px">
+      <div style="position:relative">
+        <input type="url" id="ep-url" placeholder="https://..." oninput="epUrlPreview()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 44px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
+        <a id="ep-url-link" href="#" target="_blank" rel="noopener" onclick="return !!(document.getElementById('ep-url').value.startsWith('http'))" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:20px;text-decoration:none;opacity:0.3;pointer-events:none" title="開啟連結">🔗</a>
+      </div>
+    </div>
+    <!-- 4. 原幣金額 -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+      <label style="font-size:11px;font-weight:700;color:#9C7A5A">原幣金額 <span id="ep-sym" style="color:#C5A880"></span></label>
+      <div style="display:flex;gap:4px">
+        <button onclick="epApplyPromo(2)" style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:700;color:#92400E;cursor:pointer">1+1</button>
+        <button onclick="epApplyPromo(3)" style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:700;color:#166534;cursor:pointer">2+1</button>
+        <button onclick="epApplyPromo(4)" style="background:#EDE9FE;border:1px solid #C4B5FD;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:700;color:#5B21B6;cursor:pointer">3+1</button>
+      </div>
+    </div>
+    <div style="position:relative;margin-bottom:6px">
+      <input type="text" inputmode="numeric" id="ep-foreign" oninput="window.G.epPromoOriginal=null;epForeignChange()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 40px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
+      <button onclick="document.getElementById('ep-foreign').value='';window.G.epPromoOriginal=null;epForeignChange();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
+    </div>
+    <!-- 5. 成本/建議/利潤 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px">
+      <div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:10px;padding:8px;text-align:center">
+        <div style="font-size:9px;color:#92400E;font-weight:700">退稅後成本</div>
+        <div id="ep-cost" style="font-size:13px;font-weight:900;color:#92400E">-</div>
+      </div>
+      <div style="background:#EDE9FE;border:1px solid #C4B5FD;border-radius:10px;padding:8px;text-align:center">
+        <div style="font-size:9px;color:#5B21B6;font-weight:700">建議售價</div>
+        <div id="ep-sugg" style="font-size:13px;font-weight:900;color:#5B21B6">-</div>
+      </div>
+      <div style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:10px;padding:8px;text-align:center">
+        <div style="font-size:9px;color:#166534;font-weight:700">利潤</div>
+        <div id="ep-profit-display" style="font-size:13px;font-weight:900;color:#166534">-</div>
+      </div>
+      <div id="ep-before" style="display:none">-</div>
+    </div>
+    <!-- 6. 最終售價 -->
+    <div style="background:#FFF0F0;border:1.5px solid #FF6B6B;border-radius:10px;padding:10px 14px;margin-bottom:10px">
+      <div style="font-size:9px;color:#C0392B;font-weight:700;margin-bottom:4px">最終售價</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div id="ep-final-display" style="font-size:16px;font-weight:900;color:#C0392B;min-width:80px">-</div>
+        <div style="flex:1;position:relative">
+          <input type="text" inputmode="numeric" id="ep-price" onfocus="this.dataset.manual='1'" oninput="epRivalCheck()" placeholder="✏️ 自訂金額" style="width:100%;background:white;border:1.5px solid #FF6B6B;border-radius:8px;padding:8px 36px 8px 12px;font-size:16px;font-weight:700;color:#3D2010;outline:none;box-sizing:border-box"/>
+          <button onclick="const el=document.getElementById('ep-price');if(el){el.value='';el.dataset.manual='';epRivalCheck();}" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#FF6B6B;font-size:16px;line-height:1;padding:0">✕</button>
+        </div>
+      </div>
+    </div>
+    <!-- 7. 商品類別 -->
+    <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">商品類別</label>
+    <div id="ep-cat-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:12px"></div>
+    <!-- 8. 購買通路 -->
+    <div style="margin-bottom:12px">
+      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:6px">🏪 購買通路（選填）</label>
+      <div id="ep-channel-btns" style="display:flex;flex-wrap:wrap;gap:6px">
+        <button class="ep-ch-btn  active" data-ch="" onclick="epSelectChannel(this,'')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #5C3A1E;background:#5C3A1E;color:white;cursor:pointer">未指定</button>
+        <button class="ep-ch-btn" data-ch="OLIVE YOUNG" onclick="epSelectChannel(this,'OLIVE YOUNG')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧴 OLIVE YOUNG</button>
+        <button class="ep-ch-btn" data-ch="樂天超市" onclick="epSelectChannel(this,'樂天超市')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛒 樂天超市</button>
+        <button class="ep-ch-btn" data-ch="No Brand" onclick="epSelectChannel(this,'No Brand')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 No Brand</button>
+        <button class="ep-ch-btn" data-ch="GS25" onclick="epSelectChannel(this,'GS25')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 GS25</button>
+        <button class="ep-ch-btn" data-ch="CU" onclick="epSelectChannel(this,'CU')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 CU</button>
+        <button class="ep-ch-btn" data-ch="大創 DAISO" onclick="epSelectChannel(this,'大創 DAISO')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 大創 DAISO</button>
+        <button class="ep-ch-btn" data-ch="MIMILINE" onclick="epSelectChannel(this,'MIMILINE')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎀 MIMILINE</button>
+        <button class="ep-ch-btn" data-ch="ARTBOX" onclick="epSelectChannel(this,'ARTBOX')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 ARTBOX</button>
+        <button class="ep-ch-btn" data-ch="29CM" onclick="epSelectChannel(this,'29CM')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🖤 29CM</button>
+        <button class="ep-ch-btn" data-ch="Object" onclick="epSelectChannel(this,'Object')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Object</button>
+        <button class="ep-ch-btn" data-ch="Point of View" onclick="epSelectChannel(this,'Point of View')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">👁 Point of View</button>
+        <button class="ep-ch-btn" data-ch="BUTTER" onclick="epSelectChannel(this,'BUTTER')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧈 BUTTER</button>
+        <button class="ep-ch-btn" data-ch="百貨/免稅" onclick="epSelectChannel(this,'百貨/免稅')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 百貨/免稅</button>
+        <button class="ep-ch-btn" data-ch="廣藏市場" onclick="epSelectChannel(this,'廣藏市場')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧡 廣藏市場</button>
+        <button class="ep-ch-btn" data-ch="其他" onclick="epSelectChannel(this,'其他')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">📦 其他</button>
+      </div>
+    </div>
+    <!-- 9. 加價選項 -->
+    <div style="background:#FDF6EC;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;margin-bottom:10px">
+      <div style="font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:8px">📦 加價選項（勾選後自動更新建議售價）</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#3D2010;cursor:pointer"><input type="checkbox" id="ep-flag-cold" onchange="epFlagChange()" style="accent-color:#C5A880"/> 🧊 冷藏 (+100)</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#3D2010;cursor:pointer"><input type="checkbox" id="ep-flag-coldHigh" onchange="epFlagChange()" style="accent-color:#C5A880"/> ❄️ 高風險冷藏 (+200)</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#3D2010;cursor:pointer"><input type="checkbox" id="ep-flag-heavy" onchange="epFlagChange()" style="accent-color:#C5A880"/> ⚖️ 重貨 (+100)</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#3D2010;cursor:pointer"><input type="checkbox" id="ep-flag-large" onchange="epFlagChange()" style="accent-color:#C5A880"/> 📦 大型重貨 (+300)</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#E07B39;cursor:pointer"><input type="checkbox" id="ep-flag-limited" onchange="epFlagChange()" style="accent-color:#E07B39"/> 👟 限量款鞋子 (+800)</label>
+      </div>
+    </div>
+    <!-- 10. 台灣/同行售價 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <div>
+        <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">🏷️ 台灣官方售價 (NT$)</label>
+        <input type="text" inputmode="numeric" id="ep-twprice" placeholder="例如：4900" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none"/>
+      </div>
+      <div>
+        <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">👥 同行參考價 (NT$)</label>
+        <input type="text" inputmode="numeric" id="ep-rival" placeholder="例如：149" oninput="epRivalCheck()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none"/>
+      </div>
+    </div>
+    <div id="ep-rival-msg" style="display:none;border-radius:10px;padding:8px 14px;margin-bottom:10px;font-size:12px;font-weight:700"></div>
+    <button onclick="saveEditProd()" style="width:100%;background:#C5A880;color:white;border:none;border-radius:10px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px">💾 確認儲存</button>
   </div>
 </div>
 <!-- 修改訂單 -->
@@ -1000,7 +1027,7 @@ window.showBrandSuggestions=function(val,isQA){
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <button onclick="qaToggleLiveMode()" id="qa-live-toggle" style="font-size:11px;font-weight:700;padding:5px 10px;border-radius:99px;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">⚡ 連線模式</button>
-        <button onclick="closeModal('modal-quick')" style="font-size:24px;font-weight:900;color:#9C7A5A;background:none;border:none;cursor:pointer">×</button>
+        <button onclick="qaLiveReset();closeModal('modal-quick')" style="font-size:24px;font-weight:900;color:#9C7A5A;background:none;border:none;cursor:pointer">×</button>
       </div>
     </div>
     <!-- 連線模式極速區塊 -->
@@ -1908,14 +1935,24 @@ window.qaLiveApplyPromo=function(divisor){
   const amtEl=document.getElementById("qa-live-amt");
   const nameEl=document.getElementById("qa-live-name");
   const raw=parseFloat(amtEl.value.replace(/,/g,""))||0;
-  if(!raw){showToast("請先填入韓幣金額","error");return;}
-  const perItem=Math.round(raw*(divisor-1)/divisor);
-  amtEl.value=perItem;
+  if(!raw&&!window.G.qaLivePromoOriginal){showToast("請先填入韓幣金額","error");return;}
   const labels={2:"（1+1）",3:"（2+1）",4:"（3+1）"};
   const tag=labels[divisor];
+  if(window.G.qaLivePromoDivisor===divisor&&window.G.qaLivePromoOriginal){
+    amtEl.value=window.G.qaLivePromoOriginal;
+    window.G.qaLivePromoOriginal=null;window.G.qaLivePromoDivisor=null;
+    if(nameEl){let n=nameEl.value.trim();nameEl.value=n.replace(/（[1-4][+＋][1-4]）/g,"").trim();}
+    qaLiveCalc();
+    showToast("已取消活動，還原原價","success");return;
+  }
+  const original=window.G.qaLivePromoOriginal||raw;
+  window.G.qaLivePromoOriginal=original;
+  window.G.qaLivePromoDivisor=divisor;
+  const perItem=Math.round(original*(divisor-1)/divisor);
+  amtEl.value=perItem;
   if(nameEl){
     let name=nameEl.value.trim();
-    name=name.replace(/（[1-4]\+[1-4]）/g,"").trim();
+    name=name.replace(/（[1-4][+＋][1-4]）/g,"").trim();
     nameEl.value=name+(name?" ":"")+tag;
   }
   qaLiveCalc();
@@ -1951,7 +1988,7 @@ window.epApplyPromo=function(divisor){
     epForeignChange();
     showToast("已取消活動，還原原價","success");return;
   }
-  const original=window.G.epPromoOriginal||raw;
+  const original=window.G.epPromoOriginal||(window.G.activeModalData?.originalAmount)||raw;
   window.G.epPromoOriginal=original;
   window.G.epPromoDivisor=divisor;
   const perItem=Math.round(original*(divisor-1)/divisor);
@@ -2034,6 +2071,282 @@ window.qaGetAllUrls=function(){
   return [main,...extras].filter(Boolean).join("\n");
 };
 
+window.qaLiveReset=function(){
+  const liveName=document.getElementById("qa-live-name");if(liveName)liveName.value="";
+  const liveAmt=document.getElementById("qa-live-amt");if(liveAmt)liveAmt.value="";
+  const liveCustom=document.getElementById("qa-live-custom");if(liveCustom)liveCustom.value="";
+  window.G.qaLiveCustomPrice=null;window.G.qaLivePromoOriginal=null;window.G.qaLivePromoDivisor=null;
+  ["qa-live-cost","qa-live-sugg","qa-live-profit","qa-live-final"].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent="-";});
+  const liveThumb=document.getElementById("qa-live-img-thumb");if(liveThumb){liveThumb.src="";liveThumb.removeAttribute("src");}
+  const livePrev=document.getElementById("qa-live-img-preview");if(livePrev)livePrev.style.display="none";
+  const liveLbl=document.getElementById("qa-live-img-label");if(liveLbl)liveLbl.style.display="flex";
+  const liveInput=document.getElementById("qa-live-img");if(liveInput)liveInput.value="";
+  window.G.qaLivePhoto=null;
+};
+
+// ── 移趟功能 ──────────────────────────────────────────────────────────────
+window.openMoveTrip=function(oid){
+  // 收集所有勾選的訂單，或只有這一筆
+  const checkedIds=[...window.G.selectedOrders||[]];
+  const targetIds=checkedIds.length>0&&checkedIds.includes(oid)?checkedIds:[oid];
+  const trips=window.G.trips||[];
+  // 用第一筆訂單的 tripId 作為當前趟次
+  const o=window.G.orders.find(x=>x.id===targetIds[0]);
+  if(!o)return;
+  const currentTripId=o.tripId||"";
+  const otherTrips=trips.filter(t=>t.id!==currentTripId);
+  if(!otherTrips.length){showToast("沒有其他趟次可以移動","error");return;}
+
+  window.G.moveTripOids=targetIds;
+  const existing=document.getElementById("modal-move-trip");
+  if(existing)existing.remove();
+  const div=document.createElement("div");
+  div.id="modal-move-trip";
+  div.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px";
+  div.innerHTML=`
+    <div style="background:white;border-radius:16px;padding:20px;width:100%;max-width:360px;max-height:80vh;overflow-y:auto">
+      <div style="font-weight:900;font-size:15px;color:#3D2010;margin-bottom:4px">移趟</div>
+      <div style="font-size:12px;color:#9C7A5A;margin-bottom:16px">共 ${targetIds.length} 個品項，移到哪個趟次？</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+        ${otherTrips.map(t=>`
+          <button onclick="doMoveTrip('${t.id}')" style="text-align:left;padding:12px 14px;border-radius:10px;border:1px solid #E8D5B0;background:#FAF8F5;font-size:13px;font-weight:700;color:#3D2010;cursor:pointer;width:100%">
+            ✈️ ${t.name||t.id}${t.ended?" （已結束）":""}
+          </button>`).join("")}
+      </div>
+      <button onclick="document.getElementById('modal-move-trip').remove()" style="width:100%;padding:10px;border-radius:10px;border:1px solid #E8D5B0;background:white;color:#9C7A5A;font-size:13px;font-weight:700;cursor:pointer">取消</button>
+    </div>`;
+  document.body.appendChild(div);
+};
+
+window.doMoveTrip=async function(newTripId){
+  const oids=window.G.moveTripOids||[];
+  if(!oids.length)return;
+  await Promise.all(oids.map(id=>fbUpd("orders",id,{tripId:newTripId})));
+  const t=window.G.trips.find(x=>x.id===newTripId);
+  document.getElementById("modal-move-trip")?.remove();
+  window.G.moveTripOids=[];
+  showToast(`已移到「${t?.name||newTripId}」✅`,"success");
+};
+
+// ── 商品子分類自動偵測 ────────────────────────────────────────────────────
+const SUBCAT_MAP = {
+  // 食品子分類
+  food: [
+    {key:"優格",    label:"🥛 優格/乳製品",  kw:["優格","乳酪","起司","牛奶","乳飲","豆漿","優酪"]},
+    {key:"泡麵",    label:"🍜 泡麵/麵食",    kw:["泡麵","拉麵","炒麵","冬粉","烏龍","河粉","순면","라면"]},
+    {key:"餅乾",    label:"🍪 餅乾/零食",    kw:["餅乾","洋芋片","薯片","爆米花","糖果","咖啡糖","軟糖","脆片","貝果","堅果脆","gummy","chip","cookie","snack"]},
+    {key:"飲料",    label:"🧃 飲料",          kw:["飲料","果汁","咖啡","茶飲","汽水","能量飲","乳酸菌飲","優酪乳"]},
+    {key:"果凍",    label:"🍮 果凍/布丁",    kw:["果凍","布丁","jelly","pudding"]},
+    {key:"麻糬",    label:"🍡 麻糬/年糕",    kw:["麻糬","年糕","떡","糯米"]},
+    {key:"甜點",    label:"🍰 甜點/糕點",    kw:["甜點","蛋糕","布朗尼","杜拜","生巧克力","Q餅","可頌","泡芙","馬卡龍","鬆餅","waffle","cake","杜拜巧克力"]},
+    {key:"堅果",    label:"🥜 堅果/果乾",    kw:["堅果","杏仁","腰果","核桃","果乾","草莓乾","芒果乾","蔓越莓"]},
+    {key:"海苔",    label:"🌿 海苔/乾貨",    kw:["海苔","魚乾","魷魚","乾貨"]},
+    {key:"調味",    label:"🧂 調味料/醬料",  kw:["醬","調味","辣椒","味噌","芥末","醋","鹽","糖","油"]},
+  ],
+  // 美妝子分類
+  beauty: [
+    {key:"防曬",    label:"☀️ 防曬",          kw:["防曬","sunscreen","sun cream","spf","pa+"]},
+    {key:"保濕",    label:"💧 保濕/乳液",     kw:["保濕","乳液","face cream","水乳","精華","essence","serum","安瓶"]},
+    {key:"眼霜",    label:"👁️ 眼部",          kw:["眼霜","眼膜","眼部","eye cream","eye"]},
+    {key:"面膜",    label:"🎭 面膜",          kw:["面膜","mask","sheet mask"]},
+    {key:"清潔",    label:"🫧 清潔/卸妝",    kw:["洗面","清潔","卸妝","泡沫","foam","cleanser","toner","化妝水"]},
+    {key:"彩妝",    label:"💄 彩妝",          kw:["唇膏","口紅","粉底","氣墊","眼影","睫毛","腮紅","修容","highlight"]},
+    {key:"香水",    label:"🌸 香氛/香水",    kw:["香水","perfume","香氛","body mist","身體噴霧"]},
+    {key:"身體",    label:"🧴 身體保養",     kw:["身體乳","body lotion","hand cream","護手","沐浴","浴鹽"]},
+    {key:"痘痘",    label:"🩹 痘痘貼/藥局",  kw:["痘痘貼","痘貼","藥局","保健","維他命","膠原蛋白"]},
+  ],
+  // 大創子分類
+  daiso: [
+    {key:"文具",    label:"✏️ 文具",          kw:["文具","筆","本子","便利貼","膠帶","剪刀","尺"]},
+    {key:"廚房",    label:"🍳 廚房用品",     kw:["廚房","鍋","碗","筷","保鮮","便當","瀝水"]},
+    {key:"收納",    label:"📦 收納",          kw:["收納","整理","掛鉤","夾子","置物"]},
+    {key:"美妝工具",label:"🪮 美妝工具",     kw:["棉花棒","化妝棉","海綿","刷具","美妝"]},
+  ],
+};
+
+window.getSubcat=function(name,catKey){
+  const n=(name||"").toLowerCase();
+  const rules=SUBCAT_MAP[catKey]||[];
+  for(const r of rules){
+    if(r.kw.some(k=>n.includes(k.toLowerCase())))return r;
+  }
+  return null;
+};
+
+window.getSubcatList=function(catKey,products){
+  const found={};
+  products.forEach(p=>{
+    const sub=window.getSubcat(p.name,catKey);
+    if(sub)found[sub.key]=sub;
+  });
+  return Object.values(found);
+};
+
+// ── 子分類管理 ────────────────────────────────────────────────────────────
+// 合併內建 + 自訂子分類
+function getMergedSubcatMap(){
+  const base=JSON.parse(JSON.stringify(SUBCAT_MAP)); // deep copy
+  const custom=window.G.customSubcats||[];
+  custom.forEach(cs=>{
+    if(!base[cs.catKey])base[cs.catKey]=[];
+    const existing=base[cs.catKey].find(r=>r.key===cs.key);
+    if(existing){
+      // 合併關鍵字
+      cs.kw.forEach(k=>{if(!existing.kw.includes(k))existing.kw.push(k);});
+    } else {
+      base[cs.catKey].push({key:cs.key,label:cs.label,kw:cs.kw,custom:true});
+    }
+  });
+  return base;
+}
+
+// 覆寫 getSubcat 使用合併後的 map
+window.getSubcat=function(name,catKey){
+  const n=(name||"").toLowerCase();
+  const map=getMergedSubcatMap();
+  const rules=map[catKey]||[];
+  for(const r of rules){
+    if(r.kw.some(k=>n.includes(k.toLowerCase())))return r;
+  }
+  return null;
+};
+window.getSubcatList=function(catKey,products){
+  const map=getMergedSubcatMap();
+  const found={};
+  products.forEach(p=>{
+    const sub=window.getSubcat(p.name,catKey);
+    if(sub)found[sub.key]=sub;
+  });
+  return Object.values(found);
+};
+
+// 渲染子分類設定列表
+window.renderSubcatList=function(){
+  const container=document.getElementById("subcat-list");
+  if(!container)return;
+  const map=getMergedSubcatMap();
+  const catLabels={food:"🍿食品",beauty:"💄美妝",daiso:"🏪大創",clothes:"👗衣服",bag:"👜包包",shoes:"👟鞋子",other:"📦其他"};
+  let html="";
+  Object.entries(map).forEach(([catKey,rules])=>{
+    if(!rules.length)return;
+    html+=`<div style="margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:6px">${catLabels[catKey]||catKey}</div>
+      ${rules.map(r=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#FAF8F5;border-radius:8px;margin-bottom:4px;border:1px solid ${r.custom?"#C4B5FD":"#E8D5B0"}">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:700;color:#3D2010">${r.label}</div>
+          <div style="font-size:10px;color:#9C7A5A;margin-top:2px">關鍵字：${r.kw.join("、")}</div>
+        </div>
+        ${r.custom?`<button onclick="editSubcat('${catKey}','${r.key}')" style="font-size:10px;background:#EDE9FE;color:#5B21B6;border:1px solid #C4B5FD;padding:3px 8px;border-radius:6px;cursor:pointer;font-weight:700">編輯</button>
+        <button onclick="deleteSubcat('${catKey}','${r.key}')" style="font-size:10px;background:#FDEDEC;color:#C0392B;border:1px solid #F1948A;padding:3px 8px;border-radius:6px;cursor:pointer;font-weight:700">刪除</button>`
+        :`<span style="font-size:9px;color:#9C7A5A;background:#F5F5F5;padding:2px 6px;border-radius:4px">內建</span>`}
+      </div>`).join("")}
+    </div>`;
+  });
+  container.innerHTML=html||"<div style='color:#9C7A5A;font-size:12px'>尚無子分類</div>";
+};
+
+// 新增子分類 modal
+window.openAddSubcat=function(catKey,key){
+  const custom=window.G.customSubcats||[];
+  const editing=catKey&&key?custom.find(c=>c.catKey===catKey&&c.key===key):null;
+  const map=getMergedSubcatMap();
+  const catLabels={food:"🍿食品",beauty:"💄美妝",daiso:"🏪大創",clothes:"👗衣服",bag:"👜包包",shoes:"👟鞋子",other:"📦其他"};
+  const existing=document.getElementById("modal-add-subcat");
+  if(existing)existing.remove();
+  const div=document.createElement("div");
+  div.id="modal-add-subcat";
+  div.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px";
+  div.innerHTML=`<div style="background:white;border-radius:16px;padding:20px;width:100%;max-width:380px">
+    <div style="font-weight:900;font-size:15px;color:#3D2010;margin-bottom:16px">${editing?"編輯":"新增"}子分類</div>
+    <div style="margin-bottom:10px">
+      <label style="font-size:11px;font-weight:700;color:#9C7A5A;display:block;margin-bottom:4px">所屬大分類</label>
+      <select id="sc-catkey" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px 12px;font-size:13px;outline:none">
+        ${Object.entries(catLabels).map(([k,l])=>`<option value="${k}" ${(editing?.catKey||catKey)===k?"selected":""}>${l}</option>`).join("")}
+      </select>
+    </div>
+    <div style="margin-bottom:10px">
+      <label style="font-size:11px;font-weight:700;color:#9C7A5A;display:block;margin-bottom:4px">子分類名稱（含emoji）</label>
+      <input id="sc-label" value="${editing?.label||""}" placeholder="例：🥛 優格/乳製品" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px 12px;font-size:13px;outline:none;box-sizing:border-box"/>
+    </div>
+    <div style="margin-bottom:16px">
+      <label style="font-size:11px;font-weight:700;color:#9C7A5A;display:block;margin-bottom:4px">關鍵字（逗號分隔）</label>
+      <input id="sc-kw" value="${editing?.kw.join(",")||""}" placeholder="例：優格,乳酪,起司" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px 12px;font-size:13px;outline:none;box-sizing:border-box"/>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onclick="saveSubcat(${editing?`'${catKey}','${key}'`:null})" style="flex:1;background:#5C3A1E;color:#F5E6C8;border:none;border-radius:10px;padding:11px;font-size:13px;font-weight:700;cursor:pointer">儲存</button>
+      <button onclick="document.getElementById('modal-add-subcat').remove()" style="flex:1;background:white;color:#9C7A5A;border:1px solid #E8D5B0;border-radius:10px;padding:11px;font-size:13px;font-weight:700;cursor:pointer">取消</button>
+    </div>
+  </div>`;
+  document.body.appendChild(div);
+};
+
+window.editSubcat=function(catKey,key){
+  window.openAddSubcat(catKey,key);
+};
+
+window.saveSubcat=async function(oldCatKey,oldKey){
+  const catKey=document.getElementById("sc-catkey").value;
+  const label=document.getElementById("sc-label").value.trim();
+  const kwRaw=document.getElementById("sc-kw").value;
+  const kw=kwRaw.split(",").map(k=>k.trim()).filter(Boolean);
+  if(!label||!kw.length){showToast("請填入名稱和關鍵字","error");return;}
+  const key=label.replace(/[^a-zA-Z0-9一-鿿]/g,"").slice(0,10)||Date.now().toString();
+  let custom=window.G.customSubcats||[];
+  // 移除舊的
+  if(oldCatKey&&oldKey)custom=custom.filter(c=>!(c.catKey===oldCatKey&&c.key===oldKey));
+  // 加入新的
+  custom.push({catKey,key,label,kw,custom:true});
+  window.G.customSubcats=custom;
+  await fbSet("settings","subcats",{list:custom});
+  document.getElementById("modal-add-subcat")?.remove();
+  renderSubcatList();
+  showToast("子分類已儲存！","success");
+};
+
+window.deleteSubcat=async function(catKey,key){
+  if(!confirm("確定刪除這個子分類？"))return;
+  let custom=window.G.customSubcats||[];
+  custom=custom.filter(c=>!(c.catKey===catKey&&c.key===key));
+  window.G.customSubcats=custom;
+  await fbSet("settings","subcats",{list:custom});
+  renderSubcatList();
+  showToast("已刪除","success");
+};
+
+// 載入自訂子分類
+onSnapshot(doc(db,"settings","subcats"),s=>{
+  window.G.customSubcats=s.exists()?(s.data().list||[]):[];
+  renderSubcatList();
+});
+
+window.deletePriceHistory=async function(pid,idx){
+  const p=window.G.products.find(x=>x.id===pid);
+  if(!p)return;
+  const hist=[...(p.priceHistory||[])];
+  hist.splice(idx,1);
+  await fbUpd("products",pid,{priceHistory:hist});
+  showToast("已刪除歷史價格","success");
+};
+
+// ── 批次修復 originalAmount ──────────────────────────────────────────────
+window.fixOriginalAmounts=async function(){
+  const prods=window.G.products||[];
+  let fixed=0;
+  for(const p of prods){
+    if(p.originalAmount)continue; // 已有就跳過
+    let divisor=null;
+    if(p.name?.includes("（1+1）")||p.name?.includes("(1+1)"))divisor=2;
+    else if(p.name?.includes("（2+1）")||p.name?.includes("(2+1)"))divisor=3;
+    else if(p.name?.includes("（3+1）")||p.name?.includes("(3+1)"))divisor=4;
+    if(divisor&&p.foreignAmount){
+      const original=Math.round(p.foreignAmount*divisor/(divisor-1));
+      await fbUpd("products",p.id,{originalAmount:original,promoDivisor:divisor});
+      fixed++;
+    }
+  }
+  showToast(`已修復 ${fixed} 個商品的原始金額 ✅`,"success");
+};
+
 // ── Toast ──────────────────────────────────────────────────────────────
 let _tt;
 window.showToast=(msg,type="success")=>{
@@ -2063,6 +2376,13 @@ window.openModal=function(id,data){
       document.getElementById("ep-name").value=data.name||"";
       const fa=data.foreignAmount||data.krw||0;
       document.getElementById("ep-foreign").value=fa;
+      // 設定活動狀態
+      if(data.originalAmount&&data.originalAmount!==fa){
+        window.G.epPromoOriginal=data.originalAmount;
+        window.G.epPromoDivisor=data.promoDivisor||null;
+      } else {
+        window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;
+      }
       document.getElementById("ep-price").value=data.finalPrice||0;
       document.getElementById("ep-price").dataset.manual="";
       document.getElementById("ep-twprice").value=data.twPrice||"";
@@ -2821,7 +3141,7 @@ window.saveProduct=async function(){
   const photo=window.G.calcPhoto||"";
   const photoPos=photo?(window.G.calcPhotoPos||{x:50,y:50}):{x:50,y:50};
   const photoPosCss=`${photoPos.x}% ${photoPos.y}%`;
-  await fbSet("products",id,{name:name.trim(),catKey:cat,category:catObj?.label||"其他",emoji:catObj?.emoji||"📦",currency:cur,currencySymbol:CURR[cur]?.symbol||"₩",foreignAmount:amt,beforeTax,afterTax,suggested:sugg,finalPrice:final,profit,margin,twPrice,rivalPrice,url,specs,photo,photoPos:photoPosCss,flags,channel:window.G.calcChannel||"",createdAt:Date.now()});
+  await fbSet("products",id,{name:name.trim(),catKey:cat,category:catObj?.label||"其他",emoji:catObj?.emoji||"📦",currency:cur,currencySymbol:CURR[cur]?.symbol||"₩",foreignAmount:amt,originalAmount:window.G.calcPromoOriginal||amt,beforeTax,afterTax,suggested:sugg,finalPrice:final,profit,margin,twPrice,rivalPrice,url,specs,photo,photoPos:photoPosCss,flags,channel:window.G.calcChannel||"",createdAt:Date.now()});
   ["c-name","c-amt","c-custom","c-twprice","c-rival","c-specs","c-url"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});document.querySelectorAll(".c-url-extra").forEach(el=>el.parentElement.remove());
   ["flag-cold","flag-coldHigh","flag-heavy","flag-large","flag-limited"].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=false;});
   window.G.calcChannel="";
@@ -2974,7 +3294,9 @@ window.saveEditProd=async function(){
   const newCatObj=CATS.find(x=>x.key===newCatKey)||CATS[0];
   const newFlags=epGetFlags();
   const newSpecs=(document.getElementById("ep-specs")?.value.trim()||"").split(",").map(s=>s.trim()).filter(Boolean);
-  const upd={name,foreignAmount:fa,beforeTax,afterTax,finalPrice:price,profit,margin,twPrice,rivalPrice,url,specs:newSpecs,catKey:newCatKey,category:newCatObj.label,emoji:newCatObj.emoji,flags:newFlags,channel:window.G.editChannel||""};
+  const originalAmt=window.G.epPromoOriginal||fa;
+  const promoDivisor=window.G.epPromoDivisor||null;
+  const upd={name,foreignAmount:fa,originalAmount:originalAmt,promoDivisor,beforeTax,afterTax,finalPrice:price,profit,margin,twPrice,rivalPrice,url,specs:newSpecs,catKey:newCatKey,category:newCatObj.label,emoji:newCatObj.emoji,flags:newFlags,channel:window.G.editChannel||""};
   if(window.G.editPhoto===null){/* 不動圖片 */}
   else if(window.G.editPhoto===""){upd.photo="";upd.photoPos="50% 50%";}
   else{
@@ -3008,7 +3330,7 @@ window.saveEditProd=async function(){
 
 window.copyLineFormat=function(id){
   const p=window.G.products.find(x=>x.id===id);if(!p)return;
-  const text=`【${p.name}】\n商品售價：NT$ ${p.finalPrice.toLocaleString()}`;
+  const text=`【${cleanProductName(p.name)}】\n商品售價：NT$ ${p.finalPrice.toLocaleString()}`;
   navigator.clipboard?.writeText(text).then(()=>showToast("報價已複製！")).catch(()=>{
     const ta=document.createElement("textarea");ta.value=text;ta.style.position="fixed";
     document.body.appendChild(ta);ta.focus();ta.select();
@@ -4346,12 +4668,14 @@ window.renderList=function(){
   const{products,orders,listSearch,listFilterCat,listFilterCurrency,selectedProducts}=window.G;
   const filtered=products.filter(p=>{
     const mC=listFilterCat==="all"||p.catKey===listFilterCat;
+    const mSub=!window.G.listFilterSubcat||window.getSubcat(p.name,p.catKey)?.key===window.G.listFilterSubcat;
     const mX=listFilterCurrency==="all"||(p.currency||"KRW")===listFilterCurrency;
     const sq=listSearch.toLowerCase();
     const pOrders2=orders.filter(o=>o.productId===p.id);
     const buyerNames=pOrders2.map(o=>(o.communityName||o.lineName||o.buyerName||"").toLowerCase()).join(" ");
-    const mS=!listSearch||p.name.toLowerCase().includes(sq)||p.id.toLowerCase().includes(sq)||buyerNames.includes(sq)||(p.channel||"").toLowerCase().includes(sq);
-    return mC&&mX&&mS;
+    const specsStr=(Array.isArray(p.specs)?p.specs.join(","):p.specs||"").toLowerCase();
+    const mS=!listSearch||p.name.toLowerCase().includes(sq)||p.id.toLowerCase().includes(sq)||buyerNames.includes(sq)||(p.channel||"").toLowerCase().includes(sq)||specsStr.includes(sq);
+    return mC&&mX&&mS&&mSub;
   });
   // 幣別篩選
   const cc=document.getElementById("cur-filters");
@@ -4363,7 +4687,24 @@ window.renderList=function(){
   const fc=document.getElementById("cat-filters");
   if(fc){
     const usedCats=CATS.filter(c=>products.some(p=>p.catKey===c.key));
-    fc.innerHTML=[["all","全部",products.length],...usedCats.map(c=>[c.key,c.emoji+" "+c.label,products.filter(p=>p.catKey===c.key).length])].map(([k,l,n])=>`<button onclick="window.G.listFilterCat='${k}';renderList()" style="flex-shrink:0;padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1px solid ${listFilterCat===k?"#C5A880":"#E8D5B0"};background:${listFilterCat===k?"#C5A880":"white"};color:${listFilterCat===k?"white":"#9C7A5A"};cursor:pointer">${l}(${n})</button>`).join("");
+    fc.innerHTML=[["all","全部",products.length],...usedCats.map(c=>[c.key,c.emoji+" "+c.label,products.filter(p=>p.catKey===c.key).length])].map(([k,l,n])=>`<button onclick="window.G.listFilterCat='${k}';window.G.listFilterSubcat=null;renderList()" style="flex-shrink:0;padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1px solid ${listFilterCat===k?"#C5A880":"#E8D5B0"};background:${listFilterCat===k?"#C5A880":"white"};color:${listFilterCat===k?"white":"#9C7A5A"};cursor:pointer">${l}(${n})</button>`).join("");
+  }
+  // 子分類篩選列
+  const sf=document.getElementById("subcat-filters");
+  if(sf){
+    if(listFilterCat!=="all"){
+      const catProds=products.filter(p=>p.catKey===listFilterCat);
+      const subcats=window.getSubcatList(listFilterCat,catProds);
+      const curSub=window.G.listFilterSubcat||null;
+      if(subcats.length>0){
+        sf.style.display="flex";
+        sf.innerHTML=subcats.map(s=>`<button onclick="window.G.listFilterSubcat=window.G.listFilterSubcat==='${s.key}'?null:'${s.key}';renderList()" style="flex-shrink:0;padding:4px 10px;border-radius:99px;font-size:10px;font-weight:700;border:1px solid ${curSub===s.key?"#9C7A5A":"#E8D5B0"};background:${curSub===s.key?"#9C7A5A":"white"};color:${curSub===s.key?"white":"#9C7A5A"};cursor:pointer">${s.label}(${catProds.filter(p=>window.getSubcat(p.name,listFilterCat)?.key===s.key).length})</button>`).join("");
+      } else {
+        sf.innerHTML="";
+      }
+    } else {
+      sf.innerHTML="";
+    }
   }
   if(!filtered.length){
     container.innerHTML=`<div style="background:white;border-radius:14px;padding:48px 20px;text-align:center;border:1px solid #E8D5B0"><div style="font-size:32px;margin-bottom:8px">📋</div><div style="font-weight:700;color:#3D2010">${products.length===0?"還沒有商品":"找不到符合的商品"}</div>${products.length===0?`<button onclick="showTab('calc')" style="margin-top:12px;background:#C5A880;color:white;border:none;border-radius:10px;padding:8px 20px;font-size:12px;font-weight:700;cursor:pointer">去新增商品</button>`:""}</div>`;
@@ -4442,10 +4783,7 @@ window.renderList=function(){
       ${(p.priceHistory&&p.priceHistory.length>0)?`<details style="margin-bottom:8px">
         <summary style="font-size:10px;font-weight:700;color:#9C7A5A;cursor:pointer;list-style:none;display:flex;align-items:center;gap:4px">📋 歷史價格（${p.priceHistory.length}筆）</summary>
         <div style="margin-top:6px;display:flex;flex-direction:column;gap:3px">
-          ${[...p.priceHistory].reverse().map(h=>`<div style="display:flex;justify-content:space-between;font-size:10px;padding:4px 8px;background:#FAF8F5;border-radius:6px">
-            <span style="color:#9C7A5A">${h.date}${h.trip?" · "+h.trip:""}</span>
-            <span style="color:#3D2010;font-weight:700">${cur?.symbol||"₩"}${(h.krw||0).toLocaleString()} → NT$${(h.price||0).toLocaleString()}</span>
-          </div>`).join("")}
+          ${[...p.priceHistory].reverse().map((h,ri)=>{const i=p.priceHistory.length-1-ri;return`<div style="display:flex;justify-content:space-between;align-items:center;font-size:10px;padding:4px 8px;background:#FAF8F5;border-radius:6px"><span style="color:#9C7A5A">${h.date}${h.trip?" · "+h.trip:""}</span><span style="color:#3D2010;font-weight:700">${cur?.symbol||"₩"}${(h.krw||0).toLocaleString()} → NT$${(h.price||0).toLocaleString()}</span><button data-pid="${p.id}" data-idx="${i}" onclick="deletePriceHistory(this.dataset.pid,parseInt(this.dataset.idx))" style="background:none;border:none;cursor:pointer;color:#F1948A;font-size:13px;padding:0 2px;line-height:1">✕</button></div>`;}).join("")}
         </div>
       </details>`:""}
       <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:4px;background:#FAF8F5;padding:8px;border-radius:10px;text-align:center;margin-bottom:10px" class="show-staff-only">
@@ -4771,6 +5109,7 @@ window.renderCustomers=function(){
               <span style="font-size:11px;font-weight:700;color:#3D2010">NT$${(dp*o.qty).toLocaleString()}</span>
               ${dp>=1000?`<button data-oid="${o.id}" onclick="copySingleDeposit(this.dataset.oid)" style="font-size:9px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:2px 5px;border-radius:5px;cursor:pointer;font-weight:700">訂金</button>`:""}
               ${o.tracking?`<span style="font-size:9px;color:#6090B0;background:#EAF4FD;border:1px solid #BDD9F0;padding:2px 5px;border-radius:5px">📦</span>`:""}
+              <button data-oid="${o.id}" onclick="openMoveTrip(this.dataset.oid)" style="font-size:10px;color:#0277BD;background:#E3F2FD;border:1px solid #90CAF9;padding:2px 5px;border-radius:5px;cursor:pointer">移趟</button>
               <button data-oid="${o.id}" onclick="deleteOrder(this.dataset.oid)" style="font-size:10px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:2px 5px;border-radius:5px;cursor:pointer">🗑️</button>
             </div>
           </div>`;}).join("")}</div>`:""}
@@ -4844,9 +5183,10 @@ window.renderInvoice=function(){
   const ss={pending:"background:#FEF3C7;color:#92400E;border-color:#FCD34D",settled:"background:#D1FAE5;color:#065F46;border-color:#6EE7B7",shipped:"background:#DBEAFE;color:#1E40AF;border-color:#93C5FD"};
   const sl={pending:"待訂金",deposit:"已付訂金",settled:"已付尾款",shipped:"已寄出"};
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
-  // 以人數計算（而非訂單筆數）
+  // 以人數計算（只計當趟訂單）
+  const tripOrdersForCount=getTripOrders();
   const countBuyers=(stat)=>{
-    const os=orders.filter(o=>o.status===stat);
+    const os=tripOrdersForCount.filter(o=>o.status===stat);
     return new Set(os.map(o=>o.customerId||o.communityName||o.buyerName||"未知")).size;
   };
   set("inv-pending",countBuyers("pending")+"人");
@@ -4914,6 +5254,7 @@ window.renderInvoice=function(){
             <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
               ${purchasedBtn}
               <span style="font-size:12px;font-weight:700;color:#3D2010">NT$${(dp*o.qty).toLocaleString()}</span>
+              <button data-oid="${o.id}" onclick="openMoveTrip(this.dataset.oid)" style="font-size:10px;color:#0277BD;background:#E3F2FD;border:1px solid #90CAF9;padding:2px 5px;border-radius:5px;cursor:pointer">移趟</button>
               <button data-oid="${o.id}" onclick="deleteOrder(this.dataset.oid)" style="font-size:10px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:2px 5px;border-radius:5px;cursor:pointer">🗑️</button>
             </div>
           </div>`;}).join("")}
@@ -5194,6 +5535,21 @@ window.openQuickAdd=function(){
   const qdp=document.getElementById("qa-daiso-panel");
   if(qdp)qdp.style.display="none";
   setTimeout(()=>{if(typeof qaDaisoTypeChange==="function")qaDaisoTypeChange();},150);
+  // Reset live mode fields
+  const liveName=document.getElementById("qa-live-name");if(liveName)liveName.value="";
+  const liveAmt=document.getElementById("qa-live-amt");if(liveAmt)liveAmt.value="";
+  const liveCustom=document.getElementById("qa-live-custom");if(liveCustom)liveCustom.value="";
+  window.G.qaLiveCustomPrice=null;window.G.qaLivePromoOriginal=null;window.G.qaLivePromoDivisor=null;
+  const liveCost=document.getElementById("qa-live-cost");if(liveCost)liveCost.textContent="-";
+  const liveSugg=document.getElementById("qa-live-sugg");if(liveSugg)liveSugg.textContent="-";
+  const liveProfit=document.getElementById("qa-live-profit");if(liveProfit)liveProfit.textContent="-";
+  const liveFinal=document.getElementById("qa-live-final");if(liveFinal)liveFinal.textContent="-";
+  // Reset live image
+  const liveThumb=document.getElementById("qa-live-img-thumb");if(liveThumb){liveThumb.src="";liveThumb.removeAttribute("src");}
+  const livePrev=document.getElementById("qa-live-img-preview");if(livePrev)livePrev.style.display="none";
+  const liveLbl=document.getElementById("qa-live-img-label");if(liveLbl)liveLbl.style.display="flex";
+  const liveInput=document.getElementById("qa-live-img");if(liveInput)liveInput.value="";
+  window.G.qaLivePhoto=null;
   // Reset product photo
   window.G.qaProdPhoto=null;
   window.G.qaProdPhotoPos={x:50,y:50};
