@@ -894,6 +894,11 @@ window.showBrandSuggestions=function(val,isQA){
       <input type="text" inputmode="numeric" id="ep-foreign" oninput="window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;epForeignChange()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 40px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
       <button onclick="document.getElementById('ep-foreign').value='';window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;epForeignChange();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
     </div>
+    <!-- 4b. 活動群組（選填，不同品名但同一波活動要一起混搭時填一樣的名字） -->
+    <div style="margin-bottom:6px">
+      <label style="font-size:11px;font-weight:700;color:#9C7A5A;display:block;margin-bottom:4px">🏷️ 活動群組（選填，不同品名但同一波活動時填一樣的群組名）</label>
+      <input type="text" id="ep-promo-group" placeholder="例如：洋芋片系列2+1" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:13px;outline:none;box-sizing:border-box"/>
+    </div>
     <!-- 5. 成本/建議/利潤 -->
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px">
       <div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:10px;padding:8px;text-align:center">
@@ -1049,6 +1054,18 @@ window.showBrandSuggestions=function(val,isQA){
           <button id="be-promo-2" onclick="beApplyPromo(2)" style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;color:#92400E;cursor:pointer">1+1</button>
           <button id="be-promo-3" onclick="beApplyPromo(3)" style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;color:#166534;cursor:pointer">2+1</button>
           <button id="be-promo-4" onclick="beApplyPromo(4)" style="background:#DBEAFE;border:1px solid #93C5FD;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;color:#1E3A8A;cursor:pointer">3+1</button>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px">
+          <span style="font-size:12px;font-weight:700;color:#9C7A5A">🏷️ 活動群組（不同品名的商品湊同一個活動時用，登記喊單才能互相混搭；留空套用＝清除群組）</span>
+          <input type="text" id="be-promo-group" placeholder="例如：洋芋片系列2+1（留空＝清除）" style="width:200px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;font-size:12px;outline:none"/>
+          <button onclick="applyBatchPromoGroup()" style="background:#7C3AED;color:white;border:none;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer">套用到所有選取商品</button>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px">
+          <span style="font-size:12px;font-weight:700;color:#9C7A5A">✏️ 品名批次取代（把品名裡的文字統一換掉，例如改系列名、修正錯字）</span>
+          <input type="text" id="be-name-find" placeholder="找出這段文字" style="width:130px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;font-size:12px;outline:none"/>
+          <span style="font-size:12px;color:#9C7A5A">→</span>
+          <input type="text" id="be-name-replace" placeholder="換成這段文字（留空＝刪除）" style="width:150px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;font-size:12px;outline:none"/>
+          <button onclick="applyBatchNameReplace()" style="background:#2563EB;color:white;border:none;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer">套用到所有選取商品</button>
         </div>
       </div>
     </div>
@@ -1236,6 +1253,11 @@ window.showBrandSuggestions=function(val,isQA){
         <input type="text" inputmode="numeric" id="qa-amt" placeholder="例如：12000" oninput="window.G.qaPromoOriginal=null;window.G.qaPromoDivisor=null;qaCalcPrice()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:11px 40px 11px 14px;font-size:18px;font-weight:700;outline:none"/>
         <button onclick="document.getElementById('qa-amt').value='';window.G.qaSelectedPrice=null;qaCalcPrice();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
       </div>
+    </div>
+    <!-- 活動群組（選填，不同品名但同一波活動時填一樣的群組名） -->
+    <div style="margin-bottom:12px">
+      <label style="font-size:11px;font-weight:700;color:#9C7A5A;display:block;margin-bottom:4px">🏷️ 活動群組（選填，不同品名但同一波活動時填一樣的群組名）</label>
+      <input type="text" id="qa-promo-group" placeholder="例如：洋芋片系列2+1" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:13px;outline:none;box-sizing:border-box"/>
     </div>
 
     <!-- 快速選價 -->
@@ -2219,15 +2241,15 @@ const SUBCAT_MAP = {
   food: [
     {key:"優格",    label:"🥛 優格/乳製品",  kw:["優格","乳酪","起司","牛奶","乳飲","豆漿","優酪"]},
     {key:"泡麵",    label:"🍜 泡麵/麵食",    kw:["泡麵","拉麵","炒麵","冬粉","烏龍","河粉","순면","라면"]},
-    {key:"餅乾",    label:"🍪 餅乾/零食",    kw:["餅乾","洋芋片","薯片","爆米花","糖果","咖啡糖","軟糖","脆片","貝果","堅果脆","蝴蝶餅","扭結餅","pretzel","gummy","chip","cookie","snack"]},
+    {key:"餅乾",    label:"🍪 餅乾/零食",    kw:["餅乾","洋芋片","薯片","爆米花","糖果","咖啡糖","軟糖","脆片","貝果","堅果脆","蝴蝶餅","扭結餅","蝴蝶酥","千層酥","焦糖餅","雪花酥","雪花","pretzel","gummy","chip","cookie","snack"]},
     {key:"飲料",    label:"🧃 飲料",          kw:["飲料","果汁","咖啡","茶飲","汽水","能量飲","乳酸菌飲","優酪乳"]},
     {key:"沖泡",    label:"🥤 沖泡/代餐",    kw:["沖泡","搖搖飲","蛋白飲","高蛋白","蛋白粉","乳清","奶昔粉","代餐","益生菌粉","酵素粉","shake","protein","smoothie mix"]},
+    {key:"堅果",    label:"🥜 堅果/果乾",    kw:["堅果","杏仁","腰果","核桃","果乾","草莓乾","芒果乾","蔓越莓","凍乾","水果乾"]},
     {key:"果凍",    label:"🍮 果凍/布丁",    kw:["果凍","布丁","jelly","pudding"]},
     {key:"麻糬",    label:"🍡 麻糬/年糕",    kw:["麻糬","年糕","떡","糯米"]},
-    {key:"甜點",    label:"🍰 甜點/糕點",    kw:["甜點","蛋糕","布朗尼","杜拜","生巧克力","Q餅","可頌","泡芙","馬卡龍","鬆餅","waffle","cake","杜拜巧克力"]},
-    {key:"堅果",    label:"🥜 堅果/果乾",    kw:["堅果","杏仁","腰果","核桃","果乾","草莓乾","芒果乾","蔓越莓"]},
+    {key:"甜點",    label:"🍰 甜點/糕點",    kw:["甜點","蛋糕","布朗尼","杜拜","生巧克力","Q餅","可頌","泡芙","馬卡龍","鬆餅","waffle","cake","杜拜巧克力","派","pie"]},
     {key:"海苔",    label:"🌿 海苔/乾貨",    kw:["海苔","魚乾","魷魚","乾貨"]},
-    {key:"調味",    label:"🧂 調味料/醬料",  kw:["醬","調味","辣椒","味噌","芥末","醋","鹽","糖","油"]},
+    {key:"調味",    label:"🧂 調味料/醬料",  kw:["醬","調味","辣椒","味噌","芥末","醋","食鹽","海鹽","岩鹽","橄欖油","麻油","香油","砂糖包"]},
   ],
   // 美妝子分類
   beauty: [
@@ -2419,7 +2441,8 @@ window.fixOriginalAmounts=async function(){
   const prods=window.G.products||[];
   let fixed=0;
   for(const p of prods){
-    if(p.originalAmount)continue; // 已有就跳過
+    // 原價「沒有記錄」或「跟現在的原幣金額一樣」都算髒資料（後者代表活動套用當下沒存對，是這次抓到的舊 bug）
+    if(p.originalAmount&&p.originalAmount!==p.foreignAmount)continue; // 資料正常就跳過
     let divisor=null;
     if(p.name?.includes("（1+1）")||p.name?.includes("(1+1)"))divisor=2;
     else if(p.name?.includes("（2+1）")||p.name?.includes("(2+1)"))divisor=3;
@@ -2462,6 +2485,7 @@ window.openModal=function(id,data){
       document.getElementById("ep-name").value=data.name||"";
       const fa=data.foreignAmount||data.krw||0;
       document.getElementById("ep-foreign").value=fa;
+      const epPromoGroupEl=document.getElementById("ep-promo-group");if(epPromoGroupEl)epPromoGroupEl.value=data.promoGroup||"";
       // 設定活動狀態（要原價、活動倍數都有記錄，且原價確實跟目前不同，才視為活動仍在跑）
       if(data.originalAmount&&data.promoDivisor&&data.originalAmount!==fa){
         window.G.epPromoOriginal=data.originalAmount;
@@ -2585,15 +2609,19 @@ window.openModal=function(id,data){
           promoBanner.textContent="";
         }
       }
-      // 混搭口味：把品名裡的活動標籤（如「（2+1）」）去掉後再比對，只要底下的品名一樣就算同一個活動，
-      // 不要求每個口味的品名都要各自掛上標籤（很多時候只有部分口味有加，容易漏抓）
+      // 混搭口味：優先用「活動群組」欄位比對（不同品名、同一波活動時，靠手動標記的群組名抓），
+      // 如果沒設群組，才退回用品名去掉活動標籤後比對（同品名、不同口味的情況）
       const mixSection=document.getElementById("mo-mix-section");
       window.G.moMixItems=[];
       if(mixSection){
-        if(hasPromoTag&&p){
+        if(p?.promoGroup&&p.promoGroup.trim()){
+          const grp=p.promoGroup.trim();
+          window.G.moMixSiblings=window.G.products.filter(x=>x.id!==p.id&&(x.promoGroup||"").trim()===grp);
+          mixSection.style.display=window.G.moMixSiblings.length?"block":"none";
+        } else if(hasPromoTag&&p){
           const stripTag=n=>normalizeTag(n).replace(/\(\d+\+\d+\)/g,"").trim();
           const pBase=stripTag(p.name);
-          window.G.moMixSiblings=window.G.products.filter(x=>x.id!==p.id&&stripTag(x.name)===pBase);
+          window.G.moMixSiblings=window.G.products.filter(x=>x.id!==p.id&&!x.promoGroup&&stripTag(x.name)===pBase);
           mixSection.style.display=window.G.moMixSiblings.length?"block":"none";
         } else {
           window.G.moMixSiblings=[];
@@ -3430,7 +3458,8 @@ window.saveEditProd=async function(){
   const newAliases=(document.getElementById("ep-aliases")?.value.trim()||"").split(",").map(s=>s.trim()).filter(Boolean);
   const originalAmt=window.G.epPromoOriginal||fa;
   const promoDivisor=window.G.epPromoDivisor||null;
-  const upd={name,foreignAmount:fa,originalAmount:originalAmt,promoDivisor,beforeTax,afterTax,finalPrice:price,profit,margin,twPrice,rivalPrice,url,specs:newSpecs,aliases:newAliases,catKey:newCatKey,category:newCatObj.label,emoji:newCatObj.emoji,flags:newFlags,channel:window.G.editChannel||""};
+  const promoGroup=document.getElementById("ep-promo-group")?.value.trim()||"";
+  const upd={name,foreignAmount:fa,originalAmount:originalAmt,promoDivisor,promoGroup,beforeTax,afterTax,finalPrice:price,profit,margin,twPrice,rivalPrice,url,specs:newSpecs,aliases:newAliases,catKey:newCatKey,category:newCatObj.label,emoji:newCatObj.emoji,flags:newFlags,channel:window.G.editChannel||""};
   if(window.G.editPhoto===null){/* 不動圖片 */}
   else if(window.G.editPhoto===""){upd.photo="";upd.photoPos="50% 50%";}
   else{
@@ -3688,20 +3717,34 @@ document.addEventListener("click",function(e){
 // ── 混搭多口味（1+1類活動同時登記多個商品）───────────────────────────
 window.G.moMixItems=[];
 window.G.moMixSiblings=[];
+window.moMixLabel=function(sp,showName){
+  const baseName=cleanProductName(sp.name||"");
+  const spec=(sp.specs&&sp.specs.length?sp.specs.join(","):"");
+  if(!showName)return spec||baseName;
+  return spec?`${baseName} · ${spec}`:baseName;
+};
+// 判斷混搭清單裡的商品是不是都同一個品名：都一樣就只顯示口味即可，不用每個按鈕都重複品名
+window.moMixNeedsName=function(){
+  const cur=window.G.products.find(x=>x.id===document.getElementById("mo-pid")?.textContent);
+  const names=new Set([...(window.G.moMixSiblings||[]).map(x=>cleanProductName(x.name||"")),cur?cleanProductName(cur.name||""):null].filter(Boolean));
+  return names.size>1;
+};
 window.moRenderMixSiblingBtns=function(){
   const container=document.getElementById("mo-mix-siblings");if(!container)return;
   const siblings=window.G.moMixSiblings||[];
+  const showName=moMixNeedsName();
   container.innerHTML=siblings.map(sp=>{
     const active=(window.G.moMixItems||[]).some(x=>x.productId===sp.id);
-    const label=(sp.specs&&sp.specs.length?sp.specs.join(","):sp.name);
+    const label=moMixLabel(sp,showName);
     return `<button data-pid="${sp.id}" onclick="moAddMixItem(this.dataset.pid)" style="padding:5px 12px;border-radius:8px;font-size:12px;font-weight:700;border:1.5px solid ${active?"#7C3AED":"#DDD6FE"};background:${active?"#7C3AED":"white"};color:${active?"white":"#6D28D9"};cursor:pointer">${active?"✓ ":"+ "}${label}</button>`;
   }).join("");
 };
 window.moRenderMixRows=function(){
   const rows=document.getElementById("mo-mix-rows");if(!rows)return;
+  const showName=moMixNeedsName();
   rows.innerHTML=(window.G.moMixItems||[]).map(item=>{
     const sp=window.G.products.find(x=>x.id===item.productId);if(!sp)return"";
-    const label=(sp.specs&&sp.specs.length?sp.specs.join(","):sp.name);
+    const label=moMixLabel(sp,showName);
     return `<div style="display:flex;align-items:center;gap:8px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;margin-bottom:6px">
       <span style="flex:1;font-size:12px;font-weight:700;color:#3D2010">${sp.emoji||"📦"} ${label}</span>
       <div style="display:flex;align-items:center;gap:4px;border:1px solid #E8D5B0;border-radius:6px;overflow:hidden">
@@ -5568,6 +5611,9 @@ window.batchEditProducts=function(){
   document.getElementById("be-price").value="";
   document.getElementById("be-price-mode").value="fixed";
   const bpp=document.getElementById("be-price-preview");if(bpp)bpp.textContent="";
+  const bpg=document.getElementById("be-promo-group");if(bpg)bpg.value="";
+  const bnf=document.getElementById("be-name-find");if(bnf)bnf.value="";
+  const bnr=document.getElementById("be-name-replace");if(bnr)bnr.value="";
   document.getElementById("be-fa-quick").value="";
   document.getElementById("be-fa-preview").textContent="";
   window.G.bePromoDivisor=null;
@@ -5712,6 +5758,22 @@ window.previewBatchFa=function(val){
   el.innerHTML=`成本 <b style="color:#3D2010">NT$${afterTax}</b> ／ 建議售價 <b style="color:#2E7D32">NT$${suggest}</b> ／ 利潤 <b style="color:#2E7D32">NT$${profit}</b>`;
 };
 
+// 批次品名取代：把選取商品品名裡的某段文字統一換掉（只改畫面上的輸入框，要按「儲存所有修改」才會真的存檔）
+window.applyBatchNameReplace=function(){
+  const find=document.getElementById("be-name-find")?.value||"";
+  const replace=document.getElementById("be-name-replace")?.value||"";
+  if(!find){showToast("請輸入要找出的文字","warning");return;}
+  let count=0;
+  document.querySelectorAll("#be-product-list [data-field='name']").forEach(input=>{
+    if(input.value.includes(find)){
+      input.value=input.value.split(find).join(replace);
+      count++;
+    }
+  });
+  if(!count){showToast("選取的商品品名裡沒有找到這段文字","warning");return;}
+  showToast(`已更新 ${count} 件商品的品名（記得按下方「儲存所有修改」）`,"success");
+};
+
 window.applyBatchFa=function(){
   const fa=parseFloat(document.getElementById("be-fa-quick")?.value)||0;
   if(!fa){showToast("請輸入原幣金額","warning");return;}
@@ -5800,6 +5862,18 @@ window.beApplyPromo=function(divisor){
   showToast(`已套用 ${tag.replace("（","").replace("）","")} 活動到所有選取商品`,"success");
 };
 
+// 批次標記活動群組：讓不同品名的商品可以歸在同一波活動下，登記喊單時互相混搭
+// 欄位留空再按套用 = 批次清除這些商品的活動群組
+window.applyBatchPromoGroup=async function(){
+  const grp=document.getElementById("be-promo-group")?.value.trim()||"";
+  const ids=[...(window.G.selectedProducts||[])];
+  if(!ids.length){showToast("沒有選取商品","error");return;}
+  for(const id of ids){
+    await fbUpd("products",id,{promoGroup:grp});
+  }
+  showToast(grp?`已將 ${ids.length} 件商品標記為「${grp}」活動群組`:`已清除 ${ids.length} 件商品的活動群組`,"success");
+};
+
 window.applyBatchQuick=function(){
   const mode=document.getElementById("be-price-mode")?.value;
   const val=parseFloat(document.getElementById("be-price")?.value)||0;
@@ -5834,7 +5908,11 @@ window.saveBatchEdit=async function(){
     const{beforeTax,afterTax}=calcCost(newFa,p.currency||"KRW");
     const profit=Math.round((newPrice-afterTax)*10)/10;
     const margin=newPrice>0?Math.round((profit/newPrice)*100):0;
+    // 如果這張卡片有透過活動按鈕（1+1/2+1/3+1）套用過，一併記錄原價跟倍數，避免之後修改時抓不到原價
+    const bePromoOrig=(window.G.bePromoOriginals||{})[pid];
+    const hasActivePromo=window.G.bePromoDivisor&&bePromoOrig!=null;
     const upd={name:newName,finalPrice:newPrice,profit,margin,twPrice:newTwPrice,url:newUrl,foreignAmount:newFa,beforeTax,afterTax,specs:newSpecs,aliases:newAliases};
+    if(hasActivePromo){upd.originalAmount=bePromoOrig;upd.promoDivisor=window.G.bePromoDivisor;}
     await fbUpd("products",pid,upd);
     // 記錄歷史價格（只有價格或韓幣原價變動才記錄），跟單一商品修改的邏輯一致
     if(p.finalPrice!==newPrice||p.foreignAmount!==newFa){
@@ -6374,6 +6452,7 @@ window.openQuickAdd=function(){
   const el=document.getElementById("modal-quick");
   if(el)el.style.display="flex";
   document.getElementById("qa-name").value="";
+  const qaPromoGroupReset=document.getElementById("qa-promo-group");if(qaPromoGroupReset)qaPromoGroupReset.value="";
   document.getElementById("qa-amt").value="";
   const hv=document.getElementById("qa-price-hint-val");if(hv)hv.textContent="-";
   const hc=document.getElementById("qa-price-hint-cost");if(hc)hc.textContent="";
@@ -7199,9 +7278,13 @@ window.saveQuickAdd=async function(){
   const photo=window.G.qaProdPhoto||"";
   const photoPos=window.G.qaProdPhotoPos?`${window.G.qaProdPhotoPos.x}% ${window.G.qaProdPhotoPos.y}%`:"50% 50%";
   const qaSpecs=(document.getElementById("qa-specs")?.value.trim()||"").split(",").map(s=>s.trim()).filter(Boolean);
+  const qaOriginalAmt=window.G.qaPromoOriginal||amt;
+  const qaPromoDivisor=window.G.qaPromoDivisor||null;
+  const qaPromoGroup=document.getElementById("qa-promo-group")?.value.trim()||"";
   await fbSet("products",id,{
     id,name,catKey:cat,category:catObj?.label||"其他",emoji:catObj?.emoji||"📦",
     currency:"KRW",currencySymbol:"₩",foreignAmount:amt,
+    originalAmount:qaOriginalAmt,promoDivisor:qaPromoDivisor,promoGroup:qaPromoGroup,
     beforeTax,afterTax,suggested:sugg2,finalPrice,profit,margin,
     flags:qaFlags,twPrice:0,url:qaGetAllUrls(),specs:qaSpecs,
     channel:window.G.qaChannel||"",
@@ -7213,6 +7296,8 @@ window.saveQuickAdd=async function(){
   window.G.qaPhoto=null;
   window.G.qaPhotoFull=null;
   window.G.qaSelectedPrice=null;
+  window.G.qaPromoOriginal=null;
+  window.G.qaPromoDivisor=null;
   const qaSpecEl=document.getElementById("qa-specs");if(qaSpecEl)qaSpecEl.value="";
 };
 
