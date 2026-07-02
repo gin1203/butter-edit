@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Butter Edit">
 <link rel="manifest" href="manifest.json">
-<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com" defer></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
 body{padding-top:132px}
@@ -676,6 +676,12 @@ window.showBrandSuggestions=function(val,isQA){
       <div><span id="mo-pid" style="font-size:11px;font-weight:900;background:#5C3A1E;color:#F5E6C8;padding:2px 8px;border-radius:4px;margin-right:8px"></span><span id="mo-pname" style="font-weight:900;font-size:14px;color:#3D2010"></span></div>
       <button onclick="closeModal('modal-order')" style="font-size:24px;font-weight:900;color:#9C7A5A;background:none;border:none;cursor:pointer">×</button>
     </div>
+    <div id="mo-promo-banner" style="display:none;background:#FEF3C7;border:1.5px solid #FBBF24;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;font-weight:700;color:#92400E"></div>
+    <div id="mo-mix-section" style="display:none;background:#F3F0FF;border:1px solid #DDD6FE;border-radius:10px;padding:10px 14px;margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;color:#6D28D9;margin-bottom:8px">🔄 這份活動也可以混搭其他口味（點選加入，一次登記完成）</div>
+      <div id="mo-mix-siblings" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
+      <div id="mo-mix-rows"></div>
+    </div>
     <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">直接輸入客人名字（自動建立到客戶頁）</label>
     <input type="text" id="mo-buyer" placeholder="輸入社群名字或LINE名..." style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:11px 14px;font-size:14px;outline:none;margin-bottom:10px"/>
     <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">或從客戶名單選擇</label>
@@ -885,8 +891,8 @@ window.showBrandSuggestions=function(val,isQA){
       </div>
     </div>
     <div style="position:relative;margin-bottom:6px">
-      <input type="text" inputmode="numeric" id="ep-foreign" oninput="window.G.epPromoOriginal=null;epForeignChange()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 40px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
-      <button onclick="document.getElementById('ep-foreign').value='';window.G.epPromoOriginal=null;epForeignChange();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
+      <input type="text" inputmode="numeric" id="ep-foreign" oninput="window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;epForeignChange()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 40px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
+      <button onclick="document.getElementById('ep-foreign').value='';window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;epForeignChange();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
     </div>
     <!-- 5. 成本/建議/利潤 -->
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px">
@@ -1023,14 +1029,15 @@ window.showBrandSuggestions=function(val,isQA){
       <div style="background:#FDF6EC;border-radius:10px;padding:10px 12px">
         <div style="font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:8px">⚡ 快速套用到所有選取商品（留空不套用）</div>
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
-          <select id="be-price-mode" style="background:white;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;font-size:12px;outline:none">
+          <select id="be-price-mode" onchange="previewBatchQuick()" style="background:white;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;font-size:12px;outline:none">
             <option value="fixed">售價固定改為</option>
             <option value="add">售價全部加 NT$</option>
             <option value="sub">售價全部減 NT$</option>
           </select>
-          <input type="text" inputmode="numeric" id="be-price" placeholder="金額" style="width:90px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;font-size:12px;outline:none"/>
+          <input type="text" inputmode="numeric" id="be-price" placeholder="金額" oninput="previewBatchQuick()" style="width:90px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;font-size:12px;outline:none"/>
           <button onclick="applyBatchQuick()" style="background:#5C3A1E;color:#F5E6C8;border:none;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer">套用</button>
         </div>
+        <div id="be-price-preview" style="font-size:11px;color:#9C7A5A;margin:-4px 0 8px 2px"></div>
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
           <span style="font-size:12px;font-weight:700;color:#9C7A5A">₩ 原幣批次改為</span>
           <input type="text" inputmode="numeric" id="be-fa-quick" placeholder="例如：2430" oninput="previewBatchFa(this.value)" style="width:110px;background:white;border:1px solid #FFCC80;border-radius:8px;padding:6px 10px;font-size:12px;outline:none"/>
@@ -1226,7 +1233,7 @@ window.showBrandSuggestions=function(val,isQA){
         <div id="qa-price-hint-profit" style="font-size:9px;font-weight:700;margin-top:2px"></div>
       </div>
       <div style="position:relative;display:flex;align-items:stretch">
-        <input type="text" inputmode="numeric" id="qa-amt" placeholder="例如：12000" oninput="window.G.qaPromoOriginal=null;qaCalcPrice()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:11px 40px 11px 14px;font-size:18px;font-weight:700;outline:none"/>
+        <input type="text" inputmode="numeric" id="qa-amt" placeholder="例如：12000" oninput="window.G.qaPromoOriginal=null;window.G.qaPromoDivisor=null;qaCalcPrice()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:11px 40px 11px 14px;font-size:18px;font-weight:700;outline:none"/>
         <button onclick="document.getElementById('qa-amt').value='';window.G.qaSelectedPrice=null;qaCalcPrice();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
       </div>
     </div>
@@ -1950,6 +1957,10 @@ document.addEventListener("paste",function(e){
 
 // ── 活動除價按鈕 ─────────────────────────────────────────────────────────
 window.qaApplyPromo=function(divisor){
+  // 自我修復：狀態不同步一律視為沒有活動在跑，避免越除越小
+  if(!window.G.qaPromoOriginal||!window.G.qaPromoDivisor){
+    window.G.qaPromoOriginal=null;window.G.qaPromoDivisor=null;
+  }
   const amtEl=document.getElementById("qa-amt");
   const nameEl=document.getElementById("qa-name");
   const raw=parseFloat(amtEl.value.replace(/,/g,""))||0;
@@ -2043,6 +2054,10 @@ window.duplicateProduct=async function(id){
 };
 
 window.epApplyPromo=function(divisor){
+  // 自我修復：狀態不同步（有倍數卻沒有原價，或反過來）一律視為沒有活動在跑，避免越除越小
+  if(!window.G.epPromoOriginal||!window.G.epPromoDivisor){
+    window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;
+  }
   const amtEl=document.getElementById("ep-foreign");
   const nameEl=document.getElementById("ep-name");
   const raw=parseFloat(amtEl.value.replace(/,/g,""))||0;
@@ -2204,8 +2219,9 @@ const SUBCAT_MAP = {
   food: [
     {key:"優格",    label:"🥛 優格/乳製品",  kw:["優格","乳酪","起司","牛奶","乳飲","豆漿","優酪"]},
     {key:"泡麵",    label:"🍜 泡麵/麵食",    kw:["泡麵","拉麵","炒麵","冬粉","烏龍","河粉","순면","라면"]},
-    {key:"餅乾",    label:"🍪 餅乾/零食",    kw:["餅乾","洋芋片","薯片","爆米花","糖果","咖啡糖","軟糖","脆片","貝果","堅果脆","gummy","chip","cookie","snack"]},
+    {key:"餅乾",    label:"🍪 餅乾/零食",    kw:["餅乾","洋芋片","薯片","爆米花","糖果","咖啡糖","軟糖","脆片","貝果","堅果脆","蝴蝶餅","扭結餅","pretzel","gummy","chip","cookie","snack"]},
     {key:"飲料",    label:"🧃 飲料",          kw:["飲料","果汁","咖啡","茶飲","汽水","能量飲","乳酸菌飲","優酪乳"]},
+    {key:"沖泡",    label:"🥤 沖泡/代餐",    kw:["沖泡","搖搖飲","蛋白飲","高蛋白","蛋白粉","乳清","奶昔粉","代餐","益生菌粉","酵素粉","shake","protein","smoothie mix"]},
     {key:"果凍",    label:"🍮 果凍/布丁",    kw:["果凍","布丁","jelly","pudding"]},
     {key:"麻糬",    label:"🍡 麻糬/年糕",    kw:["麻糬","年糕","떡","糯米"]},
     {key:"甜點",    label:"🍰 甜點/糕點",    kw:["甜點","蛋糕","布朗尼","杜拜","生巧克力","Q餅","可頌","泡芙","馬卡龍","鬆餅","waffle","cake","杜拜巧克力"]},
@@ -2446,8 +2462,8 @@ window.openModal=function(id,data){
       document.getElementById("ep-name").value=data.name||"";
       const fa=data.foreignAmount||data.krw||0;
       document.getElementById("ep-foreign").value=fa;
-      // 設定活動狀態
-      if(data.originalAmount&&data.originalAmount!==fa){
+      // 設定活動狀態（要原價、活動倍數都有記錄，且原價確實跟目前不同，才視為活動仍在跑）
+      if(data.originalAmount&&data.promoDivisor&&data.originalAmount!==fa){
         window.G.epPromoOriginal=data.originalAmount;
         window.G.epPromoDivisor=data.promoDivisor||null;
       } else {
@@ -2543,8 +2559,51 @@ window.openModal=function(id,data){
     setTimeout(()=>{
       document.getElementById("mo-pid").textContent=data.productId;
       document.getElementById("mo-pname").textContent=p?`${p.emoji} ${p.name}`:"";
+      // 全形/半形正規化：把常見的全形數字、加號、括號都轉成半形，避免因為字元寬度不同而抓不到活動標籤
+      const normalizeTag=s=>(s||"").replace(/[０-９＋（）﹢﹙﹚]/g,ch=>{
+        const code=ch.charCodeAt(0);
+        if(code>=0xFF10&&code<=0xFF19)return String.fromCharCode(code-0xFF10+48);
+        if(ch==="＋"||ch==="﹢")return "+";
+        if(ch==="（"||ch==="﹙")return "(";
+        if(ch==="）"||ch==="﹚")return ")";
+        return ch;
+      });
+      // 活動提醒：商品名稱裡如果有（1+1）／（2+1）／（3+1）這類標籤，登記喊單時明顯提醒一下，
+      // 並把數量預設成活動需要的件數（同口味湊一份活動時最容易忘記要登記2件、3件），避免漏算
+      const promoBanner=document.getElementById("mo-promo-banner");
+      let promoDefaultQty=1;
+      let hasPromoTag=false;
+      if(promoBanner){
+        const m=normalizeTag(p?.name).match(/\((\d+)\+(\d+)\)/);
+        if(m){
+          hasPromoTag=true;
+          promoDefaultQty=parseInt(m[1])+parseInt(m[2]);
+          promoBanner.style.display="block";
+          promoBanner.textContent=`🎉 這個商品目前有「${m[1]}+${m[2]}」活動！如果客人買的是同一種口味湊一份活動，數量要登記 ${promoDefaultQty} 件（已自動幫你填好，混搭不同口味就分開登記、維持各1件即可）`;
+        } else {
+          promoBanner.style.display="none";
+          promoBanner.textContent="";
+        }
+      }
+      // 混搭口味：把品名裡的活動標籤（如「（2+1）」）去掉後再比對，只要底下的品名一樣就算同一個活動，
+      // 不要求每個口味的品名都要各自掛上標籤（很多時候只有部分口味有加，容易漏抓）
+      const mixSection=document.getElementById("mo-mix-section");
+      window.G.moMixItems=[];
+      if(mixSection){
+        if(hasPromoTag&&p){
+          const stripTag=n=>normalizeTag(n).replace(/\(\d+\+\d+\)/g,"").trim();
+          const pBase=stripTag(p.name);
+          window.G.moMixSiblings=window.G.products.filter(x=>x.id!==p.id&&stripTag(x.name)===pBase);
+          mixSection.style.display=window.G.moMixSiblings.length?"block":"none";
+        } else {
+          window.G.moMixSiblings=[];
+          mixSection.style.display="none";
+        }
+        moRenderMixSiblingBtns();
+        moRenderMixRows();
+      }
       document.getElementById("mo-buyer").value="";
-      document.getElementById("mo-qty").value="1";
+      document.getElementById("mo-qty").value=promoDefaultQty;
       // 趟次偵測：今天在區間內優先，否則用最新趟次
       const today=new Date().toISOString().split("T")[0];
       const activeTrip=window.G.trips.find(t=>t.startDate&&t.endDate&&today>=t.startDate&&today<=t.endDate);
@@ -3626,6 +3685,51 @@ document.addEventListener("click",function(e){
   }
 });
 
+// ── 混搭多口味（1+1類活動同時登記多個商品）───────────────────────────
+window.G.moMixItems=[];
+window.G.moMixSiblings=[];
+window.moRenderMixSiblingBtns=function(){
+  const container=document.getElementById("mo-mix-siblings");if(!container)return;
+  const siblings=window.G.moMixSiblings||[];
+  container.innerHTML=siblings.map(sp=>{
+    const active=(window.G.moMixItems||[]).some(x=>x.productId===sp.id);
+    const label=(sp.specs&&sp.specs.length?sp.specs.join(","):sp.name);
+    return `<button data-pid="${sp.id}" onclick="moAddMixItem(this.dataset.pid)" style="padding:5px 12px;border-radius:8px;font-size:12px;font-weight:700;border:1.5px solid ${active?"#7C3AED":"#DDD6FE"};background:${active?"#7C3AED":"white"};color:${active?"white":"#6D28D9"};cursor:pointer">${active?"✓ ":"+ "}${label}</button>`;
+  }).join("");
+};
+window.moRenderMixRows=function(){
+  const rows=document.getElementById("mo-mix-rows");if(!rows)return;
+  rows.innerHTML=(window.G.moMixItems||[]).map(item=>{
+    const sp=window.G.products.find(x=>x.id===item.productId);if(!sp)return"";
+    const label=(sp.specs&&sp.specs.length?sp.specs.join(","):sp.name);
+    return `<div style="display:flex;align-items:center;gap:8px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;margin-bottom:6px">
+      <span style="flex:1;font-size:12px;font-weight:700;color:#3D2010">${sp.emoji||"📦"} ${label}</span>
+      <div style="display:flex;align-items:center;gap:4px;border:1px solid #E8D5B0;border-radius:6px;overflow:hidden">
+        <button data-pid="${sp.id}" onclick="moMixQtyAdj(this.dataset.pid,-1)" style="width:24px;height:24px;border:none;background:#FAF8F5;color:#9C7A5A;font-weight:700;cursor:pointer">－</button>
+        <span style="width:24px;text-align:center;font-size:12px;font-weight:900">${item.qty}</span>
+        <button data-pid="${sp.id}" onclick="moMixQtyAdj(this.dataset.pid,1)" style="width:24px;height:24px;border:none;background:#FAF8F5;color:#9C7A5A;font-weight:700;cursor:pointer">＋</button>
+      </div>
+      <button data-pid="${sp.id}" onclick="moRemoveMixItem(this.dataset.pid)" style="font-size:11px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:3px 8px;border-radius:6px;cursor:pointer">移除</button>
+    </div>`;
+  }).join("");
+};
+window.moAddMixItem=function(pid){
+  window.G.moMixItems=window.G.moMixItems||[];
+  const idx=window.G.moMixItems.findIndex(x=>x.productId===pid);
+  if(idx>=0)window.G.moMixItems.splice(idx,1);
+  else window.G.moMixItems.push({productId:pid,qty:1});
+  moRenderMixSiblingBtns();moRenderMixRows();
+};
+window.moMixQtyAdj=function(pid,delta){
+  const item=(window.G.moMixItems||[]).find(x=>x.productId===pid);if(!item)return;
+  item.qty=Math.max(1,item.qty+delta);
+  moRenderMixRows();
+};
+window.moRemoveMixItem=function(pid){
+  window.G.moMixItems=(window.G.moMixItems||[]).filter(x=>x.productId!==pid);
+  moRenderMixSiblingBtns();moRenderMixRows();
+};
+
 window.addOrder=async function(){
   const productId=document.getElementById("mo-pid")?.textContent;if(!productId)return;
   const buyerInput=document.getElementById("mo-buyer")?.value.trim();
@@ -3654,7 +3758,6 @@ window.addOrder=async function(){
     }
   } else {showToast("請輸入客人名字","error");return;}
   const prod=window.G.products.find(p=>p.id===productId);if(!prod)return;
-  const id="O"+Date.now();
   const tripId=window.G.moSelectedTripId||"";
   const orderType=window.G.moOrderType||"onsite";
   const orderTypeLabel=orderType==="onsite"?"🛍️現場":"📱代買";
@@ -3662,9 +3765,21 @@ window.addOrder=async function(){
   // 有多個規格選項時，必須選擇規格才能登記
   const prod2=window.G.products.find(p=>p.id===productId);
   if(prod2?.specs?.length>1&&!spec){showToast("請先選擇規格！","error");return;}
+  const id="O"+Date.now();
   await fbSet("orders",id,{productId,productName:cleanProductName(prod.name),productEmoji:prod.emoji,customerId,communityName,lineName,buyerName:communityName||lineName,qty,unitPrice:prod.finalPrice,total:prod.finalPrice*qty,status:"pending",tripId,orderType,spec,createdAt:Date.now()});
+  // 混搭口味：同一活動下勾選的其他商品，一次登記完成，不用再開一次視窗
+  const mixItems=window.G.moMixItems||[];
+  let mixIdx=0;
+  for(const item of mixItems){
+    const sp=window.G.products.find(x=>x.id===item.productId);if(!sp)continue;
+    const mixId="O"+Date.now()+"_m"+(mixIdx++);
+    const mixSpec=(sp.specs&&sp.specs.length?sp.specs.join(","):"");
+    await fbSet("orders",mixId,{productId:sp.id,productName:cleanProductName(sp.name),productEmoji:sp.emoji,customerId,communityName,lineName,buyerName:communityName||lineName,qty:item.qty,unitPrice:sp.finalPrice,total:sp.finalPrice*item.qty,status:"pending",tripId,orderType,spec:mixSpec,createdAt:Date.now()});
+  }
+  window.G.moMixItems=[];
   const specEl=document.getElementById("mo-spec");if(specEl)specEl.value="";
-  closeModal("modal-order");showToast(`${orderTypeLabel} 已為 ${communityName||lineName} 登記${spec?" ("+spec+")":""}`);
+  const totalKinds=1+mixItems.length;
+  closeModal("modal-order");showToast(`${orderTypeLabel} 已為 ${communityName||lineName} 登記${totalKinds>1?`（混搭 ${totalKinds} 種口味）`:(spec?" ("+spec+")":"")}`);
   // 強制刷新避免 Firebase onSnapshot 延遲導致畫面未更新
   setTimeout(()=>{renderList();renderCustomers();renderInvoice();},600);
 };
@@ -5452,6 +5567,7 @@ window.batchEditProducts=function(){
   document.getElementById("be-count").textContent=ids.length;
   document.getElementById("be-price").value="";
   document.getElementById("be-price-mode").value="fixed";
+  const bpp=document.getElementById("be-price-preview");if(bpp)bpp.textContent="";
   document.getElementById("be-fa-quick").value="";
   document.getElementById("be-fa-preview").textContent="";
   window.G.bePromoDivisor=null;
@@ -5495,11 +5611,13 @@ window.batchEditProducts=function(){
         </div>
       </div>
       <!-- 成本資訊 -->
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px;text-align:center;background:white;border-radius:8px;padding:8px;border:1px solid #E8D5B0">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px;text-align:center;background:white;border-radius:8px;padding:8px;border:1px solid #E8D5B0">
         <div><div style="font-size:9px;color:#9C7A5A">${CURR_obj} 原幣</div><div style="font-size:12px;font-weight:700;color:#3D2010">${fa.toLocaleString()}</div></div>
-        <div><div style="font-size:9px;color:#9C7A5A">退稅後成本</div><div id="be-cost-${id}" style="font-size:12px;font-weight:700;color:#3D2010">NT$${liveAfterTax}</div></div>
-        <div><div style="font-size:9px;color:#2E7D32">建議售價</div><div id="be-suggest-${id}" style="font-size:12px;font-weight:700;color:#2E7D32">NT$${Math.ceil(liveAfterTax*1.3)}</div></div>
+        <div><div style="font-size:9px;color:#9C7A5A">成本</div><div id="be-cost-${id}" style="font-size:12px;font-weight:700;color:#3D2010">NT$${liveAfterTax}</div></div>
+        <div><div style="font-size:9px;color:#2E7D32">利潤</div><div id="be-profit-${id}" style="font-size:12px;font-weight:700;color:${liveProfit>=0?"#2E7D32":"#EF5350"}">NT$${liveProfit}</div></div>
+        <div><div style="font-size:9px;color:#6B21A8">毛利</div><div id="be-margin-${id}" style="font-size:12px;font-weight:700;color:#6B21A8">${p.finalPrice>0?Math.round((liveProfit/p.finalPrice)*100):0}%</div></div>
       </div>
+      <div id="be-suggest-${id}" style="display:none">NT$${Math.ceil(liveAfterTax*1.3)}</div>
       <!-- 韓幣原價 -->
       <div style="margin-bottom:8px">
         <div style="font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:4px">${CURR_obj} 原幣價格（改這裡會重新計算）</div>
@@ -5520,7 +5638,6 @@ window.batchEditProducts=function(){
         <div style="font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:4px">官網/平台網址（選填）</div>
         <input type="url" value="${p.url||""}" data-field="url" placeholder="https://..." style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;font-size:12px;outline:none"/>
       </div>
-      <div id="be-profit-${id}" style="margin-top:6px;font-size:10px;color:#9C7A5A;text-align:right">利潤 NT$${liveProfit} ／ 毛利 ${p.finalPrice>0?Math.round((liveProfit/p.finalPrice)*100):0}%</div>
     </div>`;
   }).join("");
   modal.style.display="flex";
@@ -5550,11 +5667,40 @@ window.beUpdateProfit=function(input,pid){
   const{afterTax}=calcCost(fa,p.currency||"KRW");
   const profit=Math.round((newPrice-afterTax)*10)/10;
   const margin=newPrice>0?Math.round((profit/newPrice)*100):0;
-  const el=document.getElementById("be-profit-"+pid);
-  if(el){el.textContent=`利潤 NT$${profit} ／ 毛利 ${margin}%`;el.style.color=profit>=0?"#2E7D32":"#EF5350";}
+  const profitEl=document.getElementById("be-profit-"+pid);
+  const marginEl=document.getElementById("be-margin-"+pid);
+  const color=profit>=0?"#2E7D32":"#EF5350";
+  if(profitEl){profitEl.textContent=`NT$${profit}`;profitEl.style.color=color;}
+  if(marginEl){marginEl.textContent=`${margin}%`;marginEl.style.color=color;}
 };
 
 // 快速套用到所有商品的售價
+window.previewBatchQuick=function(){
+  const el=document.getElementById("be-price-preview");
+  if(!el)return;
+  const mode=document.getElementById("be-price-mode")?.value;
+  const val=parseFloat(document.getElementById("be-price")?.value)||0;
+  if(!val){el.textContent="";return;}
+  const ids=[...(window.G.selectedProducts||[])];
+  if(!ids.length){el.textContent="";return;}
+  let min=null,max=null;
+  ids.forEach(id=>{
+    const p=window.G.products.find(x=>x.id===id);if(!p)return;
+    const cost=p.afterTax||0;
+    let newPrice;
+    if(mode==="fixed")newPrice=val;
+    else if(mode==="add")newPrice=(p.finalPrice||0)+val;
+    else newPrice=(p.finalPrice||0)-val;
+    const profit=Math.round((newPrice-cost)*10)/10;
+    if(min===null||profit<min)min=profit;
+    if(max===null||profit>max)max=profit;
+  });
+  if(min===null){el.textContent="";return;}
+  el.innerHTML=min===max
+    ?`套用後利潤約 <b style="color:${min>=0?"#2E7D32":"#C0392B"}">NT$${min}</b>`
+    :`套用後利潤約 <b style="color:${min>=0?"#2E7D32":"#C0392B"}">NT$${min}</b> ～ <b style="color:${max>=0?"#2E7D32":"#C0392B"}">NT$${max}</b>（依各商品成本不同）`;
+};
+
 window.previewBatchFa=function(val){
   const fa=parseFloat(val)||0;
   const el=document.getElementById("be-fa-preview");
@@ -6236,11 +6382,11 @@ window.openQuickAdd=function(){
   document.querySelectorAll(".qa-ch-btn").forEach(b=>{b.style.background="white";b.style.borderColor="#E8D5B0";b.style.color="#9C7A5A";b.classList.remove("active");});
   const firstCh=document.querySelector(".qa-ch-btn");
   if(firstCh){firstCh.style.background="#5C3A1E";firstCh.style.borderColor="#5C3A1E";firstCh.style.color="white";firstCh.classList.add("active");}
-  document.getElementById("qa-img-preview").style.display="none";
-  document.getElementById("qa-img-label").style.display="flex";
-  document.getElementById("qa-ai-result").style.display="none";
-  document.getElementById("qa-loading").style.display="none";
-  document.getElementById("qa-img-input").value="";
+  document.getElementById("qa-img-preview")?.style&&(document.getElementById("qa-img-preview").style.display="none");
+  document.getElementById("qa-img-label")?.style&&(document.getElementById("qa-img-label").style.display="flex");
+  document.getElementById("qa-ai-result")?.style&&(document.getElementById("qa-ai-result").style.display="none");
+  document.getElementById("qa-loading")?.style&&(document.getElementById("qa-loading").style.display="none");
+  const qaImgInputLegacy=document.getElementById("qa-img-input");if(qaImgInputLegacy)qaImgInputLegacy.value="";
   window.G.qaSelectedPrice=null;
   const qb=document.getElementById("qa-quick-btns");if(qb)qb.innerHTML="";
   const qc=document.getElementById("qa-custom");if(qc)qc.value="";
@@ -6416,9 +6562,16 @@ window.qaRecognize=async function(b64,imgSrc){
     });
     const data=await resp.json();
     if(data.error){throw new Error(data.error);}
+    const hasGarbageRepeat=t=>{
+      // 偵測同一字元連續重複5次以上（OCR雜訊，例如「囗囗囗囗囗」），不是拿字串長度當判斷依據
+      for(let i=0;i+4<t.length;i++){
+        if(t[i]===t[i+1]&&t[i]===t[i+2]&&t[i]===t[i+3]&&t[i]===t[i+4])return true;
+      }
+      return false;
+    };
     const clean=t=>{
       if(!t||typeof t!=="string"||t.length>80)return "";
-      if(/(.){5,}/.test(t))return "";
+      if(hasGarbageRepeat(t))return "";
       if(t.startsWith("{"))return "";
       return t;
     };
