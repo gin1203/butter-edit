@@ -707,9 +707,9 @@ window.showBrandSuggestions=function(val,isQA){
     </div>
     <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">數量</label>
     <div style="display:flex;align-items:center;gap:0;margin-bottom:14px;border:1px solid #E8D5B0;border-radius:10px;overflow:hidden;background:#FAF8F5">
-      <button onclick="moQtyAdj(-1)" style="width:48px;height:48px;font-size:24px;font-weight:700;border:none;background:transparent;color:#9C7A5A;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1">−</button>
+      <button onclick="moQtyAdj(-1)" style="-webkit-appearance:none;appearance:none;width:48px;height:48px;font-size:22px;font-weight:700;border:none;background:transparent;color:#9C7A5A;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;margin:0">－</button>
       <input type="text" inputmode="numeric" id="mo-qty" value="1" oninput="moQtyClamp()" style="flex:1;border:none;background:transparent;text-align:center;font-size:20px;font-weight:900;color:#3D2010;outline:none;padding:0"/>
-      <button onclick="moQtyAdj(1)" style="width:48px;height:48px;font-size:24px;font-weight:700;border:none;background:transparent;color:#9C7A5A;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1">＋</button>
+      <button onclick="moQtyAdj(1)" style="-webkit-appearance:none;appearance:none;width:48px;height:48px;font-size:22px;font-weight:700;border:none;background:transparent;color:#9C7A5A;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;margin:0">＋</button>
     </div>
     <!-- 規格備註 -->
     <div id="mo-spec-area" style="margin-bottom:12px;display:none">
@@ -1031,11 +1031,17 @@ window.showBrandSuggestions=function(val,isQA){
           <input type="text" inputmode="numeric" id="be-price" placeholder="金額" style="width:90px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;font-size:12px;outline:none"/>
           <button onclick="applyBatchQuick()" style="background:#5C3A1E;color:#F5E6C8;border:none;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer">套用</button>
         </div>
-        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
           <span style="font-size:12px;font-weight:700;color:#9C7A5A">₩ 原幣批次改為</span>
           <input type="text" inputmode="numeric" id="be-fa-quick" placeholder="例如：2430" oninput="previewBatchFa(this.value)" style="width:110px;background:white;border:1px solid #FFCC80;border-radius:8px;padding:6px 10px;font-size:12px;outline:none"/>
           <button onclick="applyBatchFa()" style="background:#E07B39;color:white;border:none;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer">套用並重算</button>
           <span id="be-fa-preview" style="font-size:11px;color:#9C7A5A"></span>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <span style="font-size:12px;font-weight:700;color:#9C7A5A">🎉 活動價（各商品依自己原幣重算，再點一次取消）</span>
+          <button id="be-promo-2" onclick="beApplyPromo(2)" style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;color:#92400E;cursor:pointer">1+1</button>
+          <button id="be-promo-3" onclick="beApplyPromo(3)" style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;color:#166534;cursor:pointer">2+1</button>
+          <button id="be-promo-4" onclick="beApplyPromo(4)" style="background:#DBEAFE;border:1px solid #93C5FD;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;color:#1E3A8A;cursor:pointer">3+1</button>
         </div>
       </div>
     </div>
@@ -3417,8 +3423,24 @@ window.saveCustomer=async function(){
   const address=document.getElementById("mc-addr")?.value.trim()||"";
   const note=document.getElementById("mc-note")?.value.trim()||"";
   if(!communityName&&!lineName){showToast("請至少填一個名字","error");return;}
-  const id=m.id||"C"+Date.now();
-  await fbSet("customers",id,{communityName,lineName,phone,address,note,createdAt:m.createdAt||Date.now()});
+  let id=m.id;
+  let createdAt=m.createdAt;
+  if(!id){
+    // 新增客戶：先檢查是否已有同名（社群名或LINE名）客戶，避免建立重複資料
+    const inputCN=communityName.trim().toLowerCase();
+    const inputLN=lineName.trim().toLowerCase();
+    const dup=(window.G.customers||[]).find(c=>
+      (inputCN&&(c.communityName||"").trim().toLowerCase()===inputCN)||
+      (inputLN&&(c.lineName||"").trim().toLowerCase()===inputLN)
+    );
+    if(dup){
+      id=dup.id;
+      createdAt=dup.createdAt;
+      showToast(`已有同名客戶「${dup.communityName||dup.lineName}」，已改為更新該筆資料，避免重複`,"warning");
+    }
+  }
+  id=id||"C"+Date.now();
+  await fbSet("customers",id,{communityName,lineName,phone,address,note,createdAt:createdAt||Date.now()});
   closeModal("modal-cust");showToast("客戶資料已儲存");
 };
 window.deleteCustomer=async function(id){
@@ -4231,9 +4253,14 @@ window.renderStockPlanContent=function(){
       specGroups[key].push(o);
     });
     html+=`<div style="background:#FAF8F5;border:1px solid #E8D5B0;border-radius:14px;padding:14px;margin-bottom:12px">`;
-    html+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">`;
+    html+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px">`;
+    html+=`<div style="display:flex;align-items:center;gap:8px;min-width:0">`;
+    if(p.photo){
+      html+=`<div onclick="openLightbox('${p.id}')" style="flex-shrink:0;width:36px;height:36px;border-radius:8px;overflow:hidden;background:white;border:1px solid #E8D5B0;cursor:zoom-in"><img src="${p.photo}" style="width:100%;height:100%;object-fit:cover;object-position:${p.photoPos||"50% 50%"};display:block" loading="lazy"/></div>`;
+    }
     html+=`<div style="font-size:13px;font-weight:900;color:#3D2010">${p.emoji||"📦"} ${p.name}</div>`;
-    html+=`<div style="font-size:12px;font-weight:700;color:#E07B39;background:#FFF3E0;border:1px solid #FFCC80;padding:3px 10px;border-radius:99px">共 ${total} 個</div>`;
+    html+=`</div>`;
+    html+=`<div style="flex-shrink:0;font-size:12px;font-weight:700;color:#E07B39;background:#FFF3E0;border:1px solid #FFCC80;padding:3px 10px;border-radius:99px">共 ${total} 個</div>`;
     html+=`</div>`;
     Object.keys(specGroups).forEach(spec=>{
       const sOrders=specGroups[spec];
@@ -4249,9 +4276,9 @@ window.renderStockPlanContent=function(){
         html+=`<span style="font-size:10px;font-weight:900;color:#C5A880;min-width:20px">#${i+1}</span>`;
         html+=`<span style="flex:1;font-size:13px;font-weight:700;color:#3D2010">${buyer}</span>`;
         html+=`<div style="display:flex;align-items:center;gap:0;border:1px solid #E8D5B0;border-radius:8px;overflow:hidden;background:#FAF8F5">
-          <button onclick="spQtyAdj('${o.id}',-1)" style="width:28px;height:28px;font-size:16px;border:none;background:transparent;color:#9C7A5A;cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>
+          <button onclick="spQtyAdj('${o.id}',-1)" style="-webkit-appearance:none;appearance:none;width:28px;height:28px;font-size:15px;font-weight:700;border:none;background:transparent;color:#9C7A5A;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;margin:0">－</button>
           <input id="sp-qty-${o.id}" type="text" inputmode="numeric" value="${o.qty}" style="width:28px;text-align:center;border:none;background:transparent;font-size:13px;font-weight:900;color:#3D2010;outline:none;padding:0"/>
-          <button onclick="spQtyAdj('${o.id}',1,${o.qty})" style="width:28px;height:28px;font-size:16px;border:none;background:transparent;color:#9C7A5A;cursor:pointer;display:flex;align-items:center;justify-content:center">＋</button>
+          <button onclick="spQtyAdj('${o.id}',1,${o.qty})" style="-webkit-appearance:none;appearance:none;width:28px;height:28px;font-size:15px;font-weight:700;border:none;background:transparent;color:#9C7A5A;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;margin:0">＋</button>
         </div>`;
         html+=`<button class="sp-give-btn" onclick="stockPlanGive('${o.id}',this,${o.qty})" style="flex-shrink:0;background:#A5D6A7;color:#1B5E20;border:1.5px solid #A5D6A7;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer">✓ 給貨</button>`;
         html+=`</div>`;
@@ -4272,41 +4299,54 @@ window.spQtyAdj=function(oid,delta,max){
 };
 
 window.stockPlanGive=async function(oid,btn,origQty){
+  if(btn.dataset.busy==="1")return; // 防止快速連點造成重複執行
+  btn.dataset.busy="1";
   const row=document.getElementById("sp-row-"+oid);
   const isGiven=btn.dataset.given==="1";
   const qtyEl=document.getElementById("sp-qty-"+oid);
   const giveQty=parseInt(qtyEl?.value)||origQty||1;
-  if(isGiven){
-    // 撤銷
-    btn.dataset.given="0";
-    btn.textContent="✓ 給貨";
-    btn.style.background="#A5D6A7";
-    btn.style.color="#1B5E20";
-    btn.style.border="1.5px solid #A5D6A7";
-    if(row){row.style.background="white";row.style.borderColor="#E8D5B0";}
-    await fbUpd("orders",oid,{status:"pending",qty:origQty,givenFromStock:false});
-  } else {
-    // 標記已給
-    btn.dataset.given="1";
-    btn.textContent="✅ 已給";
-    btn.style.background="#E8F5E9";
-    btn.style.color="#777";
-    btn.style.border="1.5px solid #C8E6C9";
-    if(row){row.style.background="#F0FFF4";row.style.borderColor="#A5D6A7";}
-    if(giveQty<origQty){
-      // 部分給貨：更新原單數量，新增一筆剩餘
-      const o=window.G.orders.find(x=>x.id===oid);
-      if(o){
-        await fbUpd("orders",oid,{qty:giveQty,status:"settled",givenFromStock:true});
-        const remainId="ord_"+Date.now()+"_r";
-        const remain=giveQty<origQty?origQty-giveQty:0;
-        await fbSet("orders",remainId,{...o,id:remainId,qty:remain,status:"pending",createdAt:o.createdAt});
-        showToast(`已給 ${giveQty} 個，剩 ${remain} 個留待下次 ✅`);
+  try{
+    if(isGiven){
+      // 撤銷：還原原單數量，並刪除當初部分給貨時新增的「剩餘訂單」，避免重複累加
+      const remainId=btn.dataset.remainId;
+      if(remainId){
+        await fbDel("orders",remainId);
+        btn.dataset.remainId="";
       }
+      btn.dataset.given="0";
+      btn.textContent="✓ 給貨";
+      btn.style.background="#A5D6A7";
+      btn.style.color="#1B5E20";
+      btn.style.border="1.5px solid #A5D6A7";
+      if(row){row.style.background="white";row.style.borderColor="#E8D5B0";}
+      if(qtyEl)qtyEl.value=origQty;
+      await fbUpd("orders",oid,{status:"pending",qty:origQty,givenFromStock:false});
     } else {
-      await fbUpd("orders",oid,{status:"settled",givenFromStock:true});
-      showToast("已給 ✅");
+      // 標記已給
+      btn.textContent="✅ 已給";
+      btn.style.background="#E8F5E9";
+      btn.style.color="#777";
+      btn.style.border="1.5px solid #C8E6C9";
+      if(row){row.style.background="#F0FFF4";row.style.borderColor="#A5D6A7";}
+      if(giveQty<origQty){
+        // 部分給貨：更新原單數量，新增一筆剩餘（只會新增一次，重複按會先走上面撤銷分支）
+        const o=window.G.orders.find(x=>x.id===oid);
+        if(o){
+          await fbUpd("orders",oid,{qty:giveQty,status:"settled",givenFromStock:true});
+          const remainId="ord_"+Date.now()+"_r";
+          const remain=origQty-giveQty;
+          await fbSet("orders",remainId,{...o,id:remainId,qty:remain,status:"pending",createdAt:o.createdAt});
+          btn.dataset.remainId=remainId;
+          showToast(`已給 ${giveQty} 個，剩 ${remain} 個留待下次 ✅`);
+        }
+      } else {
+        await fbUpd("orders",oid,{status:"settled",givenFromStock:true});
+        showToast("已給 ✅");
+      }
+      btn.dataset.given="1";
     }
+  } finally {
+    btn.dataset.busy="0";
   }
 };
 
@@ -5412,6 +5452,11 @@ window.batchEditProducts=function(){
   document.getElementById("be-count").textContent=ids.length;
   document.getElementById("be-price").value="";
   document.getElementById("be-price-mode").value="fixed";
+  document.getElementById("be-fa-quick").value="";
+  document.getElementById("be-fa-preview").textContent="";
+  window.G.bePromoDivisor=null;
+  window.G.bePromoOriginals={};
+  beUpdatePromoBtnStyle(null);
   // 渲染每個商品的詳細卡片
   const list=document.getElementById("be-product-list");
   list.innerHTML=ids.map(id=>{
@@ -5524,6 +5569,9 @@ window.previewBatchFa=function(val){
 window.applyBatchFa=function(){
   const fa=parseFloat(document.getElementById("be-fa-quick")?.value)||0;
   if(!fa){showToast("請輸入原幣金額","warning");return;}
+  window.G.bePromoDivisor=null;
+  window.G.bePromoOriginals={};
+  beUpdatePromoBtnStyle(null);
   document.querySelectorAll("#be-product-list [data-field='foreignAmount']").forEach(input=>{
     const card=input.closest("[data-beid]");if(!card)return;
     const pid=card.dataset.beid;
@@ -5532,6 +5580,78 @@ window.applyBatchFa=function(){
     beUpdateCost(input,pid,p.currency||"KRW");
   });
   showToast("已套用原幣並重算建議售價","success");
+};
+
+// 批次活動除價按鈕（1+1／2+1／3+1，各商品依自己原幣重算，同一按鈕再點一次還原，不會累計）
+window.beUpdatePromoBtnStyle=function(active){
+  [2,3,4].forEach(d=>{
+    const btn=document.getElementById("be-promo-"+d);
+    if(!btn)return;
+    if(d===active){
+      btn.style.outline="2px solid #5C3A1E";
+      btn.style.outlineOffset="1px";
+    }else{
+      btn.style.outline="none";
+    }
+  });
+};
+
+window.beApplyPromo=function(divisor){
+  const cards=document.querySelectorAll("#be-product-list [data-beid]");
+  if(!cards.length)return;
+  const labels={2:"（1+1）",3:"（2+1）",4:"（3+1）"};
+  const tag=labels[divisor];
+  window.G.bePromoOriginals=window.G.bePromoOriginals||{};
+
+  // 同一個活動再按一次 → 全部還原原價
+  if(window.G.bePromoDivisor===divisor){
+    cards.forEach(card=>{
+      const pid=card.dataset.beid;
+      const p=window.G.products.find(x=>x.id===pid);if(!p)return;
+      const faInput=card.querySelector("[data-field='foreignAmount']");
+      const nameInput=card.querySelector("[data-field='name']");
+      const orig=window.G.bePromoOriginals[pid];
+      if(faInput&&orig!=null){
+        faInput.value=orig;
+        beUpdateCost(faInput,pid,p.currency||"KRW");
+      }
+      if(nameInput){
+        let n=nameInput.value.trim();
+        n=n.replace(/（[1-4][+＋][1-4]）/g,"").trim();
+        nameInput.value=n;
+      }
+    });
+    window.G.bePromoDivisor=null;
+    window.G.bePromoOriginals={};
+    beUpdatePromoBtnStyle(null);
+    showToast("已取消活動，還原原價","success");
+    return;
+  }
+
+  // 套用（或切換到不同活動）→ 一律以「第一次點活動按鈕前的原幣金額」為基準重算，不會愈點愈少
+  cards.forEach(card=>{
+    const pid=card.dataset.beid;
+    const p=window.G.products.find(x=>x.id===pid);if(!p)return;
+    const faInput=card.querySelector("[data-field='foreignAmount']");
+    const nameInput=card.querySelector("[data-field='name']");
+    if(!faInput)return;
+    let orig=window.G.bePromoOriginals[pid];
+    if(orig==null){
+      orig=parseFloat(faInput.value)||p.foreignAmount||p.krw||0;
+      window.G.bePromoOriginals[pid]=orig;
+    }
+    const perItem=Math.round(orig*(divisor-1)/divisor);
+    faInput.value=perItem;
+    beUpdateCost(faInput,pid,p.currency||"KRW");
+    if(nameInput){
+      let n=nameInput.value.trim();
+      n=n.replace(/（[1-4][+＋][1-4]）/g,"").trim();
+      nameInput.value=n+(n?" ":"")+tag;
+    }
+  });
+  window.G.bePromoDivisor=divisor;
+  beUpdatePromoBtnStyle(divisor);
+  showToast(`已套用 ${tag.replace("（","").replace("）","")} 活動到所有選取商品`,"success");
 };
 
 window.applyBatchQuick=function(){
@@ -5570,6 +5690,14 @@ window.saveBatchEdit=async function(){
     const margin=newPrice>0?Math.round((profit/newPrice)*100):0;
     const upd={name:newName,finalPrice:newPrice,profit,margin,twPrice:newTwPrice,url:newUrl,foreignAmount:newFa,beforeTax,afterTax,specs:newSpecs,aliases:newAliases};
     await fbUpd("products",pid,upd);
+    // 記錄歷史價格（只有價格或韓幣原價變動才記錄），跟單一商品修改的邏輯一致
+    if(p.finalPrice!==newPrice||p.foreignAmount!==newFa){
+      const tripName=(getLatestTrip()||{}).name||"";
+      const histEntry={krw:newFa,price:newPrice,date:new Date().toISOString().split("T")[0],trip:tripName};
+      const existing=p.priceHistory||[];
+      const newHist=[...existing,histEntry].slice(-10); // 最多保留10筆
+      await fbUpd("products",pid,{priceHistory:newHist});
+    }
     updated++;
   }
   window.G.selectedProducts.clear();
@@ -5596,15 +5724,20 @@ window.renderCustomers=function(){
     });
   }
   if(!filtered.length){container.innerHTML=`<div style="background:white;border-radius:14px;padding:48px 20px;text-align:center;border:1px solid #E8D5B0"><div style="font-size:32px;margin-bottom:8px">👥</div><div style="font-weight:700;color:#3D2010">${customers.length===0?"還沒有客戶資料":"找不到符合的客戶"}</div></div>`;return;}
-  // 按最新訂單時間排序
-  filtered=[...filtered].sort((a,b)=>{
-    const getLatest=c=>{
-      const cOrds=orders.filter(o=>o.customerId===c.id||(o.communityName||o.buyerName||"").trim().toLowerCase()===(c.communityName||"").trim().toLowerCase());
-      return cOrds.length?Math.max(...cOrds.map(o=>o.createdAt||0)):c.createdAt||0;
-    };
-    return getLatest(b)-getLatest(a);
-  });
-  container.innerHTML=filtered.map(c=>{
+  // 排序：有「待對帳」訂單的客戶優先排在前面；已結清或沒有訂單的排到後面（中間加分隔線），
+  // 這樣訂單被清空後客戶只會「掉到分隔線下面」，不會讓人誤以為整筆資料憑空消失
+  const custLatest=c=>{
+    const cOrds=orders.filter(o=>o.customerId===c.id||(o.communityName||o.buyerName||"").trim().toLowerCase()===(c.communityName||"").trim().toLowerCase());
+    return cOrds.length?Math.max(...cOrds.map(o=>o.createdAt||0)):c.createdAt||0;
+  };
+  const custPendingCount=c=>{
+    const cOrds=orders.filter(o=>o.customerId===c.id||(o.communityName||o.buyerName||"").trim().toLowerCase()===(c.communityName||"").trim().toLowerCase());
+    return cOrds.filter(o=>o.status==="pending").length;
+  };
+  const withPending=filtered.filter(c=>custPendingCount(c)>0).sort((a,b)=>custLatest(b)-custLatest(a));
+  const withoutPending=filtered.filter(c=>custPendingCount(c)===0).sort((a,b)=>custLatest(b)-custLatest(a));
+  filtered=[...withPending,...withoutPending];
+  const cardHtmls=filtered.map(c=>{
     // 比對訂單：優先用 customerId，兜底用名字比對（相容舊喊單）
     const cName=(c.communityName||"").trim().toLowerCase();
     const cLine=(c.lineName||"").trim().toLowerCase();
@@ -5688,7 +5821,11 @@ window.renderCustomers=function(){
           </div>`;}).join("")}</div>`:""}
       </div>
     </div>`;
-  }).join("");
+  });
+  if(withPending.length>0&&withoutPending.length>0){
+    cardHtmls.splice(withPending.length,0,`<div style="display:flex;align-items:center;gap:8px;margin:14px 0 10px;color:#B08968;font-size:11px;font-weight:700"><div style="flex:1;height:1px;background:#E8D5B0"></div><span>✅ 已結清／無待處理</span><div style="flex:1;height:1px;background:#E8D5B0"></div></div>`);
+  }
+  container.innerHTML=cardHtmls.join("");
   updateBatchBar("customer");
 };
 
