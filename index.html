@@ -604,24 +604,26 @@ window.showBrandSuggestions=function(val,isQA){
     <div style="background:#FDF6EC;border-radius:10px;padding:12px;margin-bottom:10px">
       <div style="font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:8px">＋ 新增帳號</div>
       <div style="display:flex;gap:6px;margin-bottom:6px">
-        <input type="text" id="new-username" placeholder="帳號名稱（如 butter、staff01）" style="flex:1;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:13px;outline:none"/>
-        <select id="new-role" style="background:white;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:12px;outline:none">
+        <input type="text" id="new-username" placeholder="帳號名稱（如 butter、staff01）" style="flex:1;min-width:0;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:13px;outline:none"/>
+        <select id="new-role" style="flex-shrink:0;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:12px;outline:none">
           <option value="owner">👑 老闆</option>
           <option value="staff">👤 小幫手</option>
         </select>
       </div>
       <div style="display:flex;gap:6px">
-        <input type="password" id="new-password" placeholder="設定密碼（至少6位）" style="flex:1;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:13px;outline:none"/>
-        <button onclick="createAccount()" style="background:#5C3A1E;color:#F5E6C8;border:none;border-radius:8px;padding:7px 16px;font-size:12px;font-weight:700;cursor:pointer">建立</button>
+        <input type="password" id="new-password" placeholder="設定密碼（至少6位）" style="flex:1;min-width:0;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:13px;outline:none"/>
+        <button onclick="createAccount()" style="flex-shrink:0;background:#5C3A1E;color:#F5E6C8;border:none;border-radius:8px;padding:7px 16px;font-size:12px;font-weight:700;cursor:pointer">建立</button>
       </div>
     </div>
     <!-- 重設密碼 -->
     <div style="background:#FAF8F5;border-radius:10px;padding:12px">
       <div style="font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:8px">🔑 重設他人密碼</div>
+      <div style="margin-bottom:6px">
+        <input type="text" id="reset-username" placeholder="帳號名稱" style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:13px;outline:none;box-sizing:border-box"/>
+      </div>
       <div style="display:flex;gap:6px">
-        <input type="text" id="reset-username" placeholder="帳號名稱" style="flex:1;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:13px;outline:none"/>
-        <input type="password" id="reset-password" placeholder="新密碼（至少6位）" style="flex:1;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:13px;outline:none"/>
-        <button onclick="resetAccountPwd()" style="background:#C5A880;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer">重設</button>
+        <input type="password" id="reset-password" placeholder="新密碼（至少6位）" style="flex:1;min-width:0;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:13px;outline:none"/>
+        <button onclick="resetAccountPwd()" style="flex-shrink:0;background:#C5A880;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer">重設</button>
       </div>
     </div>
   </div>
@@ -659,6 +661,8 @@ window.showBrandSuggestions=function(val,isQA){
       <div style="font-size:11px;color:#92400E;font-weight:700;margin-bottom:6px">🔧 一次性修復工具</div>
       <div style="font-size:10px;color:#92400E;margin-bottom:8px">修復已建立的活動商品（1+1/2+1/3+1）的原始金額記錄，讓修改時能正確顯示原價。</div>
       <button onclick="fixOriginalAmounts()" style="width:100%;background:#F59E0B;color:white;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">🔧 修復活動商品原始金額</button>
+      <div style="font-size:10px;color:#92400E;margin:10px 0 8px">用目前匯率重新計算所有商品的成本／利潤／毛利（原幣金額、售價不會變，只更新成本相關數字）。</div>
+      <button onclick="refreshAllCosts()" style="width:100%;background:#F59E0B;color:white;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">🔄 用目前匯率重算全部商品成本</button>
     </div>
   </div>
 </div>
@@ -1254,18 +1258,18 @@ window.showBrandSuggestions=function(val,isQA){
         <button onclick="document.getElementById('qa-amt').value='';window.G.qaSelectedPrice=null;qaCalcPrice();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
       </div>
     </div>
-    <!-- 活動群組（選填，不同品名但同一波活動時填一樣的群組名） -->
-    <div style="margin-bottom:12px">
-      <label style="font-size:11px;font-weight:700;color:#9C7A5A;display:block;margin-bottom:4px">🏷️ 活動群組（選填，不同品名但同一波活動時填一樣的群組名）</label>
-      <input type="text" id="qa-promo-group" placeholder="例如：洋芋片系列2+1" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:13px;outline:none;box-sizing:border-box"/>
-    </div>
-
     <!-- 快速選價 -->
     <div id="qa-quick-btns" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px"></div>
     <!-- 自訂售價獨立一列 -->
     <div style="position:relative;margin-bottom:12px">
       <input type="text" inputmode="numeric" id="qa-custom" placeholder="✏️ 自訂售價" oninput="window.G.qaSelectedPrice=parseFloat(this.value)||null;qaCalcPrice();" style="width:100%;background:#FFF5F5;border:1.5px solid #FFAAAA;border-radius:10px;padding:10px 40px 10px 14px;font-size:15px;font-weight:700;color:#3D2010;outline:none;box-sizing:border-box"/>
       <button onclick="document.getElementById('qa-custom').value='';window.G.qaSelectedPrice=null;qaCalcPrice();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#FFAAAA;font-size:16px;line-height:1;padding:0">✕</button>
+    </div>
+
+    <!-- 活動群組（選填，不同品名但同一波活動時填一樣的群組名） -->
+    <div style="margin-bottom:12px">
+      <label style="font-size:11px;font-weight:700;color:#9C7A5A;display:block;margin-bottom:4px">🏷️ 活動群組（選填，不同品名但同一波活動時填一樣的群組名）</label>
+      <input type="text" id="qa-promo-group" placeholder="例如：洋芋片系列2+1" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:13px;outline:none;box-sizing:border-box"/>
     </div>
 
     <!-- 類別 -->
@@ -1399,7 +1403,7 @@ const CURR={
 window.G={
   role:"",
   tab:"calc",
-  products:[],customers:[],orders:[],trips:[],
+  products:[],customers:[],orders:[],trips:[],productsLoaded:false,customersLoaded:false,ordersLoaded:false,
   settings:{rate:0.024,taxRefund:0.07,cardFee:0.015,cardRebate:0.033,rateJPY:0.22,rateTHB:0.90},
   rates:{KRW:0.024,JPY:0.22,THB:0.90},
   currency:"KRW",
@@ -1709,14 +1713,15 @@ setTimeout(fixBodyPadding,300);
 async function fetchRates(){
   const el=document.getElementById("rate-bar");
   try{
-    const r=await fetch("https://api.frankfurter.app/latest?from=TWD&to=KRW,JPY,THB");
+    // 原本用 Frankfurter API 完全沒支援台幣（TWD），每次一定失敗，一直在用預設值。
+    // 改用 ExchangeRate-API 的免費開放端點（不用金鑰，支援台幣）。
+    const r=await fetch("https://open.er-api.com/v6/latest/TWD");
     if(!r.ok)throw new Error("API error");
     const d=await r.json();
-    if(d.rates){
-      window.G.rates.KRW=Math.round(100000/d.rates.KRW)/100000;
-      window.G.rates.JPY=Math.round(10000/d.rates.JPY)/10000;
-      window.G.rates.THB=Math.round(10000/d.rates.THB)/10000;
-    }
+    if(d.result!=="success"||!d.rates)throw new Error("API error");
+    window.G.rates.KRW=Math.round(100000/d.rates.KRW)/100000;
+    window.G.rates.JPY=Math.round(10000/d.rates.JPY)/10000;
+    window.G.rates.THB=Math.round(10000/d.rates.THB)/10000;
     if(el){
       const{KRW,JPY,THB}=window.G.rates;
       el.innerHTML=`🇰🇷 ₩1=NT$${KRW} &nbsp;·&nbsp; 🇯🇵 ¥1=NT$${JPY} &nbsp;·&nbsp; 🇹🇭 ฿1=NT$${THB}<br><span style="color:#B0906A;font-size:9px">即時匯率</span>`;
@@ -2240,8 +2245,8 @@ const SUBCAT_MAP = {
   // 食品子分類
   food: [
     {key:"優格",    label:"🥛 優格/乳製品",  kw:["優格","乳酪","起司","牛奶","乳飲","豆漿","優酪"]},
-    {key:"泡麵",    label:"🍜 泡麵/麵食",    kw:["泡麵","拉麵","炒麵","冬粉","烏龍","河粉","순면","라면"]},
     {key:"餅乾",    label:"🍪 餅乾/零食",    kw:["餅乾","洋芋片","薯片","爆米花","糖果","咖啡糖","軟糖","脆片","貝果","堅果脆","蝴蝶餅","扭結餅","蝴蝶酥","千層酥","焦糖餅","雪花酥","雪花","pretzel","gummy","chip","cookie","snack"]},
+    {key:"泡麵",    label:"🍜 泡麵/麵食",    kw:["泡麵","拉麵","炒麵","炒碼麵","冬粉","烏龍","河粉","義大利麵","義大利麪","pasta","spaghetti","짬뽕","jjamppong","순면","라면"]},
     {key:"飲料",    label:"🧃 飲料",          kw:["飲料","果汁","咖啡","茶飲","汽水","能量飲","乳酸菌飲","優酪乳","蒟蒻飲"]},
     {key:"沖泡",    label:"🥤 沖泡/代餐",    kw:["沖泡","搖搖飲","蛋白飲","高蛋白","蛋白粉","乳清","奶昔粉","代餐","益生菌粉","酵素粉","shake","protein","smoothie mix"]},
     {key:"堅果",    label:"🥜 堅果/果乾",    kw:["堅果","杏仁","腰果","核桃","果乾","草莓乾","芒果乾","蔓越莓","凍乾","水果乾"]},
@@ -2454,6 +2459,23 @@ window.fixOriginalAmounts=async function(){
     }
   }
   showToast(`已修復 ${fixed} 個商品的原始金額 ✅`,"success");
+};
+
+window.refreshAllCosts=async function(){
+  const prods=window.G.products||[];
+  let updated=0;
+  for(const p of prods){
+    const fa=p.foreignAmount||p.krw||0;
+    if(!fa)continue;
+    const{beforeTax,afterTax}=calcCost(fa,p.currency||"KRW");
+    const profit=Math.round(((p.finalPrice||0)-afterTax)*10)/10;
+    const margin=(p.finalPrice||0)>0?Math.round((profit/p.finalPrice)*100):0;
+    // 差距小於 NT$0.1 就不用特地寫入，省一點資料庫寫入次數
+    if(Math.abs(afterTax-(p.afterTax||0))<0.1)continue;
+    await fbUpd("products",p.id,{beforeTax,afterTax,profit,margin});
+    updated++;
+  }
+  showToast(`已用目前匯率重新計算 ${updated} 個商品的成本／利潤 ✅`,"success");
 };
 
 // ── Toast ──────────────────────────────────────────────────────────────
@@ -3245,10 +3267,13 @@ window.resetSettings=function(){
 // ── Firebase 監聽 ──────────────────────────────────────────────────────
 onSnapshot(collection(db,"products"),s=>{
   window.G.products=s.docs.map(d=>({id:d.id,...d.data()}));
+  window.G.productsLoaded=true;
   updateStats();renderList();renderInvoice();
 });
 onSnapshot(collection(db,"customers"),s=>{
-  window.G.customers=s.docs.map(d=>({id:d.id,...d.data()}));renderCustomers();
+  window.G.customers=s.docs.map(d=>({id:d.id,...d.data()}));
+  window.G.customersLoaded=true;
+  renderCustomers();
 });
 // 載入 LINE 綁定資料
 (async()=>{
@@ -3266,7 +3291,9 @@ onSnapshot(collection(db,"trips"),s=>{
   renderTripList();renderTripBars();renderTripHistory();
 });
 onSnapshot(collection(db,"orders"),s=>{
-  window.G.orders=s.docs.map(d=>{const o={id:d.id,...d.data()};o.productName=cleanProductName(o.productName);return o;});updateStats();renderInvoice();renderList();renderCustomers();renderTripHistory();
+  window.G.orders=s.docs.map(d=>{const o={id:d.id,...d.data()};o.productName=cleanProductName(o.productName);return o;});
+  window.G.ordersLoaded=true;
+  updateStats();renderInvoice();renderList();renderCustomers();renderTripHistory();
 });
 onSnapshot(doc(db,"settings","main"),s=>{
   if(s.exists()){
@@ -4630,7 +4657,7 @@ const CAT_KEYWORDS={
   beauty:["面膜","精華","乳液","保濕","美白","防曬","粉底","口紅","眼影","睫毛","卸妝","洗面","護膚","保養","香水","perfume","香氛","沐浴","身體乳","護手霜","眼霜","眼部","眼周","抗老","緊緻","BB霜","CC霜","氣墊","精華液","安瓶","COSRX","Laneige","蘭芝","Innisfree","悅詩風吟","Etude","Missha","The Ordinary","SKII","SK-II","Sulwhasoo","雪花秀","Hera","赫拉","rom&nd","3CE","Peripera","Clio","Espoir","Too Cool for School","Dr.Jart","Medicube","TIRTIR","Beauty of Joseon","朝鮮美女","Anua","Torriden","SOME BY MI","Abib","Round Lab","Skin1004","isntree","iUNIK","Klavuu","Banila Co","A'pieu","Mamonde","夢妝","Nature Republic","自然樂園","The Face Shop","臉部小舖","Holika Holika","Etude House","CNP","Dr.G","Make P:rem","Mary Kay","MAC","Dior Beauty","Chanel Beauty","YSL Beauty","Givenchy Beauty","Armani Beauty","NARS","Laura Mercier","Bobbi Brown","Urban Decay","Fenty Beauty","Charlotte Tilbury","Drunk Elephant","Paula's Choice","CeraVe","La Roche-Posay","理膚寶水","Vichy","薇姿","Avene","雅漾","Bioderma","貝德瑪"],
   clothes:["上衣","T恤","外套","洋裝","褲","裙","衛衣","帽T","jacket","shirt","dress","pants","hoodie","coat","jumper"],
   shoes:["鞋","sneaker","shoes","boots","拖鞋","涼鞋","運動鞋","球鞋","Nike","nike","Adidas","adidas","PUMA","Puma","puma","New Balance","NB","Converse","converse","Vans","vans","Asics","ASICS","Reebok","Saucony","Salomon","On Running","Hoka","Brooks","Mizuno","Onitsuka","鬼塚虎","Air Force","Jordan","Dunk","Yeezy","Stan Smith","Gel-Kayano","Fresh Foam","靴","涼鞋","穆勒"],
-  bag:["包","bag","tote","後背包","手提包","肩背包","側背包","clutch","pouch","錢包"],
+  bag:["包包","bag","tote","後背包","手提包","肩背包","側背包","clutch","pouch","錢包"],
   sunglasses:["墨鏡","太陽眼鏡","sunglasses","glasses","眼鏡"],
   accessory:["鑰匙圈","吊飾","髮夾","髮圈","耳環","項鍊","手環","戒指","別針","brooch","keyring","charm","娃娃","玩偶","公仔","貼紙","文具","筆記本","資料夾"],
   home:["香氛蠟燭","擴香","居家","棉被","床單","枕頭","毛巾","杯子","碗盤","收納"],
@@ -5378,7 +5405,11 @@ window.renderList=function(){
     const pOrders2=orders.filter(o=>o.productId===p.id);
     const buyerNames=pOrders2.map(o=>(o.communityName||o.lineName||o.buyerName||"").toLowerCase()).join(" ");
     const specsStr=(Array.isArray(p.specs)?p.specs.join(","):p.specs||"").toLowerCase();
-    const mS=!listSearch||p.name.toLowerCase().includes(sq)||p.id.toLowerCase().includes(sq)||buyerNames.includes(sq)||(p.channel||"").toLowerCase().includes(sq)||specsStr.includes(sq);
+    // 通路縮寫對照：輸入縮寫也能搜到對應的完整通路名稱
+    const channelAbbr={"oy":"olive young"};
+    const channelLower=(p.channel||"").toLowerCase();
+    const mChannelAbbr=sq&&channelAbbr[sq]&&channelLower.includes(channelAbbr[sq]);
+    const mS=!listSearch||p.name.toLowerCase().includes(sq)||p.id.toLowerCase().includes(sq)||buyerNames.includes(sq)||channelLower.includes(sq)||specsStr.includes(sq)||mChannelAbbr;
     return mC&&mX&&mS&&mSub;
   });
   // 幣別篩選
@@ -5411,6 +5442,10 @@ window.renderList=function(){
     }
   }
   if(!filtered.length){
+    if(!window.G.productsLoaded){
+      container.innerHTML=`<div style="background:white;border-radius:14px;padding:48px 20px;text-align:center;border:1px solid #E8D5B0"><div style="font-size:32px;margin-bottom:8px">⏳</div><div style="font-weight:700;color:#3D2010">商品資料載入中…</div><div style="font-size:12px;color:#9C7A5A;margin-top:6px">網路較慢時可能需要幾秒鐘，請稍候</div></div>`;
+      return;
+    }
     container.innerHTML=`<div style="background:white;border-radius:14px;padding:48px 20px;text-align:center;border:1px solid #E8D5B0"><div style="font-size:32px;margin-bottom:8px">📋</div><div style="font-weight:700;color:#3D2010">${products.length===0?"還沒有商品":"找不到符合的商品"}</div>${products.length===0?`<button onclick="showTab('calc')" style="margin-top:12px;background:#C5A880;color:white;border:none;border-radius:10px;padding:8px 20px;font-size:12px;font-weight:700;cursor:pointer">去新增商品</button>`:""}</div>`;
     return;
   }
@@ -5732,7 +5767,10 @@ window.previewBatchQuick=function(){
   let min=null,max=null;
   ids.forEach(id=>{
     const p=window.G.products.find(x=>x.id===id);if(!p)return;
-    const cost=p.afterTax||0;
+    // 用目前匯率即時重算成本，跟卡片上顯示的「成本」口徑一致，不要用資料庫裡可能是舊匯率算出的存值
+    const fa=p.foreignAmount||p.krw||0;
+    const{afterTax}=calcCost(fa,p.currency||"KRW");
+    const cost=afterTax||0;
     let newPrice;
     if(mode==="fixed")newPrice=val;
     else if(mode==="add")newPrice=(p.finalPrice||0)+val;
@@ -5947,7 +5985,9 @@ window.renderCustomers=function(){
       });
     });
   }
-  if(!filtered.length){container.innerHTML=`<div style="background:white;border-radius:14px;padding:48px 20px;text-align:center;border:1px solid #E8D5B0"><div style="font-size:32px;margin-bottom:8px">👥</div><div style="font-weight:700;color:#3D2010">${customers.length===0?"還沒有客戶資料":"找不到符合的客戶"}</div></div>`;return;}
+  if(!filtered.length){
+    if(!window.G.customersLoaded){container.innerHTML=`<div style="background:white;border-radius:14px;padding:48px 20px;text-align:center;border:1px solid #E8D5B0"><div style="font-size:32px;margin-bottom:8px">⏳</div><div style="font-weight:700;color:#3D2010">客戶資料載入中…</div><div style="font-size:12px;color:#9C7A5A;margin-top:6px">網路較慢時可能需要幾秒鐘，請稍候</div></div>`;return;}
+    container.innerHTML=`<div style="background:white;border-radius:14px;padding:48px 20px;text-align:center;border:1px solid #E8D5B0"><div style="font-size:32px;margin-bottom:8px">👥</div><div style="font-weight:700;color:#3D2010">${customers.length===0?"還沒有客戶資料":"找不到符合的客戶"}</div></div>`;return;}
   // 排序：有「待對帳」訂單的客戶優先排在前面；已結清或沒有訂單的排到後面（中間加分隔線），
   // 這樣訂單被清空後客戶只會「掉到分隔線下面」，不會讓人誤以為整筆資料憑空消失
   const custLatest=c=>{
@@ -6127,7 +6167,9 @@ window.renderInvoice=function(){
   set("inv-deposit",countBuyers("deposit")+"人");
   set("inv-settled",countBuyers("settled")+"人");
   set("inv-shipped",countBuyers("shipped")+"人");
-  if(!filtered.length){container.innerHTML=`<div style="background:white;border-radius:14px;padding:48px 20px;text-align:center;border:1px solid #E8D5B0"><div style="font-size:32px;margin-bottom:8px">🧾</div><div style="font-weight:700;color:#3D2010">沒有符合的訂單</div></div>`;return;}
+  if(!filtered.length){
+    if(!window.G.ordersLoaded){container.innerHTML=`<div style="background:white;border-radius:14px;padding:48px 20px;text-align:center;border:1px solid #E8D5B0"><div style="font-size:32px;margin-bottom:8px">⏳</div><div style="font-weight:700;color:#3D2010">訂單資料載入中…</div><div style="font-size:12px;color:#9C7A5A;margin-top:6px">網路較慢時可能需要幾秒鐘，請稍候</div></div>`;return;}
+    container.innerHTML=`<div style="background:white;border-radius:14px;padding:48px 20px;text-align:center;border:1px solid #E8D5B0"><div style="font-size:32px;margin-bottom:8px">🧾</div><div style="font-weight:700;color:#3D2010">沒有符合的訂單</div></div>`;return;}
   // 同一買家的訂單合併成一張對帳單
   const buyerMap={};
   filtered.forEach(o=>{
