@@ -2246,7 +2246,7 @@ const SUBCAT_MAP = {
   food: [
     {key:"優格",    label:"🥛 優格/乳製品",  kw:["優格","乳酪","起司","牛奶","乳飲","豆漿","優酪"]},
     {key:"餅乾",    label:"🍪 餅乾/零食",    kw:["餅乾","洋芋片","薯片","爆米花","糖果","咖啡糖","軟糖","脆片","貝果","堅果脆","蝴蝶餅","扭結餅","蝴蝶酥","千層酥","焦糖餅","雪花酥","雪花","pretzel","gummy","chip","cookie","snack"]},
-    {key:"泡麵",    label:"🍜 泡麵/麵食",    kw:["泡麵","拉麵","炒麵","炒碼麵","冬粉","烏龍","河粉","義大利麵","義大利麪","pasta","spaghetti","짬뽕","jjamppong","순면","라면"]},
+    {key:"泡麵",    label:"🍜 泡麵/麵食",    kw:["泡麵","拉麵","炒麵","炒碼麵","醬麵","炸醬麵","拌麵","湯麵","涼麵","冷麵","乾麵","油麵","刀削麵","蕎麥麵","蒟蒻麵","寬麵","速食麵","即食麵","杯麵","年糕麵","冬粉","烏龍","河粉","義大利麵","義大利麪","pasta","spaghetti","noodle","짬뽕","jjamppong","순면","라면"]},
     {key:"飲料",    label:"🧃 飲料",          kw:["飲料","果汁","咖啡","茶飲","汽水","能量飲","乳酸菌飲","優酪乳","蒟蒻飲"]},
     {key:"沖泡",    label:"🥤 沖泡/代餐",    kw:["沖泡","搖搖飲","蛋白飲","高蛋白","蛋白粉","乳清","奶昔粉","代餐","益生菌粉","酵素粉","shake","protein","smoothie mix"]},
     {key:"堅果",    label:"🥜 堅果/果乾",    kw:["堅果","杏仁","腰果","核桃","果乾","草莓乾","芒果乾","蔓越莓","凍乾","水果乾"]},
@@ -6070,12 +6070,12 @@ window.renderCustomers=function(){
           const isPurchased=o.purchased===true;
           const rowBg=isPreorder?(isPurchased?"#FAF8F5":"#F3F0FF"):"#FAF8F5";
           const leftBar=isPreorder?`border-left:4px solid ${isPurchased?"#A7F3D0":"#9333EA"}`:"border-left:4px solid transparent";
-          return `<div data-oid="${o.id}" onclick="${isPreorder?`togglePurchased(this.dataset.oid)`:''}" style="display:flex;justify-content:space-between;align-items:center;background:${rowBg};border-radius:8px;padding:6px 10px;${leftBar};${isPreorder?"cursor:pointer;":""}" title="${isPreorder?(isPurchased?"已買到，點擊切換":"待購入，點擊切換已買到"):""}">
-            <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0">
-              <span style="font-size:11px;color:#3D2010;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cleanProductName((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品")}${o.spec?" ("+o.spec+")":""} ×${o.qty}</span>
-              ${o.givenFromStock?`<span style="font-size:9px;background:#C8E6C9;color:#1B5E20;border-radius:4px;padding:1px 5px;font-weight:700;white-space:nowrap">✅ 已給</span>`:""}
+          return `<div data-oid="${o.id}" onclick="${isPreorder?`togglePurchased(this.dataset.oid)`:''}" style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:4px 8px;background:${rowBg};border-radius:8px;padding:6px 10px;${leftBar};${isPreorder?"cursor:pointer;":""}" title="${isPreorder?(isPurchased?"已買到，點擊切換":"待購入，點擊切換已買到"):""}">
+            <div style="display:flex;align-items:center;gap:6px;min-width:140px;flex:1 1 auto">
+              <span style="font-size:11px;color:#3D2010;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${cleanProductName((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品")}${o.spec?" ("+o.spec+")":""} ×${o.qty}</span>
+              ${o.givenFromStock?`<span style="font-size:9px;background:#C8E6C9;color:#1B5E20;border-radius:4px;padding:1px 5px;font-weight:700;white-space:nowrap;flex-shrink:0">✅ 已給</span>`:""}
             </div>
-            <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;margin-left:6px">
+            <div style="display:flex;align-items:center;gap:5px;flex:0 0 auto">
               <span style="font-size:11px;font-weight:700;color:#3D2010">NT$${(dp*o.qty).toLocaleString()}</span>
               ${dp>=1000?`<button data-oid="${o.id}" onclick="copySingleDeposit(this.dataset.oid)" style="font-size:9px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:2px 5px;border-radius:5px;cursor:pointer;font-weight:700">訂金</button>`:""}
               ${o.tracking?`<span style="font-size:9px;color:#6090B0;background:#EAF4FD;border:1px solid #BDD9F0;padding:2px 5px;border-radius:5px">📦</span>`:""}
@@ -6232,13 +6232,13 @@ window.renderInvoice=function(){
           const isPurchased=o.purchased===true;
           const rowBg=isPreorder&&!isPurchased?"#F3F0FF":"transparent";
           const purchasedBtn=isPreorder?`<button data-oid="${o.id}" onclick="togglePurchased(this.dataset.oid)" style="font-size:9px;font-weight:700;padding:2px 0;border-radius:5px;cursor:pointer;width:52px;text-align:center;border:1px solid ${isPurchased?"#6EE7B7":"#FCD34D"};background:${isPurchased?"#D1FAE5":"#FEF3C7"};color:${isPurchased?"#065F46":"#92400E"}">${isPurchased?"已買到":"待購入"}</button>`:"";
-          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 4px;border-bottom:1px solid #F5EDE0;background:${rowBg};border-radius:4px;margin:1px 0">
-            <div style="display:flex;align-items:center;gap:6px;min-width:0">
+          return `<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:4px 8px;padding:6px 4px;border-bottom:1px solid #F5EDE0;background:${rowBg};border-radius:4px;margin:1px 0">
+            <div style="display:flex;align-items:center;gap:6px;min-width:140px;flex:1 1 auto">
               <input type="checkbox" ${checked2?"checked":""} onchange="toggleSelectItem('order','${o.id}')" style="width:14px;height:14px;accent-color:#C5A880;flex-shrink:0"/>
-              <span style="font-size:12px;color:#3D2010;font-weight:600;white-space:nowrap">${cleanProductName((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品")}${o.spec?" ("+o.spec+")":""} ×${o.qty}</span>
-              ${o.discountNote?`<span style="font-size:9px;background:#FDF6EC;color:#A08060;padding:1px 5px;border-radius:4px">${o.discountNote}</span>`:""}
+              <span style="font-size:12px;color:#3D2010;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${cleanProductName((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品")}${o.spec?" ("+o.spec+")":""} ×${o.qty}</span>
+              ${o.discountNote?`<span style="font-size:9px;background:#FDF6EC;color:#A08060;padding:1px 5px;border-radius:4px;flex-shrink:0">${o.discountNote}</span>`:""}
             </div>
-            <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
+            <div style="display:flex;align-items:center;gap:5px;flex:0 0 auto">
               ${purchasedBtn}
               <span style="font-size:12px;font-weight:700;color:#3D2010">NT$${(dp*o.qty).toLocaleString()}</span>
               <button data-oid="${o.id}" onclick="event.stopPropagation();openMoveTrip(this.dataset.oid)" style="font-size:10px;color:#0277BD;background:#E3F2FD;border:1px solid #90CAF9;padding:2px 5px;border-radius:5px;cursor:pointer">移趟</button>
