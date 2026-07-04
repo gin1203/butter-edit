@@ -2012,6 +2012,16 @@ document.addEventListener("paste",function(e){
       return;
     }
   }
+  // 備援：剪貼簿裡只有圖片網址（例如長按選的是「拷貝連結」），改用網址下載後轉成檔案
+  const text=e.clipboardData?.getData("text/plain")||"";
+  if(/^https?:\/\/\S+\.(jpg|jpeg|png|webp|gif)(\?\S*)?$/i.test(text.trim())){
+    e.preventDefault();
+    fetch(text.trim()).then(r=>r.blob()).then(blob=>{
+      if(!blob.type.startsWith("image/")){showToast("這個網址不是圖片，貼上失敗","error");return;}
+      const f=new File([blob],"pasted-image."+(blob.type.split("/")[1]||"jpg"),{type:blob.type});
+      handlePastedImage(f);
+    }).catch(()=>showToast("圖片網址讀取失敗，建議改用「拷貝影像」再貼上","error"));
+  }
 });
 
 // ── 全域拖曳圖片支援（例如 iPad 分割畫面，從 Safari 網頁拖圖過來）────────────
