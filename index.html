@@ -161,7 +161,7 @@ window.showBrandSuggestions=function(val,isQA){
         </div>
       </div>
       <div style="position:relative">
-        <input type="text" inputmode="numeric" id="c-amt" oninput="calcUpdate()" placeholder="請輸入金額" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:12px 40px 12px 14px;font-size:20px;font-weight:700;outline:none"/>
+        <input type="text" inputmode="numeric" id="c-amt" oninput="daisoAutoSelectBest();calcUpdate()" placeholder="請輸入金額" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:12px 40px 12px 14px;font-size:20px;font-weight:700;outline:none"/>
         <button onclick="document.getElementById('c-amt').value='';const cc=document.getElementById('c-custom');if(cc)cc.value='';calcUpdate();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
       </div>
     </div>
@@ -210,7 +210,7 @@ window.showBrandSuggestions=function(val,isQA){
     <div id="r-tw-row" style="display:none;background:#EEF2FF;border:1px solid #C7D2FE;border-radius:10px;padding:10px 14px;margin-bottom:8px;justify-content:space-between;align-items:center">
       <span style="font-size:11px;color:#4338CA;font-weight:700">🏷️ 台灣售價</span>
       <span id="r-tw-price" style="font-size:13px;font-weight:900;color:#4338CA">-</span>
-      <span style="font-size:11px;color:#6366F1">省</span>
+      <span id="r-tw-label" style="font-size:11px;color:#6366F1">省</span>
       <span id="r-tw-save" style="font-size:13px;font-weight:900;color:#16A34A">-</span>
     </div>
     <!-- 同行比較列（已移至商品頁顯示） -->
@@ -896,7 +896,7 @@ window.showBrandSuggestions=function(val,isQA){
     </div>
     <div style="position:relative;margin-bottom:6px">
       <input type="text" inputmode="numeric" id="ep-foreign" oninput="window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;epForeignChange()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 40px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
-      <button onclick="document.getElementById('ep-foreign').value='';window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;epForeignChange();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
+      <button onclick="document.getElementById('ep-foreign').value='';window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;const pr=document.getElementById('ep-price');if(pr){pr.value='';delete pr.dataset.manual;}epForeignChange();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
     </div>
     <!-- 4b. 活動群組（選填，不同品名但同一波活動要一起混搭時填一樣的名字） -->
     <div style="margin-bottom:6px">
@@ -918,6 +918,9 @@ window.showBrandSuggestions=function(val,isQA){
         <div id="ep-profit-display" style="font-size:13px;font-weight:900;color:#166534">-</div>
       </div>
       <div id="ep-before" style="display:none">-</div>
+    </div>
+    <div id="ep-cost-warn" style="display:none;background:#FDEDEC;border:1px solid #F1948A;border-radius:10px;padding:8px 14px;margin-bottom:8px;font-size:12px;font-weight:700;color:#C0392B;text-align:center">
+      ⚠️ 目前售價低於成本，會賠錢，請確認
     </div>
     <!-- 6. 最終售價 -->
     <div style="background:#FFF0F0;border:1.5px solid #FF6B6B;border-radius:10px;padding:10px 14px;margin-bottom:10px">
@@ -1254,7 +1257,7 @@ window.showBrandSuggestions=function(val,isQA){
         <div id="qa-price-hint-profit" style="font-size:9px;font-weight:700;margin-top:2px"></div>
       </div>
       <div style="position:relative;display:flex;align-items:stretch">
-        <input type="text" inputmode="numeric" id="qa-amt" placeholder="例如：12000" oninput="window.G.qaPromoOriginal=null;window.G.qaPromoDivisor=null;qaCalcPrice()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:11px 40px 11px 14px;font-size:18px;font-weight:700;outline:none"/>
+        <input type="text" inputmode="numeric" id="qa-amt" placeholder="例如：12000" oninput="window.G.qaPromoOriginal=null;window.G.qaPromoDivisor=null;qaDaisoAutoSelectBest();qaCalcPrice()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:11px 40px 11px 14px;font-size:18px;font-weight:700;outline:none"/>
         <button onclick="document.getElementById('qa-amt').value='';window.G.qaSelectedPrice=null;qaCalcPrice();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
       </div>
     </div>
@@ -1918,8 +1921,11 @@ function suggestPrice(at,cat,flags,twPrice,rawAmt){
   else if(flags.isCold)price+=100;
   if(flags.isHeavy)price+=100;
   if(flags.isLarge)price+=300;
-  // 最終：市場價格下限（如果有填台灣售價，不能超過）
-  if(twPrice>0&&cat!=="luxury"&&price>=twPrice)price=roundPrice(twPrice*0.95);
+  // 最終：市場價格下限（如果有填台灣售價，不能超過），但絕對不能建議賠本的價格
+  if(twPrice>0&&cat!=="luxury"&&price>=twPrice){
+    const capped=roundPrice(twPrice*0.95);
+    price=capped>=at?capped:roundPrice(at*1.15); // 壓到台灣價格會賠本的話，改用「成本+15%」保底，不會建議賠錢
+  }
   return price;
 }
 
@@ -2762,7 +2768,7 @@ const DAISO_PRICES={
   bulky:      [99,149,199],
   makeup:     [49,69,89,129,179,199],
 };
-window.daisoTypeChange=function(){
+window.daisoAutoSelectBest=function(){
   const vt=document.querySelector('input[name="daiso-type"]:checked')?.value||"cute";
   const prices=DAISO_PRICES[vt]||[99];
   const container=document.getElementById("daiso-price-btns");
@@ -2792,7 +2798,10 @@ window.daisoTypeChange=function(){
       NT$${p}
     </button>`;
   }).join("");
-  setTimeout(calcUpdate, 0);
+};
+window.daisoTypeChange=function(){
+  daisoAutoSelectBest();
+  calcUpdate();
 };
 window.daisoPriceBtnClick=function(btn,price){
   document.querySelectorAll(".daiso-price-btn").forEach(b=>{
@@ -2801,7 +2810,7 @@ window.daisoPriceBtnClick=function(btn,price){
   btn.style.background="#2E7D32";btn.style.borderColor="#2E7D32";btn.style.color="white";btn.classList.add("active");
   calcUpdate();
 };
-window.qaDaisoTypeChange=function(){
+window.qaDaisoAutoSelectBest=function(){
   const vt=document.querySelector('input[name="qa-daiso-type"]:checked')?.value||"cute";
   const prices=DAISO_PRICES[vt]||[99];
   const container=document.getElementById("qa-daiso-price-btns");
@@ -2829,7 +2838,10 @@ window.qaDaisoTypeChange=function(){
       NT$${p}
     </button>`;
   }).join("");
-  setTimeout(qaCalcPrice, 0);
+};
+window.qaDaisoTypeChange=function(){
+  qaDaisoAutoSelectBest();
+  qaCalcPrice();
 };
 window.qaDaisoPriceBtnClick=function(btn,price){
   document.querySelectorAll(".qa-daiso-price-btn").forEach(b=>{
@@ -3138,7 +3150,10 @@ window.calcUpdate=function(){
     if(twPrice>0&&twRow){
       const save=twPrice-final;
       document.getElementById("r-tw-price").textContent=`NT$ ${twPrice.toLocaleString()}`;
-      document.getElementById("r-tw-save").textContent=`NT$ ${save.toLocaleString()}`;
+      const lbl=document.getElementById("r-tw-label");
+      const saveEl=document.getElementById("r-tw-save");
+      if(save>=0){if(lbl)lbl.textContent="省";saveEl.textContent=`NT$ ${save.toLocaleString()}`;saveEl.style.color="#16A34A";}
+      else{if(lbl)lbl.textContent="貴";saveEl.textContent=`NT$ ${Math.abs(save).toLocaleString()}`;saveEl.style.color="#C0392B";}
       twRow.style.display="flex";
     } else if(twRow){twRow.style.display="none";}
     // 同行比較
@@ -3448,7 +3463,14 @@ window.epForeignChange=function(){
   updateEpCalc(amt,m.currency||"KRW",cat,twPrice,epGetFlags());
 };
 function updateEpCalc(amt,cur,cat,twPrice,flags){
-  if(!amt)return;
+  if(!amt){
+    const set0=(id)=>{const e=document.getElementById(id);if(e)e.textContent="-";};
+    set0("ep-before");set0("ep-after");set0("ep-cost");set0("ep-sugg");
+    const pd0=document.getElementById("ep-profit-display");if(pd0){pd0.textContent="-";pd0.style.color="#166534";}
+    const fd0=document.getElementById("ep-final-display");if(fd0)fd0.textContent="-";
+    const warn0=document.getElementById("ep-cost-warn");if(warn0)warn0.style.display="none";
+    return;
+  }
   twPrice=twPrice||0;flags=flags||{};
   const{beforeTax,afterTax}=calcCost(amt,cur);
   const sugg=suggestPrice(afterTax,cat,flags,twPrice,amt);
@@ -3465,6 +3487,8 @@ function updateEpCalc(amt,cur,cat,twPrice,flags){
   if(pd){pd.textContent=`NT$${profit}`;pd.style.color=profit>=0?"#166534":"#EF5350";}
   const fd=document.getElementById("ep-final-display");
   if(fd)fd.textContent=`NT$ ${finalPrice}`;
+  const warn=document.getElementById("ep-cost-warn");
+  if(warn)warn.style.display=profit<0?"block":"none";
 }
 
 window.saveEditProd=async function(){
@@ -5514,7 +5538,7 @@ window.renderList=function(){
           ${(p.specs&&p.specs.length>0)?`<div style="font-size:12px;color:#9C7A5A;font-weight:700;margin-bottom:4px">📐 ${Array.isArray(p.specs)?p.specs.join(", "):p.specs}</div>`:""}
           <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap">
             <div style="font-size:18px;font-weight:900;color:#F4845F">NT$ ${p.finalPrice.toLocaleString()}</div>
-            ${p.twPrice>0?`<div style="font-size:10px;color:#4338CA;font-weight:700">台灣 NT$${p.twPrice.toLocaleString()} (省${(p.twPrice-p.finalPrice).toLocaleString()})</div>`:""}
+            ${p.twPrice>0?(()=>{const diff=p.twPrice-p.finalPrice;return diff>=0?`<div style="font-size:10px;color:#4338CA;font-weight:700">台灣 NT$${p.twPrice.toLocaleString()} (省${diff.toLocaleString()})</div>`:`<div style="font-size:10px;color:#C0392B;font-weight:700">台灣 NT$${p.twPrice.toLocaleString()} (貴${Math.abs(diff).toLocaleString()})</div>`;})():""}
           </div>
           ${p.rivalPrice>0?(()=>{const diff=p.finalPrice-p.rivalPrice;if(diff===0)return`<div style="font-size:10px;font-weight:700;color:#15803D;margin-top:3px">✅ 與同行持平（NT$${p.rivalPrice}）</div>`;if(diff>0)return`<div style="font-size:10px;font-weight:700;color:#92400E;margin-top:3px">⚠️ 高於同行 NT$${diff}（同行 NT$${p.rivalPrice}）</div>`;return`<div style="font-size:10px;font-weight:700;color:#9F1239;margin-top:3px">👀 低於同行 NT$${Math.abs(diff)}（同行 NT$${p.rivalPrice}）</div>`;})():""}
           ${costChanged?`<div style="font-size:9px;color:#E07B39;font-weight:700;margin-top:2px">⚡ 匯率已變動</div>`:""}
@@ -6198,31 +6222,30 @@ window.renderInvoice=function(){
     const remaining=totalAmt-totalDeposit;
     return `<div style="background:white;border-radius:14px;border:1px solid ${allChecked?"#C5A880":"#E8D5B0"};margin-bottom:10px;overflow:hidden">
       <!-- 客戶標題列 -->
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid #F5EDE0">
-        <div style="display:flex;align-items:center;gap:8px">
-          <input type="checkbox" ${allChecked?"checked":""} data-bkey="${encodeURIComponent(b.key)}" onchange="toggleBuyerOrders(decodeURIComponent(this.dataset.bkey),this.checked)" style="width:16px;height:16px;accent-color:#C5A880"/>
-          <div>
+      <div style="padding:12px 14px;border-bottom:1px solid #F5EDE0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <input type="checkbox" ${allChecked?"checked":""} data-bkey="${encodeURIComponent(b.key)}" onchange="toggleBuyerOrders(decodeURIComponent(this.dataset.bkey),this.checked)" style="width:16px;height:16px;accent-color:#C5A880;flex-shrink:0"/>
+          <div style="min-width:0;flex:1">
             <span style="font-weight:900;font-size:14px;color:#3D2010">👤 ${b.name}</span>
             ${b.lineName?`<span style="font-size:11px;color:#9C7A5A;margin-left:6px">LINE：${b.lineName}</span>`:""}
           </div>
+          <span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:${statusColor[allStatus]}22;color:${statusColor[allStatus]};border:1px solid ${statusColor[allStatus]}44;flex-shrink:0">${statusLabel[allStatus]||""}</span>
         </div>
-        <div style="display:flex;align-items:center;gap:6px">
-          <span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:${statusColor[allStatus]}22;color:${statusColor[allStatus]};border:1px solid ${statusColor[allStatus]}44">${statusLabel[allStatus]||""}</span>
-          <div style="display:flex;gap:3px">
-            ${["pending","deposit","settled","shipped"].map(k=>{
-              const active=b.orders.every(o=>o.status===k);
-              const colorMap={pending:"#F59E0B",deposit:"#9333EA",settled:"#10B981",shipped:"#3B82F6"};
-              const bg=active?(colorMap[k]||"#9C7A5A"):"white";
-              const cl=active?"white":"#9C7A5A";
-              const bc=active?(colorMap[k]||"#9C7A5A"):"#E8D5B0";
-              const slb={pending:"待訂金",deposit:"已付訂金",settled:"已付尾款",shipped:"已寄出"};
-              return `<button data-bkey="${encodeURIComponent(b.key)}" data-st="${k}" onclick="updateBuyerStatus(decodeURIComponent(this.dataset.bkey),this.dataset.st)" style="padding:4px 6px;border-radius:6px;font-size:9px;font-weight:700;border:1px solid ${bc};background:${bg};color:${cl};cursor:pointer">${slb[k]}</button>`;
-            }).join("")}
-          </div>
-<div style="display:flex;gap:5px">
-            ${b.orders.some(o=>(o.discountPrice||o.unitPrice||0)>=1000)?`<button data-bkey="${encodeURIComponent(b.key)}" onclick="copyDepositOrder(null,decodeURIComponent(this.dataset.bkey))" style="font-size:10px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:3px 8px;border-radius:6px;cursor:pointer;font-weight:700">複製訂金</button>`:""}
-            <button data-bkey="${encodeURIComponent(b.key)}" onclick="copyBuyerOrder(decodeURIComponent(this.dataset.bkey))" style="font-size:10px;background:#EAF4FD;color:#0277BD;border:1px solid #90D7FF;padding:3px 10px;border-radius:6px;cursor:pointer;font-weight:700">複製結清</button>
-          </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:8px">
+          ${["pending","deposit","settled","shipped"].map(k=>{
+            const active=b.orders.every(o=>o.status===k);
+            const colorMap={pending:"#F59E0B",deposit:"#9333EA",settled:"#10B981",shipped:"#3B82F6"};
+            const bg=active?(colorMap[k]||"#9C7A5A"):"white";
+            const cl=active?"white":"#9C7A5A";
+            const bc=active?(colorMap[k]||"#9C7A5A"):"#E8D5B0";
+            const slb={pending:"待訂金",deposit:"已付訂金",settled:"已付尾款",shipped:"已寄出"};
+            return `<button data-bkey="${encodeURIComponent(b.key)}" data-st="${k}" onclick="updateBuyerStatus(decodeURIComponent(this.dataset.bkey),this.dataset.st)" style="padding:5px 2px;border-radius:6px;font-size:10px;font-weight:700;border:1px solid ${bc};background:${bg};color:${cl};cursor:pointer;white-space:nowrap;text-align:center">${slb[k]}</button>`;
+          }).join("")}
+        </div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end">
+          ${b.orders.some(o=>(o.discountPrice||o.unitPrice||0)>=1000)?`<button data-bkey="${encodeURIComponent(b.key)}" onclick="copyDepositOrder(null,decodeURIComponent(this.dataset.bkey))" style="font-size:10px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:700">複製訂金</button>`:""}
+          <button data-bkey="${encodeURIComponent(b.key)}" onclick="copyBuyerOrder(decodeURIComponent(this.dataset.bkey))" style="font-size:10px;background:#EAF4FD;color:#0277BD;border:1px solid #90D7FF;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700">複製結清</button>
+          <button data-oid="${b.orders[0].id}" onclick="openEditOrd(this.dataset.oid)" style="font-size:10px;padding:4px 10px;border-radius:6px;font-weight:700;border:1px solid #E8D5B0;background:#FDF6EC;color:#C5A880;cursor:pointer">✏️ 修改</button>
         </div>
       </div>
       <!-- 商品明細 -->
@@ -6257,10 +6280,6 @@ window.renderInvoice=function(){
             ${totalDeposit>0?`<span style="font-size:10px;color:#9333EA;margin-left:8px">訂金 NT$${totalDeposit.toLocaleString()} · 待收 NT$${remaining.toLocaleString()}</span>`:""}
           </div>
         </div>
-      </div>
-      <!-- 편집 버튼만 남기기 -->
-      <div style="padding:6px 14px 10px;display:flex;justify-content:flex-end">
-        <button data-oid="${b.orders[0].id}" onclick="openEditOrd(this.dataset.oid)" style="padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;border:1px solid #E8D5B0;background:#FDF6EC;color:#C5A880;cursor:pointer">✏️ 修改</button>
       </div>
     </div>`;
   }).join("");
