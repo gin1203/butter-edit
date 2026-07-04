@@ -1692,6 +1692,8 @@ onAuthStateChanged(auth,async user=>{
     document.getElementById("app").style.display="block";
     setTimeout(fixBodyPadding,50);
     fetchRates();
+    // 登入當下先畫一次畫面（此時資料可能還沒回來），讓「載入中」提示能立刻顯示，不會整片空白乾等
+    renderList();renderCustomers();renderInvoice();
   } else {
     document.getElementById("login-screen").style.display="flex";
     document.getElementById("app").style.display="none";
@@ -6072,7 +6074,7 @@ window.renderCustomers=function(){
           const leftBar=isPreorder?`border-left:4px solid ${isPurchased?"#A7F3D0":"#9333EA"}`:"border-left:4px solid transparent";
           return `<div data-oid="${o.id}" onclick="${isPreorder?`togglePurchased(this.dataset.oid)`:''}" style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:4px 8px;background:${rowBg};border-radius:8px;padding:6px 10px;${leftBar};${isPreorder?"cursor:pointer;":""}" title="${isPreorder?(isPurchased?"已買到，點擊切換":"待購入，點擊切換已買到"):""}">
             <div style="display:flex;align-items:center;gap:6px;min-width:140px;flex:1 1 auto">
-              <span style="font-size:11px;color:#3D2010;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${cleanProductName((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品")}${o.spec?" ("+o.spec+")":""} ×${o.qty}</span>
+              <span style="font-size:11px;color:#3D2010;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${isPreorder?(isPurchased?"✅ ":"🛒 "):""}${cleanProductName((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品")}${o.spec?" ("+o.spec+")":""} ×${o.qty}</span>
               ${o.givenFromStock?`<span style="font-size:9px;background:#C8E6C9;color:#1B5E20;border-radius:4px;padding:1px 5px;font-weight:700;white-space:nowrap;flex-shrink:0">✅ 已給</span>`:""}
             </div>
             <div style="display:flex;align-items:center;gap:5px;flex:0 0 auto">
