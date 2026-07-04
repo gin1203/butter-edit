@@ -2014,6 +2014,32 @@ document.addEventListener("paste",function(e){
   }
 });
 
+// ── 全域拖曳圖片支援（例如 iPad 分割畫面，從 Safari 網頁拖圖過來）────────────
+document.addEventListener("dragover",function(e){
+  e.preventDefault(); // 一定要擋掉，不然瀏覽器會直接開啟圖片，drop 事件也不會觸發
+});
+document.addEventListener("drop",function(e){
+  const dt=e.dataTransfer;
+  if(!dt)return;
+  // 情況一：拖的是本機檔案／iPad 相簿圖片，會直接帶檔案
+  const file=Array.from(dt.files||[]).find(f=>f.type.startsWith("image/"));
+  if(file){
+    e.preventDefault();
+    handlePastedImage(file);
+    return;
+  }
+  // 情況二：從網頁拖圖片過來，有些情況只會帶圖片網址，改用網址下載後轉成檔案
+  const uri=dt.getData("text/uri-list")||dt.getData("text/plain");
+  if(uri&&/^https?:\/\//i.test(uri)){
+    e.preventDefault();
+    fetch(uri).then(r=>r.blob()).then(blob=>{
+      if(!blob.type.startsWith("image/")){showToast("這個網址不是圖片，貼上失敗","error");return;}
+      const f=new File([blob],"dropped-image."+(blob.type.split("/")[1]||"jpg"),{type:blob.type});
+      handlePastedImage(f);
+    }).catch(()=>showToast("圖片拖曳失敗，可以改用「複製圖片」後貼上試試","error"));
+  }
+});
+
 // ── 活動除價按鈕 ─────────────────────────────────────────────────────────
 window.qaApplyPromo=function(divisor){
   // 自我修復：狀態不同步一律視為沒有活動在跑，避免越除越小
