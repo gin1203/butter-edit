@@ -849,6 +849,12 @@ window.showBrandSuggestions=function(val,isQA){
       <h3 style="margin:0;font-size:15px;font-weight:900;color:#3D2010">修改商品</h3>
       <button onclick="closeModal('modal-eprod')" style="font-size:24px;font-weight:900;color:#9C7A5A;background:none;border:none;cursor:pointer">×</button>
     </div>
+    <!-- 0. 商品編號（可自訂，控制清單排序位置） -->
+    <div style="margin-bottom:14px">
+      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">🔖 商品編號</label>
+      <input type="text" id="ep-code" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;font-weight:700;outline:none;box-sizing:border-box;text-transform:uppercase"/>
+      <div style="font-size:10px;color:#9C7A5A;margin-top:4px;line-height:1.5">清單預設會照編號排序。想把新商品排在 F104 後面、F105 前面，可以把編號改成 <b>F104A</b>（只能在此商品「已喊單 0 件」時修改，避免對帳資料對不上）。</div>
+    </div>
     <!-- 1. 商品圖片 -->
     <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">📷 商品圖片（選填）</label>
     <div id="ep-img-area" style="margin-bottom:14px">
@@ -1928,6 +1934,12 @@ function suggestPrice(at,cat,flags,twPrice,rawAmt){
     if(twPrice>0&&price>=twPrice)price=roundPrice(twPrice*0.95);
   }
   else price=roundPrice(at*1.35);
+  // 保底：避免成本卡在價格級距的上緣時，利潤薄到不合理（甚至賠錢）
+  // 至少要有成本的 10%，且不低於 NT$10，兩者取高
+  const minMargin=Math.max(Math.round(at*0.1*10)/10,10);
+  if(price-at<minMargin){
+    price=roundPrice(at+minMargin);
+  }
   // 加價旗標
   if(flags.coldHigh)price+=200;
   else if(flags.isCold)price+=100;
@@ -2264,7 +2276,7 @@ window.doMoveTrip=async function(newTripId){
 const SUBCAT_MAP = {
   // 食品子分類
   food: [
-    {key:"優格",    label:"🥛 優格/乳製品",  kw:["優格","乳酪","起司","牛奶","乳飲","豆漿","優酪"]},
+    {key:"海苔",    label:"🌿 海苔/乾貨",    kw:["海苔","魚乾","魷魚","乾貨"]},
     {key:"餅乾",    label:"🍪 餅乾/零食",    kw:["餅乾","洋芋片","薯片","爆米花","糖果","咖啡糖","軟糖","脆片","貝果","堅果脆","蝴蝶餅","扭結餅","蝴蝶酥","千層酥","焦糖餅","雪花酥","雪花","pretzel","gummy","chip","cookie","snack"]},
     {key:"泡麵",    label:"🍜 泡麵/麵食",    kw:["泡麵","拉麵","炒麵","炒碼麵","醬麵","炸醬麵","拌麵","湯麵","涼麵","冷麵","乾麵","油麵","刀削麵","蕎麥麵","蒟蒻麵","寬麵","速食麵","即食麵","杯麵","年糕麵","冬粉","烏龍","河粉","義大利麵","義大利麪","pasta","spaghetti","noodle","짬뽕","jjamppong","순면","라면"]},
     {key:"飲料",    label:"🧃 飲料",          kw:["飲料","果汁","咖啡","茶飲","汽水","能量飲","乳酸菌飲","優酪乳","蒟蒻飲"]},
@@ -2273,14 +2285,14 @@ const SUBCAT_MAP = {
     {key:"果凍",    label:"🍮 果凍/布丁",    kw:["果凍","布丁","jelly","pudding"]},
     {key:"麻糬",    label:"🍡 麻糬/年糕",    kw:["麻糬","年糕","떡","糯米"]},
     {key:"甜點",    label:"🍰 甜點/糕點",    kw:["甜點","蛋糕","布朗尼","杜拜","生巧克力","Q餅","可頌","泡芙","馬卡龍","鬆餅","waffle","cake","杜拜巧克力","派","pie"]},
-    {key:"海苔",    label:"🌿 海苔/乾貨",    kw:["海苔","魚乾","魷魚","乾貨"]},
     {key:"調味",    label:"🧂 調味料/醬料",  kw:["醬","調味","辣椒","味噌","芥末","醋","食鹽","海鹽","岩鹽","橄欖油","麻油","香油","砂糖包"]},
+    {key:"優格",    label:"🥛 優格/乳製品",  kw:["優格","乳酪","起司","牛奶","乳飲","豆漿","優酪"]},
   ],
   // 美妝子分類
   beauty: [
     {key:"防曬",    label:"☀️ 防曬",          kw:["防曬","sunscreen","sun cream","spf","pa+"]},
     {key:"護髮",    label:"💆 護髮/頭皮",     kw:["護髮","養髮","頭皮","頭髮","洗髮","潤髮","髮膜","haircare","hair care","shampoo"]},
-    {key:"保濕",    label:"💧 保濕/乳液",     kw:["保濕","乳液","face cream","水乳","精華","essence","serum","安瓶"]},
+    {key:"保濕",    label:"💧 保濕/乳液",     kw:["保濕","乳液","面霜","face cream","水乳","精華","essence","serum","安瓶"]},
     {key:"眼霜",    label:"👁️ 眼部",          kw:["眼霜","眼膜","眼部","eye cream","eye"]},
     {key:"面膜",    label:"🎭 面膜",          kw:["面膜","mask","sheet mask"]},
     {key:"清潔",    label:"🫧 清潔/卸妝",    kw:["洗面","清潔","卸妝","泡沫","foam","cleanser","toner","化妝水"]},
@@ -2525,6 +2537,7 @@ window.openModal=function(id,data){
     setTimeout(()=>{
       const cur=CURR[data.currency||"KRW"];
       document.getElementById("ep-sym").textContent=`${cur?.flag||""} ${cur?.name||""} (${cur?.symbol||""})`;
+      document.getElementById("ep-code").value=data.id||"";
       document.getElementById("ep-name").value=data.name||"";
       const fa=data.foreignAmount||data.krw||0;
       document.getElementById("ep-foreign").value=fa;
@@ -3533,11 +3546,25 @@ window.saveEditProd=async function(){
     const pp=window.G.editPhotoPos||{x:50,y:50};
     upd.photoPos=`${pp.x}% ${pp.y}%`;
   }
-  // 類別改變時自動更新料號
+  // 類別改變 或 手動調整編號時，更新料號
   const oldId=m.id;
   let newId=oldId;
+  const manualCode=(document.getElementById("ep-code")?.value||"").trim().toUpperCase();
   if(newCatKey!==(m.catKey||"food")){
     newId=genId(newCatKey, m.currency||"KRW");
+  } else if(manualCode&&manualCode!==oldId){
+    const hasOrders=(window.G.orders||[]).some(o=>o.productId===oldId);
+    if(hasOrders){
+      showToast("這個商品已經有喊單紀錄，更改編號會讓喊單對不上，請先確認喊單為 0 再修改","error");
+      return;
+    }
+    if(window.G.products.some(x=>x.id===manualCode&&x.id!==oldId)){
+      showToast("這個商品編號已經有人在用了，換一個試試","error");
+      return;
+    }
+    newId=manualCode;
+  }
+  if(newId!==oldId){
     upd.id=newId;
     // 用新 ID 建立，刪除舊的
     await fbSet("products",newId,{...m,...upd,id:newId});
