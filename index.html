@@ -1388,11 +1388,19 @@ window.showBrandSuggestions=function(val,isQA){
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, updateDoc, addDoc, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const app=initializeApp({apiKey:"AIzaSyAt6Te8T9DggqFmhBzZz5iEKIXlPH11DpE",authDomain:"thebutter-2eb30.firebaseapp.com",projectId:"thebutter-2eb30",storageBucket:"thebutter-2eb30.firebasestorage.app",messagingSenderId:"149175450461",appId:"1:149175450461:web:c7c09a1d510994d6a0c6b4"});
-const db=getFirestore(app);
+// 開啟本機持久化快取：第二次以後打開 App，先用手機本地存的資料立刻顯示，
+// 背景再跟資料庫同步「有變動的部分」，不用每次都整包重新下載所有商品（含照片）
+let db;
+try{
+  db=initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});
+}catch(e){
+  // 部分瀏覽器/無痕模式不支援，退回原本無快取模式，不影響功能
+  db=getFirestore(app);
+}
 const auth=getAuth(app);
 const fbSet=(c,i,d)=>setDoc(doc(db,c,i),d);
 const fbDel=(c,i)=>deleteDoc(doc(db,c,i));
@@ -1495,7 +1503,7 @@ window.G.calcPhotoPos={x:50,y:50};
 window.cImgPick=async function(input){
   const file=input.files[0];if(!file)return;
   showToast("壓縮圖片中…","success");
-  const b64=await compressImg(file,900,0.88);
+  const b64=await compressImg(file,640,0.75);
   window.G.calcPhoto=b64;
   window.G.calcPhotoPos={x:50,y:50};
   const thumb=document.getElementById("c-img-thumb");
@@ -1529,7 +1537,7 @@ window.G.editPhotoPos=null;
 window.epImgPick=async function(input){
   const file=input.files[0];if(!file)return;
   showToast("壓縮圖片中…","success");
-  const b64=await compressImg(file,900,0.88);
+  const b64=await compressImg(file,640,0.75);
   window.G.editPhoto=b64;
   window.G.editPhotoPos={x:50,y:50};
   const thumb=document.getElementById("ep-img-thumb");
@@ -1698,23 +1706,23 @@ function applyRoleUI(role){
 
 onAuthStateChanged(auth,async user=>{
   if(user){
-    try{
-      await new Promise((resolve,reject)=>{
-        const t=setTimeout(()=>reject(new Error("timeout")),5000);
-        const unsub=onSnapshot(doc(db,"roles",user.uid),snap=>{
-          clearTimeout(t);unsub();
-          const role=snap.exists()?(snap.data().role||"staff"):"staff";
-          applyRoleUI(role);
-          resolve();
-        });
-      });
-    }catch{applyRoleUI("owner");} // 查不到角色預設老闆（第一個帳號）
+    // 先用最保守的權限（小幫手）立刻顯示畫面，不要讓使用者對著空白畫面等資料庫回應
+    // 等真正查到角色後，再視情況升級成老闆畫面；這樣不會延遲登入，也不會外洩利潤資料
+    applyRoleUI("staff");
     document.getElementById("login-screen").style.display="none";
     document.getElementById("app").style.display="block";
     setTimeout(fixBodyPadding,50);
     fetchRates();
     // 登入當下先畫一次畫面（此時資料可能還沒回來），讓「載入中」提示能立刻顯示，不會整片空白乾等
     renderList();renderCustomers();renderInvoice();
+    // 背景查詢實際角色，不擋畫面
+    let roleResolved=false;
+    const t=setTimeout(()=>{ if(!roleResolved) applyRoleUI("owner"); },5000); // 5秒都查不到，視為第一個帳號=老闆
+    const unsub=onSnapshot(doc(db,"roles",user.uid),snap=>{
+      roleResolved=true;clearTimeout(t);unsub();
+      const role=snap.exists()?(snap.data().role||"staff"):"staff";
+      applyRoleUI(role);
+    },()=>{ roleResolved=true;clearTimeout(t);applyRoleUI("owner"); });
   } else {
     document.getElementById("login-screen").style.display="flex";
     document.getElementById("app").style.display="none";
@@ -5680,13 +5688,13 @@ window.renderList=function(){
     const costChanged=Math.abs(liveAfterTax-(p.afterTax||0))>1;  // 超過1元才標示變動
     return `<div style="background:white;border-radius:14px;padding:16px;border:1px solid ${checked?"#C5A880":"#E8D5B0"};margin-bottom:10px">
       <!-- Row 1: checkbox + id + tags -->
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:8px">
         <input type="checkbox" ${checked?"checked":""} onchange="toggleSelectItem('product','${p.id}')" style="width:16px;height:16px;accent-color:#C5A880;flex-shrink:0"/>
-        <span style="font-size:10px;font-weight:900;background:#5C3A1E;color:#F5E6C8;padding:2px 8px;border-radius:4px;flex-shrink:0">${p.id}</span>
-        <span style="font-size:10px;background:#FAF8F5;border:1px solid #E8D5B0;color:#9C7A5A;padding:2px 8px;border-radius:99px">${p.emoji} ${p.category}</span>
-        <span style="font-size:10px;background:#FDF6EC;border:1px solid #E8D5B0;color:#A08060;padding:2px 8px;border-radius:99px">${cur?.flag||""} ${cur?.name||""}</span>
-        ${p.channel?`<span style="font-size:10px;background:#E8F5E9;border:1px solid #A5D6A7;color:#2E7D32;padding:2px 8px;border-radius:99px;font-weight:700">🏪 ${p.channel}</span>`:""}
-        ${(()=>{const sc=window.getSubcat?.(p.name,p.catKey);return sc?`<span style="font-size:10px;background:#F3E8FF;border:1px solid #D8B4FE;color:#7B5EA7;padding:2px 8px;border-radius:99px;font-weight:700">${sc.label}</span>`:"";})()}
+        <span style="font-size:10px;font-weight:900;background:#5C3A1E;color:#F5E6C8;padding:2px 8px;border-radius:4px;flex-shrink:0;white-space:nowrap">${p.id}</span>
+        <span style="font-size:10px;background:#FAF8F5;border:1px solid #E8D5B0;color:#9C7A5A;padding:2px 8px;border-radius:99px;flex-shrink:0;white-space:nowrap">${p.emoji} ${p.category}</span>
+        <span style="font-size:10px;background:#FDF6EC;border:1px solid #E8D5B0;color:#A08060;padding:2px 8px;border-radius:99px;flex-shrink:0;white-space:nowrap">${cur?.flag||""} ${cur?.name||""}</span>
+        ${p.channel?`<span style="font-size:10px;background:#E8F5E9;border:1px solid #A5D6A7;color:#2E7D32;padding:2px 8px;border-radius:99px;font-weight:700;flex-shrink:0;white-space:nowrap">🏪 ${p.channel}</span>`:""}
+        ${(()=>{const sc=window.getSubcat?.(p.name,p.catKey);return sc?`<span style="font-size:10px;background:#F3E8FF;border:1px solid #D8B4FE;color:#7B5EA7;padding:2px 8px;border-radius:99px;font-weight:700;flex-shrink:0;white-space:nowrap">${sc.label}</span>`:"";})()}
       </div>
       <!-- Row 2: action buttons -->
       <div style="display:flex;gap:6px;margin-bottom:10px">
@@ -6944,7 +6952,7 @@ window.G.qaProdPhotoPos={x:50,y:50};
 window.qaProdImgPick=async function(input){
   const file=input.files[0];if(!file)return;
   showToast("壓縮圖片中…","success");
-  const b64=await compressImg(file,900,0.88);
+  const b64=await compressImg(file,640,0.75);
   window.G.qaProdPhoto=b64;
   window.G.qaProdPhotoPos={x:50,y:50};
   const thumb=document.getElementById("qa-prod-img-thumb");
