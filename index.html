@@ -684,7 +684,6 @@ window.showBrandSuggestions=function(val,isQA){
 
 <div id="brand-suggestions" style="display:none;position:fixed;z-index:99999;background:white;border:1.5px solid #C5A880;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.2);max-height:280px;overflow-y:auto;min-width:200px"></div>
 <div id="qa-brand-suggestions" style="display:none;position:fixed;z-index:99999;background:white;border:1.5px solid #C5A880;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.2);max-height:280px;overflow-y:auto;min-width:200px"></div>
-<div id="ep-brand-suggestions" style="display:none;position:fixed;z-index:99999;background:white;border:1.5px solid #C5A880;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.2);max-height:280px;overflow-y:auto;min-width:200px"></div>
 </main>
 </div><!-- #app -->
 
@@ -884,6 +883,7 @@ window.showBrandSuggestions=function(val,isQA){
         <div style="position:relative">
           <input type="text" id="ep-name" oninput="(function(v){setTimeout(function(){showBrandSuggestions(v,'edit');},0);})(this.value)" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 40px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
           <button onclick="document.getElementById('ep-name').value=''" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
+          <div id="ep-brand-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;z-index:99999;background:white;border:1.5px solid #C5A880;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.2);max-height:280px;overflow-y:auto"></div>
         </div>
       </div>
       <div style="flex:1.5">
@@ -3105,10 +3105,12 @@ function showBrandSuggestions(val,mode){
   var q=val.toLowerCase();
   var matches=BRAND_DB.filter(function(b){return b.n.toLowerCase().indexOf(q)>=0;}).slice(0,6);
   if(!matches.length){box.style.display="none";return;}
-  var r=inp.getBoundingClientRect();
-  box.style.top=(r.bottom+2)+"px";
-  box.style.left=r.left+"px";
-  box.style.width=r.width+"px";
+  if(mode!=="edit"){
+    var r=inp.getBoundingClientRect();
+    box.style.top=(r.bottom+2)+"px";
+    box.style.left=r.left+"px";
+    box.style.width=r.width+"px";
+  }
   var CL={food:"🍿食品",beauty:"💄美妝",daiso:"🏪大創",shoes:"👟鞋子",clothes:"👗衣服",bag:"👜包包",luxury:"💎精品",sunglasses:"🕶墨鏡",accessory:"🎀飾品",home:"🏠居家",device:"🪄美容儀",other:"📦其他"};
   var h="";
   for(var i=0;i<matches.length;i++){
