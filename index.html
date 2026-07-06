@@ -860,9 +860,14 @@ body.live-mode .hide-live { display: none !important; }
           <div id="ep-brand-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;z-index:99999;background:white;border:1.5px solid #C5A880;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.2);max-height:280px;overflow-y:auto"></div>
         </div>
       </div>
-      <div style="flex:1.5">
-        <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">📐 規格</label>
-        <input type="text" id="ep-specs" placeholder="黑色,金色" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
+    </div>
+    <!-- 規格：一個口味一個標籤，可個別點開修改/刪除 -->
+    <div style="margin-bottom:10px">
+      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">📐 規格（例如口味，點標籤可修改，點×可刪除）</label>
+      <div id="ep-specs-chips" style="display:flex;flex-wrap:wrap;gap:6px;padding:8px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;min-height:42px"></div>
+      <div style="display:flex;gap:6px;margin-top:6px">
+        <input type="text" id="ep-specs-new" placeholder="輸入新口味後按 Enter 或逗號新增" onkeydown="if((event.key==='Enter'||event.key===',')&&!event.isComposing&&event.keyCode!==229){event.preventDefault();epAddSpec(this.value);this.value='';}" style="flex:1;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:8px 12px;font-size:13px;outline:none;box-sizing:border-box"/>
+        <button onclick="epAddSpec(document.getElementById('ep-specs-new').value);document.getElementById('ep-specs-new').value='';" style="background:#C5A880;color:white;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer">新增</button>
       </div>
     </div>
     <!-- 別名 -->
@@ -2586,7 +2591,8 @@ window.openModal=function(id,data){
       document.getElementById("ep-price").dataset.manual="";
       document.getElementById("ep-twprice").value=data.twPrice||"";
       document.getElementById("ep-rival").value=data.rivalPrice||"";
-      document.getElementById("ep-specs").value=(data.specs||[]).join(",");
+      window.G.epSpecsList=[...(data.specs||[])];
+      epRenderSpecs();
       document.getElementById("ep-aliases").value=(data.aliases||[]).join(",");
       document.getElementById("ep-note").value=data.note||"";
       setTimeout(()=>{epUrlPreview();epRivalCheck();},50);
@@ -3068,6 +3074,58 @@ window.BRAND_DB=[
 ];
 
 // ── 品牌 Autocomplete ───────────────────────────────────────────────────
+// ── 修改商品：規格標籤編輯（一個口味一個可點擊修改/刪除的標籤）───────────────
+window.epRenderSpecs=function(){
+  const box=document.getElementById("ep-specs-chips");
+  if(!box)return;
+  const list=window.G.epSpecsList||[];
+  if(!list.length){
+    box.innerHTML='<span style="font-size:12px;color:#C5A880;font-style:italic;padding:4px">尚未新增規格/口味</span>';
+    return;
+  }
+  box.innerHTML=list.map((s,i)=>{
+    const esc=String(s).replace(/"/g,"&quot;");
+    return `<span data-idx="${i}" onclick="epEditSpec(this)" style="display:inline-flex;align-items:center;gap:5px;background:white;border:1px solid #D8C4A0;border-radius:99px;padding:5px 6px 5px 12px;font-size:13px;color:#3D2010;cursor:pointer">
+      <span class="ep-spec-text">${esc}</span>
+      <button onclick="event.stopPropagation();epRemoveSpec(${i})" style="background:#F5EDE0;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;color:#9C7A5A;cursor:pointer;line-height:1;padding:0">×</button>
+    </span>`;
+  }).join("");
+};
+window.epAddSpec=function(val){
+  val=(val||"").trim();
+  if(!val)return;
+  window.G.epSpecsList=window.G.epSpecsList||[];
+  window.G.epSpecsList.push(val);
+  epRenderSpecs();
+};
+window.epRemoveSpec=function(idx){
+  window.G.epSpecsList.splice(idx,1);
+  epRenderSpecs();
+};
+window.epEditSpec=function(chipEl){
+  const idx=parseInt(chipEl.dataset.idx,10);
+  const current=window.G.epSpecsList[idx];
+  const textEl=chipEl.querySelector(".ep-spec-text");
+  const input=document.createElement("input");
+  input.type="text";
+  input.value=current;
+  input.style.cssText="border:none;outline:none;font-size:13px;width:"+(Math.max(current.length,3)*9)+"px;background:transparent;color:#3D2010";
+  textEl.replaceWith(input);
+  input.focus();
+  input.select();
+  const commit=()=>{
+    const v=input.value.trim();
+    if(v)window.G.epSpecsList[idx]=v;
+    epRenderSpecs();
+  };
+  input.addEventListener("blur",commit);
+  input.addEventListener("keydown",e=>{
+    if(e.key==="Enter"){e.preventDefault();commit();}
+    if(e.key==="Escape"){e.preventDefault();epRenderSpecs();}
+  });
+  input.addEventListener("click",e=>e.stopPropagation());
+};
+
 window.showBrandSuggestions=function showBrandSuggestions(val,mode){
   // mode: true/"quick"=快速上架, "edit"=修改商品, false/其他=新增商品
   var boxId=mode==="edit"?"ep-brand-suggestions":(mode?"qa-brand-suggestions":"brand-suggestions");
@@ -3577,7 +3635,7 @@ window.saveEditProd=async function(){
   const newCatKey=window.G.editCatKey||m.catKey||"food";
   const newCatObj=CATS.find(x=>x.key===newCatKey)||CATS[0];
   const newFlags=epGetFlags();
-  const newSpecs=(document.getElementById("ep-specs")?.value.trim()||"").split(",").map(s=>s.trim()).filter(Boolean);
+  const newSpecs=(window.G.epSpecsList||[]).map(s=>String(s).trim()).filter(Boolean);
   const newAliases=(document.getElementById("ep-aliases")?.value.trim()||"").split(",").map(s=>s.trim()).filter(Boolean);
   const newNote=document.getElementById("ep-note")?.value.trim()||"";
   const originalAmt=window.G.epPromoOriginal||fa;
