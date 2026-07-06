@@ -2321,7 +2321,7 @@ const SUBCAT_MAP = {
   // 食品子分類
   food: [
     {key:"海苔",    label:"🌿 海苔/乾貨",    kw:["海苔","魚乾","魷魚","乾貨"]},
-    {key:"餅乾",    label:"🍪 餅乾/零食",    kw:["餅乾","洋芋片","薯片","爆米花","糖果","咖啡糖","軟糖","脆片","貝果","堅果脆","蝴蝶餅","扭結餅","蝴蝶酥","千層酥","焦糖餅","雪花酥","雪花","pretzel","gummy","chip","cookie","snack"]},
+    {key:"餅乾",    label:"🍪 餅乾/零食",    kw:["餅乾","洋芋片","薯片","爆米花","糖果","咖啡糖","軟糖","脆片","貝果","堅果脆","蝴蝶餅","扭結餅","蝴蝶酥","千層酥","焦糖餅","雪花酥","雪花","威化","oreo","奧利奧","wafer","pretzel","gummy","chip","cookie","snack"]},
     {key:"泡麵",    label:"🍜 泡麵/麵食",    kw:["泡麵","拉麵","炒麵","炒碼麵","醬麵","炸醬麵","拌麵","湯麵","涼麵","冷麵","乾麵","油麵","刀削麵","蕎麥麵","蒟蒻麵","寬麵","速食麵","即食麵","杯麵","年糕麵","冬粉","烏龍","河粉","義大利麵","義大利麪","pasta","spaghetti","noodle","짬뽕","jjamppong","순면","라면"]},
     {key:"飲料",    label:"🧃 飲料",          kw:["飲料","果汁","咖啡","茶飲","汽水","能量飲","乳酸菌飲","優酪乳","蒟蒻飲"]},
     {key:"沖泡",    label:"🥤 沖泡/代餐",    kw:["沖泡","搖搖飲","蛋白飲","高蛋白","蛋白粉","乳清","奶昔粉","代餐","益生菌粉","酵素粉","shake","protein","smoothie mix"]},
@@ -6459,7 +6459,7 @@ window.renderInvoice=function(){
             <div style="display:flex;align-items:center;gap:5px;flex:0 0 auto">
               ${purchasedBtn}
               <span style="font-size:12px;font-weight:700;color:#3D2010">NT$${(dp*o.qty).toLocaleString()}</span>
-              ${(()=>{const prod=window.G.products.find(x=>x.id===o.productId);if(!prod)return"";const lineProfit=(dp-(prod.afterTax||0))*o.qty;const lineRevenue=dp*o.qty;const margin=lineRevenue>0?Math.round((lineProfit/lineRevenue)*100):0;return `<span class="hide-staff" style="font-size:10px;font-weight:700;color:${lineProfit>=0?"#2E7D32":"#C0392B"}">利潤 NT$${Math.round(lineProfit).toLocaleString()}（毛利${margin}%）</span>`;})()}
+              ${(()=>{const prod=window.G.products.find(x=>x.id===o.productId)||window.G.products.find(x=>cleanProductName(x.name)===cleanProductName(o.productName||""));if(!prod)return"";const lineProfit=(dp-(prod.afterTax||0))*o.qty;const lineRevenue=dp*o.qty;const margin=lineRevenue>0?Math.round((lineProfit/lineRevenue)*100):0;return `<span class="hide-staff" style="font-size:10px;font-weight:700;color:${lineProfit>=0?"#2E7D32":"#C0392B"}">利潤 NT$${Math.round(lineProfit).toLocaleString()}（毛利${margin}%）</span>`;})()}
               <button data-oid="${o.id}" onclick="event.stopPropagation();openMoveTrip(this.dataset.oid)" style="font-size:10px;color:#0277BD;background:#E3F2FD;border:1px solid #90CAF9;padding:2px 5px;border-radius:5px;cursor:pointer">移趟</button>
               <button data-oid="${o.id}" onclick="event.stopPropagation();deleteOrder(this.dataset.oid)" style="font-size:10px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:2px 5px;border-radius:5px;cursor:pointer">🗑️</button>
             </div>
@@ -6475,7 +6475,7 @@ window.renderInvoice=function(){
           </div>
         </div>
         ${(()=>{
-          const netProfit=b.orders.reduce((s,o)=>{const prod=window.G.products.find(x=>x.id===o.productId);if(!prod)return s;return s+(( (o.discountPrice||o.unitPrice||0) -(prod.afterTax||0))*o.qty);},0)-bDisc;
+          const netProfit=b.orders.reduce((s,o)=>{const prod=window.G.products.find(x=>x.id===o.productId)||window.G.products.find(x=>cleanProductName(x.name)===cleanProductName(o.productName||""));if(!prod)return s;return s+(( (o.discountPrice||o.unitPrice||0) -(prod.afterTax||0))*o.qty);},0)-bDisc;
           const margin=totalAmt>0?Math.round((netProfit/totalAmt)*100):0;
           return `<div class="hide-staff" style="text-align:right;margin-top:2px"><span style="font-size:11px;font-weight:700;color:${netProfit>=0?"#2E7D32":"#C0392B"}">利潤 NT$${Math.round(netProfit).toLocaleString()}（毛利${margin}%）</span></div>`;
         })()}
