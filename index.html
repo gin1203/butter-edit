@@ -684,6 +684,7 @@ window.showBrandSuggestions=function(val,isQA){
 
 <div id="brand-suggestions" style="display:none;position:fixed;z-index:99999;background:white;border:1.5px solid #C5A880;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.2);max-height:280px;overflow-y:auto;min-width:200px"></div>
 <div id="qa-brand-suggestions" style="display:none;position:fixed;z-index:99999;background:white;border:1.5px solid #C5A880;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.2);max-height:280px;overflow-y:auto;min-width:200px"></div>
+<div id="ep-brand-suggestions" style="display:none;position:fixed;z-index:99999;background:white;border:1.5px solid #C5A880;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.2);max-height:280px;overflow-y:auto;min-width:200px"></div>
 </main>
 </div><!-- #app -->
 
@@ -881,7 +882,7 @@ window.showBrandSuggestions=function(val,isQA){
       <div style="flex:3">
         <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">商品名稱</label>
         <div style="position:relative">
-          <input type="text" id="ep-name" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 40px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
+          <input type="text" id="ep-name" oninput="(function(v){setTimeout(function(){showBrandSuggestions(v,'edit');},0);})(this.value)" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 40px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
           <button onclick="document.getElementById('ep-name').value=''" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
         </div>
       </div>
@@ -894,6 +895,11 @@ window.showBrandSuggestions=function(val,isQA){
     <div style="margin-bottom:10px">
       <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">🏷️ 批次比對別名（客人可能怎麼叫它，用逗號分隔）</label>
       <input type="text" id="ep-aliases" placeholder="例如：可可脆片,可可,燕麥優格" style="width:100%;background:#FFF9F0;border:1px solid #FFCC80;border-radius:10px;padding:10px 14px;font-size:13px;outline:none;box-sizing:border-box"/>
+    </div>
+    <!-- 備註（例如多合一包裝內含口味，這類較長的說明） -->
+    <div style="margin-bottom:10px">
+      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">📝 備註（例如內含口味、注意事項，卡片上預設收合不佔版面）</label>
+      <textarea id="ep-note" rows="2" placeholder="例如：內含曲奇奶油、蜂蜜黃油、玉米三種口味各2包" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:13px;outline:none;box-sizing:border-box;resize:vertical"></textarea>
     </div>
     <!-- 3. 官網 -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
@@ -2608,6 +2614,7 @@ window.openModal=function(id,data){
       document.getElementById("ep-rival").value=data.rivalPrice||"";
       document.getElementById("ep-specs").value=(data.specs||[]).join(",");
       document.getElementById("ep-aliases").value=(data.aliases||[]).join(",");
+      document.getElementById("ep-note").value=data.note||"";
       setTimeout(()=>{epUrlPreview();epRivalCheck();},50);
       // 載入多筆網址
       const urls=(data.url||"").split("\n").filter(Boolean);
@@ -3087,10 +3094,10 @@ window.BRAND_DB=[
 ];
 
 // ── 品牌 Autocomplete ───────────────────────────────────────────────────
-function showBrandSuggestions(val,isQA){
-  console.log("showBrandSuggestions called:",val,isQA);
-  var boxId=isQA?"qa-brand-suggestions":"brand-suggestions";
-  var inputId=isQA?"qa-name":"c-name";
+function showBrandSuggestions(val,mode){
+  // mode: true/"quick"=快速上架, "edit"=修改商品, false/其他=新增商品
+  var boxId=mode==="edit"?"ep-brand-suggestions":(mode?"qa-brand-suggestions":"brand-suggestions");
+  var inputId=mode==="edit"?"ep-name":(mode?"qa-name":"c-name");
   var box=document.getElementById(boxId);
   var inp=document.getElementById(inputId);
   if(!box||!inp)return;
@@ -3107,14 +3114,16 @@ function showBrandSuggestions(val,isQA){
   for(var i=0;i<matches.length;i++){
     var b=matches[i];
     var nm=b.n.replace(/\\/g,"\\\\").replace(/'/g,"\\'");
-    h+='<div onmousedown="event.preventDefault();selectBrand(\''+nm+'\',\''+b.cat+'\','+(isQA?'true':'false')+')" style="padding:11px 16px;cursor:pointer;font-size:13px;color:#3D2010;border-bottom:1px solid #F5EDE0;display:flex;justify-content:space-between;align-items:center;background:white">';
+    h+='<div onmousedown="event.preventDefault();selectBrand(\''+nm+'\',\''+b.cat+'\',\''+mode+'\')" style="padding:11px 16px;cursor:pointer;font-size:13px;color:#3D2010;border-bottom:1px solid #F5EDE0;display:flex;justify-content:space-between;align-items:center;background:white">';
     h+='<b>'+b.n+'</b><span style="font-size:11px;color:#C5A880">'+(CL[b.cat]||b.cat)+'</span></div>';
   }
   box.innerHTML=h;
   box.style.display="block";
 }
-window.selectBrand=function(name,cat,isQA){
-  const inputId=isQA?"qa-name":"c-name";
+window.selectBrand=function(name,cat,mode){
+  const isQA=mode==="true"||mode===true;
+  const isEdit=mode==="edit";
+  const inputId=isEdit?"ep-name":(isQA?"qa-name":"c-name");
   const input=document.getElementById(inputId);
   if(input){
     input.value=name+" ";
@@ -3122,9 +3131,13 @@ window.selectBrand=function(name,cat,isQA){
     // 移到字串末尾
     input.setSelectionRange(input.value.length,input.value.length);
   }
-  const containerId=isQA?"qa-brand-suggestions":"brand-suggestions";
+  const containerId=isEdit?"ep-brand-suggestions":(isQA?"qa-brand-suggestions":"brand-suggestions");
   const box=document.getElementById(containerId);
   if(box)box.style.display="none";
+  if(isEdit){
+    // 修改商品：只帶入名稱，不自動切換分類（避免誤觸發改編號流程）
+    return;
+  }
   if(isQA){
     window.G.qaCatKey=cat;
     document.querySelectorAll("[data-qacat]").forEach(btn=>{
@@ -3151,6 +3164,8 @@ document.addEventListener("click",e=>{
     {const b=document.getElementById("brand-suggestions");if(b)b.style.display="none";}
   if(!e.target.closest("#qa-brand-suggestions")&&!e.target.closest("#qa-name"))
     {const b=document.getElementById("qa-brand-suggestions");if(b)b.style.display="none";}
+  if(!e.target.closest("#ep-brand-suggestions")&&!e.target.closest("#ep-name"))
+    {const b=document.getElementById("ep-brand-suggestions");if(b)b.style.display="none";}
 });
 
 window.calcUpdate=function(){
@@ -3588,10 +3603,11 @@ window.saveEditProd=async function(){
   const newFlags=epGetFlags();
   const newSpecs=(document.getElementById("ep-specs")?.value.trim()||"").split(",").map(s=>s.trim()).filter(Boolean);
   const newAliases=(document.getElementById("ep-aliases")?.value.trim()||"").split(",").map(s=>s.trim()).filter(Boolean);
+  const newNote=document.getElementById("ep-note")?.value.trim()||"";
   const originalAmt=window.G.epPromoOriginal||fa;
   const promoDivisor=window.G.epPromoDivisor||null;
   const promoGroup=document.getElementById("ep-promo-group")?.value.trim()||"";
-  const upd={name,foreignAmount:fa,originalAmount:originalAmt,promoDivisor,promoGroup,beforeTax,afterTax,finalPrice:price,profit,margin,twPrice,rivalPrice,url,specs:newSpecs,aliases:newAliases,catKey:newCatKey,category:newCatObj.label,emoji:newCatObj.emoji,flags:newFlags,channel:window.G.editChannel||""};
+  const upd={name,foreignAmount:fa,originalAmount:originalAmt,promoDivisor,promoGroup,beforeTax,afterTax,finalPrice:price,profit,margin,twPrice,rivalPrice,url,specs:newSpecs,aliases:newAliases,note:newNote,catKey:newCatKey,category:newCatObj.label,emoji:newCatObj.emoji,flags:newFlags,channel:window.G.editChannel||""};
   if(window.G.editPhoto===null){/* 不動圖片 */}
   else if(window.G.editPhoto===""){upd.photo="";upd.photoPos="50% 50%";}
   else{
@@ -5717,6 +5733,7 @@ window.renderList=function(){
         <div style="flex:1;min-width:0">
           <div style="font-weight:700;font-size:15px;color:#3D2010;line-height:1.3;margin-bottom:4px">${p.name}</div>
           ${(p.specs&&p.specs.length>0)?`<div style="font-size:12px;color:#9C7A5A;font-weight:700;margin-bottom:4px">📐 ${Array.isArray(p.specs)?p.specs.join(", "):p.specs}</div>`:""}
+          ${p.note?`<details style="margin-bottom:4px"><summary style="font-size:11px;color:#A0824A;font-weight:600;cursor:pointer;list-style:none">📝 備註（點開）</summary><div style="font-size:12px;color:#6B5638;margin-top:3px;white-space:pre-wrap;line-height:1.5">${p.note}</div></details>`:""}
           <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap">
             <div style="font-size:18px;font-weight:900;color:#F4845F">NT$ ${p.finalPrice.toLocaleString()}</div>
             ${p.twPrice>0?(()=>{const diff=p.twPrice-p.finalPrice;return diff>=0?`<div style="font-size:10px;color:#4338CA;font-weight:700">台灣 NT$${p.twPrice.toLocaleString()} (省${diff.toLocaleString()})</div>`:`<div style="font-size:10px;color:#C0392B;font-weight:700">台灣 NT$${p.twPrice.toLocaleString()} (貴${Math.abs(diff).toLocaleString()})</div>`;})():""}
