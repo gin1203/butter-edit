@@ -24,32 +24,6 @@ input,textarea,select,button{font-family:inherit}
 body.live-mode .hide-live { display: none !important; }
 </style>
 <script>
-// 品牌搜尋 - 提早定義確保可用
-window.showBrandSuggestions=function(val,isQA){
-  console.log("SBS called",val,isQA,typeof window.BRAND_DB);
-  var box=document.getElementById(isQA?"qa-brand-suggestions":"brand-suggestions");
-  var inp=document.getElementById(isQA?"qa-name":"c-name");
-  if(!box||!inp)return;
-  if(!val||val.length<1){box.style.display="none";return;}
-  var q=val.toLowerCase();
-  if(typeof window.BRAND_DB==="undefined"){box.style.display="none";return;}
-  var matches=window.BRAND_DB.filter(function(b){return b.n.toLowerCase().indexOf(q)>=0;}).slice(0,6);
-  if(!matches.length){box.style.display="none";return;}
-  var r=inp.getBoundingClientRect();
-  box.style.top=(r.bottom+2)+"px";
-  box.style.left=r.left+"px";
-  box.style.width=r.width+"px";
-  var CL={food:"🍿食品",beauty:"💄美妝",daiso:"🏪大創",shoes:"👟鞋子",clothes:"👗衣服",bag:"👜包包",luxury:"💎精品",sunglasses:"🕶墨鏡",accessory:"🎀飾品",home:"🏠居家",device:"🪄美容儀",other:"📦其他"};
-  var h="";
-  for(var i=0;i<matches.length;i++){
-    var b=matches[i];
-    var nm=b.n.replace(/\\/g,"\\\\").replace(/'/g,"\\'");
-    h+='<div onmousedown="event.preventDefault();window.selectBrand(\''+nm+'\',\''+b.cat+'\','+(isQA?'true':'false')+')" style="padding:11px 16px;cursor:pointer;font-size:13px;color:#3D2010;border-bottom:1px solid #F5EDE0;display:flex;justify-content:space-between;align-items:center;background:white">';
-    h+='<b>'+b.n+'</b><span style="font-size:11px;color:#C5A880">'+(CL[b.cat]||b.cat)+'</span></div>';
-  }
-  box.innerHTML=h;
-  box.style.display="block";
-};
 </script>
 </head>
 <body>
@@ -3094,7 +3068,7 @@ window.BRAND_DB=[
 ];
 
 // ── 品牌 Autocomplete ───────────────────────────────────────────────────
-function showBrandSuggestions(val,mode){
+window.showBrandSuggestions=function showBrandSuggestions(val,mode){
   // mode: true/"quick"=快速上架, "edit"=修改商品, false/其他=新增商品
   var boxId=mode==="edit"?"ep-brand-suggestions":(mode?"qa-brand-suggestions":"brand-suggestions");
   var inputId=mode==="edit"?"ep-name":(mode?"qa-name":"c-name");
