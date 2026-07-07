@@ -118,6 +118,7 @@ body.live-mode .hide-live { display: none !important; }
         <div style="position:relative">
           <input type="text" id="c-name" oninput="calcUpdate();autoDetectCatFromName(this.value);(function(v){setTimeout(function(){showBrandSuggestions(v,false);},0);})(this.value)" placeholder="例如：Matin Kim 短袖" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:12px 40px 12px 14px;font-size:14px;outline:none"/>
           <button onclick="document.getElementById('c-name').value='';calcUpdate();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
+          <div id="brand-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;z-index:99999;background:white;border:1.5px solid #C5A880;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.2);max-height:280px;overflow-y:auto"></div>
         </div>
       </div>
       <div>
@@ -656,8 +657,7 @@ body.live-mode .hide-live { display: none !important; }
   </div>
 </div>
 
-<div id="brand-suggestions" style="display:none;position:fixed;z-index:99999;background:white;border:1.5px solid #C5A880;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.2);max-height:280px;overflow-y:auto;min-width:200px"></div>
-<div id="qa-brand-suggestions" style="display:none;position:fixed;z-index:99999;background:white;border:1.5px solid #C5A880;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.2);max-height:280px;overflow-y:auto;min-width:200px"></div>
+
 </main>
 </div><!-- #app -->
 
@@ -1227,6 +1227,7 @@ body.live-mode .hide-live { display: none !important; }
         <div style="position:relative">
           <input type="text" id="qa-name" placeholder="例如：크레용 신짱 인형 키링 / 蠟筆小新娃娃鑰匙圈" oninput="qaAutoDetectCat(this.value);(function(v){setTimeout(function(){showBrandSuggestions(v,true);},0);})(this.value)" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:11px 40px 11px 14px;font-size:14px;outline:none"/>
           <button onclick="document.getElementById('qa-name').value='';" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
+          <div id="qa-brand-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;z-index:99999;background:white;border:1.5px solid #C5A880;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.2);max-height:280px;overflow-y:auto"></div>
         </div>
       </div>
       <div>
@@ -3137,12 +3138,6 @@ window.showBrandSuggestions=function showBrandSuggestions(val,mode){
   var q=val.toLowerCase();
   var matches=BRAND_DB.filter(function(b){return b.n.toLowerCase().indexOf(q)>=0;}).slice(0,6);
   if(!matches.length){box.style.display="none";return;}
-  if(mode!=="edit"){
-    var r=inp.getBoundingClientRect();
-    box.style.top=(r.bottom+2)+"px";
-    box.style.left=r.left+"px";
-    box.style.width=r.width+"px";
-  }
   var CL={food:"🍿食品",beauty:"💄美妝",daiso:"🏪大創",shoes:"👟鞋子",clothes:"👗衣服",bag:"👜包包",luxury:"💎精品",sunglasses:"🕶墨鏡",accessory:"🎀飾品",home:"🏠居家",device:"🪄美容儀",other:"📦其他"};
   var h="";
   for(var i=0;i<matches.length;i++){
@@ -5641,7 +5636,7 @@ window.renderList=function(){
   const{products,orders,listSearch,listFilterCat,listFilterCurrency,selectedProducts}=window.G;
   const filtered=products.filter(p=>{
     const mC=listFilterCat==="all"||p.catKey===listFilterCat;
-    const mSub=!window.G.listFilterSubcat||window.getSubcat(p.name,p.catKey)?.key===window.G.listFilterSubcat;
+    const mSub=!window.G.listFilterSubcat||(window.G.listFilterSubcat==="__none__"?!window.getSubcat(p.name,p.catKey):window.getSubcat(p.name,p.catKey)?.key===window.G.listFilterSubcat);
     const mX=listFilterCurrency==="all"||(p.currency||"KRW")===listFilterCurrency;
     const sq=listSearch.toLowerCase();
     const pOrders2=orders.filter(o=>o.productId===p.id);
@@ -5686,9 +5681,11 @@ window.renderList=function(){
       const catProds=products.filter(p=>p.catKey===listFilterCat);
       const subcats=window.getSubcatList(listFilterCat,catProds);
       const curSub=window.G.listFilterSubcat||null;
+      const unclassified=catProds.filter(p=>!window.getSubcat(p.name,listFilterCat));
       if(subcats.length>0){
         sf.style.display="flex";
-        sf.innerHTML=subcats.map(s=>`<button onclick="window.G.listFilterSubcat=window.G.listFilterSubcat==='${s.key}'?null:'${s.key}';renderList()" style="flex-shrink:0;padding:4px 10px;border-radius:99px;font-size:10px;font-weight:700;border:1px solid ${curSub===s.key?"#E07B39":"#FFCC80"};background:${curSub===s.key?"#E07B39":"#FFF3E0"};color:${curSub===s.key?"white":"#C76B25"};cursor:pointer">${s.label}(${catProds.filter(p=>window.getSubcat(p.name,listFilterCat)?.key===s.key).length})</button>`).join("");
+        sf.innerHTML=subcats.map(s=>`<button onclick="window.G.listFilterSubcat=window.G.listFilterSubcat==='${s.key}'?null:'${s.key}';renderList()" style="flex-shrink:0;padding:4px 10px;border-radius:99px;font-size:10px;font-weight:700;border:1px solid ${curSub===s.key?"#E07B39":"#FFCC80"};background:${curSub===s.key?"#E07B39":"#FFF3E0"};color:${curSub===s.key?"white":"#C76B25"};cursor:pointer">${s.label}(${catProds.filter(p=>window.getSubcat(p.name,listFilterCat)?.key===s.key).length})</button>`).join("")
+          +(unclassified.length>0?`<button onclick="window.G.listFilterSubcat=window.G.listFilterSubcat==='__none__'?null:'__none__';renderList()" style="flex-shrink:0;padding:4px 10px;border-radius:99px;font-size:10px;font-weight:700;border:1px solid ${curSub==="__none__"?"#C0392B":"#F1948A"};background:${curSub==="__none__"?"#C0392B":"#FDEDEC"};color:${curSub==="__none__"?"white":"#C0392B"};cursor:pointer">❓ 未分類(${unclassified.length})</button>`:"");
       } else {
         sf.innerHTML="";
       }
