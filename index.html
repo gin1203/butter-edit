@@ -356,6 +356,7 @@ body.live-mode .hide-live { display: none !important; }
     <button id="list-view-toggle" onclick="toggleListView()" style="background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:7px 12px;font-size:16px;cursor:pointer" title="切換顯示模式">☰</button>
     <button onclick="exportProductCSV()" style="flex:1;font-size:11px;background:#EBF5FB;color:#2980B9;border:1px solid #AED6F1;padding:7px 4px;border-radius:8px;font-weight:700;cursor:pointer">匯出商品庫</button>
     <button onclick="showStockPlan()" style="flex:1;font-size:11px;background:#FFF3E0;color:#E07B39;border:1px solid #FFCC80;padding:7px 4px;border-radius:8px;font-weight:700;cursor:pointer">📦 備貨清單</button>
+    <button onclick="showPromoGroups()" style="flex:1;font-size:11px;background:#FDF2E9;color:#C0392B;border:1px solid #F1948A;padding:7px 4px;border-radius:8px;font-weight:700;cursor:pointer">🎯 行銷活動</button>
   </div>
   <div class="hide-live" style="display:flex;gap:4px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:99px;padding:3px;margin-bottom:8px">
     <button id="list-sort-default" onclick="setListSortMode('default')" style="flex:1;font-size:12px;font-weight:700;padding:8px 4px;border-radius:99px;border:none;background:#C5A880;color:white;cursor:pointer;transition:background 0.15s,color 0.15s">🕐 上架順序</button>
@@ -893,7 +894,7 @@ body.live-mode .hide-live { display: none !important; }
     </div>
     <!-- 4. 原幣金額 -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
-      <label style="font-size:11px;font-weight:700;color:#9C7A5A">原幣金額 <span id="ep-sym" style="color:#C5A880"></span></label>
+      <label style="font-size:11px;font-weight:700;color:#9C7A5A">原幣金額 <span id="ep-sym" style="color:#C5A880"></span> <span id="ep-promo-active-badge" style="display:none;font-size:10px;font-weight:700;color:#166534;background:#DCFCE7;border-radius:6px;padding:2px 6px;margin-left:4px"></span></label>
       <div style="display:flex;gap:4px">
         <button onclick="epApplyPromo(2)" style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:700;color:#92400E;cursor:pointer">1+1</button>
         <button onclick="epApplyPromo(3)" style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:700;color:#166534;cursor:pointer">2+1</button>
@@ -901,8 +902,8 @@ body.live-mode .hide-live { display: none !important; }
       </div>
     </div>
     <div style="position:relative;margin-bottom:6px">
-      <input type="text" inputmode="numeric" id="ep-foreign" oninput="window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;epForeignChange()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 40px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
-      <button onclick="document.getElementById('ep-foreign').value='';window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;const pr=document.getElementById('ep-price');if(pr){pr.value='';delete pr.dataset.manual;}epForeignChange();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
+      <input type="text" inputmode="numeric" id="ep-foreign" oninput="window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;epForeignChange();epUpdatePromoBadge();" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 40px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
+      <button onclick="document.getElementById('ep-foreign').value='';window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;const pr=document.getElementById('ep-price');if(pr){pr.value='';delete pr.dataset.manual;}epForeignChange();epUpdatePromoBadge();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
     </div>
     <!-- 4b. 活動群組（選填，不同品名但同一波活動要一起混搭時填一樣的名字） -->
     <div style="margin-bottom:6px">
@@ -935,7 +936,7 @@ body.live-mode .hide-live { display: none !important; }
         <div id="ep-final-display" style="font-size:16px;font-weight:900;color:#C0392B;min-width:80px">-</div>
         <div style="flex:1;position:relative">
           <input type="text" inputmode="numeric" id="ep-price" onfocus="this.dataset.manual='1'" oninput="epRivalCheck()" placeholder="✏️ 自訂金額" style="width:100%;background:white;border:1.5px solid #FF6B6B;border-radius:8px;padding:8px 36px 8px 12px;font-size:16px;font-weight:700;color:#3D2010;outline:none;box-sizing:border-box"/>
-          <button onclick="const el=document.getElementById('ep-price');if(el){el.value='';el.dataset.manual='';epRivalCheck();}" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#FF6B6B;font-size:16px;line-height:1;padding:0">✕</button>
+          <button onclick="const el=document.getElementById('ep-price');if(el){el.value='';el.dataset.manual='';epForeignChange();epRivalCheck();}" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#FF6B6B;font-size:16px;line-height:1;padding:0">✕</button>
         </div>
       </div>
     </div>
@@ -2145,6 +2146,17 @@ window.duplicateProduct=async function(id){
   }
 };
 
+window.epUpdatePromoBadge=function(){
+  const badge=document.getElementById("ep-promo-active-badge");
+  if(!badge)return;
+  const labels={2:"1+1",3:"2+1",4:"3+1"};
+  if(window.G.epPromoDivisor&&labels[window.G.epPromoDivisor]){
+    badge.textContent="✓ 目前套用 "+labels[window.G.epPromoDivisor];
+    badge.style.display="inline";
+  } else {
+    badge.style.display="none";
+  }
+};
 window.epApplyPromo=function(divisor){
   // 自我修復：狀態不同步（有倍數卻沒有原價，或反過來）一律視為沒有活動在跑，避免越除越小
   if(!window.G.epPromoOriginal||!window.G.epPromoDivisor){
@@ -2162,9 +2174,10 @@ window.epApplyPromo=function(divisor){
     window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;
     if(nameEl){let n=nameEl.value.trim();nameEl.value=n.replace(/（[1-4][+＋][1-4]）/g,"").trim();}
     epForeignChange();
+    epUpdatePromoBadge();
     showToast("已取消活動，還原原價","success");return;
   }
-  const original=window.G.epPromoOriginal||(window.G.activeModalData?.originalAmount)||raw;
+  const original=window.G.epPromoOriginal||raw||(window.G.activeModalData?.originalAmount)||0;
   window.G.epPromoOriginal=original;
   window.G.epPromoDivisor=divisor;
   const perItem=Math.round(original*(divisor-1)/divisor);
@@ -2175,6 +2188,7 @@ window.epApplyPromo=function(divisor){
     nameEl.value=name+(name?" ":"")+tag;
   }
   epForeignChange();
+  epUpdatePromoBadge();
   showToast(`已套用 ${tag.replace("（","").replace("）","")} 活動，每件 ${perItem.toLocaleString()}`,"success");
 };
 
@@ -2581,13 +2595,15 @@ window.openModal=function(id,data){
       const fa=data.foreignAmount||data.krw||0;
       document.getElementById("ep-foreign").value=fa;
       const epPromoGroupEl=document.getElementById("ep-promo-group");if(epPromoGroupEl)epPromoGroupEl.value=data.promoGroup||"";
-      // 設定活動狀態（要原價、活動倍數都有記錄，且原價確實跟目前不同，才視為活動仍在跑）
-      if(data.originalAmount&&data.promoDivisor&&data.originalAmount!==fa){
+      // 設定活動狀態（要原價、活動倍數都有記錄，且換算回來要真的等於目前金額，才視為活動仍在跑；對不上就自我修復視為沒有活動）
+      const expectedPerItem=(data.originalAmount&&data.promoDivisor)?Math.round(data.originalAmount*(data.promoDivisor-1)/data.promoDivisor):null;
+      if(data.originalAmount&&data.promoDivisor&&expectedPerItem===fa){
         window.G.epPromoOriginal=data.originalAmount;
         window.G.epPromoDivisor=data.promoDivisor||null;
       } else {
         window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;
       }
+      epUpdatePromoBadge();
       document.getElementById("ep-price").value=data.finalPrice||0;
       document.getElementById("ep-price").dataset.manual="";
       document.getElementById("ep-twprice").value=data.twPrice||"";
@@ -2786,7 +2802,35 @@ window.openModal=function(id,data){
   }
 };
 window.closeModal=function(id){
-  const el=document.getElementById(id);if(el)el.style.display="none";
+  const el=document.getElementById(id);
+  if(id==="modal-eprod"&&window.G.cameFromPromoGroups&&el){
+    window.G.cameFromPromoGroups=false;
+    showPromoGroups();
+    const pg=document.getElementById("modal-promo-groups");
+    if(pg){
+      // 讓兩個視窗「重疊」淡出淡入，中間不會有背景露出來的瞬間
+      pg.style.zIndex="49";
+      pg.style.transition="none";
+      pg.style.opacity="0";
+      pg.style.display="flex";
+      // 強制 reflow，確保上面這行先套用，接下來的 transition 才會有效果
+      void pg.offsetHeight;
+      pg.style.transition="opacity .2s ease";
+      pg.style.opacity="1";
+      el.style.transition="opacity .2s ease";
+      el.style.opacity="0";
+      setTimeout(()=>{
+        el.style.display="none";
+        el.style.opacity="";
+        el.style.transition="";
+        pg.style.zIndex="50";
+        pg.style.opacity="";
+        pg.style.transition="";
+      },220);
+      return;
+    }
+  }
+  if(el)el.style.display="none";
 };
 // 點外部關閉
 document.querySelectorAll(".modal-overlay").forEach(el=>{
@@ -3410,6 +3454,11 @@ onSnapshot(collection(db,"products"),s=>{
   window.G.productsLoaded=true;
   updateStats();renderList();renderInvoice();
 });
+onSnapshot(collection(db,"promoGroupMeta"),s=>{
+  window.G.promoGroupMeta={};
+  s.docs.forEach(d=>{window.G.promoGroupMeta[d.id]=d.data();});
+  if(document.getElementById("modal-promo-groups")?.style.display==="flex")renderPromoGroups();
+});
 onSnapshot(collection(db,"customers"),s=>{
   window.G.customers=s.docs.map(d=>({id:d.id,...d.data()}));
   window.G.customersLoaded=true;
@@ -3526,6 +3575,7 @@ window.epUrlPreview=function(){
 };
 
 window.epRivalCheck=function(){
+  const msgEl=document.getElementById("ep-rival-msg");
   const rival=parseFloat(document.getElementById("ep-rival")?.value)||0;
   const price=parseFloat(document.getElementById("ep-price")?.value)||0;
   // 更新利潤（ep-after 隱藏版 或 ep-cost 顯示版都試）
@@ -4512,17 +4562,32 @@ window.boParse=async function(){
 function renderBoResult(parsed,products){
   const lst=document.getElementById("bo-result-list");
   if(!parsed.length){lst.innerHTML=`<div style="color:#9C7A5A;font-size:13px">找不到對應商品</div>`;document.getElementById("bo-result").style.display="block";return;}
+  const promoLabels={2:"1+1",3:"2+1",4:"3+1"};
+  const tagToDivisor={"1+1":2,"2+1":3,"3+1":4};
+  const parseDivisor=(p)=>{
+    if(!p)return null;
+    if(p.promoDivisor)return p.promoDivisor;
+    const m=(p.name||"").match(/（(1\+1|2\+1|3\+1)）/);
+    return m?tagToDivisor[m[1]]:null;
+  };
   lst.innerHTML=parsed.map((item,i)=>{
     const p=products.find(x=>x.id===item.productId);
     const bg=item.confidence==="high"?"#F0FFF4":item.confidence==="medium"?"#FFFBEB":"#FFF5F5";
     const border=item.confidence==="high"?"#A5D6A7":item.confidence==="medium"?"#FCD34D":"#F1948A";
-    return`<div style="background:${bg};border:1px solid ${border};border-radius:10px;padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;gap:8px">
-      <input type="checkbox" id="bo-check-${i}" checked style="width:16px;height:16px;accent-color:#C5A880;flex-shrink:0"/>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:11px;color:#9C7A5A;margin-bottom:2px">原文：${item.originalText}</div>
-        <div style="font-size:13px;font-weight:700;color:#3D2010">${p?`${p.emoji||"📦"} ${p.name}${item.spec?" ("+item.spec+")":""}`:` ❌ 找不到商品`}</div>
+    const divisor=parseDivisor(p);
+    return`<div style="background:${bg};border:1px solid ${border};border-radius:10px;padding:10px 12px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="bo-check-${i}" checked style="width:16px;height:16px;accent-color:#C5A880;flex-shrink:0"/>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:11px;color:#9C7A5A;margin-bottom:2px">原文：${item.originalText}</div>
+          <div style="font-size:13px;font-weight:700;color:#3D2010">${p?`${p.emoji||"📦"} ${p.name}${item.spec?" ("+item.spec+")":""}`:` ❌ 找不到商品`}</div>
+        </div>
+        <input type="number" id="bo-qty-${i}" value="${item.qty}" min="1" oninput="window.G.boParsed[${i}].qty=parseInt(this.value)||1" style="width:52px;text-align:center;font-size:14px;font-weight:900;color:#E07B39;border:1px solid #E8D5B0;border-radius:8px;padding:4px 2px;flex-shrink:0"/>
       </div>
-      <div style="font-size:13px;font-weight:900;color:#E07B39;flex-shrink:0">×${item.qty}</div>
+      ${divisor?`<div style="margin-top:6px;margin-left:24px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <span style="font-size:10px;color:#C0392B;background:#FDEDEC;border-radius:99px;padding:2px 9px;font-weight:700">⚠️ 這是${promoLabels[divisor]}，記得確認數量是否要算進贈送的份數</span>
+        <button onclick="const el=document.getElementById('bo-qty-${i}');const nv=Math.round(parseFloat(el.value)*${divisor});el.value=nv;window.G.boParsed[${i}].qty=nv;" style="font-size:10px;color:#166534;background:#DCFCE7;border:1px solid #86EFAC;border-radius:99px;padding:2px 9px;font-weight:700;cursor:pointer">一鍵換算成${promoLabels[divisor]}總數（×${divisor}）</button>
+      </div>`:""}
     </div>`;
   }).join("");
   document.getElementById("bo-result").style.display="block";
@@ -4566,6 +4631,224 @@ window.boConfirm=async function(){
   closeModal("modal-batch-order");
   showToast(`✅ 已建立 ${count} 筆訂單`);
   setTimeout(()=>{renderCustomers();renderList();renderInvoice();},1200);
+};
+
+window.pgUploadImage=async function(inputEl,gDocId){
+  const file=inputEl.files?.[0];
+  if(!file)return;
+  showToast("圖片上傳中…","success");
+  try{
+    const b64=await compressImg(file,900,0.85);
+    await fbSet("promoGroupMeta",gDocId,{image:b64});
+    showToast("銷售圖已上傳","success");
+  }catch(e){
+    showToast("圖片上傳失敗","error");console.error(e);
+  }
+};
+window.pgRemoveImage=async function(gDocId){
+  await fbSet("promoGroupMeta",gDocId,{image:""});
+  showToast("已移除銷售圖","success");
+};
+window.pgStartNewGroup=function(){
+  const inp=document.getElementById("pg-new-group-name");
+  const name=(inp?.value||"").trim();
+  if(!name){showToast("請先輸入群組名稱","error");return;}
+  window.G.pgPendingGroups=window.G.pgPendingGroups||new Set();
+  window.G.pgPendingGroups.add(name);
+  if(inp)inp.value="";
+  renderPromoGroups();
+};
+window.showPromoGroups=function(){
+  document.getElementById("modal-promo-groups").style.display="flex";
+  renderPromoGroups();
+};
+window.renderPromoGroups=function(){
+  const box=document.getElementById("promo-groups-content");
+  if(!box)return;
+  const products=window.G.products||[];
+  const groups={};
+  products.forEach(p=>{
+    const g=(p.promoGroup||"").trim();
+    if(!g)return;
+    if(!groups[g])groups[g]=[];
+    groups[g].push(p);
+  });
+  (window.G.pgPendingGroups||new Set()).forEach(g=>{if(!groups[g])groups[g]=[];});
+  const names=Object.keys(groups).sort();
+  if(!names.length){
+    box.innerHTML='<div style="text-align:center;padding:30px 10px;color:#C5A880;font-size:13px">目前沒有商品設定活動群組<br><span style="font-size:11px">在「修改商品」裡填寫「活動群組」欄位即可加入</span></div>';
+    return;
+  }
+  const summaryLine=`<div style="font-size:11px;color:#C5A880;font-weight:700;margin-bottom:10px">共 ${names.length} 個活動群組</div>`;
+  box.innerHTML=summaryLine+names.map((g,gi)=>{
+    const items=groups[g];
+    const gEsc=g.replace(/"/g,"&quot;");
+    const gDocId=g.replace(/[\/\s]+/g,"_").slice(0,180);
+    const groupImg=window.G.promoGroupMeta?.[gDocId]?.image;
+    const totalValue=items.reduce((s,p)=>s+(p.finalPrice||0),0);
+    const promoLabels={2:"1+1",3:"2+1",4:"3+1"};
+    const tagToDivisor={"1+1":2,"2+1":3,"3+1":4};
+    const parseDivisorFromName=(name)=>{
+      const m=(name||"").match(/（(1\+1|2\+1|3\+1)）/);
+      return m?tagToDivisor[m[1]]:null;
+    };
+    const itemDivisors=[...new Set(items.map(p=>p.promoDivisor||parseDivisorFromName(p.name)).filter(Boolean))];
+    const itemPrices=[...new Set(items.map(p=>p.finalPrice).filter(v=>v>0))];
+    let promoSummaryHtml="";
+    const memberIds=new Set(items.map(p=>p.id));
+    const groupOrders=(window.G.orders||[]).filter(o=>memberIds.has(o.productId));
+    const totalQty=groupOrders.reduce((s,o)=>s+(o.qty||0),0);
+    const totalRevenue=groupOrders.reduce((s,o)=>{
+      const unitPrice=o.discountPrice||o.unitPrice||0;
+      return s+unitPrice*(o.qty||0);
+    },0);
+    const buyGetLabels={2:"買1送1",3:"買2送1",4:"買3送1"};
+    let priceRowHtml="";
+    if(itemDivisors.length===1&&itemPrices.length===1){
+      const divisor=itemDivisors[0];
+      const unitPrice=itemPrices[0];
+      const normalPrice=Math.round(unitPrice*divisor/(divisor-1));
+      const totalPaid=normalPrice*(divisor-1);
+      const originalBundleTotal=normalPrice*divisor;
+      priceRowHtml=`<span style="font-size:10px;color:#166534;background:#DCFCE7;border-radius:99px;padding:2px 9px;font-weight:700">${promoLabels[divisor]}</span><span style="font-size:11px;color:#B8A68A;text-decoration:line-through">NT$${originalBundleTotal}</span><span style="font-size:14px;color:#C0392B;font-weight:900">NT$${totalPaid}</span><span style="font-size:11px;color:#5C3A1E">（共${divisor}包）</span>`;
+    } else if(itemDivisors.length===1){
+      priceRowHtml=`<span style="font-size:10px;color:#166534;background:#DCFCE7;border-radius:99px;padding:2px 9px;font-weight:700">${promoLabels[itemDivisors[0]]}</span>`;
+    }
+    const salesRowHtml=totalQty>0
+      ?`<span style="font-size:10px;color:#0277BD;background:#EBF5FB;border:1px solid #AED6F1;border-radius:99px;padding:3px 10px;font-weight:700">🛒 已喊單 ${totalQty} 件・營業額 NT$${totalRevenue.toLocaleString()}</span>`
+      :`<span style="font-size:10px;color:#C5A880;font-style:italic">尚無喊單紀錄</span>`;
+    promoSummaryHtml=`${priceRowHtml}`;
+    const collapsedByDefault=items.length>5;
+    const reallyOpen=window.G.pgGroupOpenMap?.has(g)?window.G.pgGroupOpenMap.get(g):!collapsedByDefault;
+    const detailsId=`pg-details-${gi}`;
+    const itemRows=items.map(p=>`<div onclick="window.G.cameFromPromoGroups=true;document.getElementById('modal-promo-groups').style.display='none';openEditProd('${p.id}')" style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:#F5EDE0;border-radius:9px;padding:8px 12px;transition:background .15s;cursor:pointer" onmouseover="this.style.background='#EFE0C4'" onmouseout="this.style.background='#F5EDE0'">
+          <span style="font-size:12px;color:#3D2010"><span style="color:#C5A880;font-weight:700">${p.id}</span> · ${p.name.replace(/（[1-4][+＋][1-4]）/g,"").trim()}${(p.specs&&p.specs.length>0)?` <span style="color:#9C7A5A;font-size:11px">📐 ${Array.isArray(p.specs)?p.specs.join("、"):p.specs}</span>`:""}</span>
+          <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+            <span style="font-size:11px;color:#A08060;font-weight:600">NT$${(p.finalPrice||0).toLocaleString()}</span>
+            <button onclick="event.stopPropagation();removeFromPromoGroup('${p.id}')" title="移出這個群組" style="width:20px;height:20px;border-radius:50%;background:#FDEDEC;border:1px solid #F1948A;color:#C0392B;font-size:12px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;flex-shrink:0">×</button>
+          </div>
+        </div>`).join("");
+    const listHtml=items.length===0
+      ? `<div style="text-align:center;padding:14px;font-size:11px;color:#D8C4A0;font-style:italic">還沒有商品，用下面搜尋加入第一件吧</div>`
+      : `<details ${reallyOpen?"open":""} style="margin-bottom:2px">
+            <summary onclick="event.preventDefault();event.stopPropagation();const d=this.parentElement;d.open=!d.open;window.G.pgGroupOpenMap=window.G.pgGroupOpenMap||new Map();window.G.pgGroupOpenMap.set('${gEsc}',d.open);this.querySelector('.pg-toggle-label').textContent=d.open?'▲ 收起':'▼ 顯示全部 '+${items.length}+' 件';" style="cursor:pointer;list-style:none;font-size:11px;font-weight:700;color:#C5A880;padding:6px 2px;display:flex;align-items:center;gap:4px">
+              <span class="pg-toggle-label">${reallyOpen?"▲ 收起":"▼ 顯示全部 "+items.length+" 件"}</span>
+            </summary>
+            <div style="display:flex;flex-direction:column;gap:6px;margin-top:6px">${itemRows}</div>
+          </details>`;
+    return `<div style="border:1px solid #EFE0C4;border-left:4px solid #D8A857;border-radius:14px;padding:16px;margin-bottom:14px;background:linear-gradient(180deg,#FFFDF9,#FFFFFF);box-shadow:0 1px 4px rgba(120,90,40,0.06);transition:box-shadow .2s,transform .2s" onmouseover="this.style.boxShadow='0 4px 14px rgba(120,90,40,0.14)';this.style.transform='translateY(-1px)'" onmouseout="this.style.boxShadow='0 1px 4px rgba(120,90,40,0.06)';this.style.transform='translateY(0)'">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+        <span style="font-size:15px">🏷️</span>
+        <input type="text" value="${gEsc}" data-oldname="${gEsc}" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" onblur="renamePromoGroup(this.dataset.oldname,this.value)" style="flex:1;font-size:14px;font-weight:900;color:#3D2010;border:1px solid transparent;border-radius:8px;padding:6px 8px;outline:none;background:transparent" onfocus="this.style.background='white';this.style.border='1px solid #E8D5B0'"/>
+        <button onclick="deletePromoGroup('${gEsc}')" title="刪除整個群組" style="font-size:13px;color:#C0392B;background:none;border:none;cursor:pointer;padding:4px 6px;flex-shrink:0">🗑️</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:14px;padding-left:23px;margin-bottom:12px;align-items:flex-start">
+        <div style="flex-shrink:0">
+          ${groupImg
+            ?`<div style="position:relative;display:inline-block">
+                <img src="${groupImg}" onclick="document.getElementById('img-lightbox-content').src=this.src;document.getElementById('modal-img-lightbox').style.display='flex'" style="width:110px;height:auto;border-radius:10px;border:1px solid #E8D5B0;display:block;cursor:zoom-in"/>
+                <div style="position:absolute;top:4px;right:4px;display:flex;gap:3px">
+                  <label onclick="event.stopPropagation()" title="更換圖片" style="width:20px;height:20px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.92);border-radius:50%;cursor:pointer;font-size:9px;box-shadow:0 1px 4px rgba(0,0,0,0.25)">✏️<input type="file" accept="image/*" style="display:none" onchange="pgUploadImage(this,'${gDocId}')"/></label>
+                  <button onclick="event.stopPropagation();pgRemoveImage('${gDocId}')" title="移除圖片" style="width:20px;height:20px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.92);border:none;border-radius:50%;cursor:pointer;color:#C0392B;font-size:11px;font-weight:900;padding:0;box-shadow:0 1px 4px rgba(0,0,0,0.25)">×</button>
+                </div>
+              </div>`
+            :`<label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:1.5px dashed #D8C4A0;border-radius:10px;width:110px;height:110px;cursor:pointer;color:#C5A880;font-size:10px;background:#FFFDF8;text-align:center;padding:8px;box-sizing:border-box">
+                📷 上傳銷售圖<input type="file" accept="image/*" style="display:none" onchange="pgUploadImage(this,'${gDocId}')"/>
+              </label>`}
+        </div>
+        <div style="flex:1;min-width:180px;display:flex;flex-direction:column;gap:7px">
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:11px;color:#5C3A1E">
+            <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#D8A857;flex-shrink:0"></span><span style="color:#9C7A5A;background:#FAF8F5;border-radius:99px;padding:2px 9px">${items.length} 件商品</span>
+          </div>
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px">
+            <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#D8A857;flex-shrink:0"></span>${promoSummaryHtml}
+          </div>
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px">
+            <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#D8A857;flex-shrink:0"></span>${salesRowHtml}
+          </div>
+        </div>
+      </div>
+      ${listHtml}
+      <div style="position:relative;margin-top:10px">
+        <input type="text" placeholder="🔍 搜尋商品名稱或編號，加入這個群組..." oninput="pgSearchInput(this,'${gEsc}')" style="width:100%;font-size:12px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px 12px;outline:none;box-sizing:border-box"/>
+        <div class="pg-suggest" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;z-index:99999;background:white;border:1.5px solid #C5A880;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.2);max-height:220px;overflow-y:auto"></div>
+      </div>
+    </div>`;
+  }).join("");
+};
+window.pgSearchInput=function(inputEl,groupName){
+  const box=inputEl.nextElementSibling;
+  const q=inputEl.value.trim().toLowerCase();
+  if(!q){box.style.display="none";return;}
+  const matches=(window.G.products||[])
+    .filter(p=>(p.promoGroup||"").trim()!==groupName)
+    .filter(p=>p.name.toLowerCase().includes(q)||p.id.toLowerCase().includes(q))
+    .slice(0,8);
+  if(!matches.length){
+    box.innerHTML='<div style="padding:10px 14px;font-size:12px;color:#C5A880">找不到符合的商品</div>';
+    box.style.display="block";
+    return;
+  }
+  const gEsc=groupName.replace(/'/g,"\\'");
+  box.innerHTML=matches.map(p=>{
+    const already=(p.promoGroup||"").trim();
+    const warn=already?`<span style="font-size:10px;color:#E07B39">（目前在「${already}」）</span>`:"";
+    return `<div onmousedown="event.preventDefault();addToPromoGroup('${p.id}','${gEsc}')" style="padding:9px 14px;cursor:pointer;font-size:12px;color:#3D2010;border-bottom:1px solid #F5EDE0;display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <span>${p.id} · ${p.name} ${warn}</span>
+      <span style="font-size:11px;color:#A08060;flex-shrink:0">NT$${(p.finalPrice||0).toLocaleString()}</span>
+    </div>`;
+  }).join("");
+  box.style.display="block";
+};
+window.addToPromoGroup=async function(pid,groupName){
+  await fbUpd("products",pid,{promoGroup:groupName});
+  showToast("已加入活動群組","success");
+  setTimeout(renderPromoGroups,300);
+};
+document.addEventListener("click",e=>{
+  if(!e.target.closest(".pg-suggest")&&!e.target.matches('input[placeholder*="加入這個群組"]')){
+    document.querySelectorAll(".pg-suggest").forEach(b=>b.style.display="none");
+  }
+});
+window.deletePromoGroup=async function(groupName){
+  const members=(window.G.products||[]).filter(p=>(p.promoGroup||"").trim()===groupName);
+  if(members.length>0){
+    if(!confirm(`確定要刪除「${groupName}」這個活動群組嗎？\n裡面 ${members.length} 件商品會被移出群組（商品本身不會被刪除）。`))return;
+    for(const p of members){
+      await fbUpd("products",p.id,{promoGroup:""});
+    }
+  }
+  window.G.pgPendingGroups?.delete(groupName);
+  try{
+    const gDocId=groupName.replace(/[\/\s]+/g,"_").slice(0,180);
+    await fbDel("promoGroupMeta",gDocId);
+  }catch(e){}
+  showToast(`已刪除活動群組「${groupName}」`,"success");
+  setTimeout(renderPromoGroups,300);
+};
+window.removeFromPromoGroup=async function(pid){
+  await fbUpd("products",pid,{promoGroup:""});
+  showToast("已移出活動群組","success");
+  setTimeout(renderPromoGroups,300);
+};
+window.renamePromoGroup=async function(oldName,newNameRaw){
+  const newName=(newNameRaw||"").trim();
+  if(!newName||newName===oldName){renderPromoGroups();return;}
+  const members=(window.G.products||[]).filter(p=>(p.promoGroup||"").trim()===oldName);
+  for(const p of members){
+    await fbUpd("products",p.id,{promoGroup:newName});
+  }
+  try{
+    const oldDocId=oldName.replace(/[\/\s]+/g,"_").slice(0,180);
+    const newDocId=newName.replace(/[\/\s]+/g,"_").slice(0,180);
+    const oldImg=window.G.promoGroupMeta?.[oldDocId]?.image;
+    if(oldImg){
+      await fbSet("promoGroupMeta",newDocId,{image:oldImg});
+      await fbDel("promoGroupMeta",oldDocId);
+    }
+  }catch(e){}
+  showToast(`已將「${oldName}」改名為「${newName}」（共 ${members.length} 件商品）`,"success");
+  setTimeout(renderPromoGroups,300);
 };
 
 window.showStockPlan=function(){
@@ -5764,7 +6047,7 @@ window.renderList=function(){
         <div style="flex:1;min-width:0">
           <div style="font-weight:700;font-size:15px;color:#3D2010;line-height:1.3;margin-bottom:4px">${p.name}</div>
           ${(p.specs&&p.specs.length>0)?`<div style="font-size:12px;color:#9C7A5A;font-weight:700;margin-bottom:4px">📐 ${Array.isArray(p.specs)?p.specs.join(", "):p.specs}</div>`:""}
-          ${p.note?`<details style="margin-bottom:4px"><summary style="font-size:11px;color:#A0824A;font-weight:600;cursor:pointer;list-style:none">📝 備註（點開）</summary><div style="font-size:12px;color:#6B5638;margin-top:3px;white-space:pre-wrap;line-height:1.5">${p.note}</div></details>`:""}
+          ${p.note?`<details ${window.G.openNoteIds?.has(p.id)?"open":""} style="margin-bottom:4px"><summary onclick="event.preventDefault();event.stopPropagation();const d=this.parentElement;d.open=!d.open;window.G.openNoteIds=window.G.openNoteIds||new Set();if(d.open){window.G.openNoteIds.add('${p.id}');}else{window.G.openNoteIds.delete('${p.id}');}" style="font-size:11px;color:#A0824A;font-weight:600;cursor:pointer;list-style:none">📝 備註（點開）</summary><div style="font-size:12px;color:#6B5638;margin-top:3px;white-space:pre-wrap;line-height:1.5">${p.note}</div></details>`:""}
           <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap">
             <div style="font-size:18px;font-weight:900;color:#F4845F">NT$ ${p.finalPrice.toLocaleString()}</div>
             ${p.twPrice>0?(()=>{const diff=p.twPrice-p.finalPrice;return diff>=0?`<div style="font-size:10px;color:#4338CA;font-weight:700">台灣 NT$${p.twPrice.toLocaleString()} (省${diff.toLocaleString()})</div>`:`<div style="font-size:10px;color:#C0392B;font-weight:700">台灣 NT$${p.twPrice.toLocaleString()} (貴${Math.abs(diff).toLocaleString()})</div>`;})():""}
@@ -5774,8 +6057,8 @@ window.renderList=function(){
         </div>
       </div>
       ${p.url?(p.url.split("\n").filter(Boolean).map((u,i)=>`<a href="${u}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#2980B9;background:#EBF5FB;border:1px solid #AED6F1;padding:3px 10px;border-radius:99px;text-decoration:none;margin-bottom:4px;margin-right:4px;font-weight:600">🔗 ${i===0?"官網":"官網 "+(i+1)}</a>`).join(""))  :""}
-      ${(p.priceHistory&&p.priceHistory.length>0)?`<details style="margin-bottom:8px">
-        <summary style="font-size:10px;font-weight:700;color:#9C7A5A;cursor:pointer;list-style:none;display:flex;align-items:center;gap:4px">📋 歷史價格（${p.priceHistory.length}筆）</summary>
+      ${(p.priceHistory&&p.priceHistory.length>0)?`<details ${window.G.openHistoryIds?.has(p.id)?"open":""} style="margin-bottom:8px">
+        <summary onclick="event.preventDefault();event.stopPropagation();const d=this.parentElement;d.open=!d.open;window.G.openHistoryIds=window.G.openHistoryIds||new Set();if(d.open){window.G.openHistoryIds.add('${p.id}');}else{window.G.openHistoryIds.delete('${p.id}');}" style="font-size:10px;font-weight:700;color:#9C7A5A;cursor:pointer;list-style:none;display:flex;align-items:center;gap:4px">📋 歷史價格（${p.priceHistory.length}筆）</summary>
         <div style="margin-top:6px;display:flex;flex-direction:column;gap:3px">
           ${[...p.priceHistory].reverse().map((h,ri)=>{const i=p.priceHistory.length-1-ri;return`<div style="display:flex;justify-content:space-between;align-items:center;font-size:10px;padding:4px 8px;background:#FAF8F5;border-radius:6px"><span style="color:#9C7A5A">${h.date}${h.trip?" · "+h.trip:""}</span><span style="color:#3D2010;font-weight:700">${cur?.symbol||"₩"}${(h.krw||0).toLocaleString()} → NT$${(h.price||0).toLocaleString()}</span><button data-pid="${p.id}" data-idx="${i}" onclick="deletePriceHistory(this.dataset.pid,parseInt(this.dataset.idx))" style="background:none;border:none;cursor:pointer;color:#F1948A;font-size:13px;padding:0 2px;line-height:1">✕</button></div>`;}).join("")}
         </div>
@@ -7673,6 +7956,30 @@ window.swUpdate = function(){
     <div id="stock-plan-content"></div>
   </div>
 </div>
+
+<!-- 行銷活動 Modal -->
+<div id="modal-promo-groups" class="modal-overlay" style="display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,0.45);align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
+  <div style="background:white;border-radius:20px;width:100%;max-width:560px;padding:24px;margin:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 style="margin:0;font-size:16px;font-weight:900;color:#3D2010">🎯 行銷活動總覽</h3>
+      <button onclick="document.getElementById('modal-promo-groups').style.display='none'" style="font-size:24px;color:#9C7A5A;background:none;border:none;cursor:pointer">×</button>
+    </div>
+    <div style="font-size:11px;color:#9C7A5A;margin-bottom:14px">同一個「活動群組」名稱的商品，喊單時可以互相混搭口味。這裡列出目前有設定活動群組的所有商品。</div>
+    <div style="border:1.5px dashed #D8C4A0;border-radius:12px;padding:12px;margin-bottom:18px;background:#FFFDF8;display:flex;gap:8px;align-items:center">
+      <span style="font-size:16px;flex-shrink:0">✨</span>
+      <input type="text" id="pg-new-group-name" placeholder="輸入新活動群組名稱，例如：洋芋片系列2+1" onkeydown="if(event.key==='Enter'){event.preventDefault();pgStartNewGroup();}" style="flex:1;font-size:12px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:8px 12px;outline:none;box-sizing:border-box"/>
+      <button onclick="pgStartNewGroup()" style="background:#C5A880;color:white;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;white-space:nowrap">建立</button>
+    </div>
+    <div id="promo-groups-content"></div>
+  </div>
+</div>
+
+<!-- 圖片放大檢視 Modal -->
+<div id="modal-img-lightbox" class="modal-overlay" onclick="document.getElementById('modal-img-lightbox').style.display='none'" style="display:none;position:fixed;inset:0;z-index:99;background:rgba(0,0,0,0.8);align-items:center;justify-content:center;padding:20px">
+  <img id="img-lightbox-content" src="" style="max-width:100%;max-height:100%;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,0.5)"/>
+  <button onclick="document.getElementById('modal-img-lightbox').style.display='none'" style="position:fixed;top:20px;right:20px;font-size:28px;color:white;background:rgba(0,0,0,0.4);border:none;border-radius:50%;width:40px;height:40px;cursor:pointer">×</button>
+</div>
+
 
 <!-- LINE 出貨通知 Modal -->
 <div id="modal-line-notify" class="modal-overlay" style="display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;padding:20px">
