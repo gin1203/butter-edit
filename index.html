@@ -285,6 +285,7 @@ body.live-mode .hide-live { display: none !important; }
         <button class="calc-ch-btn" data-ch="BUTTER" onclick="calcSelectChannel(this,'BUTTER')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧈 BUTTER</button>
         <button class="calc-ch-btn" data-ch="新世界/樂天百貨" onclick="calcSelectChannel(this,'新世界/樂天百貨')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏢 百貨/免稅</button>
         <button class="calc-ch-btn" data-ch="廣藏市場" onclick="calcSelectChannel(this,'廣藏市場')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏮 廣藏市場</button>
+        <button class="calc-ch-btn" data-ch="藥局" onclick="calcSelectChannel(this,'藥局')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">💊 藥局</button>
         <button class="calc-ch-btn" data-ch="其他" onclick="calcSelectChannel(this,'其他')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">📦 其他</button>
       </div>
     </div>
@@ -962,6 +963,7 @@ body.live-mode .hide-live { display: none !important; }
         <button class="ep-ch-btn" data-ch="BUTTER" onclick="epSelectChannel(this,'BUTTER')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧈 BUTTER</button>
         <button class="ep-ch-btn" data-ch="百貨/免稅" onclick="epSelectChannel(this,'百貨/免稅')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 百貨/免稅</button>
         <button class="ep-ch-btn" data-ch="廣藏市場" onclick="epSelectChannel(this,'廣藏市場')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧡 廣藏市場</button>
+        <button class="ep-ch-btn" data-ch="藥局" onclick="epSelectChannel(this,'藥局')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">💊 藥局</button>
         <button class="ep-ch-btn" data-ch="其他" onclick="epSelectChannel(this,'其他')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">📦 其他</button>
       </div>
     </div>
@@ -1306,6 +1308,7 @@ body.live-mode .hide-live { display: none !important; }
         <button class="qa-ch-btn" data-ch="BUTTER" onclick="qaSelectChannel(this,'BUTTER')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧈 BUTTER</button>
         <button class="qa-ch-btn" data-ch="新世界/樂天百貨" onclick="qaSelectChannel(this,'新世界/樂天百貨')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏢 百貨/免稅</button>
         <button class="qa-ch-btn" data-ch="廣藏市場" onclick="qaSelectChannel(this,'廣藏市場')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏮 廣藏市場</button>
+        <button class="qa-ch-btn" data-ch="藥局" onclick="qaSelectChannel(this,'藥局')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">💊 藥局</button>
         <button class="qa-ch-btn" data-ch="其他" onclick="qaSelectChannel(this,'其他')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">📦 其他</button>
       </div>
     </div>
@@ -2346,7 +2349,8 @@ const SUBCAT_MAP = {
     {key:"彩妝",    label:"💄 彩妝",          kw:["唇膏","口紅","粉底","氣墊","眼影","睫毛","腮紅","修容","highlight"]},
     {key:"香水",    label:"🌸 香氛/香水",    kw:["香水","perfume","香氛","body mist","身體噴霧"]},
     {key:"身體",    label:"🧴 身體保養",     kw:["身體乳","body lotion","hand cream","護手","沐浴","浴鹽"]},
-    {key:"痘痘",    label:"🩹 痘痘貼/藥局",  kw:["痘痘貼","痘貼","粉刺","黑頭","導出液","藥局","保健","維他命","膠原蛋白"]},
+    {key:"痘痘",    label:"🩹 痘痘貼/藥局",  kw:["痘痘貼","痘貼","粉刺","黑頭","導出液","藥局","保健","維他命","膠原蛋白","眼藥水","隱形眼鏡","滴眼液","人工淚液"]},
+    {key:"美容儀器",label:"🔌 美容儀器",     kw:["美容儀","導入儀","導出儀","booster","microcurrent","微電流","音波儀","筋膜儀","按摩儀","脫毛儀","洗臉機","潔顏儀","洗顏機","led光療","光療儀","age-r","medicube"]},
   ],
   // 大創子分類
   daiso: [
@@ -2609,6 +2613,7 @@ window.openModal=function(id,data){
       document.getElementById("ep-twprice").value=data.twPrice||"";
       document.getElementById("ep-rival").value=data.rivalPrice||"";
       window.G.epSpecsList=[...(data.specs||[])];
+      window.G.epSpecImages=(window.G.epSpecsList||[]).map((s,i)=>(data.specImages||[])[i]||"");
       epRenderSpecs();
       document.getElementById("ep-aliases").value=(data.aliases||[]).join(",");
       document.getElementById("ep-note").value=data.note||"";
@@ -2787,7 +2792,16 @@ window.openModal=function(id,data){
       if(specArea&&specBtns){
         if(specs.length>0){
           specArea.style.display="block";
-          specBtns.innerHTML=specs.map(s=>`<button onclick="moSelectSpec('${s}',this)" style="padding:6px 14px;border-radius:8px;font-size:13px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">${s}</button>`).join("");
+          specBtns.innerHTML=specs.map((s,i)=>{
+            const img=(p?.specImages||[])[i]||"";
+            const imgHtml=img
+              ?`<img src="${img}" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:8px"/>`
+              :`<span style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:20px;color:#C5A880">📐</span>`;
+            return `<button onclick="moSelectSpec('${s}',this)" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px;border-radius:12px;font-size:13px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer;width:84px">
+              <span style="width:68px;height:68px;border-radius:8px;background:#FAF8F5;overflow:hidden;flex-shrink:0">${imgHtml}</span>
+              <span>${s}</span>
+            </button>`;
+          }).join("");
           // 只有一個規格選項時自動選取
           if(specs.length===1){
             const firstBtn=specBtns.querySelector("button");
@@ -3124,13 +3138,22 @@ window.epRenderSpecs=function(){
   const box=document.getElementById("ep-specs-chips");
   if(!box)return;
   const list=window.G.epSpecsList||[];
+  window.G.epSpecImages=window.G.epSpecImages||[];
   if(!list.length){
     box.innerHTML='<span style="font-size:12px;color:#C5A880;font-style:italic;padding:4px">尚未新增規格/口味</span>';
     return;
   }
   box.innerHTML=list.map((s,i)=>{
     const esc=String(s).replace(/"/g,"&quot;");
-    return `<span data-idx="${i}" onclick="epEditSpec(this)" style="display:inline-flex;align-items:center;gap:5px;background:white;border:1px solid #D8C4A0;border-radius:99px;padding:5px 6px 5px 12px;font-size:13px;color:#3D2010;cursor:pointer">
+    const img=window.G.epSpecImages[i]||"";
+    const thumb=img
+      ? `<span style="width:22px;height:22px;border-radius:6px;flex-shrink:0;position:relative;display:inline-block">
+          <img onclick="event.stopPropagation();epSpecImgPick(${i})" src="${img}" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:6px;cursor:pointer"/>
+          <button onclick="event.stopPropagation();epSpecImgClear(${i})" title="移除照片" style="position:absolute;top:-6px;right:-6px;width:14px;height:14px;border-radius:50%;background:#C0392B;color:white;border:none;font-size:9px;line-height:1;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center">×</button>
+        </span>`
+      : `<span onclick="event.stopPropagation();epSpecImgPick(${i})" style="width:22px;height:22px;border-radius:6px;background:#F5EDE0;flex-shrink:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:12px">📷</span>`;
+    return `<span data-idx="${i}" onclick="epEditSpec(this)" style="display:inline-flex;align-items:center;gap:6px;background:white;border:1px solid #D8C4A0;border-radius:99px;padding:5px 6px 5px 6px;font-size:13px;color:#3D2010;cursor:pointer">
+      ${thumb}
       <span class="ep-spec-text">${esc}</span>
       <button onclick="event.stopPropagation();epRemoveSpec(${i})" style="background:#F5EDE0;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;color:#9C7A5A;cursor:pointer;line-height:1;padding:0">×</button>
     </span>`;
@@ -3140,12 +3163,41 @@ window.epAddSpec=function(val){
   val=(val||"").trim();
   if(!val)return;
   window.G.epSpecsList=window.G.epSpecsList||[];
+  window.G.epSpecImages=window.G.epSpecImages||[];
   window.G.epSpecsList.push(val);
+  window.G.epSpecImages.push("");
   epRenderSpecs();
 };
 window.epRemoveSpec=function(idx){
   window.G.epSpecsList.splice(idx,1);
+  if(window.G.epSpecImages)window.G.epSpecImages.splice(idx,1);
   epRenderSpecs();
+};
+// 每個規格的照片：點縮圖/相機圖示 → 觸發隱藏的檔案選取 → 壓縮後存進 epSpecImages[idx]
+window.epSpecImgClear=function(idx){
+  window.G.epSpecImages=window.G.epSpecImages||[];
+  window.G.epSpecImages[idx]="";
+  epRenderSpecs();
+  showToast("已移除規格照片","success");
+};
+window.epSpecImgPick=function(idx){
+  let input=document.getElementById("ep-spec-img-input");
+  if(!input){
+    input=document.createElement("input");
+    input.type="file";input.accept="image/*";input.id="ep-spec-img-input";input.style.display="none";
+    document.body.appendChild(input);
+  }
+  input.onchange=async function(){
+    const file=input.files[0];if(!file)return;
+    showToast("壓縮圖片中…","success");
+    const b64=await compressImg(file,300,0.7);
+    window.G.epSpecImages=window.G.epSpecImages||[];
+    window.G.epSpecImages[idx]=b64;
+    epRenderSpecs();
+    input.value="";
+    showToast("規格照片已更新","success");
+  };
+  input.click();
 };
 window.epEditSpec=function(chipEl){
   const idx=parseInt(chipEl.dataset.idx,10);
@@ -3680,13 +3732,16 @@ window.saveEditProd=async function(){
   const newCatKey=window.G.editCatKey||m.catKey||"food";
   const newCatObj=CATS.find(x=>x.key===newCatKey)||CATS[0];
   const newFlags=epGetFlags();
-  const newSpecs=(window.G.epSpecsList||[]).map(s=>String(s).trim()).filter(Boolean);
+  const rawSpecs=window.G.epSpecsList||[];
+  const rawSpecImages=window.G.epSpecImages||[];
+  const newSpecs=[];const newSpecImages=[];
+  rawSpecs.forEach((s,i)=>{const t=String(s).trim();if(t){newSpecs.push(t);newSpecImages.push(rawSpecImages[i]||"");}});
   const newAliases=(document.getElementById("ep-aliases")?.value.trim()||"").split(",").map(s=>s.trim()).filter(Boolean);
   const newNote=document.getElementById("ep-note")?.value.trim()||"";
   const originalAmt=window.G.epPromoOriginal||fa;
   const promoDivisor=window.G.epPromoDivisor||null;
   const promoGroup=document.getElementById("ep-promo-group")?.value.trim()||"";
-  const upd={name,foreignAmount:fa,originalAmount:originalAmt,promoDivisor,promoGroup,beforeTax,afterTax,finalPrice:price,profit,margin,twPrice,rivalPrice,url,specs:newSpecs,aliases:newAliases,note:newNote,catKey:newCatKey,category:newCatObj.label,emoji:newCatObj.emoji,flags:newFlags,channel:window.G.editChannel||""};
+  const upd={name,foreignAmount:fa,originalAmount:originalAmt,promoDivisor,promoGroup,beforeTax,afterTax,finalPrice:price,profit,margin,twPrice,rivalPrice,url,specs:newSpecs,specImages:newSpecImages,aliases:newAliases,note:newNote,catKey:newCatKey,category:newCatObj.label,emoji:newCatObj.emoji,flags:newFlags,channel:window.G.editChannel||""};
   if(window.G.editPhoto===null){/* 不動圖片 */}
   else if(window.G.editPhoto===""){upd.photo="";upd.photoPos="50% 50%";}
   else{
@@ -4371,8 +4426,9 @@ window.exportProductCSV=function(){
 };
 
 window.exportShippingCSV=function(){
-  const{orders,products,invSearch}=window.G;
-  let filtered=invSearch?orders.filter(o=>{const s=invSearch.toLowerCase();return(o.communityName||"").toLowerCase().includes(s)||(o.lineName||"").toLowerCase().includes(s)||(o.productName||"").toLowerCase().includes(s);}):orders;
+  const{products,invSearch}=window.G;
+  const tripOrders=getTripOrders();
+  let filtered=invSearch?tripOrders.filter(o=>{const s=invSearch.toLowerCase();return(o.communityName||"").toLowerCase().includes(s)||(o.lineName||"").toLowerCase().includes(s)||(o.productName||"").toLowerCase().includes(s);}):tripOrders;
   if(!filtered.length){showToast("沒有記錄可匯出","warning");return;}
   const bMap={};
   filtered.forEach(o=>{
@@ -4722,7 +4778,7 @@ window.renderPromoGroups=function(){
     const reallyOpen=window.G.pgGroupOpenMap?.has(g)?window.G.pgGroupOpenMap.get(g):!collapsedByDefault;
     const detailsId=`pg-details-${gi}`;
     const itemRows=items.map(p=>`<div onclick="window.G.cameFromPromoGroups=true;document.getElementById('modal-promo-groups').style.display='none';openEditProd('${p.id}')" style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:#F5EDE0;border-radius:9px;padding:8px 12px;transition:background .15s;cursor:pointer" onmouseover="this.style.background='#EFE0C4'" onmouseout="this.style.background='#F5EDE0'">
-          <span style="font-size:12px;color:#3D2010"><span style="color:#C5A880;font-weight:700">${p.id}</span> · ${p.name.replace(/（[1-4][+＋][1-4]）/g,"").trim()}${(p.specs&&p.specs.length>0)?` <span style="color:#9C7A5A;font-size:11px">📐 ${Array.isArray(p.specs)?p.specs.join("、"):p.specs}</span>`:""}</span>
+          <span style="font-size:12px;color:#3D2010"><span style="color:#C5A880;font-weight:700">${p.id}</span> · ${p.name.replace(/（[1-4][+＋][1-4]）/g,"").trim()}${(p.specs&&p.specs.length>0)?` <span style="color:#9C7A5A;font-size:11px">${Array.isArray(p.specs)?p.specs.join("、"):p.specs}</span>`:""}</span>
           <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
             <span style="font-size:11px;color:#A08060;font-weight:600">NT$${(p.finalPrice||0).toLocaleString()}</span>
             <button onclick="event.stopPropagation();removeFromPromoGroup('${p.id}')" title="移出這個群組" style="width:20px;height:20px;border-radius:50%;background:#FDEDEC;border:1px solid #F1948A;color:#C0392B;font-size:12px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;flex-shrink:0">×</button>
@@ -4746,7 +4802,7 @@ window.renderPromoGroups=function(){
         <div style="flex-shrink:0">
           ${groupImg
             ?`<div style="position:relative;display:inline-block">
-                <img src="${groupImg}" onclick="document.getElementById('img-lightbox-content').src=this.src;document.getElementById('modal-img-lightbox').style.display='flex'" style="width:110px;height:auto;border-radius:10px;border:1px solid #E8D5B0;display:block;cursor:zoom-in"/>
+                <img src="${groupImg}" onclick="lbOpen(this.src)" style="width:110px;height:auto;border-radius:10px;border:1px solid #E8D5B0;display:block;cursor:zoom-in"/>
                 <div style="position:absolute;top:4px;right:4px;display:flex;gap:3px">
                   <label onclick="event.stopPropagation()" title="更換圖片" style="width:20px;height:20px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.92);border-radius:50%;cursor:pointer;font-size:9px;box-shadow:0 1px 4px rgba(0,0,0,0.25)">✏️<input type="file" accept="image/*" style="display:none" onchange="pgUploadImage(this,'${gDocId}')"/></label>
                   <button onclick="event.stopPropagation();pgRemoveImage('${gDocId}')" title="移除圖片" style="width:20px;height:20px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.92);border:none;border-radius:50%;cursor:pointer;color:#C0392B;font-size:11px;font-weight:900;padding:0;box-shadow:0 1px 4px rgba(0,0,0,0.25)">×</button>
@@ -7975,10 +8031,89 @@ window.swUpdate = function(){
 </div>
 
 <!-- 圖片放大檢視 Modal -->
-<div id="modal-img-lightbox" class="modal-overlay" onclick="document.getElementById('modal-img-lightbox').style.display='none'" style="display:none;position:fixed;inset:0;z-index:99;background:rgba(0,0,0,0.8);align-items:center;justify-content:center;padding:20px">
-  <img id="img-lightbox-content" src="" style="max-width:100%;max-height:100%;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,0.5)"/>
-  <button onclick="document.getElementById('modal-img-lightbox').style.display='none'" style="position:fixed;top:20px;right:20px;font-size:28px;color:white;background:rgba(0,0,0,0.4);border:none;border-radius:50%;width:40px;height:40px;cursor:pointer">×</button>
+<div id="modal-img-lightbox" class="modal-overlay" onclick="lbBgClick(event)" style="display:none;position:fixed;inset:0;z-index:99;background:rgba(0,0,0,0.8);align-items:center;justify-content:center;padding:20px;overflow:hidden">
+  <img id="img-lightbox-content" src="" style="max-width:100%;max-height:100%;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,0.5);touch-action:none;will-change:transform" ontouchstart="lbTouchStart(event)" ontouchmove="lbTouchMove(event)" ontouchend="lbTouchEnd(event)"/>
+  <button onclick="event.stopPropagation();lbClose()" style="position:fixed;top:20px;right:20px;font-size:28px;color:white;background:rgba(0,0,0,0.4);border:none;border-radius:50%;width:40px;height:40px;cursor:pointer;z-index:2">×</button>
 </div>
+<script>
+// ---- 圖片放大檢視：僅在此 Modal 內生效的手指縮放/拖曳，不影響全站縮放設定 ----
+window.G=window.G||{};
+window.G.lb={scale:1,tx:0,ty:0,baseScale:1,baseTx:0,baseTy:0,startX:0,startY:0,startDist:0,pinching:false,moved:false,lastTap:0};
+window.lbApply=function(){
+  const img=document.getElementById("img-lightbox-content");
+  if(!img)return;
+  const s=window.G.lb;
+  img.style.transform=`translate(${s.tx}px,${s.ty}px) scale(${s.scale})`;
+};
+window.lbOpen=function(src){
+  const s=window.G.lb;
+  s.scale=1;s.tx=0;s.ty=0;
+  document.getElementById("img-lightbox-content").src=src;
+  lbApply();
+  document.getElementById("modal-img-lightbox").style.display="flex";
+};
+window.lbClose=function(){
+  document.getElementById("modal-img-lightbox").style.display="none";
+  const s=window.G.lb;
+  s.scale=1;s.tx=0;s.ty=0;
+  lbApply();
+};
+window.lbBgClick=function(e){
+  if(e.target&&e.target.id==="img-lightbox-content")return;
+  lbClose();
+};
+function lbDist(t1,t2){return Math.hypot(t2.pageX-t1.pageX,t2.pageY-t1.pageY);}
+window.lbTouchStart=function(e){
+  const s=window.G.lb;
+  if(e.touches.length===2){
+    e.preventDefault();
+    s.pinching=true;s.moved=true;
+    s.startDist=lbDist(e.touches[0],e.touches[1]);
+    s.baseScale=s.scale;s.baseTx=s.tx;s.baseTy=s.ty;
+  } else if(e.touches.length===1){
+    s.pinching=false;s.moved=false;
+    s.startX=e.touches[0].pageX;s.startY=e.touches[0].pageY;
+    s.baseTx=s.tx;s.baseTy=s.ty;
+    if(s.scale>1)e.preventDefault();
+  }
+};
+window.lbTouchMove=function(e){
+  const s=window.G.lb;
+  if(e.touches.length===2){
+    e.preventDefault();
+    const dist=lbDist(e.touches[0],e.touches[1]);
+    let newScale=s.baseScale*(dist/s.startDist);
+    newScale=Math.max(1,Math.min(4,newScale));
+    s.scale=newScale;
+    lbApply();
+  } else if(e.touches.length===1&&s.scale>1){
+    e.preventDefault();
+    const dx=e.touches[0].pageX-s.startX;
+    const dy=e.touches[0].pageY-s.startY;
+    if(Math.abs(dx)>3||Math.abs(dy)>3)s.moved=true;
+    s.tx=s.baseTx+dx;s.ty=s.baseTy+dy;
+    lbApply();
+  }
+};
+window.lbTouchEnd=function(e){
+  const s=window.G.lb;
+  if(e.touches.length>0)return;
+  if(s.scale<1.02){s.scale=1;s.tx=0;s.ty=0;lbApply();}
+  if(!s.moved){
+    const now=Date.now();
+    if(now-s.lastTap<300){
+      // 雙擊：在目前 1x / 2x 之間切換
+      if(s.scale>1){s.scale=1;s.tx=0;s.ty=0;}else{s.scale=2;}
+      lbApply();
+      s.lastTap=0;
+    } else {
+      s.lastTap=now;
+      if(s.scale<=1)lbClose();
+    }
+  }
+  s.pinching=false;
+};
+</script>
 
 
 <!-- LINE 出貨通知 Modal -->
