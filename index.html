@@ -286,6 +286,7 @@ body.live-mode .hide-live { display: none !important; }
         <button class="calc-ch-btn" data-ch="新世界/樂天百貨" onclick="calcSelectChannel(this,'新世界/樂天百貨')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏢 百貨/免稅</button>
         <button class="calc-ch-btn" data-ch="廣藏市場" onclick="calcSelectChannel(this,'廣藏市場')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏮 廣藏市場</button>
         <button class="calc-ch-btn" data-ch="藥局" onclick="calcSelectChannel(this,'藥局')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">💊 藥局</button>
+        <button class="calc-ch-btn" data-ch="品牌官網/直營門市" onclick="calcSelectChannel(this,'品牌官網/直營門市')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 品牌官網/直營門市</button>
         <button class="calc-ch-btn" data-ch="其他" onclick="calcSelectChannel(this,'其他')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">📦 其他</button>
       </div>
     </div>
@@ -969,6 +970,7 @@ body.live-mode .hide-live { display: none !important; }
         <button class="ep-ch-btn" data-ch="百貨/免稅" onclick="epSelectChannel(this,'百貨/免稅')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 百貨/免稅</button>
         <button class="ep-ch-btn" data-ch="廣藏市場" onclick="epSelectChannel(this,'廣藏市場')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧡 廣藏市場</button>
         <button class="ep-ch-btn" data-ch="藥局" onclick="epSelectChannel(this,'藥局')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">💊 藥局</button>
+        <button class="ep-ch-btn" data-ch="品牌官網/直營門市" onclick="epSelectChannel(this,'品牌官網/直營門市')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 品牌官網/直營門市</button>
         <button class="ep-ch-btn" data-ch="其他" onclick="epSelectChannel(this,'其他')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">📦 其他</button>
       </div>
     </div>
@@ -1323,6 +1325,7 @@ body.live-mode .hide-live { display: none !important; }
         <button class="qa-ch-btn" data-ch="新世界/樂天百貨" onclick="qaSelectChannel(this,'新世界/樂天百貨')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏢 百貨/免稅</button>
         <button class="qa-ch-btn" data-ch="廣藏市場" onclick="qaSelectChannel(this,'廣藏市場')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏮 廣藏市場</button>
         <button class="qa-ch-btn" data-ch="藥局" onclick="qaSelectChannel(this,'藥局')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">💊 藥局</button>
+        <button class="qa-ch-btn" data-ch="品牌官網/直營門市" onclick="qaSelectChannel(this,'品牌官網/直營門市')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 品牌官網/直營門市</button>
         <button class="qa-ch-btn" data-ch="其他" onclick="qaSelectChannel(this,'其他')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">📦 其他</button>
       </div>
     </div>
@@ -2367,7 +2370,7 @@ const SUBCAT_MAP = {
   food: [
     {key:"海苔",    label:"🌿 海苔/乾貨",    kw:["海苔","魚乾","魷魚","乾貨"]},
     {key:"調味",    label:"🧂 調味料/醬料",  kw:["醬","調味","辣椒","味噌","芥末","醋","食鹽","海鹽","岩鹽","橄欖油","麻油","香油","砂糖包"]},
-    {key:"餅乾",    label:"🍪 餅乾/零食",    kw:["餅乾","洋芋片","薯片","爆米花","糖果","咖啡糖","軟糖","脆片","貝果","堅果脆","蝴蝶餅","扭結餅","蝴蝶酥","千層酥","焦糖餅","雪花酥","雪花","威化","oreo","奧利奧","wafer","pretzel","gummy","chip","cookie","snack","涼糖","薄荷糖","薄荷涼糖","硬糖","喉糖","巧克力球","chocolate ball","糖"]},
+    {key:"餅乾",    label:"🍪 餅乾/零食",    kw:["餅乾","洋芋片","薯片","爆米花","糖果","咖啡糖","軟糖","脆片","貝果","堅果脆","蝴蝶餅","扭結餅","蝴蝶酥","千層酥","焦糖餅","雪花酥","雪花","威化","oreo","奧利奧","wafer","pretzel","gummy","chip","cookie","snack","涼糖","薄荷糖","薄荷涼糖","硬糖","喉糖","巧克力球","巧克力棒","chocolate ball","chocolate bar","糖"]},
     {key:"泡麵",    label:"🍜 泡麵/麵食",    kw:["泡麵","拉麵","炒麵","炒碼麵","醬麵","炸醬麵","拌麵","湯麵","涼麵","冷麵","乾麵","油麵","刀削麵","蕎麥麵","蒟蒻麵","寬麵","速食麵","即食麵","杯麵","年糕麵","冬粉","烏龍","河粉","義大利麵","義大利麪","pasta","spaghetti","noodle","짬뽕","jjamppong","순면","라면"]},
     {key:"飲料",    label:"🧃 飲料",          kw:["飲料","果汁","咖啡","茶飲","汽水","能量飲","乳酸菌飲","優酪乳","蒟蒻飲"]},
     {key:"沖泡",    label:"🥤 沖泡/代餐",    kw:["沖泡","搖搖飲","蛋白飲","高蛋白","蛋白粉","乳清","奶昔粉","代餐","益生菌粉","酵素粉","shake","protein","smoothie mix"]},
