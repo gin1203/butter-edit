@@ -372,6 +372,7 @@ body.live-mode .hide-live { display: none !important; }
       <button onclick="batchDeleteProducts()" style="font-size:11px;background:#FDEDEC;color:#C0392B;border:1px solid #F1948A;padding:5px 10px;border-radius:8px;font-weight:700;cursor:pointer">🗑️ 批次刪除</button>
     </div>
   </div>
+  <button id="list-archived-toggle" onclick="toggleListShowArchived()" style="width:100%;font-size:11px;font-weight:700;padding:7px 10px;border-radius:8px;border:1px solid #BCAAA4;background:#EFEBE9;color:#6D4C41;cursor:pointer;margin-bottom:8px">📦 查看已封存商品</button>
   <div id="cur-filters" class="scrollbar-none" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:6px"></div>
   <div id="cat-filters" class="scrollbar-none" style="display:flex;flex-wrap:wrap;gap:6px;padding-bottom:4px;margin-bottom:6px"></div>
   <div id="subcat-filters" class="scrollbar-none" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;min-height:0"></div>
@@ -707,17 +708,20 @@ body.live-mode .hide-live { display: none !important; }
       </div>
       <div id="mo-trip-buttons" style="display:none;margin-top:8px;display:none;flex-wrap:wrap;gap:5px"></div>
     </div>
-    <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">數量</label>
-    <div style="display:flex;align-items:center;gap:0;margin-bottom:14px;border:1px solid #E8D5B0;border-radius:10px;overflow:hidden;background:#FAF8F5">
-      <button onclick="moQtyAdj(-1)" style="-webkit-appearance:none;appearance:none;width:48px;height:48px;font-size:22px;font-weight:700;border:none;background:transparent;color:#9C7A5A;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;margin:0">－</button>
-      <input type="text" inputmode="numeric" id="mo-qty" value="1" oninput="moQtyClamp()" style="flex:1;border:none;background:transparent;text-align:center;font-size:20px;font-weight:900;color:#3D2010;outline:none;padding:0"/>
-      <button onclick="moQtyAdj(1)" style="-webkit-appearance:none;appearance:none;width:48px;height:48px;font-size:22px;font-weight:700;border:none;background:transparent;color:#9C7A5A;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;margin:0">＋</button>
+    <div id="mo-qty-section">
+      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">數量</label>
+      <div style="display:flex;align-items:center;gap:0;margin-bottom:14px;border:1px solid #E8D5B0;border-radius:10px;overflow:hidden;background:#FAF8F5">
+        <button onclick="moQtyAdj(-1)" style="-webkit-appearance:none;appearance:none;width:48px;height:48px;font-size:22px;font-weight:700;border:none;background:transparent;color:#9C7A5A;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;margin:0">－</button>
+        <input type="text" inputmode="numeric" id="mo-qty" value="1" oninput="moQtyClamp()" style="flex:1;border:none;background:transparent;text-align:center;font-size:20px;font-weight:900;color:#3D2010;outline:none;padding:0"/>
+        <button onclick="moQtyAdj(1)" style="-webkit-appearance:none;appearance:none;width:48px;height:48px;font-size:22px;font-weight:700;border:none;background:transparent;color:#9C7A5A;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;margin:0">＋</button>
+      </div>
     </div>
     <!-- 規格備註 -->
     <div id="mo-spec-area" style="margin-bottom:12px;display:none">
-      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">📐 規格／尺寸</label>
+      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">📐 規格／尺寸 <span style="font-weight:400;color:#C5A880">（可複選多個規格一起登記）</span></label>
       <div id="mo-spec-btns" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px"></div>
       <input type="text" id="mo-spec" placeholder="或自行輸入..." style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 14px;font-size:13px;outline:none"/>
+      <div id="mo-multi-spec-list" style="display:none;margin-top:8px;flex-direction:column;gap:6px"></div>
     </div>
     <!-- 喊單類型 -->
     <div style="margin-bottom:12px">
@@ -1778,6 +1782,13 @@ function calcCost(amt,cur){
     afterTax:Math.round(amt*rate*(1-tax)*(1+cardRebate-cardFee)*10)/10
   };
 }
+// 訂單的「單件成本」：如果這筆訂單已經標記買到、有凍結成本快照，就用那個時間點的真實成本；
+// 否則（還沒買到、或是舊訂單沒有快照）才退回用「現在」的匯率/成本去估算。
+window.getOrderUnitCost=function(o,prod){
+  if(o&&typeof o.costSnapshot==="number")return o.costSnapshot;
+  if(!prod)return 0;
+  return calcCost(prod.foreignAmount||prod.krw||0,prod.currency||"KRW").afterTax;
+};
 window.calcCost=calcCost;
 function snap(raw,steps){for(const s of steps)if(s>=raw)return s;return Math.ceil(raw/100)*100-1;}
 function suggestPrice(at,cat,flags,twPrice,rawAmt){
@@ -1982,6 +1993,24 @@ function makeFileList(file){
   return dt.files;
 }
 async function handlePastedImage(file){
+  // 0. 規格照片貼上目標優先（點規格的📷之後可以直接 Ctrl+V 貼上剪貼簿圖片）
+  if(window.G.specPasteTarget){
+    const target=window.G.specPasteTarget;
+    window.G.specPasteTarget=null;
+    showToast("壓縮圖片中…","success");
+    const b64=await compressImg(file,640,0.8);
+    if(target.type==="ep"){
+      window.G.epSpecImages=window.G.epSpecImages||[];
+      window.G.epSpecImages[target.idx]=b64;
+      if(typeof epRenderSpecs==="function")epRenderSpecs();
+    } else if(target.type==="qa"){
+      window.G.qaSpecImages=window.G.qaSpecImages||[];
+      window.G.qaSpecImages[target.idx]=b64;
+      if(typeof qaRenderSpecs==="function")qaRenderSpecs();
+    }
+    showToast("規格照片已更新！","success");
+    return;
+  }
   // 判斷目前開啟的是哪個頁面/modal，依優先順序注入
   const isVisible=id=>{const el=document.getElementById(id);return el&&el.getBoundingClientRect().height>0&&el.style.display!=="none";};
 
@@ -2150,7 +2179,7 @@ window.duplicateProduct=async function(id){
   const p=window.G.products.find(x=>x.id===id);
   if(!p)return;
   const newId=genId(p.catKey||"other", p.currency||"KRW");
-  const newProd={...p, id:newId, name:p.name+" （複製）", createdAt:Date.now()};
+  const newProd={...p, id:newId, name:p.name+" （複製）", archived:false, createdAt:Date.now()};
   try{
     await fbSet("products",newId,newProd);
     showToast("✅ 已複製！請點修改更換名稱和圖片","success");
@@ -2337,7 +2366,8 @@ const SUBCAT_MAP = {
   // 食品子分類
   food: [
     {key:"海苔",    label:"🌿 海苔/乾貨",    kw:["海苔","魚乾","魷魚","乾貨"]},
-    {key:"餅乾",    label:"🍪 餅乾/零食",    kw:["餅乾","洋芋片","薯片","爆米花","糖果","咖啡糖","軟糖","脆片","貝果","堅果脆","蝴蝶餅","扭結餅","蝴蝶酥","千層酥","焦糖餅","雪花酥","雪花","威化","oreo","奧利奧","wafer","pretzel","gummy","chip","cookie","snack"]},
+    {key:"調味",    label:"🧂 調味料/醬料",  kw:["醬","調味","辣椒","味噌","芥末","醋","食鹽","海鹽","岩鹽","橄欖油","麻油","香油","砂糖包"]},
+    {key:"餅乾",    label:"🍪 餅乾/零食",    kw:["餅乾","洋芋片","薯片","爆米花","糖果","咖啡糖","軟糖","脆片","貝果","堅果脆","蝴蝶餅","扭結餅","蝴蝶酥","千層酥","焦糖餅","雪花酥","雪花","威化","oreo","奧利奧","wafer","pretzel","gummy","chip","cookie","snack","涼糖","薄荷糖","薄荷涼糖","硬糖","喉糖","巧克力球","chocolate ball","糖"]},
     {key:"泡麵",    label:"🍜 泡麵/麵食",    kw:["泡麵","拉麵","炒麵","炒碼麵","醬麵","炸醬麵","拌麵","湯麵","涼麵","冷麵","乾麵","油麵","刀削麵","蕎麥麵","蒟蒻麵","寬麵","速食麵","即食麵","杯麵","年糕麵","冬粉","烏龍","河粉","義大利麵","義大利麪","pasta","spaghetti","noodle","짬뽕","jjamppong","순면","라면"]},
     {key:"飲料",    label:"🧃 飲料",          kw:["飲料","果汁","咖啡","茶飲","汽水","能量飲","乳酸菌飲","優酪乳","蒟蒻飲"]},
     {key:"沖泡",    label:"🥤 沖泡/代餐",    kw:["沖泡","搖搖飲","蛋白飲","高蛋白","蛋白粉","乳清","奶昔粉","代餐","益生菌粉","酵素粉","shake","protein","smoothie mix"]},
@@ -2345,7 +2375,6 @@ const SUBCAT_MAP = {
     {key:"果凍",    label:"🍮 果凍/布丁",    kw:["果凍","布丁","jelly","pudding"]},
     {key:"麻糬",    label:"🍡 麻糬/年糕",    kw:["麻糬","年糕","떡","糯米"]},
     {key:"甜點",    label:"🍰 甜點/糕點",    kw:["甜點","蛋糕","布朗尼","杜拜","生巧克力","Q餅","可頌","泡芙","馬卡龍","鬆餅","waffle","cake","杜拜巧克力","派","pie"]},
-    {key:"調味",    label:"🧂 調味料/醬料",  kw:["醬","調味","辣椒","味噌","芥末","醋","食鹽","海鹽","岩鹽","橄欖油","麻油","香油","砂糖包"]},
     {key:"優格",    label:"🥛 優格/乳製品",  kw:["優格","乳酪","起司","牛奶","乳飲","豆漿","優酪"]},
   ],
   // 美妝子分類
@@ -2805,7 +2834,13 @@ window.openModal=function(id,data){
       const specArea=document.getElementById("mo-spec-area");
       const specBtns=document.getElementById("mo-spec-btns");
       const specInput=document.getElementById("mo-spec");
-      if(specInput)specInput.value="";
+      if(specInput){specInput.value="";specInput.style.display="block";}
+      // 重置規格選取狀態
+      window.G.moSpecSel={};
+      const multiList=document.getElementById("mo-multi-spec-list");
+      if(multiList){multiList.style.display="none";multiList.innerHTML="";}
+      const qtySectionReset=document.getElementById("mo-qty-section");
+      if(qtySectionReset)qtySectionReset.style.display="block";
       const specs=p?.specs||[];
       if(specArea&&specBtns){
         if(specs.length>0){
@@ -2815,7 +2850,7 @@ window.openModal=function(id,data){
             const imgHtml=img
               ?`<img onclick="event.stopPropagation();lbOpen('${img}')" src="${img}" draggable="false" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:8px;cursor:zoom-in;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent"/><span style="position:absolute;bottom:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,0.55);color:white;font-size:10px;display:flex;align-items:center;justify-content:center;pointer-events:none">🔍</span>`
               :`<span style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:20px;color:#C5A880">📐</span>`;
-            return `<div class="mo-spec-card" onclick="moSelectSpec('${s}',this)" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px;border-radius:12px;font-size:13px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer;width:84px">
+            return `<div class="mo-spec-card" data-spec="${s.replace(/"/g,"&quot;")}" onclick="moSelectSpec('${s}',this)" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px;border-radius:12px;font-size:13px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer;width:84px">
               <span style="width:68px;height:68px;border-radius:8px;background:#FAF8F5;overflow:hidden;flex-shrink:0;position:relative;display:block">${imgHtml}</span>
               <span>${s}</span>
             </div>`;
@@ -2834,6 +2869,7 @@ window.openModal=function(id,data){
   }
 };
 window.closeModal=function(id){
+  window.G.specPasteTarget=null;
   const el=document.getElementById(id);
   if(id==="modal-eprod"&&window.G.cameFromPromoGroups&&el){
     window.G.cameFromPromoGroups=false;
@@ -3199,6 +3235,7 @@ window.epSpecImgClear=function(idx){
   showToast("已移除規格照片","success");
 };
 window.epSpecImgPick=function(idx){
+  window.G.specPasteTarget={type:"ep",idx};
   let input=document.getElementById("ep-spec-img-input");
   if(!input){
     input=document.createElement("input");
@@ -3208,7 +3245,7 @@ window.epSpecImgPick=function(idx){
   input.onchange=async function(){
     const file=input.files[0];if(!file)return;
     showToast("壓縮圖片中…","success");
-    const b64=await compressImg(file,300,0.7);
+    const b64=await compressImg(file,640,0.8);
     window.G.epSpecImages=window.G.epSpecImages||[];
     window.G.epSpecImages[idx]=b64;
     epRenderSpecs();
@@ -3288,6 +3325,7 @@ window.qaSpecImgClear=function(idx){
   showToast("已移除規格照片","success");
 };
 window.qaSpecImgPick=function(idx){
+  window.G.specPasteTarget={type:"qa",idx};
   let input=document.getElementById("qa-spec-img-input");
   if(!input){
     input=document.createElement("input");
@@ -3297,7 +3335,7 @@ window.qaSpecImgPick=function(idx){
   input.onchange=async function(){
     const file=input.files[0];if(!file)return;
     showToast("壓縮圖片中…","success");
-    const b64=await compressImg(file,300,0.7);
+    const b64=await compressImg(file,640,0.8);
     window.G.qaSpecImages=window.G.qaSpecImages||[];
     window.G.qaSpecImages[idx]=b64;
     qaRenderSpecs();
@@ -3694,6 +3732,29 @@ window.saveProduct=async function(){
   showTab("list");
 };
 
+window.archiveProduct=async function(id){
+  await fbUpd("products",id,{archived:true});
+  showToast("📦 已封存，商品清單裡不會再顯示（歷史訂單/報表都還在）");
+};
+window.unarchiveProduct=async function(id){
+  await fbUpd("products",id,{archived:false});
+  showToast("↩️ 已取消封存，商品清單裡恢復顯示");
+};
+window.toggleListShowArchived=function(){
+  window.G.listShowArchived=!window.G.listShowArchived;
+  const btn=document.getElementById("list-archived-toggle");
+  if(btn){
+    if(window.G.listShowArchived){
+      btn.textContent="↩️ 返回一般商品清單";
+      btn.style.background="#6D4C41";btn.style.color="white";btn.style.borderColor="#6D4C41";
+    } else {
+      btn.textContent="📦 查看已封存商品";
+      btn.style.background="#EFEBE9";btn.style.color="#6D4C41";btn.style.borderColor="#BCAAA4";
+    }
+  }
+  renderList();
+};
+
 window.deleteProduct=async function(id){
   if(!confirm(`確定刪除商品 ${id}？`))return;
   await fbDel("products",id);
@@ -4017,17 +4078,75 @@ window.batchDeleteCustomers=async function(){
 window.G.moOrderType="onsite"; // 預設現場購買
 
 window.moSelectSpec=function(spec,btn){
-  const input=document.getElementById("mo-spec");
-  if(input){
-    if(input.value===spec){
-      input.value="";
-      btn.style.background="white";btn.style.color="#9C7A5A";btn.style.borderColor="#E8D5B0";
-    } else {
-      input.value=spec;
-      document.querySelectorAll("#mo-spec-btns .mo-spec-card").forEach(b=>{b.style.background="white";b.style.color="#9C7A5A";b.style.borderColor="#E8D5B0";});
-      btn.style.background="#5C3A1E";btn.style.color="white";btn.style.borderColor="#5C3A1E";
-    }
+  window.G.moSpecSel=window.G.moSpecSel||{};
+  const sel=window.G.moSpecSel;
+  if(spec in sel){
+    delete sel[spec];
+  } else {
+    // 第一個被選的規格，數量沿用目前的全域數量框；之後新增的規格預設1個
+    const globalQty=parseInt(document.getElementById("mo-qty")?.value)||1;
+    sel[spec]=Object.keys(sel).length===0?globalQty:1;
   }
+  moRenderSpecSelection();
+};
+
+// ── 規格選取狀態渲染：只選 0/1 個時維持原本單選+數量框介面；
+//    選到第 2 個不同規格時，自動切換成「多規格各自數量」清單，不需要額外開關 ──
+window.moRenderSpecSelection=function(){
+  const sel=window.G.moSpecSel||{};
+  const keys=Object.keys(sel);
+  document.querySelectorAll("#mo-spec-btns .mo-spec-card").forEach(card=>{
+    const s=card.dataset.spec;
+    const active=s in sel;
+    card.style.background=active?"#5C3A1E":"white";
+    card.style.color=active?"white":"#9C7A5A";
+    card.style.borderColor=active?"#5C3A1E":"#E8D5B0";
+  });
+  const specInput=document.getElementById("mo-spec");
+  const qtySection=document.getElementById("mo-qty-section");
+  if(keys.length<=1){
+    if(specInput){specInput.value=keys[0]||"";specInput.style.display="block";}
+    if(qtySection)qtySection.style.display="block";
+    if(keys.length===1){
+      const qtyInput=document.getElementById("mo-qty");
+      if(qtyInput)qtyInput.value=sel[keys[0]];
+    }
+    const box=document.getElementById("mo-multi-spec-list");
+    if(box){box.style.display="none";box.innerHTML="";}
+  } else {
+    if(specInput){specInput.value="";specInput.style.display="none";}
+    if(qtySection)qtySection.style.display="none";
+    moRenderMultiSpecList();
+  }
+};
+// 全域數量框調整時，如果目前正好只選了一個規格，同步更新那個規格的數量
+window.moSyncSingleSpecQty=function(){
+  const sel=window.G.moSpecSel||{};
+  const keys=Object.keys(sel);
+  if(keys.length===1)sel[keys[0]]=parseInt(document.getElementById("mo-qty")?.value)||1;
+};
+window.moMultiSpecQtyAdj=function(spec,delta){
+  const sel=window.G.moSpecSel||{};
+  const cur=sel[spec]||1;
+  sel[spec]=Math.max(1,cur+delta);
+  moRenderMultiSpecList();
+};
+window.moRenderMultiSpecList=function(){
+  const box=document.getElementById("mo-multi-spec-list");
+  if(!box)return;
+  const map=window.G.moSpecSel||{};
+  const specs=Object.keys(map);
+  if(!specs.length){box.style.display="none";box.innerHTML="";return;}
+  box.style.display="flex";
+  box.innerHTML=`<div style="font-size:11px;color:#9C7A5A;font-weight:700;margin-bottom:2px">已選 ${specs.length} 種規格，各自設定數量：</div>`+
+    specs.map(s=>`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:6px 10px">
+      <span style="font-size:13px;font-weight:700;color:#3D2010;flex:1">${s}</span>
+      <div style="display:flex;align-items:center;gap:0;border:1px solid #E8D5B0;border-radius:8px;overflow:hidden;background:white">
+        <button onclick="moMultiSpecQtyAdj('${s.replace(/'/g,"\\'")}',-1)" style="width:30px;height:30px;border:none;background:transparent;color:#9C7A5A;font-size:16px;font-weight:700;cursor:pointer">－</button>
+        <span style="width:28px;text-align:center;font-size:13px;font-weight:900;color:#3D2010">${map[s]}</span>
+        <button onclick="moMultiSpecQtyAdj('${s.replace(/'/g,"\\'")}',1)" style="width:30px;height:30px;border:none;background:transparent;color:#9C7A5A;font-size:16px;font-weight:700;cursor:pointer">＋</button>
+      </div>
+    </div>`).join("");
 };
 
 window.moSetType=function(type){
@@ -4220,12 +4339,33 @@ window.addOrder=async function(){
   const tripId=window.G.moSelectedTripId||"";
   const orderType=window.G.moOrderType||"onsite";
   const orderTypeLabel=orderType==="onsite"?"🛍️現場":"📱代買";
-  const spec=document.getElementById("mo-spec")?.value.trim()||"";
-  // 有多個規格選項時，必須選擇規格才能登記
-  const prod2=window.G.products.find(p=>p.id===productId);
-  if(prod2?.specs?.length>1&&!spec){showToast("請先選擇規格！","error");return;}
-  const id="O"+Date.now();
-  await fbSet("orders",id,{productId,productName:cleanProductName(prod.name),productEmoji:prod.emoji,customerId,communityName,lineName,buyerName:communityName||lineName,qty,unitPrice:prod.finalPrice,total:prod.finalPrice*qty,status:"pending",tripId,orderType,spec,purchased:orderType==="onsite",createdAt:Date.now()});
+  const onsiteCost=orderType==="onsite"?calcCost(prod.foreignAmount||prod.krw||0,prod.currency||"KRW").afterTax:null;
+  let totalKinds=0;
+  let lastSpecLabel="";
+
+  const specSel=window.G.moSpecSel||{};
+  const specKeys=Object.keys(specSel);
+  if(specKeys.length>=2){
+    // 一次喊多個規格：每個選中的規格各自用自己設定的數量，各建一筆訂單
+    let idx=0;
+    for(const s of specKeys){
+      const q=specSel[s]||1;
+      const oid="O"+Date.now()+"_s"+(idx++);
+      await fbSet("orders",oid,{productId,productName:cleanProductName(prod.name),productEmoji:prod.emoji,customerId,communityName,lineName,buyerName:communityName||lineName,qty:q,unitPrice:prod.finalPrice,total:prod.finalPrice*q,status:"pending",tripId,orderType,spec:s,purchased:orderType==="onsite",costSnapshot:onsiteCost,createdAt:Date.now()});
+      totalKinds++;
+    }
+    lastSpecLabel=`（${specKeys.join("、")}）`;
+  } else {
+    const spec=specKeys[0]||document.getElementById("mo-spec")?.value.trim()||"";
+    const qtyFinal=specKeys.length===1?(specSel[specKeys[0]]||1):qty;
+    // 有多個規格選項時，必須選擇規格才能登記
+    if(prod?.specs?.length>1&&!spec){showToast("請先選擇規格！","error");return;}
+    const id="O"+Date.now();
+    await fbSet("orders",id,{productId,productName:cleanProductName(prod.name),productEmoji:prod.emoji,customerId,communityName,lineName,buyerName:communityName||lineName,qty:qtyFinal,unitPrice:prod.finalPrice,total:prod.finalPrice*qtyFinal,status:"pending",tripId,orderType,spec,purchased:orderType==="onsite",costSnapshot:onsiteCost,createdAt:Date.now()});
+    totalKinds=1;
+    lastSpecLabel=spec?" ("+spec+")":"";
+  }
+
   // 混搭口味：同一活動下勾選的其他商品，一次登記完成，不用再開一次視窗
   const mixItems=window.G.moMixItems||[];
   let mixIdx=0;
@@ -4233,12 +4373,14 @@ window.addOrder=async function(){
     const sp=window.G.products.find(x=>x.id===item.productId);if(!sp)continue;
     const mixId="O"+Date.now()+"_m"+(mixIdx++);
     const mixSpec=(sp.specs&&sp.specs.length?sp.specs.join(","):"");
-    await fbSet("orders",mixId,{productId:sp.id,productName:cleanProductName(sp.name),productEmoji:sp.emoji,customerId,communityName,lineName,buyerName:communityName||lineName,qty:item.qty,unitPrice:sp.finalPrice,total:sp.finalPrice*item.qty,status:"pending",tripId,orderType,spec:mixSpec,purchased:orderType==="onsite",createdAt:Date.now()});
+    const mixCost=orderType==="onsite"?calcCost(sp.foreignAmount||sp.krw||0,sp.currency||"KRW").afterTax:null;
+    await fbSet("orders",mixId,{productId:sp.id,productName:cleanProductName(sp.name),productEmoji:sp.emoji,customerId,communityName,lineName,buyerName:communityName||lineName,qty:item.qty,unitPrice:sp.finalPrice,total:sp.finalPrice*item.qty,status:"pending",tripId,orderType,spec:mixSpec,purchased:orderType==="onsite",costSnapshot:mixCost,createdAt:Date.now()});
+    totalKinds++;
   }
   window.G.moMixItems=[];
+  window.G.moSpecSel={};
   const specEl=document.getElementById("mo-spec");if(specEl)specEl.value="";
-  const totalKinds=1+mixItems.length;
-  closeModal("modal-order");showToast(`${orderTypeLabel} 已為 ${communityName||lineName} 登記${totalKinds>1?`（混搭 ${totalKinds} 種口味）`:(spec?" ("+spec+")":"")}`);
+  closeModal("modal-order");showToast(`${orderTypeLabel} 已為 ${communityName||lineName} 登記${totalKinds>1?`（共 ${totalKinds} 筆 ${lastSpecLabel}）`:lastSpecLabel}`);
   // 強制刷新避免 Firebase onSnapshot 延遲導致畫面未更新
   setTimeout(()=>{renderList();renderCustomers();renderInvoice();},600);
 };
@@ -4247,11 +4389,13 @@ window.moQtyAdj=function(delta){
   const el=document.getElementById("mo-qty");if(!el)return;
   const v=parseInt(el.value)||1;
   el.value=Math.max(1,v+delta);
+  moSyncSingleSpecQty();
 };
 window.moQtyClamp=function(){
   const el=document.getElementById("mo-qty");if(!el)return;
   const v=parseInt(el.value);
   if(isNaN(v)||v<1)el.value=1;
+  moSyncSingleSpecQty();
 };
 
 window.updateOrderStatus=async function(id,status){
@@ -4341,7 +4485,7 @@ window.eoAddProduct=async function(productId){
     customerId:cid,communityName:c.communityName||"",lineName:c.lineName||"",
     buyerName:c.communityName||c.lineName||"",
     qty:1,unitPrice:p.finalPrice,discountPrice:p.finalPrice,total:p.finalPrice,
-    status:"pending",tripId,orderType:"onsite",spec:"",purchased:true,createdAt:Date.now()};
+    status:"pending",tripId,orderType:"onsite",spec:"",purchased:true,costSnapshot:calcCost(p.foreignAmount||p.krw||0,p.currency||"KRW").afterTax,createdAt:Date.now()};
   // 暫存，不立即寫入 Firebase
   if(!window.G.eoPendingAdd)window.G.eoPendingAdd=[];
   window.G.eoPendingAdd.push(newOrder);
@@ -4796,11 +4940,13 @@ window.boConfirm=async function(){
     const p=products.find(x=>x.id===item.productId);
     if(!p)continue;
     const id="ord_"+Date.now()+"_"+i;
+    const batchCost=orderType==="onsite"?calcCost(p.foreignAmount||p.krw||0,p.currency||"KRW").afterTax:null;
     await fbSet("orders",id,{
       productId:item.productId,productName:p.name,productEmoji:p.emoji,
       customerId,communityName,lineName:lineName||"",buyerName:communityName,
       qty:item.qty,unitPrice:p.finalPrice,total:p.finalPrice*item.qty,
       status:"pending",tripId,orderType,spec:item.spec||"",purchased:orderType==="onsite",
+      costSnapshot:batchCost,
       createdAt:Date.now()+(i*1000)
     });
     count++;
@@ -5882,7 +6028,7 @@ window.renderCategoryHealth=function(){
     if(!cats[catKey])cats[catKey]={rev:0,cost:0,qty:0,custMap:{}};
     const c=cats[catKey];
     const rev=(o.discountPrice||o.unitPrice||0)*(o.qty||0);
-    const unitCost=p?calcCost(p.foreignAmount||p.krw||0,p.currency||"KRW").afterTax:0;
+    const unitCost=getOrderUnitCost(o,p);
     c.rev+=rev;
     c.cost+=unitCost*(o.qty||0);
     c.qty+=(o.qty||0);
@@ -6008,7 +6154,7 @@ window.renderStats=function(){
     const price=(o.discountPrice||o.unitPrice||0);
     const total=price*o.qty;
     const fa=p?.foreignAmount||p?.krw||0;
-    const {afterTax}=p?calcCost(fa,p.currency||"KRW"):{afterTax:0};
+    const {afterTax}=p?{afterTax:getOrderUnitCost(o,p)}:{afterTax:0};
     const oCost=afterTax*o.qty;
     rev+=total; cost+=oCost; qty+=o.qty;
     // 分類
@@ -6197,12 +6343,11 @@ window.deleteTrip=async function(id){
 function updateStats(){
   const tripOrders=getTripOrders();
   let tC=0,tR=0,tQ=0;
-  window.G.products.forEach(p=>{
-    const pO=tripOrders.filter(o=>o.productId===p.id);
-    const qty=pO.reduce((s,o)=>s+o.qty,0);
-    const fa=p.foreignAmount||p.krw||0;
-    const{afterTax}=calcCost(fa,p.currency||"KRW");
-    tQ+=qty;tC+=afterTax*qty;tR+=p.finalPrice*qty;
+  tripOrders.forEach(o=>{
+    const p=window.G.products.find(x=>x.id===o.productId);
+    const afterTax=getOrderUnitCost(o,p);
+    const price=p?.finalPrice||o.unitPrice||0;
+    tQ+=o.qty;tC+=afterTax*o.qty;tR+=price*o.qty;
   });
   const profit=Math.round(tR-tC);
   const margin=tR>0?Math.round((profit/tR)*100):0;
@@ -6237,6 +6382,7 @@ window.renderList=function(){
   const container=document.getElementById("product-cards");if(!container)return;
   const{products,orders,listSearch,listFilterCat,listFilterCurrency,selectedProducts}=window.G;
   const filtered=products.filter(p=>{
+    const mArchived=window.G.listShowArchived?p.archived===true:!p.archived;
     const mC=listFilterCat==="all"||p.catKey===listFilterCat;
     const mSub=!window.G.listFilterSubcat||(window.G.listFilterSubcat==="__none__"?!window.getSubcat(p.name,p.catKey):window.getSubcat(p.name,p.catKey)?.key===window.G.listFilterSubcat);
     const mX=listFilterCurrency==="all"||(p.currency||"KRW")===listFilterCurrency;
@@ -6249,7 +6395,7 @@ window.renderList=function(){
     const channelLower=(p.channel||"").toLowerCase();
     const mChannelAbbr=sq&&channelAbbr[sq]&&channelLower.includes(channelAbbr[sq]);
     const mS=!listSearch||p.name.toLowerCase().includes(sq)||p.id.toLowerCase().includes(sq)||buyerNames.includes(sq)||channelLower.includes(sq)||specsStr.includes(sq)||mChannelAbbr;
-    return mC&&mX&&mS&&mSub;
+    return mC&&mX&&mS&&mSub&&mArchived;
   });
   // 排序：預設維持上架順序；也可以切成熱銷排行或利潤高低
   const sortMode=window.G.listSortMode||"default";
@@ -6359,6 +6505,7 @@ window.renderList=function(){
         <button onclick="copyLineFormat('${p.id}')" style="flex:1;font-size:11px;color:#9C7A5A;background:#FAF8F5;border:1px solid #E8D5B0;padding:6px 0;border-radius:8px;cursor:pointer;font-weight:600">報價</button>
         <button data-pid="${p.id}" onclick="openEditProd(this.dataset.pid)" class="hide-live" style="flex:1;font-size:11px;color:#C5A880;background:#FDF6EC;border:1px solid #E8D5B0;padding:6px 0;border-radius:8px;cursor:pointer;font-weight:600">修改</button>
         <button data-pid="${p.id}" onclick="duplicateProduct(this.dataset.pid)" class="hide-live" style="flex:1;font-size:11px;color:#0277BD;background:#E3F2FD;border:1px solid #90CAF9;padding:6px 0;border-radius:8px;cursor:pointer;font-weight:600">複製</button>
+        <button data-pid="${p.id}" onclick="${p.archived?"unarchiveProduct":"archiveProduct"}(this.dataset.pid)" class="hide-live" style="flex:1;font-size:11px;color:#6D4C41;background:#EFEBE9;border:1px solid #BCAAA4;padding:6px 0;border-radius:8px;cursor:pointer;font-weight:600">${p.archived?"取消封存":"封存"}</button>
         <button onclick="deleteProduct('${p.id}')" class="hide-live" style="flex:1;font-size:11px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:6px 0;border-radius:8px;cursor:pointer;font-weight:600">刪除</button>
       </div>
       <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:10px">
@@ -6397,6 +6544,13 @@ window.renderList=function(){
           <span style="font-size:12px;font-weight:700;color:#3D2010">🛒 已喊單 <span style="${(()=>{const hot={food:10,daiso:10,beauty:5,clothes:5,accessory:5,home:5,sunglasses:5,shoes:3,bag:3,luxury:3,device:3,other:5};const threshold=hot[p.catKey]||5;return pTotal>=threshold?"color:#E07B39;font-weight:900":"color:#C5A880";})()}">${pTotal} 件${(()=>{const hot={food:10,daiso:10,beauty:5,clothes:5,accessory:5,home:5,sunglasses:5,shoes:3,bag:3,luxury:3,device:3,other:5};const threshold=hot[p.catKey]||5;return pTotal>=threshold?" 🔥":"";})()}</span></span>
           <button onclick="openModal('modal-order',{productId:'${p.id}'})" style="background:#FDF6EC;color:#A08060;border:1px solid #E8D5B0;padding:4px 12px;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer">＋ 登記喊單</button>
         </div>
+        ${(()=>{
+          const map={};
+          pOrders.forEach(o=>{const key=o.spec||"";if(!key)return;map[key]=(map[key]||0)+o.qty;});
+          const keys=Object.keys(map);
+          if(keys.length<2)return""; // 只有0或1種規格時，跟上面的總數重複，不用另外顯示
+          return `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">${keys.sort((a,b)=>map[b]-map[a]).map(k=>`<span style="font-size:10px;font-weight:700;background:#FDF6EC;color:#9C7A5A;border:1px solid #E8D5B0;border-radius:99px;padding:3px 10px">${k}：${map[k]}件</span>`).join("")}</div>`;
+        })()}
         ${pOrders.length>0?`<div style="display:flex;flex-direction:column;gap:4px">${(()=>{const sorted=[...pOrders].sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));let cum=0;return sorted.map((o,i)=>{cum+=o.qty;return`<div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="flex-shrink:0;font-size:10px;font-weight:900;color:#9C7A5A;min-width:18px">#${i+1}</span><span style="flex:1;display:inline-flex;align-items:center;gap:4px;font-weight:700;background:#EBF7EE;color:#2E7D32;border:1px solid #C8E6C9;padding:3px 8px;border-radius:99px">${o.communityName||o.buyerName}${o.spec?` <span style="background:#C8E6C9;border-radius:4px;padding:0 4px;font-size:10px">${o.spec}</span>`:""} ×${o.qty}</span><span style="flex-shrink:0;font-size:10px;color:#C5A880;font-weight:700">累計${cum}</span><button onclick="deleteOrder('${o.id}')" style="color:#E53935;background:none;border:none;cursor:pointer;font-weight:900;font-size:14px;line-height:1;flex-shrink:0">×</button></div>`;}).join("");})()}</div>`:`<div style="font-size:10px;color:#9C7A5A;font-style:italic">尚無喊單</div>`}
       </div>
     </div>`;
@@ -7114,7 +7268,7 @@ window.renderInvoice=function(){
             <div style="display:flex;align-items:center;gap:5px;flex:0 0 auto">
               ${purchasedBtn}
               <span style="font-size:12px;font-weight:700;color:#3D2010">NT$${(dp*o.qty).toLocaleString()}</span>
-              ${(()=>{const prod=window.G.products.find(x=>x.id===o.productId)||window.G.products.find(x=>cleanProductName(x.name)===cleanProductName(o.productName||""));if(!prod)return"";const lineProfit=(dp-(prod.afterTax||0))*o.qty;const lineRevenue=dp*o.qty;const margin=lineRevenue>0?Math.round((lineProfit/lineRevenue)*100):0;return `<span class="hide-staff" style="font-size:10px;font-weight:700;color:${lineProfit>=0?"#2E7D32":"#C0392B"}">利潤 NT$${Math.round(lineProfit).toLocaleString()}（毛利${margin}%）</span>`;})()}
+              ${(()=>{const prod=window.G.products.find(x=>x.id===o.productId)||window.G.products.find(x=>cleanProductName(x.name)===cleanProductName(o.productName||""));if(!prod)return"";const lineProfit=(dp-getOrderUnitCost(o,prod))*o.qty;const lineRevenue=dp*o.qty;const margin=lineRevenue>0?Math.round((lineProfit/lineRevenue)*100):0;return `<span class="hide-staff" style="font-size:10px;font-weight:700;color:${lineProfit>=0?"#2E7D32":"#C0392B"}">利潤 NT$${Math.round(lineProfit).toLocaleString()}（毛利${margin}%）</span>`;})()}
               <button data-oid="${o.id}" onclick="event.stopPropagation();openMoveTrip(this.dataset.oid)" style="font-size:10px;color:#0277BD;background:#E3F2FD;border:1px solid #90CAF9;padding:2px 5px;border-radius:5px;cursor:pointer">移趟</button>
               <button data-oid="${o.id}" onclick="event.stopPropagation();deleteOrder(this.dataset.oid)" style="font-size:10px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:2px 5px;border-radius:5px;cursor:pointer">🗑️</button>
             </div>
@@ -7130,7 +7284,7 @@ window.renderInvoice=function(){
           </div>
         </div>
         ${(()=>{
-          const netProfit=b.orders.reduce((s,o)=>{const prod=window.G.products.find(x=>x.id===o.productId)||window.G.products.find(x=>cleanProductName(x.name)===cleanProductName(o.productName||""));if(!prod)return s;return s+(( (o.discountPrice||o.unitPrice||0) -(prod.afterTax||0))*o.qty);},0)-bDisc;
+          const netProfit=b.orders.reduce((s,o)=>{const prod=window.G.products.find(x=>x.id===o.productId)||window.G.products.find(x=>cleanProductName(x.name)===cleanProductName(o.productName||""));if(!prod)return s;return s+(( (o.discountPrice||o.unitPrice||0) -getOrderUnitCost(o,prod))*o.qty);},0)-bDisc;
           const margin=totalAmt>0?Math.round((netProfit/totalAmt)*100):0;
           return `<div class="hide-staff" style="text-align:right;margin-top:2px"><span style="font-size:11px;font-weight:700;color:${netProfit>=0?"#2E7D32":"#C0392B"}">利潤 NT$${Math.round(netProfit).toLocaleString()}（毛利${margin}%）</span></div>`;
         })()}
@@ -7144,7 +7298,20 @@ window.renderInvoice=function(){
 window.togglePurchased=async function(oid){
   const o=window.G.orders.find(x=>x.id===oid);if(!o)return;
   const next=!o.purchased;
-  await fbUpd("orders",oid,{purchased:next});
+  const upd={purchased:next};
+  if(next){
+    // 標記為「已購買」的這一刻，把當下的成本凍結存起來，之後就算匯率變動，這筆訂單的利潤也不會再跟著漂移
+    const prod=window.G.products.find(x=>x.id===o.productId);
+    if(prod){
+      upd.costSnapshot=calcCost(prod.foreignAmount||prod.krw||0,prod.currency||"KRW").afterTax;
+      upd.costSnapshotAt=Date.now();
+    }
+  } else {
+    // 取消勾選：把舊的凍結成本清掉，退回「即時估算」狀態，避免在還沒真的買之前，誤用上一次的舊快照
+    upd.costSnapshot=null;
+    upd.costSnapshotAt=null;
+  }
+  await fbUpd("orders",oid,upd);
   showToast(next?"✓ 已標記為買到了！":"已取消買到標記");
 };
 
@@ -8298,7 +8465,7 @@ window.swUpdate = function(){
     <div style="background:#FDF6EC;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:#9C7A5A;line-height:1.6">
       統計範圍是<b>全部趟次</b>的歷史訂單（不受上面「選擇趟次」影響），看的是長期的分類表現。<br>
       回購率＝這個分類裡「買過 2 次以上（不同筆訂單）」的客人，佔買過這個分類的所有客人的比例。<br>
-      成本／利潤是用商品「目前」的成本估算，不是下單當下的歷史成本，會有些微誤差。
+      成本／利潤：已標記「買到」的訂單，會用你當時買到那一刻凍結的真實成本計算；還沒買到、或是舊訂單沒有凍結紀錄的，才用「現在」的匯率/成本去估算，數字會隨匯率波動、僅供參考。
     </div>
     <div id="category-health-content"></div>
   </div>
