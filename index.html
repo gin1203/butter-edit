@@ -873,7 +873,7 @@ body.live-mode .hide-live { display: none !important; }
       <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">📐 規格（例如口味，點標籤可修改，點×可刪除）</label>
       <div id="ep-specs-chips" style="display:flex;flex-wrap:wrap;gap:6px;padding:8px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;min-height:42px"></div>
       <div style="display:flex;gap:6px;margin-top:6px">
-        <input type="text" id="ep-specs-new" placeholder="輸入新口味後按 Enter 或逗號新增" onkeydown="if((event.key==='Enter'||event.key===',')&&!event.isComposing&&event.keyCode!==229){event.preventDefault();epAddSpec(this.value);this.value='';}" style="flex:1;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:8px 12px;font-size:13px;outline:none;box-sizing:border-box"/>
+        <input type="text" id="ep-specs-new" placeholder="輸入新口味後按 Enter 或逗號新增" onpaste="handleSpecUrlPaste(event,'ep')" onkeydown="if((event.key==='Enter'||event.key===',')&&!event.isComposing&&event.keyCode!==229){event.preventDefault();epAddSpec(this.value);this.value='';}" style="flex:1;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:8px 12px;font-size:13px;outline:none;box-sizing:border-box"/>
         <button onclick="epAddSpec(document.getElementById('ep-specs-new').value);document.getElementById('ep-specs-new').value='';" style="background:#C5A880;color:white;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer">新增</button>
       </div>
     </div>
@@ -894,7 +894,7 @@ body.live-mode .hide-live { display: none !important; }
     </div>
     <div id="ep-url-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px">
       <div style="position:relative">
-        <input type="url" id="ep-url" placeholder="https://..." oninput="epUrlPreview()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 44px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
+        <input type="url" id="ep-url" placeholder="https://..." oninput="epUrlPreview()" style="width:100%;background:#EAF4FD;border:1px solid #90CAF9;border-radius:10px;padding:10px 44px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
         <a id="ep-url-link" href="#" target="_blank" rel="noopener" onclick="return !!(document.getElementById('ep-url').value.startsWith('http'))" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:20px;text-decoration:none;opacity:0.3;pointer-events:none" title="開啟連結">🔗</a>
       </div>
     </div>
@@ -1242,7 +1242,7 @@ body.live-mode .hide-live { display: none !important; }
       <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">📐 規格（點標籤可修改，點×可刪除，點📷可設定照片）</label>
       <div id="qa-specs-chips" style="display:flex;flex-wrap:wrap;gap:6px;padding:8px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;min-height:42px"></div>
       <div style="display:flex;gap:6px;margin-top:6px">
-        <input type="text" id="qa-specs-new" placeholder="輸入新口味後按 Enter 或逗號新增" onkeydown="if((event.key==='Enter'||event.key===',')&&!event.isComposing&&event.keyCode!==229){event.preventDefault();qaAddSpec(this.value);this.value='';}" style="flex:1;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:8px 12px;font-size:13px;outline:none;box-sizing:border-box"/>
+        <input type="text" id="qa-specs-new" placeholder="輸入新口味後按 Enter 或逗號新增" onpaste="handleSpecUrlPaste(event,'qa')" onkeydown="if((event.key==='Enter'||event.key===',')&&!event.isComposing&&event.keyCode!==229){event.preventDefault();qaAddSpec(this.value);this.value='';}" style="flex:1;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:8px 12px;font-size:13px;outline:none;box-sizing:border-box"/>
         <button onclick="qaAddSpec(document.getElementById('qa-specs-new').value);document.getElementById('qa-specs-new').value='';" style="background:#C5A880;color:white;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer">新增</button>
       </div>
     </div>
@@ -1254,7 +1254,7 @@ body.live-mode .hide-live { display: none !important; }
     </div>
     <div id="qa-url-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">
       <div style="position:relative">
-        <input type="url" id="qa-url" placeholder="https://..." style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:13px;outline:none;box-sizing:border-box"/>
+        <input type="url" id="qa-url" placeholder="https://..." style="width:100%;background:#EAF4FD;border:1px solid #90CAF9;border-radius:10px;padding:10px 14px;font-size:13px;outline:none;box-sizing:border-box"/>
       </div>
     </div>
 
@@ -2246,7 +2246,7 @@ window.epAddUrlRow=function(){
   const idx=list.children.length;
   const div=document.createElement("div");
   div.style.cssText="position:relative";
-  div.innerHTML=`<input type="url" class="ep-url-extra" placeholder="https://..." style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 44px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
+  div.innerHTML=`<input type="url" class="ep-url-extra" placeholder="https://..." style="width:100%;background:#EAF4FD;border:1px solid #90CAF9;border-radius:10px;padding:10px 44px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
     <button onclick="this.parentElement.remove()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#F1948A;font-size:18px;line-height:1">✕</button>`;
   list.appendChild(div);
 };
@@ -2294,7 +2294,7 @@ window.qaAddUrlRow=function(){
   if(!list)return;
   const div=document.createElement("div");
   div.style.cssText="position:relative";
-  div.innerHTML='<input type="url" class="qa-url-extra" placeholder="https://..." style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 44px 10px 14px;font-size:13px;outline:none;box-sizing:border-box"/><button onclick="this.parentElement.remove()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#F1948A;font-size:18px;line-height:1">✕</button>';
+  div.innerHTML='<input type="url" class="qa-url-extra" placeholder="https://..." style="width:100%;background:#EAF4FD;border:1px solid #90CAF9;border-radius:10px;padding:10px 44px 10px 14px;font-size:13px;outline:none;box-sizing:border-box"/><button onclick="this.parentElement.remove()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#F1948A;font-size:18px;line-height:1">✕</button>';
   list.appendChild(div);
 };
 window.qaGetAllUrls=function(){
@@ -3197,25 +3197,61 @@ window.epRenderSpecs=function(){
     box.innerHTML='<span style="font-size:12px;color:#C5A880;font-style:italic;padding:4px">尚未新增規格/口味</span>';
     return;
   }
+  const armed=window.G.specPasteTarget;
   box.innerHTML=list.map((s,i)=>{
     const esc=String(s).replace(/"/g,"&quot;");
     const img=window.G.epSpecImages[i]||"";
+    const isArmed=armed&&armed.type==="ep"&&armed.idx===i;
+    const ringStyle=isArmed?"outline:2px solid #7C3AED;outline-offset:1px":"";
     const thumb=img
-      ? `<span style="width:22px;height:22px;border-radius:6px;flex-shrink:0;position:relative;display:inline-block">
-          <img onclick="event.stopPropagation();epSpecImgPick(${i})" src="${img}" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:6px;cursor:pointer"/>
+      ? `<span style="width:22px;height:22px;border-radius:6px;flex-shrink:0;position:relative;display:inline-block;${ringStyle}">
+          <img onclick="event.stopPropagation();epSpecImgArm(${i})" src="${img}" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:6px;cursor:pointer"/>
           <button onclick="event.stopPropagation();epSpecImgClear(${i})" title="移除照片" style="position:absolute;top:-6px;right:-6px;width:14px;height:14px;border-radius:50%;background:#C0392B;color:white;border:none;font-size:9px;line-height:1;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center">×</button>
         </span>`
-      : `<span onclick="event.stopPropagation();epSpecImgPick(${i})" style="width:22px;height:22px;border-radius:6px;background:#F5EDE0;flex-shrink:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:12px">📷</span>`;
-    return `<span data-idx="${i}" onclick="epEditSpec(this)" style="display:inline-flex;align-items:center;gap:6px;background:white;border:1px solid #D8C4A0;border-radius:99px;padding:5px 6px 5px 6px;font-size:13px;color:#3D2010;cursor:pointer">
+      : `<span onclick="event.stopPropagation();epSpecImgArm(${i})" title="點一下，然後 Ctrl+V 貼上剪貼簿圖片" style="width:22px;height:22px;border-radius:6px;background:${isArmed?"#EDE4FB":"#F5EDE0"};flex-shrink:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:12px;${ringStyle}">📷</span>`;
+    const browseBtn=`<button onclick="event.stopPropagation();epSpecImgBrowse(${i})" title="選擇檔案上傳" style="background:none;border:none;color:#B0906A;font-size:10px;cursor:pointer;padding:0;text-decoration:underline">選檔案</button>`;
+    return `<span data-idx="${i}" onclick="epEditSpec(this)" style="display:inline-flex;align-items:center;gap:5px;background:white;border:1px solid #D8C4A0;border-radius:99px;padding:5px 6px 5px 6px;font-size:13px;color:#3D2010;cursor:pointer">
       ${thumb}
       <span class="ep-spec-text">${esc}</span>
+      ${browseBtn}
       <button onclick="event.stopPropagation();epRemoveSpec(${i})" style="background:#F5EDE0;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;color:#9C7A5A;cursor:pointer;line-height:1;padding:0">×</button>
     </span>`;
   }).join("");
 };
+window.handleSpecUrlPaste=function(e,mode){
+  const text=(e.clipboardData||window.clipboardData)?.getData("text")?.trim()||"";
+  if(!/^(https?:\/\/|www\.)/i.test(text))return; // 不是網址，讓它照原本的方式貼進規格欄位就好
+  e.preventDefault(); // 擋下來，不要讓網址真的貼進規格欄位
+  if(mode==="ep"){
+    const urlInput=document.getElementById("ep-url");
+    if(urlInput&&!urlInput.value.trim()){
+      urlInput.value=text;
+      if(typeof epUrlPreview==="function")epUrlPreview();
+    } else {
+      epAddUrlRow();
+      const extras=document.querySelectorAll(".ep-url-extra");
+      if(extras.length)extras[extras.length-1].value=text;
+    }
+  } else {
+    const urlInput=document.getElementById("qa-url");
+    if(urlInput&&!urlInput.value.trim()){
+      urlInput.value=text;
+    } else {
+      qaAddUrlRow();
+      const extras=document.querySelectorAll(".qa-url-extra");
+      if(extras.length)extras[extras.length-1].value=text;
+    }
+  }
+  showToast("偵測到網址，已經自動幫你搬到「官網網址」欄位了","success");
+};
 window.epAddSpec=function(val){
   val=(val||"").trim();
   if(!val)return;
+  // 偵測貼錯：這看起來像網址，不是規格/口味，直接擋下來提醒，不要真的加進去
+  if(/^(https?:\/\/|www\.)/i.test(val)){
+    showToast("這看起來是網址喔，麻煩貼到下面的「官網網址」欄位","error");
+    return;
+  }
   window.G.epSpecsList=window.G.epSpecsList||[];
   window.G.epSpecImages=window.G.epSpecImages||[];
   window.G.epSpecsList.push(val);
@@ -3227,14 +3263,20 @@ window.epRemoveSpec=function(idx){
   if(window.G.epSpecImages)window.G.epSpecImages.splice(idx,1);
   epRenderSpecs();
 };
-// 每個規格的照片：點縮圖/相機圖示 → 觸發隱藏的檔案選取 → 壓縮後存進 epSpecImages[idx]
+// 每個規格的照片：點縮圖/相機圖示 → 「武裝」貼上目標（不開檔案視窗，直接 Ctrl+V 即可貼上）；
+// 另外提供「選檔案」連結給想用傳統選檔案方式上傳的人，兩者分開，不會互相卡住
 window.epSpecImgClear=function(idx){
   window.G.epSpecImages=window.G.epSpecImages||[];
   window.G.epSpecImages[idx]="";
   epRenderSpecs();
   showToast("已移除規格照片","success");
 };
-window.epSpecImgPick=function(idx){
+window.epSpecImgArm=function(idx){
+  window.G.specPasteTarget={type:"ep",idx};
+  epRenderSpecs();
+  showToast("📋 已選取這個規格，直接 Ctrl+V 貼上圖片即可","success");
+};
+window.epSpecImgBrowse=function(idx){
   window.G.specPasteTarget={type:"ep",idx};
   let input=document.getElementById("ep-spec-img-input");
   if(!input){
@@ -3248,6 +3290,7 @@ window.epSpecImgPick=function(idx){
     const b64=await compressImg(file,640,0.8);
     window.G.epSpecImages=window.G.epSpecImages||[];
     window.G.epSpecImages[idx]=b64;
+    window.G.specPasteTarget=null;
     epRenderSpecs();
     input.value="";
     showToast("規格照片已更新","success");
@@ -3267,6 +3310,11 @@ window.epEditSpec=function(chipEl){
   input.select();
   const commit=()=>{
     const v=input.value.trim();
+    if(/^(https?:\/\/|www\.)/i.test(v)){
+      showToast("這看起來是網址喔，麻煩貼到下面的「官網網址」欄位","error");
+      epRenderSpecs();
+      return;
+    }
     if(v)window.G.epSpecsList[idx]=v;
     epRenderSpecs();
   };
@@ -3288,18 +3336,23 @@ window.qaRenderSpecs=function(){
     box.innerHTML='<span style="font-size:12px;color:#C5A880;font-style:italic;padding:4px">尚未新增規格/口味</span>';
     return;
   }
+  const armed=window.G.specPasteTarget;
   box.innerHTML=list.map((s,i)=>{
     const esc=String(s).replace(/"/g,"&quot;");
     const img=window.G.qaSpecImages[i]||"";
+    const isArmed=armed&&armed.type==="qa"&&armed.idx===i;
+    const ringStyle=isArmed?"outline:2px solid #7C3AED;outline-offset:1px":"";
     const thumb=img
-      ? `<span style="width:22px;height:22px;border-radius:6px;flex-shrink:0;position:relative;display:inline-block">
-          <img onclick="event.stopPropagation();qaSpecImgPick(${i})" src="${img}" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:6px;cursor:pointer"/>
+      ? `<span style="width:22px;height:22px;border-radius:6px;flex-shrink:0;position:relative;display:inline-block;${ringStyle}">
+          <img onclick="event.stopPropagation();qaSpecImgArm(${i})" src="${img}" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:6px;cursor:pointer"/>
           <button onclick="event.stopPropagation();qaSpecImgClear(${i})" title="移除照片" style="position:absolute;top:-6px;right:-6px;width:14px;height:14px;border-radius:50%;background:#C0392B;color:white;border:none;font-size:9px;line-height:1;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center">×</button>
         </span>`
-      : `<span onclick="event.stopPropagation();qaSpecImgPick(${i})" style="width:22px;height:22px;border-radius:6px;background:#F5EDE0;flex-shrink:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:12px">📷</span>`;
-    return `<span data-idx="${i}" onclick="qaEditSpec(this)" style="display:inline-flex;align-items:center;gap:6px;background:white;border:1px solid #D8C4A0;border-radius:99px;padding:5px 6px 5px 6px;font-size:13px;color:#3D2010;cursor:pointer">
+      : `<span onclick="event.stopPropagation();qaSpecImgArm(${i})" title="點一下，然後 Ctrl+V 貼上剪貼簿圖片" style="width:22px;height:22px;border-radius:6px;background:${isArmed?"#EDE4FB":"#F5EDE0"};flex-shrink:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:12px;${ringStyle}">📷</span>`;
+    const browseBtn=`<button onclick="event.stopPropagation();qaSpecImgBrowse(${i})" title="選擇檔案上傳" style="background:none;border:none;color:#B0906A;font-size:10px;cursor:pointer;padding:0;text-decoration:underline">選檔案</button>`;
+    return `<span data-idx="${i}" onclick="qaEditSpec(this)" style="display:inline-flex;align-items:center;gap:5px;background:white;border:1px solid #D8C4A0;border-radius:99px;padding:5px 6px 5px 6px;font-size:13px;color:#3D2010;cursor:pointer">
       ${thumb}
       <span class="qa-spec-text">${esc}</span>
+      ${browseBtn}
       <button onclick="event.stopPropagation();qaRemoveSpec(${i})" style="background:#F5EDE0;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;color:#9C7A5A;cursor:pointer;line-height:1;padding:0">×</button>
     </span>`;
   }).join("");
@@ -3307,6 +3360,11 @@ window.qaRenderSpecs=function(){
 window.qaAddSpec=function(val){
   val=(val||"").trim();
   if(!val)return;
+  // 偵測貼錯：這看起來像網址，不是規格/口味，直接擋下來提醒，不要真的加進去
+  if(/^(https?:\/\/|www\.)/i.test(val)){
+    showToast("這看起來是網址喔，麻煩貼到下面的「官網網址」欄位","error");
+    return;
+  }
   window.G.qaSpecsList=window.G.qaSpecsList||[];
   window.G.qaSpecImages=window.G.qaSpecImages||[];
   window.G.qaSpecsList.push(val);
@@ -3324,7 +3382,12 @@ window.qaSpecImgClear=function(idx){
   qaRenderSpecs();
   showToast("已移除規格照片","success");
 };
-window.qaSpecImgPick=function(idx){
+window.qaSpecImgArm=function(idx){
+  window.G.specPasteTarget={type:"qa",idx};
+  qaRenderSpecs();
+  showToast("📋 已選取這個規格，直接 Ctrl+V 貼上圖片即可","success");
+};
+window.qaSpecImgBrowse=function(idx){
   window.G.specPasteTarget={type:"qa",idx};
   let input=document.getElementById("qa-spec-img-input");
   if(!input){
@@ -3338,6 +3401,7 @@ window.qaSpecImgPick=function(idx){
     const b64=await compressImg(file,640,0.8);
     window.G.qaSpecImages=window.G.qaSpecImages||[];
     window.G.qaSpecImages[idx]=b64;
+    window.G.specPasteTarget=null;
     qaRenderSpecs();
     input.value="";
     showToast("規格照片已更新","success");
@@ -3357,6 +3421,11 @@ window.qaEditSpec=function(chipEl){
   input.select();
   const commit=()=>{
     const v=input.value.trim();
+    if(/^(https?:\/\/|www\.)/i.test(v)){
+      showToast("這看起來是網址喔，麻煩貼到下面的「官網網址」欄位","error");
+      qaRenderSpecs();
+      return;
+    }
     if(v)window.G.qaSpecsList[idx]=v;
     qaRenderSpecs();
   };
