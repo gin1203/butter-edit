@@ -2882,6 +2882,10 @@ window.openModal=function(id,data){
 };
 window.closeModal=function(id){
   window.G.specPasteTarget=null;
+  if(id==="modal-eord"&&window.G._eoHiddenTab){
+    window.G._eoHiddenTab.classList.add("active");
+    window.G._eoHiddenTab=null;
+  }
   const el=document.getElementById(id);
   if(id==="modal-eprod"&&window.G.cameFromPromoGroups&&el){
     window.G.cameFromPromoGroups=false;
@@ -6652,6 +6656,10 @@ window.openEditCust=function(id){
 window.openEditOrd=function(oid){
   const o=window.G.orders.find(x=>x.id===oid);
   if(!o){showToast("找不到訂單","error");return;}
+  // 開彈窗時先把背景那個分頁（例如客戶清單，資料量大時本身就很重）暫時藏起來，
+  // 減輕瀏覽器在彈窗互動當下要處理的畫面複雜度，關閉彈窗時再恢復顯示
+  const activeTabPage=document.querySelector(".tab-page.active");
+  if(activeTabPage){window.G._eoHiddenTab=activeTabPage;activeTabPage.classList.remove("active");}
   const cid=o.customerId||"";
   window.G.activeEordCustId=cid;
   window.G.eoPendingAdd=[];
@@ -7971,6 +7979,8 @@ window.openEditCustOrOrder=function(custId, custName){
 
 window.doQuickAddOrder=function(custId, custName){
   // 直接開啟修改訂單 modal（即使沒有訂單也能新增）
+  const activeTabPage=document.querySelector(".tab-page.active");
+  if(activeTabPage){window.G._eoHiddenTab=activeTabPage;activeTabPage.classList.remove("active");}
   window.G.activeEordCustId=custId;
   window.G.eoPendingAdd=[];
   const sr=document.getElementById("eo-prod-search");if(sr)sr.value="";
