@@ -596,6 +596,18 @@ body.live-mode .hide-live { display: none !important; }
 
 <!-- ═══ 設定 ═══ -->
 <div id="tab-settings" class="tab-page" style="padding:16px 16px 80px">
+  <!-- 資料備份 -->
+  <div style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:20px;margin-bottom:12px">
+    <div style="font-size:15px;font-weight:700;color:#3D2010;margin-bottom:8px;padding-bottom:10px;border-bottom:1px solid #E8D5B0">💾 資料備份</div>
+    <p style="font-size:12px;color:#9C7A5A;margin:0 0 12px;line-height:1.6">把商品、客戶、訂單、趟次全部打包成一個檔案下載下來。建議定期備份一次（例如每趟結束後），存到你自己的電腦或雲端硬碟，這樣不管發生什麼意外，都有一份完整的存檔可以救回來。</p>
+    <button onclick="exportFullBackup()" style="width:100%;background:#5C3A1E;color:#F5E6C8;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer">📦 匯出全部資料備份</button>
+    <div id="backup-last-time" style="font-size:10px;color:#C5A880;margin-top:8px;text-align:center"></div>
+    <div style="border-top:1px solid #E8D5B0;margin-top:14px;padding-top:14px">
+      <p style="font-size:12px;color:#C0392B;margin:0 0 10px;line-height:1.6">⚠️ 還原備份會把檔案裡的資料覆蓋回系統（同編號的商品/客戶/訂單會被檔案內容取代），請確認是從你自己匯出的備份檔案還原，操作前系統會再跟你確認一次。</p>
+      <input type="file" id="backup-restore-input" accept="application/json" style="display:none" onchange="handleRestoreFile(this)"/>
+      <button onclick="document.getElementById('backup-restore-input').click()" style="width:100%;background:#FDEDEC;color:#C0392B;border:1px solid #F1948A;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer">♻️ 從備份檔案還原</button>
+    </div>
+  </div>
   <!-- 帳號管理（老闆專用） -->
   <div id="account-mgmt" class="hide-staff" style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:20px;margin-bottom:12px">
     <div style="font-size:15px;font-weight:700;color:#3D2010;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #E8D5B0">👥 帳號管理</div>
@@ -4834,6 +4846,70 @@ function dlCSV(rows,fn){
 }
 const today=()=>new Date().toISOString().split("T")[0];
 
+window.exportFullBackup=function(){
+  const backup={
+    _備份說明:"The Butter Edit 完整資料備份，可用於萬一資料異常時比對還原，請妥善保存",
+    _備份時間:new Date().toISOString(),
+    products:window.G.products||[],
+    customers:window.G.customers||[],
+    orders:window.G.orders||[],
+    trips:window.G.trips||[],
+    expenses:window.G.expenses||{},
+    promoGroupMeta:window.G.promoGroupMeta||{},
+    customSubcats:window.G.customSubcats||[],
+    customBrands:window.G.customBrands||[],
+    settings:window.G.settings||{}
+  };
+  const json=JSON.stringify(backup,null,2);
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([json],{type:"application/json;charset=utf-8;"}));
+  a.download=`ButterEdit_資料備份_${today()}.json`;
+  a.click();
+  const timeEl=document.getElementById("backup-last-time");
+  if(timeEl)timeEl.textContent=`上次備份：${new Date().toLocaleString("zh-TW")}`;
+  showToast(`✅ 已匯出備份（商品 ${backup.products.length} 件、客戶 ${backup.customers.length} 位、訂單 ${backup.orders.length} 筆）`,"success");
+};
+window.handleRestoreFile=function(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=async(e)=>{
+    let data;
+    try{data=JSON.parse(e.target.result);}
+    catch(err){showToast("這個檔案不是有效的備份檔","error");input.value="";return;}
+    if(!data.products&&!data.customers&&!data.orders){
+      showToast("這個檔案看起來不是本系統的備份檔","error");input.value="";return;
+    }
+    const counts=`商品 ${(data.products||[]).length} 件、客戶 ${(data.customers||[]).length} 位、訂單 ${(data.orders||[]).length} 筆、趟次 ${(data.trips||[]).length} 個`;
+    const backupTime=data._備份時間?new Date(data._備份時間).toLocaleString("zh-TW"):"未知時間";
+    if(!confirm(`確定要還原這份備份嗎？\n\n備份時間：${backupTime}\n內容：${counts}\n\n⚠️ 這會覆蓋掉系統裡同編號的資料，此動作無法復原，請確認這是你自己匯出的備份檔案。`)){
+      input.value="";return;
+    }
+    if(!confirm("再次確認：真的要開始還原嗎？還原過程中請不要關閉頁面。")){
+      input.value="";return;
+    }
+    await restoreFullBackup(data);
+    input.value="";
+  };
+  reader.readAsText(file);
+};
+window.restoreFullBackup=async function(data){
+  showToast("還原中，請稍候…","success");
+  try{
+    for(const p of (data.products||[])){const{id,...rest}=p;await fbSet("products",id,rest);}
+    for(const c of (data.customers||[])){const{id,...rest}=c;await fbSet("customers",id,rest);}
+    for(const o of (data.orders||[])){const{id,...rest}=o;await fbSet("orders",id,rest);}
+    for(const t of (data.trips||[])){const{id,...rest}=t;await fbSet("trips",id,rest);}
+    if(data.expenses){for(const tripId in data.expenses){await fbSet("expenses",tripId,{items:data.expenses[tripId]});}}
+    if(data.promoGroupMeta){for(const k in data.promoGroupMeta){await fbSet("promoGroupMeta",k,data.promoGroupMeta[k]);}}
+    if(data.customSubcats)await fbSet("settings","subcats",{list:data.customSubcats});
+    if(data.customBrands)await fbSet("settings","customBrands",{brands:data.customBrands});
+    if(data.settings)await fbSet("settings","main",data.settings);
+    showToast("✅ 還原完成！","success");
+  }catch(err){
+    console.error(err);
+    showToast("還原過程中發生錯誤，請查看主控台","error");
+  }
+};
 window.exportProductCSV=function(){
   const{products,orders}=window.G;
   if(!products.length){showToast("沒有商品可匯出","warning");return;}
