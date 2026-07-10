@@ -6691,11 +6691,14 @@ window.openEditOrd=function(oid){
   if(prevEl)prevEl.style.display="none";
 
   const list=document.getElementById("eo-order-list");
-  list.innerHTML=cOrders.map(x=>{
+  const EO_COLLAPSE_N=4;
+  window.G.eoExpanded=cOrders.length<=EO_COLLAPSE_N; // 訂單筆數不多就直接全部展開，不用多一道操作
+  list.innerHTML=cOrders.map((x,idx)=>{
     const dp=x.discountPrice||x.unitPrice||0;
     const purchasedTag=x.orderType==="preorder"?(x.purchased?'<span style="font-size:9px;background:#D1FAE5;color:#065F46;border:1px solid #6EE7B7;padding:1px 6px;border-radius:4px">已買到</span>':'<span style="font-size:9px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:1px 6px;border-radius:4px">待購入</span>'):"";
     const rowBg=x.orderType==="preorder"&&!x.purchased?"#F3F0FF":"white";
-    return `<div style="background:${rowBg};border:1px solid #E8D5B0;border-radius:12px;padding:12px 14px;margin-bottom:8px" data-oid="${x.id}">
+    const hideStyle=(!window.G.eoExpanded&&idx>=EO_COLLAPSE_N)?"display:none":"";
+    return `<div class="eo-collapsible-row" style="background:${rowBg};border:1px solid #E8D5B0;border-radius:12px;padding:12px 14px;margin-bottom:8px;${hideStyle}" data-oid="${x.id}">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <div style="display:flex;align-items:center;gap:6px">
           <span style="font-size:13px;font-weight:700;color:#3D2010">${(window.G.products.find(p=>p.id===x.productId)?.name)||x.productName||"商品"}${x.spec?` <span style="font-size:11px;font-weight:700;color:#9C7A5A;background:#F5F0E8;border-radius:4px;padding:1px 6px">${x.spec}</span>`:""}</span>
@@ -6721,10 +6724,16 @@ window.openEditOrd=function(oid){
         <input type="text" class="eo-discount-note" value="${x.discountNote||""}" placeholder="例如：折50、贈品、會員優惠..." style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:12px;outline:none"/>
       </div>
     </div>`;
-  }).join("");
+  }).join("")+(!window.G.eoExpanded&&cOrders.length>EO_COLLAPSE_N?`<button id="eo-expand-btn" onclick="eoToggleExpand()" style="width:100%;margin-bottom:8px;background:#FDF6EC;color:#B08968;border:1px dashed #E8D5B0;border-radius:8px;padding:8px;font-size:12px;font-weight:700;cursor:pointer">▼ 展開查看／編輯其餘 ${cOrders.length-EO_COLLAPSE_N} 筆</button>`:"");
 
   const el=document.getElementById("modal-eord");
   if(el)el.style.display="flex";
+};
+window.eoToggleExpand=function(){
+  window.G.eoExpanded=true;
+  document.querySelectorAll("#eo-order-list .eo-collapsible-row").forEach(el=>{el.style.display="";});
+  const btn=document.getElementById("eo-expand-btn");
+  if(btn)btn.remove();
 };
 
 // ── 批次修改 ───────────────────────────────────────────────────────────
