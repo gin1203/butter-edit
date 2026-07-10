@@ -1035,7 +1035,7 @@ body.live-mode .hide-live { display: none !important; }
       <div style="margin-bottom:10px">
         <div style="font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:6px">＋ 新增商品到此訂單</div>
         <div style="position:relative">
-          <input type="text" id="eo-prod-search" placeholder="🔍 搜尋商品名稱..." oninput="eoSearchProducts(this.value)" onblur="setTimeout(()=>{const r=document.getElementById('eo-prod-results');if(r)r.style.display='none';},200)" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px 12px;font-size:13px;outline:none"/>
+          <input type="text" id="eo-prod-search" placeholder="🔍 搜尋商品名稱..." oninput="eoSearchProductsDebounced(this.value,event)" onblur="setTimeout(()=>{const r=document.getElementById('eo-prod-results');if(r)r.style.display='none';},200)" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px 12px;font-size:13px;outline:none"/>
           <div id="eo-prod-results" style="display:none;position:absolute;left:0;right:0;bottom:calc(100% + 4px);background:white;border:1px solid #E8D5B0;border-radius:8px;max-height:200px;overflow-y:auto;z-index:200;box-shadow:0 -4px 16px rgba(0,0,0,0.12)"></div>
         </div>
       </div>
@@ -4524,6 +4524,12 @@ window.batchDeleteOrders=async function(){
   for(const id of ids)await fbDel("orders",id);
   window.G.selectedOrders.clear();showToast(`已刪除 ${ids.length} 筆訂單`);
 };
+window.eoSearchProductsDebounced=function(val,e){
+  // 注音/拼音輸入法「選字前」的組字過程不要觸發搜尋，不然還沒選好字就一直重複搜尋，會很卡
+  if(e&&e.isComposing)return;
+  clearTimeout(window.G.eoSearchTimer);
+  window.G.eoSearchTimer=setTimeout(()=>eoSearchProducts(val),200);
+};
 window.eoSearchProducts=function(q){
   const res=document.getElementById("eo-prod-results");
   if(!res)return;
@@ -7108,6 +7114,12 @@ window.renderCustomers=function(){
     const cP=cO.filter(o=>o.status==="pending").length;
     // 開啟「🛒 待購代買」篩選時，卡片內的商品明細也只顯示尚未購買的代買項目，不要連已買到/現場購買的一起列出
     const cODisplay=custUnpurchased?cO.filter(o=>o.orderType==="preorder"&&!o.purchased):cO;
+    // 訂單筆數多的客戶，預設先收合只顯示前4筆，減少整個客戶頁一次要渲染的DOM量（手機記憶體有限，訂單筆數一多容易卡頓）
+    const COLLAPSE_N=4;
+    window.G.custExpandedSet=window.G.custExpandedSet||new Set();
+    const isExpanded=window.G.custExpandedSet.has(c.id);
+    const showAllOrders=isExpanded||cODisplay.length<=COLLAPSE_N;
+    const cODisplayShown=showAllOrders?cODisplay:cODisplay.slice(0,COLLAPSE_N);
     const checked=selectedCustomers.has(c.id);
     const safeC={id:c.id};
     return `<div style="background:white;border-radius:14px;padding:14px;border:1px solid ${checked?"#C5A880":"#E8D5B0"};margin-bottom:8px">
@@ -7154,7 +7166,7 @@ window.renderCustomers=function(){
           const colsNew=hasHigh?"1fr 1fr 1fr 1fr":"1fr 1fr 1fr";
           return cO.length>0?`<div style="display:grid;grid-template-columns:${colsNew};gap:5px;margin-bottom:8px"><button data-oid="${cO[0].id}" onclick="openEditOrd(this.dataset.oid)" style="font-size:11px;background:#FDF6EC;color:#C5A880;border:1px solid #E8D5B0;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">修改</button>${depositBtn}<button data-cid="${c.id}" onclick="copyCustOrder(this.dataset.cid)" style="font-size:11px;background:#EAF4FD;color:#0277BD;border:1px solid #90D7FF;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">複製訂單</button>${shopBtn}</div>`:"";
         })()}
-        ${cODisplay.length?`<div style="display:flex;flex-direction:column;gap:4px">${cODisplay.map(o=>{
+        ${cODisplayShown.length?`<div style="display:flex;flex-direction:column;gap:4px">${cODisplayShown.map(o=>{
           const sl2={pending:"#E07B39",settled:"#2E7D32",shipped:"#2980B9"};
           const stl={pending:"待訂金",deposit:"已付訂金",settled:"已付尾款",shipped:"已寄出"};
           const dp=o.discountPrice||o.unitPrice||0;
@@ -7175,6 +7187,7 @@ window.renderCustomers=function(){
               <button data-oid="${o.id}" onclick="event.stopPropagation();deleteOrder(this.dataset.oid)" style="font-size:10px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:2px 5px;border-radius:5px;cursor:pointer">🗑️</button>
             </div>
           </div>`;}).join("")}</div>`:""}
+        ${!showAllOrders?`<button data-cid="${c.id}" onclick="expandCustOrders(this.dataset.cid)" style="width:100%;margin-top:6px;background:#FDF6EC;color:#B08968;border:1px dashed #E8D5B0;border-radius:8px;padding:6px;font-size:11px;font-weight:700;cursor:pointer">▼ 展開查看全部 ${cODisplay.length} 筆</button>`:""}
       </div>
     </div>`;
   });
@@ -7185,6 +7198,11 @@ window.renderCustomers=function(){
   updateBatchBar("customer");
 };
 
+window.expandCustOrders=function(cid){
+  window.G.custExpandedSet=window.G.custExpandedSet||new Set();
+  window.G.custExpandedSet.add(cid);
+  renderCustomers();
+};
 window.setCustUnpurchasedView=function(on){
   window.G.custUnpurchased=on;
   const allBtn=document.getElementById("cust-view-all");
