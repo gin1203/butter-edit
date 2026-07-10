@@ -387,7 +387,10 @@ body.live-mode .hide-live { display: none !important; }
 <!-- ═══ 客戶 ═══ -->
 <div id="tab-customers" class="tab-page" style="padding:16px 16px 80px">
   <div style="display:flex;gap:8px;margin-bottom:8px">
-    <input type="text" id="cust-search" oninput="window.G.custSearch=this.value;renderCustomers()" placeholder="🔍 搜尋社群名、LINE名或電話..." style="flex:1;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none"/>
+    <div style="position:relative;flex:1">
+      <input type="text" id="cust-search" oninput="window.G.custSearch=this.value;renderCustomers()" placeholder="🔍 搜尋社群名、LINE名或電話..." style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:10px 34px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
+      <button onclick="const i=document.getElementById('cust-search');i.value='';window.G.custSearch='';renderCustomers();" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
+    </div>
     <button onclick="openModal('modal-cust',{});" style="background:#C5A880;color:white;border:none;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer">＋</button>
   </div>
   <select id="cust-trip-bar" onchange="setTripFilter(this.value)" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;color:#3D2010;outline:none;margin-bottom:8px;cursor:pointer"></select>
@@ -416,7 +419,10 @@ body.live-mode .hide-live { display: none !important; }
 
 <!-- ═══ 對帳單 ═══ -->
 <div id="tab-invoice" class="tab-page" style="padding:16px 16px 80px">
-  <input type="text" id="inv-search" oninput="window.G.invSearch=this.value;renderInvoice()" placeholder="🔍 搜尋買家姓名、商品名稱或編號..." style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none;margin-bottom:8px"/>
+  <div style="position:relative;margin-bottom:8px">
+    <input type="text" id="inv-search" oninput="window.G.invSearch=this.value;renderInvoice()" placeholder="🔍 搜尋買家姓名、商品名稱或編號..." style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:10px 34px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
+    <button onclick="const i=document.getElementById('inv-search');i.value='';window.G.invSearch='';renderInvoice();" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
+  </div>
   <select id="inv-trip-bar" onchange="setTripFilter(this.value)" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;color:#3D2010;outline:none;margin-bottom:8px;cursor:pointer"></select>
   <div style="display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap">
     <button data-invf="all"        onclick="setInvFilter('all')"        style="flex:1;min-width:60px;padding:8px 2px;border-radius:10px;font-size:10px;font-weight:700;border:1px solid #C5A880;background:#C5A880;color:white;cursor:pointer">全部</button>
@@ -1035,7 +1041,7 @@ body.live-mode .hide-live { display: none !important; }
       <div style="margin-bottom:10px">
         <div style="font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:6px">＋ 新增商品到此訂單</div>
         <div style="position:relative">
-          <input type="text" id="eo-prod-search" placeholder="🔍 搜尋商品名稱..." oninput="eoSearchProductsDebounced(this.value,event)" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px 34px 8px 12px;font-size:13px;outline:none;box-sizing:border-box"/>
+          <input type="text" id="eo-prod-search" placeholder="🔍 搜尋商品名稱..." oninput="eoSearchProductsDebounced(this.value,event)" oncompositionend="eoSearchProducts(this.value)" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px 34px 8px 12px;font-size:13px;outline:none;box-sizing:border-box"/>
           <button onclick="eoClearProdSearch()" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
           <div id="eo-prod-results" style="display:none;position:absolute;left:0;right:0;bottom:calc(100% + 4px);background:white;border:1px solid #E8D5B0;border-radius:8px;max-height:200px;overflow-y:auto;z-index:200;box-shadow:0 -4px 16px rgba(0,0,0,0.12)"></div>
         </div>
