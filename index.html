@@ -1750,7 +1750,13 @@ function fixBodyPadding(){
   document.body.style.paddingTop=(h+8)+"px";
 }
 window.addEventListener("load",fixBodyPadding);
-window.addEventListener("resize",fixBodyPadding);
+// resize 加上防抖動：手機鍵盤跳出來/收起來時，resize 事件可能連續觸發很多次，
+// 每次都立刻做「讀取版面→整頁重排」這種重運算會造成明顯卡頓，改成等 resize 停下來一小段時間才真的執行一次
+let _fixBodyPaddingTimer=null;
+window.addEventListener("resize",()=>{
+  clearTimeout(_fixBodyPaddingTimer);
+  _fixBodyPaddingTimer=setTimeout(fixBodyPadding,150);
+});
 setTimeout(fixBodyPadding,50);
 setTimeout(fixBodyPadding,300);
 
