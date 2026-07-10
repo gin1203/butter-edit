@@ -3724,7 +3724,8 @@ window.resetSettings=function(){
 onSnapshot(collection(db,"products"),s=>{
   window.G.products=s.docs.map(d=>({id:d.id,...d.data()}));
   window.G.productsLoaded=true;
-  updateStats();renderList();renderInvoice();
+  clearTimeout(window.G._prodRenderTimer);
+  window.G._prodRenderTimer=setTimeout(()=>{updateStats();renderList();renderInvoice();},150);
 });
 onSnapshot(collection(db,"promoGroupMeta"),s=>{
   window.G.promoGroupMeta={};
@@ -3734,7 +3735,8 @@ onSnapshot(collection(db,"promoGroupMeta"),s=>{
 onSnapshot(collection(db,"customers"),s=>{
   window.G.customers=s.docs.map(d=>({id:d.id,...d.data()}));
   window.G.customersLoaded=true;
-  renderCustomers();
+  clearTimeout(window.G._custRenderTimer);
+  window.G._custRenderTimer=setTimeout(()=>renderCustomers(),150);
 });
 // 載入 LINE 綁定資料
 (async()=>{
@@ -3754,12 +3756,15 @@ onSnapshot(collection(db,"trips"),s=>{
 onSnapshot(collection(db,"orders"),s=>{
   window.G.orders=s.docs.map(d=>{const o={id:d.id,...d.data()};o.productName=cleanProductName(o.productName);return o;});
   window.G.ordersLoaded=true;
-  updateStats();renderInvoice();renderList();renderCustomers();renderTripHistory();
-  if(window.G.tab==="stats")renderStats();
-  const stockModal=document.getElementById("modal-stock-plan");
-  if(stockModal&&stockModal.style.display!=="none")window.renderStockPlanContent();
-  const catHealthModal=document.getElementById("modal-category-health");
-  if(catHealthModal&&catHealthModal.style.display!=="none")window.renderCategoryHealth();
+  clearTimeout(window.G._orderRenderTimer);
+  window.G._orderRenderTimer=setTimeout(()=>{
+    updateStats();renderInvoice();renderList();renderCustomers();renderTripHistory();
+    if(window.G.tab==="stats")renderStats();
+    const stockModal=document.getElementById("modal-stock-plan");
+    if(stockModal&&stockModal.style.display!=="none")window.renderStockPlanContent();
+    const catHealthModal=document.getElementById("modal-category-health");
+    if(catHealthModal&&catHealthModal.style.display!=="none")window.renderCategoryHealth();
+  },150);
 });
 onSnapshot(doc(db,"settings","main"),s=>{
   if(s.exists()){
@@ -5831,12 +5836,6 @@ onSnapshot(doc(db,"settings","customBrands"),snap=>{
   window.G.customBrands=snap.exists()?(snap.data().brands||[]):[];
   renderCustomBrands();
 });
-onSnapshot(collection(db,"roles"),s=>{
-  window.G.roles=s.docs.map(d=>({uid:d.id,...d.data()}));
-  renderRoleList();
-  const cu=auth.currentUser;
-  if(cu){const r=window.G.roles.find(x=>x.uid===cu.uid);if(r)applyRoleUI(r.role);}
-});
 
 // 建立帳號（自動登入後再切回老闆）
 window.createAccount=async function(){
@@ -6080,12 +6079,6 @@ window.deleteExpense=function(tripId,eid){
   fbSet("expenses",tripId,{items:window.G.expenses[tripId]});
   renderStats();
 };
-
-// 載入費用
-onSnapshot(collection(db,"expenses"),s=>{
-  s.docs.forEach(d=>{window.G.expenses[d.id]=d.data().items||[];});
-  if(window.G.tab==="stats")renderStats();
-});
 
 // ── 商品分類健檢：跨全部趟次，看每個分類的營收/毛利/回購率 ──────────────────
 window.openCategoryHealth=function(){
