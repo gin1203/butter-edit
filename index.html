@@ -4576,10 +4576,11 @@ window.eoClearProdSearch=function(){
   const res=document.getElementById("eo-prod-results");if(res){res.style.display="none";res.innerHTML="";}
 };
 window.eoSearchProductsDebounced=function(val,e){
-  // 注音/拼音輸入法「選字前」的組字過程不要觸發搜尋，不然還沒選好字就一直重複搜尋，會很卡
-  if(e&&e.isComposing)return;
+  // 手機注音鍵盤在打字過程中，不一定會正確回報「組字中」狀態給瀏覽器，
+  // 之前用 isComposing 判斷反而會把正常打字誤判成一直在組字、永遠不觸發搜尋，
+  // 改成單純用「停頓一下才搜尋」的防抖動處理，不要去猜測輸入法狀態
   clearTimeout(window.G.eoSearchTimer);
-  window.G.eoSearchTimer=setTimeout(()=>eoSearchProducts(val),200);
+  window.G.eoSearchTimer=setTimeout(()=>eoSearchProducts(val),250);
 };
 window.eoSearchProducts=function(q){
   const res=document.getElementById("eo-prod-results");
