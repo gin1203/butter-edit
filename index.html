@@ -116,8 +116,8 @@ body.live-mode .hide-live { display: none !important; }
       <div>
         <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">商品名稱</label>
         <div style="position:relative">
-          <input type="text" id="c-name" oninput="calcUpdate();autoDetectCatFromName(this.value);(function(v){setTimeout(function(){showBrandSuggestions(v,false);},0);})(this.value)" placeholder="例如：Matin Kim 短袖" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:12px 40px 12px 14px;font-size:14px;outline:none"/>
-          <button onclick="document.getElementById('c-name').value='';calcUpdate();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
+          <input type="text" id="c-name" oninput="calcUpdate();autoDetectCatFromName(this.value);(function(v){setTimeout(function(){showBrandSuggestions(v,false);},0);})(this.value);(function(v){setTimeout(function(){showDupWarning(v,'c-dup-warning');},0);})(this.value)" placeholder="例如：Matin Kim 短袖" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:12px 40px 12px 14px;font-size:14px;outline:none"/>
+          <button onclick="document.getElementById('c-name').value='';calcUpdate();document.getElementById('c-dup-warning').style.display='none';" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
           <div id="brand-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;z-index:99999;background:white;border:1.5px solid #C5A880;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.2);max-height:280px;overflow-y:auto"></div>
         </div>
       </div>
@@ -126,6 +126,7 @@ body.live-mode .hide-live { display: none !important; }
         <input type="text" id="c-specs" placeholder="S,M,L" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:12px 8px;font-size:12px;outline:none"/>
       </div>
     </div>
+    <div id="c-dup-warning" style="display:none;margin-bottom:12px;background:#FFF9F0;border:1px solid #FCD34D;border-radius:10px;padding:10px 12px"></div>
     <div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <label style="font-size:11px;font-weight:700;color:#9C7A5A;text-transform:uppercase;letter-spacing:0.05em"><span id="c-sym-label">🇰🇷 韓幣 (₩)</span> 售價</label>
@@ -283,7 +284,8 @@ body.live-mode .hide-live { display: none !important; }
         <button class="calc-ch-btn" data-ch="Object" onclick="calcSelectChannel(this,'Object')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Object</button>
         <button class="calc-ch-btn" data-ch="Point of View" onclick="calcSelectChannel(this,'Point of View')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Point of View</button>
         <button class="calc-ch-btn" data-ch="BUTTER" onclick="calcSelectChannel(this,'BUTTER')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧈 BUTTER</button>
-        <button class="calc-ch-btn" data-ch="新世界/樂天百貨" onclick="calcSelectChannel(this,'新世界/樂天百貨')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏢 百貨/免稅</button>
+        <button class="calc-ch-btn" data-ch="新世界免稅店" onclick="calcSelectChannel(this,'新世界免稅店')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛬 新世界免稅店（機場提貨）</button>
+        <button class="calc-ch-btn" data-ch="新世界/樂天百貨" onclick="calcSelectChannel(this,'新世界/樂天百貨')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏢 百貨專櫃（含稅可退稅）</button>
         <button class="calc-ch-btn" data-ch="廣藏市場" onclick="calcSelectChannel(this,'廣藏市場')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏮 廣藏市場</button>
         <button class="calc-ch-btn" data-ch="藥局" onclick="calcSelectChannel(this,'藥局')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">💊 藥局</button>
         <button class="calc-ch-btn" data-ch="品牌官網/直營門市" onclick="calcSelectChannel(this,'品牌官網/直營門市')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 品牌官網/直營門市</button>
@@ -359,6 +361,7 @@ body.live-mode .hide-live { display: none !important; }
     <button onclick="exportProductCSV()" style="flex:1;font-size:11px;background:#EBF5FB;color:#2980B9;border:1px solid #AED6F1;padding:7px 4px;border-radius:8px;font-weight:700;cursor:pointer">匯出商品庫</button>
     <button onclick="showStockPlan()" style="flex:1;font-size:11px;background:#FFF3E0;color:#E07B39;border:1px solid #FFCC80;padding:7px 4px;border-radius:8px;font-weight:700;cursor:pointer">📦 備貨清單</button>
     <button onclick="showPromoGroups()" style="flex:1;font-size:11px;background:#FDF2E9;color:#C0392B;border:1px solid #F1948A;padding:7px 4px;border-radius:8px;font-weight:700;cursor:pointer">🎯 行銷活動</button>
+    <button onclick="showDupProductScan()" style="flex:1;font-size:11px;background:#FFF9F0;color:#92400E;border:1px solid #FCD34D;padding:7px 4px;border-radius:8px;font-weight:700;cursor:pointer">⚠️ 檢查重複</button>
   </div>
   <div class="hide-live" style="display:flex;gap:4px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:99px;padding:3px;margin-bottom:8px">
     <button id="list-sort-default" onclick="setListSortMode('default')" style="flex:1;font-size:12px;font-weight:700;padding:8px 4px;border-radius:99px;border:none;background:#C5A880;color:white;cursor:pointer;transition:background 0.15s,color 0.15s">🕐 上架順序</button>
@@ -985,7 +988,8 @@ body.live-mode .hide-live { display: none !important; }
         <button class="ep-ch-btn" data-ch="Object" onclick="epSelectChannel(this,'Object')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Object</button>
         <button class="ep-ch-btn" data-ch="Point of View" onclick="epSelectChannel(this,'Point of View')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">👁 Point of View</button>
         <button class="ep-ch-btn" data-ch="BUTTER" onclick="epSelectChannel(this,'BUTTER')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧈 BUTTER</button>
-        <button class="ep-ch-btn" data-ch="百貨/免稅" onclick="epSelectChannel(this,'百貨/免稅')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 百貨/免稅</button>
+        <button class="ep-ch-btn" data-ch="新世界免稅店" onclick="epSelectChannel(this,'新世界免稅店')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛬 新世界免稅店（機場提貨）</button>
+        <button class="ep-ch-btn" data-ch="新世界/樂天百貨" onclick="epSelectChannel(this,'新世界/樂天百貨')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 百貨專櫃（含稅可退稅）</button>
         <button class="ep-ch-btn" data-ch="廣藏市場" onclick="epSelectChannel(this,'廣藏市場')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧡 廣藏市場</button>
         <button class="ep-ch-btn" data-ch="藥局" onclick="epSelectChannel(this,'藥局')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">💊 藥局</button>
         <button class="ep-ch-btn" data-ch="品牌官網/直營門市" onclick="epSelectChannel(this,'品牌官網/直營門市')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 品牌官網/直營門市</button>
@@ -1052,6 +1056,12 @@ body.live-mode .hide-live { display: none !important; }
       <!-- 新增商品到訂單 -->
       <div style="margin-bottom:10px">
         <div style="font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:6px">＋ 新增商品到此訂單</div>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <button id="eo-type-onsite" onclick="eoSetType('onsite')"
+            style="flex:1;padding:7px 6px;border-radius:10px;border:2px solid #5C3A1E;background:#5C3A1E;color:#F5E6C8;font-size:11px;font-weight:700;cursor:pointer">🛍️ 現場購買</button>
+          <button id="eo-type-preorder" onclick="eoSetType('preorder')"
+            style="flex:1;padding:7px 6px;border-radius:10px;border:2px solid #E8D5B0;background:white;color:#9C7A5A;font-size:11px;font-weight:700;cursor:pointer">📱 記事本+1</button>
+        </div>
         <div style="position:relative">
           <input type="text" id="eo-prod-search" placeholder="🔍 搜尋商品名稱..." oninput="eoSearchProductsDebounced(this.value,event)" oncompositionend="eoSearchProducts(this.value)" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px 34px 8px 12px;font-size:13px;outline:none;box-sizing:border-box"/>
           <button onclick="eoClearProdSearch()" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
@@ -1253,10 +1263,11 @@ body.live-mode .hide-live { display: none !important; }
     <div style="margin-bottom:12px">
       <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">商品名稱</label>
       <div style="position:relative">
-        <input type="text" id="qa-name" placeholder="例如：크레용 신짱 인형 키링 / 蠟筆小新娃娃鑰匙圈" oninput="qaAutoDetectCat(this.value);(function(v){setTimeout(function(){showBrandSuggestions(v,true);},0);})(this.value)" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:11px 40px 11px 14px;font-size:14px;outline:none"/>
-        <button onclick="document.getElementById('qa-name').value='';" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
+        <input type="text" id="qa-name" placeholder="例如：크레용 신짱 인형 키링 / 蠟筆小新娃娃鑰匙圈" oninput="qaAutoDetectCat(this.value);(function(v){setTimeout(function(){showBrandSuggestions(v,true);},0);})(this.value);(function(v){setTimeout(function(){showDupWarning(v,'qa-dup-warning');},0);})(this.value)" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:11px 40px 11px 14px;font-size:14px;outline:none"/>
+        <button onclick="document.getElementById('qa-name').value='';document.getElementById('qa-dup-warning').style.display='none';" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
         <div id="qa-brand-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;z-index:99999;background:white;border:1.5px solid #C5A880;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.2);max-height:280px;overflow-y:auto"></div>
       </div>
+      <div id="qa-dup-warning" style="display:none;margin-top:8px;background:#FFF9F0;border:1px solid #FCD34D;border-radius:10px;padding:10px 12px"></div>
     </div>
     <!-- 規格：跟修改商品一樣，一個口味一個標籤，可個別上傳照片、修改、刪除 -->
     <div style="margin-bottom:12px">
@@ -1341,7 +1352,8 @@ body.live-mode .hide-live { display: none !important; }
         <button class="qa-ch-btn" data-ch="Object" onclick="qaSelectChannel(this,'Object')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Object</button>
         <button class="qa-ch-btn" data-ch="Point of View" onclick="qaSelectChannel(this,'Point of View')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Point of View</button>
         <button class="qa-ch-btn" data-ch="BUTTER" onclick="qaSelectChannel(this,'BUTTER')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧈 BUTTER</button>
-        <button class="qa-ch-btn" data-ch="新世界/樂天百貨" onclick="qaSelectChannel(this,'新世界/樂天百貨')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏢 百貨/免稅</button>
+        <button class="qa-ch-btn" data-ch="新世界免稅店" onclick="qaSelectChannel(this,'新世界免稅店')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛬 新世界免稅店（機場提貨）</button>
+        <button class="qa-ch-btn" data-ch="新世界/樂天百貨" onclick="qaSelectChannel(this,'新世界/樂天百貨')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏢 百貨專櫃（含稅可退稅）</button>
         <button class="qa-ch-btn" data-ch="廣藏市場" onclick="qaSelectChannel(this,'廣藏市場')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏮 廣藏市場</button>
         <button class="qa-ch-btn" data-ch="藥局" onclick="qaSelectChannel(this,'藥局')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">💊 藥局</button>
         <button class="qa-ch-btn" data-ch="品牌官網/直營門市" onclick="qaSelectChannel(this,'品牌官網/直營門市')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 品牌官網/直營門市</button>
@@ -1806,8 +1818,15 @@ async function fetchRates(){
 // ── 計算 ──────────────────────────────────────────────────────────────
 function getRate(cur){return window.G.rates[cur]||0.024;}
 function getTax(cur){return CURR[cur]?.tax||0.07;}
-function calcCost(amt,cur){
-  const rate=getRate(cur),tax=getTax(cur);
+// 免稅通路：這些通路買的東西本來就沒課稅（機場提貨的Duty Free），不像一般市內店面
+// 是「含稅價、事後憑護照退稅」，所以不能套用 getTax() 的退稅率，不然等於退了一筆不存在的稅。
+const DUTY_FREE_CHANNELS=new Set(["新世界免稅店"]);
+window.isDutyFreeChannel=function(ch){
+  if(!ch)return false;
+  return String(ch).split("、").some(c=>DUTY_FREE_CHANNELS.has(c.trim()));
+};
+function calcCost(amt,cur,dutyFree){
+  const rate=getRate(cur),tax=dutyFree?0:getTax(cur);
   const{cardFee,cardRebate}=window.G.settings;
   return{
     beforeTax:Math.round(amt*rate*10)/10,
@@ -1819,7 +1838,7 @@ function calcCost(amt,cur){
 window.getOrderUnitCost=function(o,prod){
   if(o&&typeof o.costSnapshot==="number")return o.costSnapshot;
   if(!prod)return 0;
-  return calcCost(prod.foreignAmount||prod.krw||0,prod.currency||"KRW").afterTax;
+  return calcCost(prod.foreignAmount||prod.krw||0,prod.currency||"KRW",window.isDutyFreeChannel(prod.channel)).afterTax;
 };
 window.calcCost=calcCost;
 function snap(raw,steps){for(const s of steps)if(s>=raw)return s;return Math.ceil(raw/100)*100-1;}
@@ -2401,7 +2420,7 @@ const SUBCAT_MAP = {
     {key:"泡麵",    label:"🍜 泡麵/麵食",    kw:["泡麵","拉麵","炒麵","炒碼麵","醬麵","炸醬麵","拌麵","湯麵","涼麵","冷麵","乾麵","油麵","刀削麵","蕎麥麵","蒟蒻麵","寬麵","速食麵","即食麵","杯麵","年糕麵","冬粉","烏龍","河粉","義大利麵","義大利麪","pasta","spaghetti","noodle","짬뽕","jjamppong","순면","라면"]},
     {key:"堅果",    label:"🥜 堅果/果乾",    kw:["堅果","杏仁","腰果","核桃","果乾","草莓乾","芒果乾","蔓越莓","凍乾","水果乾"]},
     {key:"調味",    label:"🧂 調味料/醬料",  kw:["醬","調味","辣椒","味噌","芥末","醋","食鹽","海鹽","岩鹽","橄欖油","麻油","香油","砂糖包"]},
-    {key:"餅乾",    label:"🍪 餅乾/零食",    kw:["餅乾","洋芋片","薯片","爆米花","糖果","咖啡糖","軟糖","脆片","貝果","堅果脆","蝴蝶餅","扭結餅","蝴蝶酥","千層酥","焦糖餅","雪花酥","雪花","威化","oreo","奧利奧","wafer","pretzel","gummy","chip","cookie","snack","涼糖","薄荷糖","薄荷涼糖","硬糖","喉糖","巧克力球","巧克力棒","chocolate ball","chocolate bar","糖"]},
+    {key:"餅乾",    label:"🍪 餅乾/零食",    kw:["餅乾","洋芋片","薯片","爆米花","糖果","咖啡糖","軟糖","脆片","貝果","堅果脆","蝴蝶餅","扭結餅","蝴蝶酥","千層酥","焦糖餅","雪花酥","雪花","威化","oreo","奧利奧","wafer","pretzel","gummy","chip","cookie","snack","涼糖","薄荷糖","薄荷涼糖","硬糖","喉糖","巧克力球","巧克力棒","chocolate ball","chocolate bar","糖","甜甜圈","燕麥酥","燕麥","donut"]},
     {key:"飲料",    label:"🧃 飲料",          kw:["飲料","果汁","咖啡","茶飲","汽水","能量飲","乳酸菌飲","優酪乳","蒟蒻飲"]},
     {key:"沖泡",    label:"🥤 沖泡/代餐",    kw:["沖泡","搖搖飲","蛋白飲","高蛋白","蛋白粉","乳清","奶昔粉","代餐","益生菌粉","酵素粉","shake","protein","smoothie mix"]},
     {key:"果凍",    label:"🍮 果凍/布丁",    kw:["果凍","布丁","jelly","pudding"]},
@@ -2636,7 +2655,7 @@ window.refreshAllCosts=async function(){
   for(const p of prods){
     const fa=p.foreignAmount||p.krw||0;
     if(!fa)continue;
-    const{beforeTax,afterTax}=calcCost(fa,p.currency||"KRW");
+    const{beforeTax,afterTax}=calcCost(fa,p.currency||"KRW",window.isDutyFreeChannel(p.channel));
     const profit=Math.round(((p.finalPrice||0)-afterTax)*10)/10;
     const margin=(p.finalPrice||0)>0?Math.round((profit/p.finalPrice)*100):0;
     // 差距小於 NT$0.1 就不用特地寫入，省一點資料庫寫入次數
@@ -3175,6 +3194,7 @@ window.BRAND_DB=[
   {n:"8 SECONDS",cat:"clothes",url:"https://www.8seconds.co.kr/"},{n:"에잇세컨즈",cat:"clothes",url:"https://www.8seconds.co.kr/"},
   {n:"Wacky WiLLY",cat:"clothes",url:"https://wackywilly.com/"},
   {n:"ONE SIX EIGHT",cat:"clothes"},
+  {n:"KHIHO",cat:"shoes",url:"https://en.khiho.com/"},{n:"기호",cat:"shoes",url:"https://en.khiho.com/"},
   // 包包配件補充
   {n:"BUCKS & LEATHER",cat:"bag"},
   {n:"LOE",cat:"bag"},
@@ -3486,6 +3506,133 @@ window.qaEditSpec=function(chipEl){
   input.addEventListener("click",e=>e.stopPropagation());
 };
 
+// ── 重複商品檢查 ──────────────────────────────────────────────────────
+// 名稱正規化：去掉括號內容(通常是數量/促銷/容量標示，例如「(1+1)」「30ml」)、
+// 空白跟標點符號，避免這些差異讓明明是同一件商品的兩筆判斷成不像。
+window.normalizeProdName=function(s){
+  return (s||"").toLowerCase()
+    // 只去掉「純促銷比例／數量單位」的括號內容，例如(1+1)(2+1)(30ml)(50g)，
+    // 不要把口味/顏色這種也寫在括號裡的文字一起去掉，不然不同口味會被誤判成完全一樣。
+    .replace(/[（(]\s*(?:[1-9][+＋][1-9]|\d+\s*(?:ml|g|kg|入|包|片|顆|盒|組|抽|枚|支)?)\s*[）)]/gi,"")
+    .replace(/[\s\-_·,，。.!！?？:：;；'"'"'"]/g,"")
+    .trim();
+};
+// 兩個名稱的相似度：0~1，用字元二連圖（bigram）算 Dice 係數，
+// 中英韓混合文字都適用，不需要先做斷詞。
+window.nameSimilarity=function(a,b){
+  const na=window.normalizeProdName(a),nb=window.normalizeProdName(b);
+  if(!na||!nb)return 0;
+  if(na===nb)return 1;
+  const longer=na.length>=nb.length?na:nb,shorter=na.length>=nb.length?nb:na;
+  if(shorter.length>=4&&longer.includes(shorter))return 0.92;
+  const bigrams=s=>{const set=new Set();for(let i=0;i<s.length-1;i++)set.add(s.slice(i,i+2));return set;};
+  const ba=bigrams(na),bb=bigrams(nb);
+  if(!ba.size||!bb.size)return 0;
+  let inter=0;ba.forEach(g=>{if(bb.has(g))inter++;});
+  return (2*inter)/(ba.size+bb.size);
+};
+// 找出跟給定名稱很像的既有商品（threshold預設0.55，可視需要調整）
+window.findSimilarProducts=function(name,excludeId,threshold){
+  threshold=threshold||0.55;
+  const products=window.G.products||[];
+  const results=[];
+  products.forEach(p=>{
+    if(excludeId&&p.id===excludeId)return;
+    const sim=window.nameSimilarity(name,p.name);
+    if(sim>=threshold)results.push({p,sim});
+  });
+  results.sort((a,b)=>b.sim-a.sim);
+  return results.slice(0,5);
+};
+// 在指定的警示區塊(boxId)顯示「這可能已經上架過」的提醒
+window.showDupWarning=function(val,boxId,excludeId){
+  const box=document.getElementById(boxId);
+  if(!box)return;
+  if(!val||val.trim().length<2){box.style.display="none";return;}
+  const matches=window.findSimilarProducts(val,excludeId);
+  if(!matches.length){box.style.display="none";return;}
+  const CL={food:"🍿食品",beauty:"💄美妝",daiso:"🏪大創",shoes:"👟鞋子",clothes:"👗衣服",bag:"👜包包",luxury:"💎精品",sunglasses:"🕶墨鏡",accessory:"🎀飾品",home:"🏠居家",device:"🪄美容儀",other:"📦其他"};
+  const rows=matches.map(m=>{
+    const p=m.p;
+    const cur=CURR[p.currency||"KRW"];
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-top:1px solid #FDE68A">
+      <div style="min-width:0">
+        <div style="font-size:12px;font-weight:700;color:#3D2010;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</div>
+        <div style="font-size:10px;color:#92400E">${p.id||""}・${CL[p.catKey]||p.category||""}・${cur?.symbol||"₩"}${(p.foreignAmount||0).toLocaleString()}・NT$${p.finalPrice||0}</div>
+      </div>
+      <span style="flex-shrink:0;font-size:10px;font-weight:700;color:${m.sim>=0.85?"#C0392B":"#92400E"};margin-left:8px">相似${Math.round(m.sim*100)}%</span>
+    </div>`;
+  }).join("");
+  box.innerHTML=`<div style="font-size:11px;font-weight:700;color:#92400E">⚠️ 商品庫裡已經有名稱很像的商品，先確認一下是不是上架過了：</div>${rows}`;
+  box.style.display="block";
+};
+// 掃描整個商品庫，把名稱很像的商品分組列出來，方便回頭清理重複／合併規格
+window.showDupProductScan=function(){
+  let modal=document.getElementById("modal-dup-scan");
+  if(!modal){
+    modal=document.createElement("div");
+    modal.id="modal-dup-scan";
+    modal.className="modal-overlay";
+    modal.style.cssText="display:none;position:fixed;inset:0;z-index:120;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;padding:16px";
+    modal.innerHTML=`<div style="background:white;border-radius:18px;width:100%;max-width:480px;max-height:85vh;display:flex;flex-direction:column">
+      <div style="padding:18px 20px 12px;border-bottom:1px solid #F0E6D0;display:flex;justify-content:space-between;align-items:center">
+        <h3 style="margin:0;font-size:15px;font-weight:900;color:#3D2010">⚠️ 檢查重複商品</h3>
+        <button onclick="document.getElementById('modal-dup-scan').style.display='none'" style="background:none;border:none;font-size:20px;color:#9C7A5A;cursor:pointer">×</button>
+      </div>
+      <div id="dup-scan-content" style="padding:14px 20px 20px;overflow-y:auto;flex:1"></div>
+    </div>`;
+    document.body.appendChild(modal);
+  }
+  modal.style.display="flex";
+  renderDupProductScan();
+};
+window.renderDupProductScan=function(){
+  const box=document.getElementById("dup-scan-content");
+  if(!box)return;
+  box.innerHTML=`<div style="text-align:center;padding:20px;color:#9C7A5A;font-size:12px">掃描中…</div>`;
+  setTimeout(()=>{
+    const products=(window.G.products||[]).filter(p=>!p.archived);
+    const n=products.length;
+    const threshold=0.6;
+    const parent=Array.from({length:n},(_,i)=>i);
+    function find(x){while(parent[x]!==x){parent[x]=parent[parent[x]];x=parent[x];}return x;}
+    function union(a,b){const ra=find(a),rb=find(b);if(ra!==rb)parent[ra]=rb;}
+    for(let i=0;i<n;i++){
+      for(let j=i+1;j<n;j++){
+        if(window.nameSimilarity(products[i].name,products[j].name)>=threshold)union(i,j);
+      }
+    }
+    const groupMap={};
+    for(let i=0;i<n;i++){
+      const root=find(i);
+      if(!groupMap[root])groupMap[root]=[];
+      groupMap[root].push(products[i]);
+    }
+    const clusters=Object.values(groupMap).filter(g=>g.length>1);
+    clusters.sort((a,b)=>b.length-a.length);
+    if(!clusters.length){
+      box.innerHTML=`<div style="text-align:center;padding:24px 10px;color:#166534;font-size:13px">✅ 沒有發現名稱很像的重複商品</div>`;
+      return;
+    }
+    const CL={food:"🍿食品",beauty:"💄美妝",daiso:"🏪大創",shoes:"👟鞋子",clothes:"👗衣服",bag:"👜包包",luxury:"💎精品",sunglasses:"🕶墨鏡",accessory:"🎀飾品",home:"🏠居家",device:"🪄美容儀",other:"📦其他"};
+    box.innerHTML=`<div style="font-size:11px;color:#9C7A5A;margin-bottom:12px">共抓到 ${clusters.length} 組可能重複／相似的商品（名稱相似度≥60%），點商品可直接開修改。如果是同商品不同口味／顏色，建議合併成一筆、用「規格」欄位區分，而不是各開一筆。</div>`+
+      clusters.map(group=>{
+        const rows=group.map(p=>{
+          const cur=CURR[p.currency||"KRW"];
+          return `<div onclick="document.getElementById('modal-dup-scan').style.display='none';openEditProd('${p.id}')" style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:#FAF8F5;border-radius:9px;padding:8px 12px;cursor:pointer" onmouseover="this.style.background='#F0E6D0'" onmouseout="this.style.background='#FAF8F5'">
+            <div style="min-width:0">
+              <div style="font-size:12px;font-weight:700;color:#3D2010;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><span style="color:#C5A880">${p.id}</span> ${p.name}</div>
+              <div style="font-size:10px;color:#9C7A5A">${CL[p.catKey]||p.category||""}・${cur?.symbol||"₩"}${(p.foreignAmount||0).toLocaleString()}・NT$${p.finalPrice||0}${(p.specs&&p.specs.length>0)?`・📐${Array.isArray(p.specs)?p.specs.join("、"):p.specs}`:""}</div>
+            </div>
+          </div>`;
+        }).join("");
+        return `<div style="border:1px solid #FCD34D;border-left:4px solid #F59E0B;border-radius:12px;padding:10px 12px;margin-bottom:12px;background:#FFFBEB">
+          <div style="font-size:11px;font-weight:700;color:#92400E;margin-bottom:6px">可能重複（${group.length}件）</div>
+          <div style="display:flex;flex-direction:column;gap:6px">${rows}</div>
+        </div>`;
+      }).join("");
+  },10);
+};
 window.showBrandSuggestions=function showBrandSuggestions(val,mode){
   // mode: true/"quick"=快速上架, "edit"=修改商品, false/其他=新增商品
   var boxId=mode==="edit"?"ep-brand-suggestions":(mode?"qa-brand-suggestions":"brand-suggestions");
@@ -3586,7 +3733,7 @@ window.calcUpdate=function(){
     if(results)results.style.display="block";
     if(welcome)welcome.style.display="none";
     const cur=window.G.currency;
-    const{beforeTax,afterTax}=calcCost(amt,cur);
+    const{beforeTax,afterTax}=calcCost(amt,cur,window.isDutyFreeChannel(window.G.calcChannel));
     const cat=window.G.calcCat||"food";
     const sugg=suggestPrice(afterTax,cat,flags,twPrice,amt);
     const final=custom||sugg;
@@ -3835,7 +3982,7 @@ window.saveProduct=async function(){
   const cat=window.G.calcCat||"food";
   const flags=window.G.calcFlags||{};
   const twPrice=window.G.calcTwPrice||0;
-  const{beforeTax,afterTax}=calcCost(amt,cur);
+  const{beforeTax,afterTax}=calcCost(amt,cur,window.isDutyFreeChannel(window.G.calcChannel));
   const sugg=suggestPrice(afterTax,cat,flags,twPrice,amt);
   const final=window.G.calcCustom||sugg;
   const profit=Math.round((final-afterTax)*10)/10;
@@ -4001,7 +4148,7 @@ function updateEpCalc(amt,cur,cat,twPrice,flags){
     return;
   }
   twPrice=twPrice||0;flags=flags||{};
-  const{beforeTax,afterTax}=calcCost(amt,cur);
+  const{beforeTax,afterTax}=calcCost(amt,cur,window.isDutyFreeChannel(window.G.editChannel));
   const sugg=suggestPrice(afterTax,cat,flags,twPrice,amt);
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
   set("ep-before",`NT$ ${beforeTax}`);
@@ -4030,7 +4177,7 @@ window.saveEditProd=async function(){
   const url=epGetAllUrls().join("\n");
   if(!name){showToast("名稱不能空白","error");return;}
   if(price<=0){showToast("售價必須大於0","error");return;}
-  const{beforeTax,afterTax}=calcCost(fa,m.currency||"KRW");
+  const{beforeTax,afterTax}=calcCost(fa,m.currency||"KRW",window.isDutyFreeChannel(window.G.editChannel));
   const profit=Math.round((price-afterTax)*10)/10;
   const margin=price>0?Math.round((profit/price)*100):0;
   const newCatKey=window.G.editCatKey||m.catKey||"food";
@@ -4093,7 +4240,7 @@ window.saveEditProd=async function(){
 
 window.copyLineFormat=function(id){
   const p=window.G.products.find(x=>x.id===id);if(!p)return;
-  const text=`【${cleanProductName(p.name)}】\n售價：NT$ ${p.finalPrice.toLocaleString()}`;
+  const text=`【${cleanProductName(p.name)}】\n商品售價：NT$ ${p.finalPrice.toLocaleString()}`;
   navigator.clipboard?.writeText(text).then(()=>showToast("報價已複製！")).catch(()=>{
     const ta=document.createElement("textarea");ta.value=text;ta.style.position="fixed";
     document.body.appendChild(ta);ta.focus();ta.select();
@@ -4470,7 +4617,7 @@ window.addOrder=async function(){
   const tripId=window.G.moSelectedTripId||"";
   const orderType=window.G.moOrderType||"onsite";
   const orderTypeLabel=orderType==="onsite"?"🛍️現場":"📱代買";
-  const onsiteCost=orderType==="onsite"?calcCost(prod.foreignAmount||prod.krw||0,prod.currency||"KRW").afterTax:null;
+  const onsiteCost=orderType==="onsite"?calcCost(prod.foreignAmount||prod.krw||0,prod.currency||"KRW",window.isDutyFreeChannel(prod.channel)).afterTax:null;
   let totalKinds=0;
   let lastSpecLabel="";
 
@@ -4504,7 +4651,7 @@ window.addOrder=async function(){
     const sp=window.G.products.find(x=>x.id===item.productId);if(!sp)continue;
     const mixId="O"+Date.now()+"_m"+(mixIdx++);
     const mixSpec=(sp.specs&&sp.specs.length?sp.specs.join(","):"");
-    const mixCost=orderType==="onsite"?calcCost(sp.foreignAmount||sp.krw||0,sp.currency||"KRW").afterTax:null;
+    const mixCost=orderType==="onsite"?calcCost(sp.foreignAmount||sp.krw||0,sp.currency||"KRW",window.isDutyFreeChannel(sp.channel)).afterTax:null;
     await fbSet("orders",mixId,{productId:sp.id,productName:cleanProductName(sp.name),productEmoji:sp.emoji,customerId,communityName,lineName,buyerName:communityName||lineName,qty:item.qty,unitPrice:sp.finalPrice,total:sp.finalPrice*item.qty,status:"pending",tripId,orderType,spec:mixSpec,purchased:orderType==="onsite",costSnapshot:mixCost,createdAt:Date.now()});
     totalKinds++;
   }
@@ -4617,6 +4764,20 @@ window.eoSearchProducts=function(q){
   }).join("");
 };
 
+window.G.eoOrderType="onsite"; // 預設現場購買
+window.eoSetType=function(type){
+  window.G.eoOrderType=type;
+  const onsite=document.getElementById("eo-type-onsite");
+  const preorder=document.getElementById("eo-type-preorder");
+  if(!onsite||!preorder)return;
+  if(type==="onsite"){
+    onsite.style.background="#5C3A1E";onsite.style.color="#F5E6C8";onsite.style.borderColor="#5C3A1E";
+    preorder.style.background="white";preorder.style.color="#9C7A5A";preorder.style.borderColor="#E8D5B0";
+  } else {
+    preorder.style.background="#5C3A1E";preorder.style.color="#F5E6C8";preorder.style.borderColor="#5C3A1E";
+    onsite.style.background="white";onsite.style.color="#9C7A5A";onsite.style.borderColor="#E8D5B0";
+  }
+};
 window.eoAddProduct=async function(productId,spec){
   if(window.G.eoAdding)return;
   window.G.eoAdding=true;
@@ -4635,19 +4796,22 @@ window.eoAddProduct=async function(productId,spec){
   const c=window.G.customers.find(x=>x.id===cid);
   if(!c){showToast("找不到客戶","error");window.G.eoAdding=false;return;}
   const tripId=window.G.moSelectedTripId||getLatestTrip()?.id||"";
+  const eoType=window.G.eoOrderType||"onsite";
   const id="O"+Date.now();
   const newOrder={id,productId,productName:cleanProductName(p.name),productEmoji:p.emoji||"📦",
     customerId:cid,communityName:c.communityName||"",lineName:c.lineName||"",
     buyerName:c.communityName||c.lineName||"",
     qty:1,unitPrice:p.finalPrice,discountPrice:p.finalPrice,total:p.finalPrice,spec:finalSpec,
-    status:"pending",tripId,orderType:"onsite",purchased:true,costSnapshot:calcCost(p.foreignAmount||p.krw||0,p.currency||"KRW").afterTax,createdAt:Date.now()};
+    status:"pending",tripId,orderType:eoType,purchased:eoType==="onsite",
+    costSnapshot:eoType==="onsite"?calcCost(p.foreignAmount||p.krw||0,p.currency||"KRW",window.isDutyFreeChannel(p.channel)).afterTax:null,
+    createdAt:Date.now()};
   // 暫存，不立即寫入 Firebase
   if(!window.G.eoPendingAdd)window.G.eoPendingAdd=[];
   window.G.eoPendingAdd.push(newOrder);
   const search=document.getElementById("eo-prod-search");if(search)search.value="";
   const res=document.getElementById("eo-prod-results");if(res)res.style.display="none";
   eoRenderPending();
-  showToast(`已加入「${p.name}」${finalSpec?"（"+finalSpec+"）":""}，請按儲存`);
+  showToast(`已加入「${p.name}」${finalSpec?"（"+finalSpec+"）":""}（${eoType==="onsite"?"🛍️現場":"📱記事本+1"}），請按儲存`);
   window.G.eoAdding=false;
 };
 // 多規格商品：先在搜尋結果的位置顯示規格選擇按鈕，選了才真的加入
@@ -4685,10 +4849,30 @@ window.eoRenderPending=function(){
   pending.forEach((item,i)=>{
     const div=document.createElement("div");
     div.className="eo-pending-row";
-    div.style.cssText="background:#F0FDF4;border:1px dashed #86EFAC;border-radius:10px;padding:10px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center";
-    div.innerHTML=`<span style="font-size:12px;font-weight:700;color:#166534">＋ ${item.productName}${item.spec?` (${item.spec})`:""} ×${item.qty} NT$${item.unitPrice} <span style="font-size:10px;font-weight:400;color:#4ADE80">（待儲存）</span></span><button onclick="window.G.eoPendingAdd.splice(${i},1);eoRenderPending();" style="color:#DC2626;background:none;border:none;cursor:pointer;font-size:14px;font-weight:900">×</button>`;
+    div.style.cssText="background:#F0FDF4;border:1px dashed #86EFAC;border-radius:10px;padding:10px 14px;margin-bottom:8px";
+    const typeBadge=item.orderType==="onsite"?"🛍️現場":"📱記事本+1";
+    const qty=item.qty||1;
+    div.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+      <span style="font-size:12px;font-weight:700;color:#166534;min-width:0">＋ ${item.productName}${item.spec?` (${item.spec})`:""} <span style="font-size:10px;font-weight:700;color:#5C3A1E;background:#FDF6EC;border-radius:6px;padding:1px 5px">${typeBadge}</span> <span style="font-size:10px;font-weight:400;color:#4ADE80">（待儲存）</span></span>
+      <button onclick="window.G.eoPendingAdd.splice(${i},1);eoRenderPending();" style="flex-shrink:0;color:#DC2626;background:none;border:none;cursor:pointer;font-size:14px;font-weight:900">×</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-top:8px">
+      <div style="display:flex;align-items:center;border:1px solid #86EFAC;border-radius:8px;overflow:hidden;background:white">
+        <button onclick="eoPendingQtyAdj(${i},-1)" style="width:28px;height:28px;border:none;background:transparent;color:#166534;font-size:15px;font-weight:700;cursor:pointer">－</button>
+        <span style="width:30px;text-align:center;font-size:13px;font-weight:900;color:#166534">${qty}</span>
+        <button onclick="eoPendingQtyAdj(${i},1)" style="width:28px;height:28px;border:none;background:transparent;color:#166534;font-size:15px;font-weight:700;cursor:pointer">＋</button>
+      </div>
+      <span style="font-size:11px;color:#166534;font-weight:700">NT$${item.unitPrice} × ${qty} = NT$${(item.unitPrice*qty).toLocaleString()}</span>
+    </div>`;
     list.appendChild(div);
   });
+};
+window.eoPendingQtyAdj=function(i,delta){
+  const item=(window.G.eoPendingAdd||[])[i];
+  if(!item)return;
+  item.qty=Math.max(1,(item.qty||1)+delta);
+  item.total=item.unitPrice*item.qty;
+  eoRenderPending();
 };
 
 window.eoUpdateDiscountPreview=function(){
@@ -4744,7 +4928,10 @@ window.saveAllEditOrders=async function(){
       communityName:c?.communityName||"",lineName:c?.lineName||"",
       buyerName:c?.communityName||c?.lineName||"",tripId};
     await fbSet("orders",item.id,saveOrder);
-    window.G.orders.push(saveOrder);
+    // 注意：不要在這裡手動 push 進 window.G.orders！
+    // onSnapshot(collection(db,"orders"),...) 監聽器一寫入就會自動把 window.G.orders
+    // 整包重新同步一次，這裡如果又手動 push 一次，會跟監聽器同步進來的那筆重複，
+    // 畫面上就會看到同一筆訂單顯示兩次（之前的bug）。
     count++;
   }
   window.G.eoPendingAdd=[];
@@ -5173,7 +5360,7 @@ window.boConfirm=async function(){
     const p=products.find(x=>x.id===item.productId);
     if(!p)continue;
     const id="ord_"+Date.now()+"_"+i;
-    const batchCost=orderType==="onsite"?calcCost(p.foreignAmount||p.krw||0,p.currency||"KRW").afterTax:null;
+    const batchCost=orderType==="onsite"?calcCost(p.foreignAmount||p.krw||0,p.currency||"KRW",window.isDutyFreeChannel(p.channel)).afterTax:null;
     await fbSet("orders",id,{
       productId:item.productId,productName:p.name,productEmoji:p.emoji,
       customerId,communityName,lineName:lineName||"",buyerName:communityName,
@@ -6626,7 +6813,7 @@ window.renderList=function(){
   } else if(sortMode==="profit"){
     const liveProfit=p=>{
       const fa=p.foreignAmount||p.krw||0;
-      const{afterTax}=calcCost(fa,p.currency||"KRW");
+      const{afterTax}=calcCost(fa,p.currency||"KRW",window.isDutyFreeChannel(p.channel));
       return (p.finalPrice||0)-afterTax;
     };
     filtered.sort((a,b)=>liveProfit(b)-liveProfit(a));
@@ -6678,7 +6865,7 @@ window.renderList=function(){
       const cur=CURR[p.currency||"KRW"];
       const pOrders=getTripOrders().filter(o=>o.productId===p.id);
       const pTotal=pOrders.reduce((s,o)=>s+o.qty,0);
-      const liveAfterTax=Math.round(calcCost(p.foreignAmount||0,p.currency||"KRW").afterTax*10)/10;
+      const liveAfterTax=Math.round(calcCost(p.foreignAmount||0,p.currency||"KRW",window.isDutyFreeChannel(p.channel)).afterTax*10)/10;
       const badgeHtml=pOrders.length>0?('<div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:5px">'+pOrders.map(o=>'<div style="display:inline-flex;align-items:center;gap:3px;background:#C5A880;color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px"><span>'+(o.communityName||o.lineName||"客人")+'</span><button data-oid="'+o.id+'" onclick="event.stopPropagation();deleteOrderFromGrid(this.dataset.oid)" style="background:none;border:none;color:white;font-size:13px;cursor:pointer;padding:0 0 0 2px;line-height:1;font-weight:900">×</button></div>').join("")+'</div>'):'' ;
       return '<div onclick="openMoFromGrid(\''+p.id+'\')" style="background:white;border-radius:14px;border:1px solid #E8D5B0;overflow:hidden;cursor:pointer">'
         +'<div style="width:100%;aspect-ratio:1/1;background:#FAF8F5;display:flex;align-items:center;justify-content:center;overflow:hidden">'
@@ -6705,7 +6892,7 @@ window.renderList=function(){
     const checked=selectedProducts.has(p.id);
     // ── 動態重算：用即時匯率，不依賴 Firebase 舊快照 ──────────────────
     const fa=p.foreignAmount||p.krw||0;
-    const liveCalc=calcCost(fa,p.currency||"KRW");
+    const liveCalc=calcCost(fa,p.currency||"KRW",window.isDutyFreeChannel(p.channel));
     const liveAfterTax=liveCalc.afterTax;
     const liveBeforeTax=liveCalc.beforeTax;
     const liveProfit=Math.round((p.finalPrice-liveAfterTax)*10)/10;
@@ -6800,6 +6987,7 @@ window.openEditOrd=function(oid){
   const cid=o.customerId||"";
   window.G.activeEordCustId=cid;
   window.G.eoPendingAdd=[];
+  if(typeof eoSetType==="function")eoSetType("onsite");
   const sr=document.getElementById("eo-prod-search");if(sr)sr.value="";
   const rr=document.getElementById("eo-prod-results");if(rr)rr.style.display="none";
   const cname=(o.communityName||o.buyerName||"").trim().toLowerCase();
@@ -6905,7 +7093,7 @@ window.batchEditProducts=function(){
     const p=window.G.products.find(x=>x.id===id);if(!p)return "";
     const fa=p.foreignAmount||p.krw||0;
     const cur=window.CATS?window.G.products:null;
-    const liveCalc=calcCost(fa,p.currency||"KRW");
+    const liveCalc=calcCost(fa,p.currency||"KRW",window.isDutyFreeChannel(p.channel));
     const liveAfterTax=liveCalc.afterTax;
     const liveProfit=Math.round((p.finalPrice-liveAfterTax)*10)/10;
     const CURR_obj=({KRW:"₩",JPY:"¥",THB:"฿"})[p.currency||"KRW"]||"₩";
@@ -6973,7 +7161,8 @@ window.batchEditProducts=function(){
 // 即時更新成本和建議售價
 window.beUpdateCost=function(input,pid,currency){
   const fa=parseFloat(input.value)||0;
-  const{afterTax}=calcCost(fa,currency||"KRW");
+  const pForChannel=window.G.products.find(x=>x.id===pid);
+  const{afterTax}=calcCost(fa,currency||"KRW",window.isDutyFreeChannel(pForChannel?.channel));
   const suggest=Math.ceil(afterTax*1.3);
   const costEl=document.getElementById("be-cost-"+pid);
   const suggestEl=document.getElementById("be-suggest-"+pid);
@@ -6990,7 +7179,7 @@ window.beUpdateProfit=function(input,pid){
   const p=window.G.products.find(x=>x.id===pid);if(!p)return;
   const newPrice=parseFloat(input.value)||0;
   const fa=p.foreignAmount||p.krw||0;
-  const{afterTax}=calcCost(fa,p.currency||"KRW");
+  const{afterTax}=calcCost(fa,p.currency||"KRW",window.isDutyFreeChannel(p.channel));
   const profit=Math.round((newPrice-afterTax)*10)/10;
   const margin=newPrice>0?Math.round((profit/newPrice)*100):0;
   const profitEl=document.getElementById("be-profit-"+pid);
@@ -7014,7 +7203,7 @@ window.previewBatchQuick=function(){
     const p=window.G.products.find(x=>x.id===id);if(!p)return;
     // 用目前匯率即時重算成本，跟卡片上顯示的「成本」口徑一致，不要用資料庫裡可能是舊匯率算出的存值
     const fa=p.foreignAmount||p.krw||0;
-    const{afterTax}=calcCost(fa,p.currency||"KRW");
+    const{afterTax}=calcCost(fa,p.currency||"KRW",window.isDutyFreeChannel(p.channel));
     const cost=afterTax||0;
     let newPrice;
     if(mode==="fixed")newPrice=val;
@@ -7188,7 +7377,7 @@ window.saveBatchEdit=async function(){
     const newFa=parseFloat(card.querySelector("[data-field='foreignAmount']")?.value)||p.foreignAmount||p.krw||0;
     const newSpecs=(card.querySelector("[data-field='specs']")?.value.trim()||"").split(",").map(s=>s.trim()).filter(Boolean);
     const newAliases=(card.querySelector("[data-field='aliases']")?.value.trim()||"").split(",").map(s=>s.trim()).filter(Boolean);
-    const{beforeTax,afterTax}=calcCost(newFa,p.currency||"KRW");
+    const{beforeTax,afterTax}=calcCost(newFa,p.currency||"KRW",window.isDutyFreeChannel(p.channel));
     const profit=Math.round((newPrice-afterTax)*10)/10;
     const margin=newPrice>0?Math.round((profit/newPrice)*100):0;
     // 如果這張卡片有透過活動按鈕（1+1/2+1/3+1）套用過，一併記錄原價跟倍數，避免之後修改時抓不到原價
@@ -7549,7 +7738,7 @@ window.togglePurchased=async function(oid){
     // 標記為「已購買」的這一刻，把當下的成本凍結存起來，之後就算匯率變動，這筆訂單的利潤也不會再跟著漂移
     const prod=window.G.products.find(x=>x.id===o.productId);
     if(prod){
-      upd.costSnapshot=calcCost(prod.foreignAmount||prod.krw||0,prod.currency||"KRW").afterTax;
+      upd.costSnapshot=calcCost(prod.foreignAmount||prod.krw||0,prod.currency||"KRW",window.isDutyFreeChannel(prod.channel)).afterTax;
       upd.costSnapshotAt=Date.now();
     }
   } else {
@@ -7878,7 +8067,7 @@ window.qaCalcPrice=function(){
     return;
   }
   const cat=window.G.qaCatKey||"food"; // 預設食品類
-  const{afterTax}=calcCost(amt,"KRW");
+  const{afterTax}=calcCost(amt,"KRW",window.isDutyFreeChannel(window.G.qaChannel));
   const flags={
     priceType:document.getElementById("qa-flag-transparent")?.checked?"transparent":"normal",
     isCold:document.getElementById("qa-flag-cold")?.checked||false,
@@ -8083,6 +8272,13 @@ window.epSelectChannel=function(btn,ch){
     }
   }
   window.G.editChannel=window.G.editChannels?.join("、")||"";
+  const m=window.G.activeModalData;
+  if(m&&typeof updateEpCalc==="function"){
+    const amt=parseFloat(document.getElementById("ep-foreign")?.value)||m.foreignAmount||0;
+    const twp=parseFloat(document.getElementById("ep-twprice")?.value)||0;
+    const cat=window.G.editCatKey||m.catKey||"food";
+    updateEpCalc(amt,m.currency||"KRW",cat,twp,typeof epGetFlags==="function"?epGetFlags():{});
+  }
 };
 window.openEditCustOrOrder=function(custId, custName){
   // 顯示選擇：修改資料 or 新增訂單
@@ -8120,6 +8316,7 @@ window.doQuickAddOrder=function(custId, custName){
   if(activeTabPage){window.G._eoHiddenTab=activeTabPage;activeTabPage.classList.remove("active");}
   window.G.activeEordCustId=custId;
   window.G.eoPendingAdd=[];
+  if(typeof eoSetType==="function")eoSetType("onsite");
   const sr=document.getElementById("eo-prod-search");if(sr)sr.value="";
   const rr=document.getElementById("eo-prod-results");if(rr)rr.style.display="none";
   const c=window.G.customers.find(x=>x.id===custId);
@@ -8546,6 +8743,7 @@ window.qaSelectChannel=function(btn,ch){
     }
   }
   window.G.qaChannel=window.G.qaChannels?.join("、")||"";
+  if(typeof window.qaCalcPrice==="function")window.qaCalcPrice();
 };
 window.calcSelectChannel=function(btn,ch){
   if(ch===""){
@@ -8572,6 +8770,7 @@ window.calcSelectChannel=function(btn,ch){
     }
   }
   window.G.calcChannel=window.G.calcChannels?.join("、")||"";
+  if(typeof window.calcUpdate==="function")window.calcUpdate();
 };
 
 window.saveQuickAdd=async function(){
@@ -8580,7 +8779,7 @@ window.saveQuickAdd=async function(){
   const cat=window.G.qaCatKey||"food";
   if(!name){showToast("請填入商品名稱","error");return;}
   if(!amt){showToast("請填入韓幣金額","error");return;}
-  const{afterTax,beforeTax}=calcCost(amt,"KRW");
+  const{afterTax,beforeTax}=calcCost(amt,"KRW",window.isDutyFreeChannel(window.G.qaChannel));
   const sugg=suggestPrice(afterTax,cat,{},0,amt);
   const id=genId(cat,"KRW");
   // Use product photo if available, otherwise use recognition photo
