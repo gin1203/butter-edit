@@ -4093,7 +4093,7 @@ window.saveEditProd=async function(){
 
 window.copyLineFormat=function(id){
   const p=window.G.products.find(x=>x.id===id);if(!p)return;
-  const text=`【${cleanProductName(p.name)}】\n商品售價：NT$ ${p.finalPrice.toLocaleString()}`;
+  const text=`【${cleanProductName(p.name)}】\n售價：NT$ ${p.finalPrice.toLocaleString()}`;
   navigator.clipboard?.writeText(text).then(()=>showToast("報價已複製！")).catch(()=>{
     const ta=document.createElement("textarea");ta.value=text;ta.style.position="fixed";
     document.body.appendChild(ta);ta.focus();ta.select();
