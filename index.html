@@ -2386,12 +2386,12 @@ const SUBCAT_MAP = {
   // 食品子分類
   food: [
     {key:"海苔",    label:"🌿 海苔/乾貨",    kw:["海苔","魚乾","魷魚","乾貨"]},
+    {key:"泡麵",    label:"🍜 泡麵/麵食",    kw:["泡麵","拉麵","炒麵","炒碼麵","醬麵","炸醬麵","拌麵","湯麵","涼麵","冷麵","乾麵","油麵","刀削麵","蕎麥麵","蒟蒻麵","寬麵","速食麵","即食麵","杯麵","年糕麵","冬粉","烏龍","河粉","義大利麵","義大利麪","pasta","spaghetti","noodle","짬뽕","jjamppong","순면","라면"]},
+    {key:"堅果",    label:"🥜 堅果/果乾",    kw:["堅果","杏仁","腰果","核桃","果乾","草莓乾","芒果乾","蔓越莓","凍乾","水果乾"]},
     {key:"調味",    label:"🧂 調味料/醬料",  kw:["醬","調味","辣椒","味噌","芥末","醋","食鹽","海鹽","岩鹽","橄欖油","麻油","香油","砂糖包"]},
     {key:"餅乾",    label:"🍪 餅乾/零食",    kw:["餅乾","洋芋片","薯片","爆米花","糖果","咖啡糖","軟糖","脆片","貝果","堅果脆","蝴蝶餅","扭結餅","蝴蝶酥","千層酥","焦糖餅","雪花酥","雪花","威化","oreo","奧利奧","wafer","pretzel","gummy","chip","cookie","snack","涼糖","薄荷糖","薄荷涼糖","硬糖","喉糖","巧克力球","巧克力棒","chocolate ball","chocolate bar","糖"]},
-    {key:"泡麵",    label:"🍜 泡麵/麵食",    kw:["泡麵","拉麵","炒麵","炒碼麵","醬麵","炸醬麵","拌麵","湯麵","涼麵","冷麵","乾麵","油麵","刀削麵","蕎麥麵","蒟蒻麵","寬麵","速食麵","即食麵","杯麵","年糕麵","冬粉","烏龍","河粉","義大利麵","義大利麪","pasta","spaghetti","noodle","짬뽕","jjamppong","순면","라면"]},
     {key:"飲料",    label:"🧃 飲料",          kw:["飲料","果汁","咖啡","茶飲","汽水","能量飲","乳酸菌飲","優酪乳","蒟蒻飲"]},
     {key:"沖泡",    label:"🥤 沖泡/代餐",    kw:["沖泡","搖搖飲","蛋白飲","高蛋白","蛋白粉","乳清","奶昔粉","代餐","益生菌粉","酵素粉","shake","protein","smoothie mix"]},
-    {key:"堅果",    label:"🥜 堅果/果乾",    kw:["堅果","杏仁","腰果","核桃","果乾","草莓乾","芒果乾","蔓越莓","凍乾","水果乾"]},
     {key:"果凍",    label:"🍮 果凍/布丁",    kw:["果凍","布丁","jelly","pudding"]},
     {key:"麻糬",    label:"🍡 麻糬/年糕",    kw:["麻糬","年糕","떡","糯米"]},
     {key:"甜點",    label:"🍰 甜點/糕點",    kw:["甜點","蛋糕","布朗尼","杜拜","生巧克力","Q餅","可頌","泡芙","馬卡龍","鬆餅","waffle","cake","杜拜巧克力","派","pie"]},
@@ -4590,22 +4590,35 @@ window.eoSearchProducts=function(q){
   const matches=window.G.products.filter(p=>(p.name||"").toLowerCase().includes(kw)||(p.id||"").toLowerCase().includes(kw)).slice(0,8);
   if(!matches.length){res.style.display="none";return;}
   res.style.display="block";
-  res.innerHTML=matches.map(p=>`
+  res.innerHTML=matches.map(p=>{
+    const specStr=Array.isArray(p.specs)?p.specs.join(","):(p.specs||"");
+    const specHtml=specStr?`<span style="font-size:11px;color:#B08968;background:#FDF6EC;border-radius:5px;padding:1px 6px;margin-left:6px">📐 ${specStr}</span>`:"";
+    return `
     <div onclick="eoAddProduct('${p.id}')" style="padding:10px 12px;cursor:pointer;border-bottom:1px solid #F5EFE6;display:flex;justify-content:space-between;align-items:center">
       <div>
         <span style="font-size:13px;font-weight:700;color:#3D2010">${p.name}</span>
         <span style="font-size:10px;color:#9C7A5A;margin-left:6px">${p.id}</span>
+        ${specHtml}
       </div>
       <span style="font-size:13px;font-weight:700;color:#A08060">NT$${p.finalPrice}</span>
-    </div>`).join("");
+    </div>`;
+  }).join("");
 };
 
-window.eoAddProduct=async function(productId){
+window.eoAddProduct=async function(productId,spec){
   if(window.G.eoAdding)return;
   window.G.eoAdding=true;
   setTimeout(()=>{window.G.eoAdding=false;},1500);
   const p=window.G.products.find(x=>x.id===productId);
   if(!p){showToast("找不到商品","error");window.G.eoAdding=false;return;}
+  const specs=Array.isArray(p.specs)?p.specs:(p.specs?[p.specs]:[]);
+  // 有多個規格、但還沒指定要選哪個 → 先跳出規格選擇，不要直接用空白規格加進去
+  if(specs.length>1&&spec===undefined){
+    window.G.eoAdding=false;
+    eoPickSpecThenAdd(productId);
+    return;
+  }
+  const finalSpec=spec!==undefined?spec:(specs[0]||"");
   const cid=window.G.activeEordCustId;
   const c=window.G.customers.find(x=>x.id===cid);
   if(!c){showToast("找不到客戶","error");window.G.eoAdding=false;return;}
@@ -4614,16 +4627,30 @@ window.eoAddProduct=async function(productId){
   const newOrder={id,productId,productName:cleanProductName(p.name),productEmoji:p.emoji||"📦",
     customerId:cid,communityName:c.communityName||"",lineName:c.lineName||"",
     buyerName:c.communityName||c.lineName||"",
-    qty:1,unitPrice:p.finalPrice,discountPrice:p.finalPrice,total:p.finalPrice,
-    status:"pending",tripId,orderType:"onsite",spec:"",purchased:true,costSnapshot:calcCost(p.foreignAmount||p.krw||0,p.currency||"KRW").afterTax,createdAt:Date.now()};
+    qty:1,unitPrice:p.finalPrice,discountPrice:p.finalPrice,total:p.finalPrice,spec:finalSpec,
+    status:"pending",tripId,orderType:"onsite",purchased:true,costSnapshot:calcCost(p.foreignAmount||p.krw||0,p.currency||"KRW").afterTax,createdAt:Date.now()};
   // 暫存，不立即寫入 Firebase
   if(!window.G.eoPendingAdd)window.G.eoPendingAdd=[];
   window.G.eoPendingAdd.push(newOrder);
   const search=document.getElementById("eo-prod-search");if(search)search.value="";
   const res=document.getElementById("eo-prod-results");if(res)res.style.display="none";
   eoRenderPending();
-  showToast(`已加入「${p.name}」，請按儲存`);
+  showToast(`已加入「${p.name}」${finalSpec?"（"+finalSpec+"）":""}，請按儲存`);
   window.G.eoAdding=false;
+};
+// 多規格商品：先在搜尋結果的位置顯示規格選擇按鈕，選了才真的加入
+window.eoPickSpecThenAdd=function(productId){
+  const p=window.G.products.find(x=>x.id===productId);if(!p)return;
+  const specs=Array.isArray(p.specs)?p.specs:(p.specs?[p.specs]:[]);
+  const res=document.getElementById("eo-prod-results");
+  if(!res)return;
+  res.style.display="block";
+  res.innerHTML=`<div style="padding:10px 12px">
+    <div style="font-size:12px;font-weight:700;color:#3D2010;margin-bottom:8px">${p.name}　請選規格：</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px">
+      ${specs.map(s=>`<button onclick="eoAddProduct('${productId}','${s.replace(/'/g,"\\'")}')" style="background:#FDF6EC;border:1px solid #E8D5B0;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;color:#5C3A1E;cursor:pointer">${s}</button>`).join("")}
+    </div>
+  </div>`;
 };
 
 window.eoDeleteOrder=async function(oid){
@@ -4647,7 +4674,7 @@ window.eoRenderPending=function(){
     const div=document.createElement("div");
     div.className="eo-pending-row";
     div.style.cssText="background:#F0FDF4;border:1px dashed #86EFAC;border-radius:10px;padding:10px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center";
-    div.innerHTML=`<span style="font-size:12px;font-weight:700;color:#166534">＋ ${item.productName} NT$${item.finalPrice} <span style="font-size:10px;font-weight:400;color:#4ADE80">（待儲存）</span></span><button onclick="window.G.eoPendingAdd.splice(${i},1);eoRenderPending();" style="color:#DC2626;background:none;border:none;cursor:pointer;font-size:14px;font-weight:900">×</button>`;
+    div.innerHTML=`<span style="font-size:12px;font-weight:700;color:#166534">＋ ${item.productName}${item.spec?` (${item.spec})`:""} ×${item.qty} NT$${item.unitPrice} <span style="font-size:10px;font-weight:400;color:#4ADE80">（待儲存）</span></span><button onclick="window.G.eoPendingAdd.splice(${i},1);eoRenderPending();" style="color:#DC2626;background:none;border:none;cursor:pointer;font-size:14px;font-weight:900">×</button>`;
     list.appendChild(div);
   });
 };
