@@ -1035,10 +1035,8 @@ body.live-mode .hide-live { display: none !important; }
       <div style="margin-bottom:10px">
         <div style="font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:6px">＋ 新增商品到此訂單</div>
         <div style="position:relative">
-          <div style="display:flex;gap:6px">
-            <input type="text" id="eo-prod-search" placeholder="輸入後按 Enter 或點搜尋" onkeydown="if(event.key==='Enter'){event.preventDefault();eoSearchProducts(this.value);}" style="flex:1;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px 12px;font-size:13px;outline:none"/>
-            <button onclick="eoSearchProducts(document.getElementById('eo-prod-search').value)" style="flex-shrink:0;background:#C5A880;color:white;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer">🔍 搜尋</button>
-          </div>
+          <input type="text" id="eo-prod-search" placeholder="🔍 搜尋商品名稱..." oninput="eoSearchProductsDebounced(this.value,event)" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px 34px 8px 12px;font-size:13px;outline:none;box-sizing:border-box"/>
+          <button onclick="eoClearProdSearch()" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
           <div id="eo-prod-results" style="display:none;position:absolute;left:0;right:0;bottom:calc(100% + 4px);background:white;border:1px solid #E8D5B0;border-radius:8px;max-height:200px;overflow-y:auto;z-index:200;box-shadow:0 -4px 16px rgba(0,0,0,0.12)"></div>
         </div>
       </div>
@@ -1743,10 +1741,14 @@ onAuthStateChanged(auth,async user=>{
 });
 
 // 動態計算 header+nav 高度，設定 body padding
+let _lastBodyPaddingH=null;
 function fixBodyPadding(){
   const bar=document.getElementById("top-bar");
   if(!bar)return;
   const h=bar.getBoundingClientRect().height;
+  // 高度跟上次算出來的一樣，就不要重新套用，避免手機鍵盤跳出/收起時多一次不必要的畫面跳動
+  if(_lastBodyPaddingH===h)return;
+  _lastBodyPaddingH=h;
   document.body.style.paddingTop=(h+8)+"px";
 }
 window.addEventListener("load",fixBodyPadding);
@@ -4562,6 +4564,10 @@ window.batchDeleteOrders=async function(){
   if(!confirm(`確定刪除 ${ids.length} 筆訂單？`))return;
   for(const id of ids)await fbDel("orders",id);
   window.G.selectedOrders.clear();showToast(`已刪除 ${ids.length} 筆訂單`);
+};
+window.eoClearProdSearch=function(){
+  const input=document.getElementById("eo-prod-search");if(input)input.value="";
+  const res=document.getElementById("eo-prod-results");if(res){res.style.display="none";res.innerHTML="";}
 };
 window.eoSearchProductsDebounced=function(val,e){
   // 注音/拼音輸入法「選字前」的組字過程不要觸發搜尋，不然還沒選好字就一直重複搜尋，會很卡
