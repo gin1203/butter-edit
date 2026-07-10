@@ -2923,10 +2923,23 @@ document.querySelectorAll(".modal-overlay").forEach(el=>{
 
 // ── Tab 切換 ──────────────────────────────────────────────────────────
 const NAV_MAP={calc:"nav-calc",list:"nav-list",customers:"nav-cust",invoice:"nav-invoice",stats:"nav-stats",pricesearch:"nav-search",settings:null};
+// 惰性重繪：資料庫有變動時，只有「目前正在看的分頁」會立刻重畫，
+// 沒在看的分頁先標記「待更新」，等使用者真的切過去才補畫一次，避免每次同步都把所有分頁全部重畫一輪
+window.G._dirtyTabs={list:false,customers:false,invoice:false};
+window.renderIfActiveElseMarkDirty=function(tabName,renderFn){
+  if(window.G.tab===tabName){renderFn();}
+  else{window.G._dirtyTabs[tabName]=true;}
+};
+const TAB_RENDER_MAP={list:()=>renderList(),customers:()=>renderCustomers(),invoice:()=>renderInvoice()};
 window.showTab=function(tab){
   window.G.tab=tab;
   document.querySelectorAll(".tab-page").forEach(el=>el.classList.remove("active"));
   const tp=document.getElementById("tab-"+tab);if(tp)tp.classList.add("active");
+  // 切過去發現這個分頁是「待更新」狀態，這時候才真的補畫一次
+  if(window.G._dirtyTabs[tab]){
+    window.G._dirtyTabs[tab]=false;
+    TAB_RENDER_MAP[tab]?.();
+  }
   Object.entries(NAV_MAP).forEach(([k,navId])=>{
     if(!navId)return;
     const btn=document.getElementById(navId);if(!btn)return;
@@ -3735,7 +3748,11 @@ onSnapshot(collection(db,"products"),s=>{
   window.G.products=s.docs.map(d=>({id:d.id,...d.data()}));
   window.G.productsLoaded=true;
   clearTimeout(window.G._prodRenderTimer);
-  window.G._prodRenderTimer=setTimeout(()=>{updateStats();renderList();renderInvoice();},150);
+  window.G._prodRenderTimer=setTimeout(()=>{
+    updateStats();
+    renderIfActiveElseMarkDirty("list",renderList);
+    renderIfActiveElseMarkDirty("invoice",renderInvoice);
+  },150);
 });
 onSnapshot(collection(db,"promoGroupMeta"),s=>{
   window.G.promoGroupMeta={};
@@ -3746,7 +3763,7 @@ onSnapshot(collection(db,"customers"),s=>{
   window.G.customers=s.docs.map(d=>({id:d.id,...d.data()}));
   window.G.customersLoaded=true;
   clearTimeout(window.G._custRenderTimer);
-  window.G._custRenderTimer=setTimeout(()=>renderCustomers(),150);
+  window.G._custRenderTimer=setTimeout(()=>renderIfActiveElseMarkDirty("customers",renderCustomers),150);
 });
 // 載入 LINE 綁定資料
 (async()=>{
@@ -3756,7 +3773,7 @@ onSnapshot(collection(db,"customers"),s=>{
     const map={};
     snap.docs.forEach(d=>{const data=d.data();map[(data.displayName||"").trim().toLowerCase()]=data;});
     window.G.lineUserMap=map;
-    renderCustomers();
+    renderIfActiveElseMarkDirty("customers",renderCustomers);
   }catch(e){console.warn("line_users載入失敗",e);}
 })();
 onSnapshot(collection(db,"trips"),s=>{
@@ -3768,7 +3785,11 @@ onSnapshot(collection(db,"orders"),s=>{
   window.G.ordersLoaded=true;
   clearTimeout(window.G._orderRenderTimer);
   window.G._orderRenderTimer=setTimeout(()=>{
-    updateStats();renderInvoice();renderList();renderCustomers();renderTripHistory();
+    updateStats();
+    renderIfActiveElseMarkDirty("invoice",renderInvoice);
+    renderIfActiveElseMarkDirty("list",renderList);
+    renderIfActiveElseMarkDirty("customers",renderCustomers);
+    renderTripHistory();
     if(window.G.tab==="stats")renderStats();
     const stockModal=document.getElementById("modal-stock-plan");
     if(stockModal&&stockModal.style.display!=="none")window.renderStockPlanContent();
