@@ -1035,7 +1035,10 @@ body.live-mode .hide-live { display: none !important; }
       <div style="margin-bottom:10px">
         <div style="font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:6px">＋ 新增商品到此訂單</div>
         <div style="position:relative">
-          <input type="text" id="eo-prod-search" placeholder="🔍 搜尋商品名稱..." oninput="eoSearchProductsDebounced(this.value,event)" onblur="setTimeout(()=>{const r=document.getElementById('eo-prod-results');if(r)r.style.display='none';},200)" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px 12px;font-size:13px;outline:none"/>
+          <div style="display:flex;gap:6px">
+            <input type="text" id="eo-prod-search" placeholder="輸入後按 Enter 或點搜尋" onkeydown="if(event.key==='Enter'){event.preventDefault();eoSearchProducts(this.value);}" style="flex:1;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px 12px;font-size:13px;outline:none"/>
+            <button onclick="eoSearchProducts(document.getElementById('eo-prod-search').value)" style="flex-shrink:0;background:#C5A880;color:white;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer">🔍 搜尋</button>
+          </div>
           <div id="eo-prod-results" style="display:none;position:absolute;left:0;right:0;bottom:calc(100% + 4px);background:white;border:1px solid #E8D5B0;border-radius:8px;max-height:200px;overflow-y:auto;z-index:200;box-shadow:0 -4px 16px rgba(0,0,0,0.12)"></div>
         </div>
       </div>
