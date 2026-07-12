@@ -4405,7 +4405,8 @@ window.saveCustomer=async function(){
   let id=m.id;
   let createdAt=m.createdAt;
   if(!id){
-    // 新增客戶：先檢查是否已有同名（社群名或LINE名）客戶，避免建立重複資料
+    // 新增客戶：先檢查是否已有同名（社群名或LINE名）客戶——但同名不代表同一人，
+    // 一定要先跟你確認才能決定要不要用同一筆，絕對不能自動靜默覆蓋掉舊客戶的資料
     const inputCN=communityName.trim().toLowerCase();
     const inputLN=lineName.trim().toLowerCase();
     const dup=(window.G.customers||[]).find(c=>
@@ -4413,9 +4414,14 @@ window.saveCustomer=async function(){
       (inputLN&&(c.lineName||"").trim().toLowerCase()===inputLN)
     );
     if(dup){
-      id=dup.id;
-      createdAt=dup.createdAt;
-      showToast(`已有同名客戶「${dup.communityName||dup.lineName}」，已改為更新該筆資料，避免重複`,"warning");
+      const dupLabel=dup.communityName||dup.lineName||"";
+      const useExisting=confirm(`找到已經存在的客人「${dupLabel}」。\n\n是同一位客人嗎？\n\n【確定】＝是同一人，更新他的資料\n【取消】＝不是同一人（同名不同人），建立新客戶`);
+      if(useExisting){
+        id=dup.id;
+        createdAt=dup.createdAt;
+        showToast(`已更新客戶「${dupLabel}」的資料`,"success");
+      }
+      // 選「取消」就照原本流程往下走，id維持空白，會建立全新客戶
     }
   }
   id=id||"C"+Date.now();
@@ -4741,16 +4747,25 @@ window.addOrder=async function(){
     if(cust){communityName=cust.communityName||"";lineName=cust.lineName||"";customerId=cust.id;}
   } else if(buyerInput){
     communityName=buyerInput;
-    // 先查是否已有同名客戶（避免重複建立 + 解決訂單比對問題）
+    // 先查是否已有同名客戶——但同名不代表同一人（例如兩個人剛好都叫Yun），
+    // 找到同名客戶時一定要先跟你確認，絕對不能自動靜默合併，不然會把不同客人的訂單錯接在一起
     const inputLower=buyerInput.trim().toLowerCase();
     const existing=window.G.customers.find(c=>
       (c.communityName||"").trim().toLowerCase()===inputLower||
       (c.lineName||"").trim().toLowerCase()===inputLower
     );
     if(existing){
-      customerId=existing.id;
-      communityName=existing.communityName||buyerInput;
-      lineName=existing.lineName||"";
+      const sameLabel=existing.communityName||existing.lineName||buyerInput;
+      const useExisting=confirm(`找到已經存在的客人「${sameLabel}」。\n\n這筆訂單是同一位客人嗎？\n\n【確定】＝是同一人，訂單登記在他底下\n【取消】＝不是同一人（同名不同人），幫我建立新客戶`);
+      if(useExisting){
+        customerId=existing.id;
+        communityName=existing.communityName||buyerInput;
+        lineName=existing.lineName||"";
+      } else {
+        const newId="C"+Date.now();
+        await fbSet("customers",newId,{communityName:buyerInput,lineName:"",phone:"",address:"",note:"",createdAt:Date.now()});
+        customerId=newId;
+      }
     } else {
       const newId="C"+Date.now();
       await fbSet("customers",newId,{communityName:buyerInput,lineName:"",phone:"",address:"",note:"",createdAt:Date.now()});
@@ -5624,7 +5639,7 @@ window.renderPromoGroups=function(){
             </summary>
             <div style="display:flex;flex-direction:column;gap:6px;margin-top:6px">${itemRows}</div>
           </details>`;
-    return `<div style="border:1px solid #EFE0C4;border-left:4px solid #D8A857;border-radius:14px;padding:16px;margin-bottom:14px;background:linear-gradient(180deg,#FFFDF9,#FFFFFF);box-shadow:0 1px 4px rgba(120,90,40,0.06);transition:box-shadow .2s,transform .2s" onmouseover="this.style.boxShadow='0 4px 14px rgba(120,90,40,0.14)';this.style.transform='translateY(-1px)'" onmouseout="this.style.boxShadow='0 1px 4px rgba(120,90,40,0.06)';this.style.transform='translateY(0)'">
+    return `<div style="border:1px solid #EFE0C4;border-left:4px solid #D8A857;border-radius:14px;padding:16px;margin-bottom:14px;background:linear-gradient(180deg,#FFFDF9,#FFFFFF);box-shadow:0 1px 4px rgba(120,90,40,0.06);transition:box-shadow .2s" onmouseover="this.style.boxShadow='0 4px 14px rgba(120,90,40,0.14)'" onmouseout="this.style.boxShadow='0 1px 4px rgba(120,90,40,0.06)'">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
         <span style="font-size:15px">🏷️</span>
         <input type="text" value="${gEsc}" data-oldname="${gEsc}" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" onblur="renamePromoGroup(this.dataset.oldname,this.value)" style="flex:1;font-size:14px;font-weight:900;color:#3D2010;border:1px solid transparent;border-radius:8px;padding:6px 8px;outline:none;background:transparent" onfocus="this.style.background='white';this.style.border='1px solid #E8D5B0'"/>
@@ -5668,9 +5683,10 @@ window.pgSearchInput=function(inputEl,groupName){
   const box=inputEl.nextElementSibling;
   const q=inputEl.value.trim().toLowerCase();
   if(!q){box.style.display="none";return;}
+  const specText=p=>(Array.isArray(p.specs)?p.specs.join("、"):(p.specs||""));
   const matches=(window.G.products||[])
     .filter(p=>(p.promoGroup||"").trim()!==groupName)
-    .filter(p=>p.name.toLowerCase().includes(q)||p.id.toLowerCase().includes(q))
+    .filter(p=>p.name.toLowerCase().includes(q)||p.id.toLowerCase().includes(q)||specText(p).toLowerCase().includes(q))
     .slice(0,8);
   if(!matches.length){
     box.innerHTML='<div style="padding:10px 14px;font-size:12px;color:#C5A880">找不到符合的商品</div>';
@@ -5681,8 +5697,9 @@ window.pgSearchInput=function(inputEl,groupName){
   box.innerHTML=matches.map(p=>{
     const already=(p.promoGroup||"").trim();
     const warn=already?`<span style="font-size:10px;color:#E07B39">（目前在「${already}」）</span>`:"";
+    const specLabel=specText(p)?` <span style="color:#9C7A5A;font-size:11px">${specText(p)}</span>`:"";
     return `<div onmousedown="event.preventDefault();addToPromoGroup('${p.id}','${gEsc}')" style="padding:9px 14px;cursor:pointer;font-size:12px;color:#3D2010;border-bottom:1px solid #F5EDE0;display:flex;justify-content:space-between;align-items:center;gap:8px">
-      <span>${p.id} · ${p.name} ${warn}</span>
+      <span>${p.id} · ${p.name}${specLabel} ${warn}</span>
       <span style="font-size:11px;color:#A08060;flex-shrink:0">NT$${(p.finalPrice||0).toLocaleString()}</span>
     </div>`;
   }).join("");
@@ -7728,14 +7745,70 @@ window.renderCustomers=function(){
     const cP=cO.filter(o=>o.status==="pending").length;
     // 開啟「🛒 待購代買」篩選時，卡片內的商品明細也只顯示尚未購買的代買項目，不要連已買到/現場購買的一起列出
     const cODisplay=custUnpurchased?cO.filter(o=>o.orderType==="preorder"&&!o.purchased):cO;
-    // 訂單筆數多的客戶，預設先收合只顯示前4筆，減少整個客戶頁一次要渲染的DOM量（手機記憶體有限，訂單筆數一多容易卡頓）
+    // 依「同商品＋同規格」分組合併顯示，避免同一位客人多次追加喊同個商品時被拆成一堆重複的行；
+    // 資料本身仍然各自獨立存放在 orders，只是「顯示」用分組，點開群組才會看到底下個別訂單，
+    // 每筆訂單原本的已購買切換／刪除／移趟功能完全不受影響
+    const groupMap={};const groupKeys=[];
+    cODisplay.forEach(o=>{
+      const gk=(o.productId||o.productName||"?")+"::"+(o.spec||"");
+      if(!groupMap[gk]){groupMap[gk]=[];groupKeys.push(gk);}
+      groupMap[gk].push(o);
+    });
+    // 訂單種類多的客戶，預設先收合只顯示前4組，減少整個客戶頁一次要渲染的DOM量（手機記憶體有限，訂單筆數一多容易卡頓）
     const COLLAPSE_N=4;
     window.G.custExpandedSet=window.G.custExpandedSet||new Set();
+    window.G.custOrderGroupExpandedSet=window.G.custOrderGroupExpandedSet||new Set();
     const isExpanded=window.G.custExpandedSet.has(c.id);
-    const showAllOrders=isExpanded||cODisplay.length<=COLLAPSE_N;
-    const cODisplayShown=showAllOrders?cODisplay:cODisplay.slice(0,COLLAPSE_N);
+    const showAllOrders=isExpanded||groupKeys.length<=COLLAPSE_N;
+    const groupKeysShown=showAllOrders?groupKeys:groupKeys.slice(0,COLLAPSE_N);
     const checked=selectedCustomers.has(c.id);
     const safeC={id:c.id};
+    const renderOrderRow=(o)=>{
+      const sl2={pending:"#E07B39",settled:"#2E7D32",shipped:"#2980B9"};
+      const stl={pending:"待訂金",deposit:"已付訂金",settled:"已付尾款",shipped:"已寄出"};
+      const dp=o.discountPrice||o.unitPrice||0;
+      const isPreorder=o.orderType==="preorder";
+      const isPurchased=o.purchased===true;
+      const rowBg=isPreorder?(isPurchased?"#FAF8F5":"#F3F0FF"):"#FAF8F5";
+      const leftBar=isPreorder?`border-left:4px solid ${isPurchased?"#A7F3D0":"#9333EA"}`:"border-left:4px solid transparent";
+      return `<div data-oid="${o.id}" onclick="${isPreorder?`togglePurchased(this.dataset.oid)`:''}" style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:4px 8px;background:${rowBg};border-radius:8px;padding:6px 10px;${leftBar};${isPreorder?"cursor:pointer;":""}" title="${isPreorder?(isPurchased?"已買到，點擊切換":"待購入，點擊切換已買到"):""}">
+        <div style="display:flex;align-items:center;gap:6px;min-width:140px;flex:1 1 auto">
+          <span style="font-size:11px;color:#3D2010;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${isPreorder?(isPurchased?"✅ ":"🛒 "):""}${cleanProductName((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品")}${o.spec?" ("+o.spec+")":""} ×${o.qty}</span>
+          ${o.givenFromStock?`<span style="font-size:9px;background:#C8E6C9;color:#1B5E20;border-radius:4px;padding:1px 5px;font-weight:700;white-space:nowrap;flex-shrink:0">✅ 已給</span>`:""}
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;flex:0 0 auto">
+          <span style="font-size:11px;font-weight:700;color:#3D2010">NT$${(dp*o.qty).toLocaleString()}</span>
+          ${dp>=1000?`<button data-oid="${o.id}" onclick="copySingleDeposit(this.dataset.oid)" style="font-size:9px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:2px 5px;border-radius:5px;cursor:pointer;font-weight:700">訂金</button>`:""}
+          ${o.tracking?`<span style="font-size:9px;color:#6090B0;background:#EAF4FD;border:1px solid #BDD9F0;padding:2px 5px;border-radius:5px">📦</span>`:""}
+          <button data-oid="${o.id}" onclick="event.stopPropagation();openMoveTrip(this.dataset.oid)" style="font-size:10px;color:#0277BD;background:#E3F2FD;border:1px solid #90CAF9;padding:2px 5px;border-radius:5px;cursor:pointer">移趟</button>
+          <button data-oid="${o.id}" onclick="event.stopPropagation();deleteOrder(this.dataset.oid)" style="font-size:10px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:2px 5px;border-radius:5px;cursor:pointer">🗑️</button>
+        </div>
+      </div>`;
+    };
+    const rowsHtml=groupKeysShown.map(gk=>{
+      const items=groupMap[gk];
+      if(items.length===1)return renderOrderRow(items[0]);
+      // 同商品同規格有多筆 → 合併成一個可展開的群組列
+      const gExpanded=window.G.custOrderGroupExpandedSet.has(c.id+"::"+gk);
+      const totalQty=items.reduce((s,o)=>s+o.qty,0);
+      const totalAmt=items.reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0);
+      const allPurchased=items.every(o=>o.orderType!=="preorder"||o.purchased===true);
+      const anyPreorder=items.some(o=>o.orderType==="preorder");
+      const rep=items[0];
+      const nameLabel=cleanProductName((window.G.products.find(x=>x.id===rep.productId)?.name)||rep.productName||"商品")+(rep.spec?" ("+rep.spec+")":"");
+      const gkEsc=gk.replace(/'/g,"\\'");
+      const groupHeader=`<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:4px 8px;background:#FAF8F5;border-radius:8px;padding:6px 10px;border-left:4px solid ${anyPreorder?(allPurchased?"#A7F3D0":"#9333EA"):"transparent"};cursor:pointer" data-cid="${c.id}" data-gk="${gkEsc}" onclick="window.toggleCustOrderGroup(this.dataset.cid,this.dataset.gk)">
+        <div style="display:flex;align-items:center;gap:6px;min-width:140px;flex:1 1 auto">
+          <span style="font-size:11px;color:#3D2010;font-weight:700">${gExpanded?"▾":"▸"} ${nameLabel} ×${totalQty}</span>
+          <span style="font-size:9px;background:#EDE9FE;color:#5B21B6;border-radius:4px;padding:1px 5px;font-weight:700;white-space:nowrap">共${items.length}筆</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;flex:0 0 auto">
+          <span style="font-size:11px;font-weight:700;color:#3D2010">NT$${totalAmt.toLocaleString()}</span>
+        </div>
+      </div>`;
+      const subRows=gExpanded?`<div style="display:flex;flex-direction:column;gap:4px;padding-left:14px;margin-top:2px">${items.map(renderOrderRow).join("")}</div>`:"";
+      return groupHeader+subRows;
+    }).join("");
     return `<div style="background:white;border-radius:14px;padding:14px;border:1px solid ${checked?"#C5A880":"#E8D5B0"};margin-bottom:8px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
         <div style="display:flex;align-items:center;gap:8px">
@@ -7780,28 +7853,8 @@ window.renderCustomers=function(){
           const colsNew=hasHigh?"1fr 1fr 1fr 1fr":"1fr 1fr 1fr";
           return cO.length>0?`<div style="display:grid;grid-template-columns:${colsNew};gap:5px;margin-bottom:8px"><button data-oid="${cO[0].id}" onclick="openEditOrd(this.dataset.oid)" style="font-size:11px;background:#FDF6EC;color:#C5A880;border:1px solid #E8D5B0;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">修改</button>${depositBtn}<button data-cid="${c.id}" onclick="copyCustOrder(this.dataset.cid)" style="font-size:11px;background:#EAF4FD;color:#0277BD;border:1px solid #90D7FF;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">複製訂單</button>${shopBtn}</div>`:"";
         })()}
-        ${cODisplayShown.length?`<div style="display:flex;flex-direction:column;gap:4px">${cODisplayShown.map(o=>{
-          const sl2={pending:"#E07B39",settled:"#2E7D32",shipped:"#2980B9"};
-          const stl={pending:"待訂金",deposit:"已付訂金",settled:"已付尾款",shipped:"已寄出"};
-          const dp=o.discountPrice||o.unitPrice||0;
-          const isPreorder=o.orderType==="preorder";
-          const isPurchased=o.purchased===true;
-          const rowBg=isPreorder?(isPurchased?"#FAF8F5":"#F3F0FF"):"#FAF8F5";
-          const leftBar=isPreorder?`border-left:4px solid ${isPurchased?"#A7F3D0":"#9333EA"}`:"border-left:4px solid transparent";
-          return `<div data-oid="${o.id}" onclick="${isPreorder?`togglePurchased(this.dataset.oid)`:''}" style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:4px 8px;background:${rowBg};border-radius:8px;padding:6px 10px;${leftBar};${isPreorder?"cursor:pointer;":""}" title="${isPreorder?(isPurchased?"已買到，點擊切換":"待購入，點擊切換已買到"):""}">
-            <div style="display:flex;align-items:center;gap:6px;min-width:140px;flex:1 1 auto">
-              <span style="font-size:11px;color:#3D2010;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${isPreorder?(isPurchased?"✅ ":"🛒 "):""}${cleanProductName((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品")}${o.spec?" ("+o.spec+")":""} ×${o.qty}</span>
-              ${o.givenFromStock?`<span style="font-size:9px;background:#C8E6C9;color:#1B5E20;border-radius:4px;padding:1px 5px;font-weight:700;white-space:nowrap;flex-shrink:0">✅ 已給</span>`:""}
-            </div>
-            <div style="display:flex;align-items:center;gap:5px;flex:0 0 auto">
-              <span style="font-size:11px;font-weight:700;color:#3D2010">NT$${(dp*o.qty).toLocaleString()}</span>
-              ${dp>=1000?`<button data-oid="${o.id}" onclick="copySingleDeposit(this.dataset.oid)" style="font-size:9px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:2px 5px;border-radius:5px;cursor:pointer;font-weight:700">訂金</button>`:""}
-              ${o.tracking?`<span style="font-size:9px;color:#6090B0;background:#EAF4FD;border:1px solid #BDD9F0;padding:2px 5px;border-radius:5px">📦</span>`:""}
-              <button data-oid="${o.id}" onclick="event.stopPropagation();openMoveTrip(this.dataset.oid)" style="font-size:10px;color:#0277BD;background:#E3F2FD;border:1px solid #90CAF9;padding:2px 5px;border-radius:5px;cursor:pointer">移趟</button>
-              <button data-oid="${o.id}" onclick="event.stopPropagation();deleteOrder(this.dataset.oid)" style="font-size:10px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:2px 5px;border-radius:5px;cursor:pointer">🗑️</button>
-            </div>
-          </div>`;}).join("")}</div>`:""}
-        ${!showAllOrders?`<button data-cid="${c.id}" onclick="expandCustOrders(this.dataset.cid)" style="width:100%;margin-top:6px;background:#FDF6EC;color:#B08968;border:1px dashed #E8D5B0;border-radius:8px;padding:6px;font-size:11px;font-weight:700;cursor:pointer">▼ 展開查看全部 ${cODisplay.length} 筆</button>`:""}
+        ${rowsHtml?`<div style="display:flex;flex-direction:column;gap:4px">${rowsHtml}</div>`:""}
+        ${!showAllOrders?`<button data-cid="${c.id}" onclick="expandCustOrders(this.dataset.cid)" style="width:100%;margin-top:6px;background:#FDF6EC;color:#B08968;border:1px dashed #E8D5B0;border-radius:8px;padding:6px;font-size:11px;font-weight:700;cursor:pointer">▼ 展開查看全部 ${groupKeys.length} 項</button>`:""}
       </div>
     </div>`;
   });
@@ -7815,6 +7868,13 @@ window.renderCustomers=function(){
 window.expandCustOrders=function(cid){
   window.G.custExpandedSet=window.G.custExpandedSet||new Set();
   window.G.custExpandedSet.add(cid);
+  renderCustomers();
+};
+window.toggleCustOrderGroup=function(cid,gk){
+  window.G.custOrderGroupExpandedSet=window.G.custOrderGroupExpandedSet||new Set();
+  const key=cid+"::"+gk;
+  if(window.G.custOrderGroupExpandedSet.has(key))window.G.custOrderGroupExpandedSet.delete(key);
+  else window.G.custOrderGroupExpandedSet.add(key);
   renderCustomers();
 };
 window.setCustUnpurchasedView=function(on){
