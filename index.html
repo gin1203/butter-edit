@@ -108,6 +108,7 @@ body.live-mode .hide-live { display: none !important; }
       <button data-cur="KRW" onclick="switchCur('KRW')" style="flex:1;padding:10px 4px;border-radius:10px;font-size:12px;font-weight:700;border:1px solid #5C3A1E;background:#5C3A1E;color:#F5E6C8;cursor:pointer;text-align:center">🇰🇷<br><span style="font-size:10px">韓幣</span></button>
       <button data-cur="JPY" onclick="switchCur('JPY')" style="flex:1;padding:10px 4px;border-radius:10px;font-size:12px;font-weight:700;border:1px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer;text-align:center">🇯🇵<br><span style="font-size:10px">日幣</span></button>
       <button data-cur="THB" onclick="switchCur('THB')" style="flex:1;padding:10px 4px;border-radius:10px;font-size:12px;font-weight:700;border:1px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer;text-align:center">🇹🇭<br><span style="font-size:10px">泰銖</span></button>
+      <button data-cur="USD" onclick="switchCur('USD')" style="flex:1;padding:10px 4px;border-radius:10px;font-size:12px;font-weight:700;border:1px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer;text-align:center">🇺🇸<br><span style="font-size:10px">美金</span></button>
     </div>
   </div>
   <!-- 輸入卡：名稱 + 金額 -->
@@ -494,9 +495,17 @@ body.live-mode .hide-live { display: none !important; }
     </div>
     <div style="display:flex;gap:8px">
       <input type="text" id="exp-label" placeholder="項目（例如：機票）" style="flex:1;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;font-size:13px;outline:none"/>
-      <input type="text" inputmode="numeric" id="exp-amount" placeholder="金額" style="width:100px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;font-size:13px;outline:none"/>
+      <input type="text" inputmode="numeric" id="exp-amount" placeholder="金額" style="width:84px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;font-size:13px;outline:none"/>
+      <select id="exp-currency" style="width:68px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px 4px;font-size:12px;font-weight:700;color:#3D2010;outline:none">
+        <option value="TWD">🇹🇼 台幣</option>
+        <option value="KRW">🇰🇷 韓幣</option>
+        <option value="JPY">🇯🇵 日幣</option>
+        <option value="THB">🇹🇭 泰銖</option>
+        <option value="USD">🇺🇸 美金</option>
+      </select>
       <button onclick="addExpense()" style="background:#C5A880;color:white;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer">＋</button>
     </div>
+    <div style="font-size:10px;color:#9C7A5A;margin-top:6px">💡 選韓幣/日幣/泰銖/美金時，直接輸入當地金額，系統會用目前匯率自動換算成台幣計入統計</div>
   </div>
   <!-- 淨利結算 -->
   <div id="stats-net" style="margin-bottom:12px"></div>
@@ -922,16 +931,22 @@ body.live-mode .hide-live { display: none !important; }
     </div>
     <!-- 4. 原幣金額 -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
-      <label style="font-size:11px;font-weight:700;color:#9C7A5A">原幣金額 <span id="ep-sym" style="color:#C5A880"></span> <span id="ep-promo-active-badge" style="display:none;font-size:10px;font-weight:700;color:#166534;background:#DCFCE7;border-radius:6px;padding:2px 6px;margin-left:4px"></span></label>
+      <label style="font-size:11px;font-weight:700;color:#9C7A5A">原幣金額 <select id="ep-cur-select" onchange="window.epSelectCurrency(this.value)" style="font-size:11px;font-weight:700;color:#3D2010;background:#FDF6EC;border:1px solid #E8D5B0;border-radius:6px;padding:2px 6px;outline:none;cursor:pointer;vertical-align:middle"></select> <span id="ep-promo-active-badge" style="display:none;font-size:10px;font-weight:700;color:#166534;background:#DCFCE7;border-radius:6px;padding:2px 6px;margin-left:4px"></span></label>
       <div style="display:flex;gap:4px">
         <button onclick="epApplyPromo(2)" style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:700;color:#92400E;cursor:pointer">1+1</button>
         <button onclick="epApplyPromo(3)" style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:700;color:#166534;cursor:pointer">2+1</button>
         <button onclick="epApplyPromo(4)" style="background:#EDE9FE;border:1px solid #C4B5FD;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:700;color:#5B21B6;cursor:pointer">3+1</button>
       </div>
     </div>
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+      <span style="font-size:11px;font-weight:700;color:#9C7A5A;flex-shrink:0">或輸入折數</span>
+      <input type="text" inputmode="decimal" id="ep-discount-pct" placeholder="例如7＝7折" style="width:70px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:4px 8px;font-size:12px;outline:none"/>
+      <button onclick="window.epApplyDiscount()" style="background:#FFE0B2;border:1px solid #FFB74D;border-radius:8px;padding:3px 10px;font-size:11px;font-weight:700;color:#E65100;cursor:pointer;white-space:nowrap;flex-shrink:0">套用折扣</button>
+      <span style="font-size:10px;color:#B0906A;flex:1;text-align:right">再按一次取消</span>
+    </div>
     <div style="position:relative;margin-bottom:6px">
-      <input type="text" inputmode="numeric" id="ep-foreign" oninput="window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;epForeignChange();epUpdatePromoBadge();" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 40px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
-      <button onclick="document.getElementById('ep-foreign').value='';window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;const pr=document.getElementById('ep-price');if(pr){pr.value='';delete pr.dataset.manual;}epForeignChange();epUpdatePromoBadge();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
+      <input type="text" inputmode="numeric" id="ep-foreign" oninput="window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;window.G.epPromoPct=null;epForeignChange();epUpdatePromoBadge();" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 40px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
+      <button onclick="document.getElementById('ep-foreign').value='';window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;window.G.epPromoPct=null;const pr=document.getElementById('ep-price');if(pr){pr.value='';delete pr.dataset.manual;}epForeignChange();epUpdatePromoBadge();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
     </div>
     <!-- 4b. 活動群組（選填，不同品名但同一波活動要一起混搭時填一樣的名字） -->
     <div style="margin-bottom:6px">
@@ -1106,6 +1121,11 @@ body.live-mode .hide-live { display: none !important; }
           <button id="be-promo-2" onclick="beApplyPromo(2)" style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;color:#92400E;cursor:pointer">1+1</button>
           <button id="be-promo-3" onclick="beApplyPromo(3)" style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;color:#166534;cursor:pointer">2+1</button>
           <button id="be-promo-4" onclick="beApplyPromo(4)" style="background:#DBEAFE;border:1px solid #93C5FD;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;color:#1E3A8A;cursor:pointer">3+1</button>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px">
+          <span style="font-size:12px;font-weight:700;color:#9C7A5A">🔖 或輸入折數（例如 락토핏 混搭2件打7折這種，各商品依自己原幣重算，再點一次取消）</span>
+          <input type="text" inputmode="decimal" id="be-discount-pct" placeholder="例如7＝7折" style="width:90px;background:white;border:1px solid #FFB74D;border-radius:8px;padding:6px 10px;font-size:12px;outline:none"/>
+          <button id="be-discount-btn" onclick="beApplyDiscount()" style="background:#FFE0B2;border:1px solid #FFB74D;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;color:#E65100;cursor:pointer">套用折扣</button>
         </div>
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px">
           <span style="font-size:12px;font-weight:700;color:#9C7A5A">🏷️ 活動群組（不同品名的商品湊同一個活動時用，登記喊單才能互相混搭；留空套用＝清除群組）</span>
@@ -1292,12 +1312,23 @@ body.live-mode .hide-live { display: none !important; }
 
     <!-- 建議售價（左）+ 韓幣金額（右）並排 -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
-      <label style="font-size:11px;font-weight:700;color:#9C7A5A">🇰🇷 韓幣售價（₩）</label>
+      <label style="font-size:11px;font-weight:700;color:#9C7A5A">原幣售價 <select id="qa-cur-select" onchange="window.qaSelectCurrency(this.value)" style="font-size:11px;font-weight:700;color:#3D2010;background:#FDF6EC;border:1px solid #E8D5B0;border-radius:6px;padding:2px 6px;outline:none;cursor:pointer;vertical-align:middle">
+        <option value="KRW" selected>🇰🇷 韓幣（₩）</option>
+        <option value="JPY">🇯🇵 日幣（¥）</option>
+        <option value="THB">🇹🇭 泰銖（฿）</option>
+        <option value="USD">🇺🇸 美金（$）</option>
+      </select></label>
       <div style="display:flex;gap:4px" id="qa-promo-btns">
         <button onclick="qaApplyPromo(2)" style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:700;color:#92400E;cursor:pointer">1+1</button>
         <button onclick="qaApplyPromo(3)" style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:700;color:#166534;cursor:pointer">2+1</button>
         <button onclick="qaApplyPromo(4)" style="background:#EDE9FE;border:1px solid #C4B5FD;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:700;color:#5B21B6;cursor:pointer">3+1</button>
       </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+      <span style="font-size:11px;font-weight:700;color:#9C7A5A;flex-shrink:0">或輸入折數</span>
+      <input type="text" inputmode="decimal" id="qa-discount-pct" placeholder="例如7＝7折" style="width:70px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:4px 8px;font-size:12px;outline:none"/>
+      <button onclick="window.qaApplyDiscount()" style="background:#FFE0B2;border:1px solid #FFB74D;border-radius:8px;padding:3px 10px;font-size:11px;font-weight:700;color:#E65100;cursor:pointer;white-space:nowrap;flex-shrink:0">套用折扣</button>
+      <span style="font-size:10px;color:#B0906A;flex:1;text-align:right">再按一次取消</span>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;align-items:stretch">
       <div id="qa-price-hint" style="background:#F5E6C8;border:1.5px solid #C5A880;border-radius:10px;padding:8px 14px;text-align:center;display:flex;flex-direction:column;justify-content:center;min-height:54px">
@@ -1307,8 +1338,8 @@ body.live-mode .hide-live { display: none !important; }
         <div id="qa-price-hint-profit" style="font-size:9px;font-weight:700;margin-top:2px"></div>
       </div>
       <div style="position:relative;display:flex;align-items:stretch">
-        <input type="text" inputmode="numeric" id="qa-amt" placeholder="例如：12000" oninput="window.G.qaPromoOriginal=null;window.G.qaPromoDivisor=null;qaDaisoAutoSelectBest();qaCalcPrice()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:11px 40px 11px 14px;font-size:18px;font-weight:700;outline:none"/>
-        <button onclick="document.getElementById('qa-amt').value='';window.G.qaSelectedPrice=null;qaCalcPrice();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
+        <input type="text" inputmode="numeric" id="qa-amt" placeholder="例如：12000" oninput="window.G.qaPromoOriginal=null;window.G.qaPromoDivisor=null;window.G.qaPromoPct=null;qaDaisoAutoSelectBest();qaCalcPrice()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:11px 40px 11px 14px;font-size:18px;font-weight:700;outline:none"/>
+        <button onclick="document.getElementById('qa-amt').value='';window.G.qaSelectedPrice=null;window.G.qaPromoOriginal=null;window.G.qaPromoDivisor=null;window.G.qaPromoPct=null;qaCalcPrice();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
       </div>
     </div>
     <!-- 快速選價 -->
@@ -1468,14 +1499,15 @@ const CURR={
   KRW:{name:"韓幣",symbol:"₩",flag:"🇰🇷",tax:0.07,rate:0.024},
   JPY:{name:"日幣",symbol:"¥",flag:"🇯🇵",tax:0.08,rate:0.22},
   THB:{name:"泰銖",symbol:"฿",flag:"🇹🇭",tax:0.07,rate:0.90},
+  USD:{name:"美金",symbol:"$",flag:"🇺🇸",tax:0,rate:31.5},
 };
 
 window.G={
   role:"",
   tab:"calc",
   products:[],customers:[],orders:[],trips:[],productsLoaded:false,customersLoaded:false,ordersLoaded:false,stockPlanMode:"time",
-  settings:{rate:0.024,taxRefund:0.07,cardFee:0.015,cardRebate:0.033,rateJPY:0.22,rateTHB:0.90},
-  rates:{KRW:0.024,JPY:0.22,THB:0.90},
+  settings:{rate:0.024,taxRefund:0.07,cardFee:0.015,cardRebate:0.033,rateJPY:0.22,rateTHB:0.90,rateUSD:31.5},
+  rates:{KRW:0.024,JPY:0.22,THB:0.90,USD:31.5},
   currency:"KRW",
   calcCat:"food",
   listSearch:"",listFilterCat:"all",listFilterCurrency:"all",
@@ -1804,14 +1836,15 @@ async function fetchRates(){
     window.G.rates.KRW=Math.round(100000/d.rates.KRW)/100000;
     window.G.rates.JPY=Math.round(10000/d.rates.JPY)/10000;
     window.G.rates.THB=Math.round(10000/d.rates.THB)/10000;
+    if(d.rates.USD)window.G.rates.USD=Math.round(10000/d.rates.USD)/10000;
     if(el){
-      const{KRW,JPY,THB}=window.G.rates;
-      el.innerHTML=`🇰🇷 ₩1=NT$${KRW} &nbsp;·&nbsp; 🇯🇵 ¥1=NT$${JPY} &nbsp;·&nbsp; 🇹🇭 ฿1=NT$${THB}<br><span style="color:#B0906A;font-size:9px">即時匯率</span>`;
+      const{KRW,JPY,THB,USD}=window.G.rates;
+      el.innerHTML=`🇰🇷 ₩1=NT$${KRW} &nbsp;·&nbsp; 🇯🇵 ¥1=NT$${JPY} &nbsp;·&nbsp; 🇹🇭 ฿1=NT$${THB} &nbsp;·&nbsp; 🇺🇸 $1=NT$${USD}<br><span style="color:#B0906A;font-size:9px">即時匯率</span>`;
     }
   }catch(e){
     if(el){
-      const{KRW,JPY,THB}=window.G.rates;
-      el.innerHTML=`🇰🇷 ₩1=NT$${KRW} &nbsp;·&nbsp; 🇯🇵 ¥1=NT$${JPY} &nbsp;·&nbsp; 🇹🇭 ฿1=NT$${THB}<br><span style="color:#B0906A;font-size:9px">預設值</span>`;
+      const{KRW,JPY,THB,USD}=window.G.rates;
+      el.innerHTML=`🇰🇷 ₩1=NT$${KRW} &nbsp;·&nbsp; 🇯🇵 ¥1=NT$${JPY} &nbsp;·&nbsp; 🇹🇭 ฿1=NT$${THB} &nbsp;·&nbsp; 🇺🇸 $1=NT$${USD}<br><span style="color:#B0906A;font-size:9px">預設值</span>`;
     }
   }
 }
@@ -2030,7 +2063,7 @@ window.suggestPrice=suggestPrice;
 
 function genId(cat,cur){
   const p={food:"F",beauty:"SK",accessory:"AC",clothes:"CL",shoes:"SH",bag:"BG",sunglasses:"GM",home:"HM",device:"BD",luxury:"LX",other:"OT"};
-  const c={KRW:"",JPY:"J",THB:"T"}[cur||"KRW"]||"";
+  const c={KRW:"",JPY:"J",THB:"T",USD:"U"}[cur||"KRW"]||"";
   const prefix=(p[cat]||"OT")+c;
   let max=0;
   window.G.products.forEach(x=>{if(x.id?.startsWith(prefix)){const n=parseInt(x.id.substring(prefix.length),10);if(!isNaN(n)&&n>max)max=n;}});
@@ -2144,19 +2177,19 @@ document.addEventListener("drop",function(e){
 // ── 活動除價按鈕 ─────────────────────────────────────────────────────────
 window.qaApplyPromo=function(divisor){
   // 自我修復：狀態不同步一律視為沒有活動在跑，避免越除越小
-  if(!window.G.qaPromoOriginal||!window.G.qaPromoDivisor){
-    window.G.qaPromoOriginal=null;window.G.qaPromoDivisor=null;
+  if(!window.G.qaPromoOriginal||(!window.G.qaPromoDivisor&&!window.G.qaPromoPct)){
+    window.G.qaPromoOriginal=null;window.G.qaPromoDivisor=null;window.G.qaPromoPct=null;
   }
   const amtEl=document.getElementById("qa-amt");
   const nameEl=document.getElementById("qa-name");
   const raw=parseFloat(amtEl.value.replace(/,/g,""))||0;
-  if(!raw&&!window.G.qaPromoOriginal){showToast("請先填入韓幣金額","error");return;}
+  if(!raw&&!window.G.qaPromoOriginal){showToast("請先填入金額","error");return;}
   const labels={2:"（1+1）",3:"（2+1）",4:"（3+1）"};
   const tag=labels[divisor];
   // 同一個活動再按一次 → 還原原價
   if(window.G.qaPromoDivisor===divisor&&window.G.qaPromoOriginal){
     amtEl.value=window.G.qaPromoOriginal;
-    window.G.qaPromoOriginal=null;window.G.qaPromoDivisor=null;
+    window.G.qaPromoOriginal=null;window.G.qaPromoDivisor=null;window.G.qaPromoPct=null;
     window.G.qaSelectedPrice=null;
     const ce=document.getElementById("qa-custom");if(ce)ce.value="";
     let name=nameEl.value.trim();
@@ -2168,15 +2201,59 @@ window.qaApplyPromo=function(divisor){
   const original=window.G.qaPromoOriginal||raw;
   window.G.qaPromoOriginal=original;
   window.G.qaPromoDivisor=divisor;
+  window.G.qaPromoPct=null; // 切換成倍數活動時，清掉折數狀態，避免疊加
   const perItem=Math.round(original*(divisor-1)/divisor);
   amtEl.value=perItem;
   window.G.qaSelectedPrice=null;
   const customEl=document.getElementById("qa-custom");if(customEl)customEl.value="";
   let name=nameEl.value.trim();
   name=name.replace(/（[1-4][+＋][1-4]）/g,"").trim();
+  name=name.replace(/（\d+(\.\d+)?折）/g,"").trim();
   nameEl.value=name+(name?" ":"")+tag;
   qaCalcPrice();
-  showToast(`已套用 ${tag.replace("（","").replace("）","")} 活動，每件 ₩${perItem.toLocaleString()}`,"success");
+  showToast(`已套用 ${tag.replace("（","").replace("）","")} 活動，每件 ${perItem.toLocaleString()}`,"success");
+};
+
+// 幾折折扣（例如活動是「2個混搭打7折」這種跟商品數量無關、純粹算百分比的折扣）
+// 邏輯跟1+1/2+1/3+1一樣：同一個折數再按一次＝取消還原原價，換折數則一律從原價重新算，不會越按越低
+window.qaApplyDiscount=function(){
+  if(!window.G.qaPromoOriginal||(!window.G.qaPromoDivisor&&!window.G.qaPromoPct)){
+    window.G.qaPromoOriginal=null;window.G.qaPromoDivisor=null;window.G.qaPromoPct=null;
+  }
+  const amtEl=document.getElementById("qa-amt");
+  const nameEl=document.getElementById("qa-name");
+  const discEl=document.getElementById("qa-discount-pct");
+  const pct=parseFloat(discEl?.value)||0;
+  const raw=parseFloat(amtEl.value.replace(/,/g,""))||0;
+  if(!pct||pct<=0||pct>=10){showToast("請輸入0~10之間的折數，例如7代表7折","error");return;}
+  if(!raw&&!window.G.qaPromoOriginal){showToast("請先填入金額","error");return;}
+  // 同一折數再按一次 → 還原原價
+  if(window.G.qaPromoPct===pct&&window.G.qaPromoOriginal){
+    amtEl.value=window.G.qaPromoOriginal;
+    window.G.qaPromoOriginal=null;window.G.qaPromoDivisor=null;window.G.qaPromoPct=null;
+    window.G.qaSelectedPrice=null;
+    const ce=document.getElementById("qa-custom");if(ce)ce.value="";
+    if(nameEl){let n=nameEl.value.trim();nameEl.value=n.replace(/（\d+(\.\d+)?折）/g,"").trim();}
+    qaCalcPrice();
+    showToast("已取消折扣，還原原價","success");return;
+  }
+  const original=window.G.qaPromoOriginal||raw;
+  window.G.qaPromoOriginal=original;
+  window.G.qaPromoPct=pct;
+  window.G.qaPromoDivisor=null; // 切換成折數時，清掉倍數活動狀態，避免疊加
+  const discounted=Math.round(original*pct/10);
+  amtEl.value=discounted;
+  window.G.qaSelectedPrice=null;
+  const customEl=document.getElementById("qa-custom");if(customEl)customEl.value="";
+  if(nameEl){
+    let name=nameEl.value.trim();
+    name=name.replace(/（[1-4][+＋][1-4]）/g,"").trim();
+    name=name.replace(/（\d+(\.\d+)?折）/g,"").trim();
+    const pctLabel=Number.isInteger(pct)?pct:pct.toFixed(1);
+    nameEl.value=name+(name?" ":"")+`（${pctLabel}折）`;
+  }
+  qaCalcPrice();
+  showToast(`已套用 ${pct}折，金額 ${discounted.toLocaleString()}`,"success");
 };
 
 window.cApplyPromo=function(divisor){
@@ -2246,14 +2323,17 @@ window.epUpdatePromoBadge=function(){
   if(window.G.epPromoDivisor&&labels[window.G.epPromoDivisor]){
     badge.textContent="✓ 目前套用 "+labels[window.G.epPromoDivisor];
     badge.style.display="inline";
+  } else if(window.G.epPromoPct){
+    badge.textContent="✓ 目前套用 "+window.G.epPromoPct+"折";
+    badge.style.display="inline";
   } else {
     badge.style.display="none";
   }
 };
 window.epApplyPromo=function(divisor){
   // 自我修復：狀態不同步（有倍數卻沒有原價，或反過來）一律視為沒有活動在跑，避免越除越小
-  if(!window.G.epPromoOriginal||!window.G.epPromoDivisor){
-    window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;
+  if(!window.G.epPromoOriginal||(!window.G.epPromoDivisor&&!window.G.epPromoPct)){
+    window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;window.G.epPromoPct=null;
   }
   const amtEl=document.getElementById("ep-foreign");
   const nameEl=document.getElementById("ep-name");
@@ -2264,7 +2344,7 @@ window.epApplyPromo=function(divisor){
   // 同一個活動再按一次 → 還原原價
   if(window.G.epPromoDivisor===divisor&&window.G.epPromoOriginal){
     amtEl.value=window.G.epPromoOriginal;
-    window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;
+    window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;window.G.epPromoPct=null;
     if(nameEl){let n=nameEl.value.trim();nameEl.value=n.replace(/（[1-4][+＋][1-4]）/g,"").trim();}
     epForeignChange();
     epUpdatePromoBadge();
@@ -2273,16 +2353,57 @@ window.epApplyPromo=function(divisor){
   const original=window.G.epPromoOriginal||raw||(window.G.activeModalData?.originalAmount)||0;
   window.G.epPromoOriginal=original;
   window.G.epPromoDivisor=divisor;
+  window.G.epPromoPct=null; // 切換成倍數活動時，清掉折數狀態，避免疊加
   const perItem=Math.round(original*(divisor-1)/divisor);
   amtEl.value=perItem;
   if(nameEl){
     let name=nameEl.value.trim();
     name=name.replace(/（[1-4][+＋][1-4]）/g,"").trim();
+    name=name.replace(/（\d+(\.\d+)?折）/g,"").trim();
     nameEl.value=name+(name?" ":"")+tag;
   }
   epForeignChange();
   epUpdatePromoBadge();
   showToast(`已套用 ${tag.replace("（","").replace("）","")} 活動，每件 ${perItem.toLocaleString()}`,"success");
+};
+
+// 幾折折扣：跟1+1/2+1/3+1同一套邏輯，同一折數再按一次＝取消還原原價，換折數一律從原價重新算，不會越按越低
+window.epApplyDiscount=function(){
+  if(!window.G.epPromoOriginal||(!window.G.epPromoDivisor&&!window.G.epPromoPct)){
+    window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;window.G.epPromoPct=null;
+  }
+  const amtEl=document.getElementById("ep-foreign");
+  const nameEl=document.getElementById("ep-name");
+  const discEl=document.getElementById("ep-discount-pct");
+  const pct=parseFloat(discEl?.value)||0;
+  const raw=parseFloat(amtEl.value.replace(/,/g,""))||0;
+  if(!pct||pct<=0||pct>=10){showToast("請輸入0~10之間的折數，例如7代表7折","error");return;}
+  if(!raw&&!window.G.epPromoOriginal){showToast("請先填入原幣金額","error");return;}
+  // 同一折數再按一次 → 還原原價
+  if(window.G.epPromoPct===pct&&window.G.epPromoOriginal){
+    amtEl.value=window.G.epPromoOriginal;
+    window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;window.G.epPromoPct=null;
+    if(nameEl){let n=nameEl.value.trim();nameEl.value=n.replace(/（\d+(\.\d+)?折）/g,"").trim();}
+    epForeignChange();
+    epUpdatePromoBadge();
+    showToast("已取消折扣，還原原價","success");return;
+  }
+  const original=window.G.epPromoOriginal||raw||(window.G.activeModalData?.originalAmount)||0;
+  window.G.epPromoOriginal=original;
+  window.G.epPromoPct=pct;
+  window.G.epPromoDivisor=null; // 切換成折數時，清掉倍數活動狀態，避免疊加
+  const discounted=Math.round(original*pct/10);
+  amtEl.value=discounted;
+  if(nameEl){
+    let name=nameEl.value.trim();
+    name=name.replace(/（[1-4][+＋][1-4]）/g,"").trim();
+    name=name.replace(/（\d+(\.\d+)?折）/g,"").trim();
+    const pctLabel=Number.isInteger(pct)?pct:pct.toFixed(1);
+    nameEl.value=name+(name?" ":"")+`（${pctLabel}折）`;
+  }
+  epForeignChange();
+  epUpdatePromoBadge();
+  showToast(`已套用 ${pct}折，金額 ${discounted.toLocaleString()}`,"success");
 };
 
 // 移除品名中的活動標記（顯示給客人時用）
@@ -2420,6 +2541,7 @@ const SUBCAT_MAP = {
     {key:"泡麵",    label:"🍜 泡麵/麵食",    kw:["泡麵","拉麵","炒麵","炒碼麵","醬麵","炸醬麵","拌麵","湯麵","涼麵","冷麵","乾麵","油麵","刀削麵","蕎麥麵","蒟蒻麵","寬麵","速食麵","即食麵","杯麵","年糕麵","冬粉","烏龍","河粉","義大利麵","義大利麪","pasta","spaghetti","noodle","짬뽕","jjamppong","순면","라면"]},
     {key:"堅果",    label:"🥜 堅果/果乾",    kw:["堅果","杏仁","腰果","核桃","果乾","草莓乾","芒果乾","蔓越莓","凍乾","水果乾"]},
     {key:"調味",    label:"🧂 調味料/醬料",  kw:["醬","調味","辣椒","味噌","芥末","醋","食鹽","海鹽","岩鹽","橄欖油","麻油","香油","砂糖包"]},
+    {key:"湯底",    label:"🍲 湯底/高湯",    kw:["高湯","高湯錠","高湯塊","湯底","湯磚","湯錠","柴魚精","昆布高湯","大醬湯","味噌湯","海鮮湯","蔘雞湯","雪濃湯","牛骨湯","部隊鍋","泡菜鍋","鍋底"]},
     {key:"餅乾",    label:"🍪 餅乾/零食",    kw:["餅乾","洋芋片","薯片","爆米花","糖果","咖啡糖","軟糖","脆片","貝果","堅果脆","蝴蝶餅","扭結餅","蝴蝶酥","千層酥","焦糖餅","雪花酥","雪花","威化","oreo","奧利奧","wafer","pretzel","gummy","chip","cookie","snack","涼糖","薄荷糖","薄荷涼糖","硬糖","喉糖","巧克力球","巧克力棒","chocolate ball","chocolate bar","糖","甜甜圈","燕麥酥","燕麥","donut"]},
     {key:"飲料",    label:"🧃 飲料",          kw:["飲料","果汁","咖啡","茶飲","汽水","能量飲","乳酸菌飲","優酪乳","蒟蒻飲"]},
     {key:"沖泡",    label:"🥤 沖泡/代餐",    kw:["沖泡","搖搖飲","蛋白飲","高蛋白","蛋白粉","乳清","奶昔粉","代餐","益生菌粉","酵素粉","shake","protein","smoothie mix"]},
@@ -2439,7 +2561,8 @@ const SUBCAT_MAP = {
     {key:"彩妝",    label:"💄 彩妝",          kw:["唇膏","口紅","粉底","氣墊","眼影","睫毛","腮紅","修容","highlight","妝前","妝前乳","妝前膏","primer","定妝","定妝噴霧","setting spray","隱形毛孔","遮瑕"]},
     {key:"香水",    label:"🌸 香氛/香水",    kw:["香水","perfume","香氛","body mist","身體噴霧"]},
     {key:"身體",    label:"🧴 身體保養",     kw:["身體乳","body lotion","hand cream","護手","沐浴","浴鹽"]},
-    {key:"痘痘",    label:"🩹 痘痘貼/藥局",  kw:["痘痘貼","痘貼","痘痘","粉刺","黑頭","導出液","藥局","保健","維他命","膠原蛋白","眼藥水","隱形眼鏡","滴眼液","人工淚液","水楊酸","去疤","疤痕","修復膏","修復軟膏","萬用修復","軟膏","蚊蟲叮咬","皮膚炎","祛斑","淡斑","褪黑"]},
+    {key:"痘痘",    label:"🩹 痘痘貼/藥局",  kw:["痘痘貼","痘貼","痘痘","粉刺","黑頭","導出液","藥局","眼藥水","隱形眼鏡","滴眼液","人工淚液","水楊酸","去疤","疤痕","修復膏","修復軟膏","萬用修復","軟膏","蚊蟲叮咬","皮膚炎","祛斑","淡斑","褪黑"]},
+    {key:"保健",    label:"💊 保健食品",     kw:["益生菌","乳酸菌","락토핏","유산균","lactofit","probiotic","維他命","綜合維他命","B群","膠原蛋白","魚油","葉黃素","鈣片","酵素","enzyme","紅蔘","人蔘","蜂膠","牛樟芝","保健食品","健康食品","營養品","營養補給"]},
     {key:"美容儀器",label:"🔌 美容儀器",     kw:["美容儀","導入儀","導出儀","booster","microcurrent","微電流","音波儀","筋膜儀","按摩儀","脫毛儀","洗臉機","潔顏儀","洗顏機","led光療","光療儀","age-r","medicube"]},
   ],
   // 大創子分類
@@ -2691,20 +2814,31 @@ window.openModal=function(id,data){
   if(id==="modal-eprod"&&data){
     setTimeout(()=>{
       const cur=CURR[data.currency||"KRW"];
-      document.getElementById("ep-sym").textContent=`${cur?.flag||""} ${cur?.name||""} (${cur?.symbol||""})`;
+      window.G.editCurrency=data.currency||"KRW";
+      const epCurSel=document.getElementById("ep-cur-select");
+      if(epCurSel){
+        epCurSel.innerHTML=Object.entries(CURR).map(([k,v])=>`<option value="${k}" ${k===window.G.editCurrency?"selected":""}>${v.flag} ${v.name}（${v.symbol}）</option>`).join("");
+      }
       document.getElementById("ep-code").value=data.id||"";
       document.getElementById("ep-name").value=data.name||"";
       const fa=data.foreignAmount||data.krw||0;
       document.getElementById("ep-foreign").value=fa;
       const epPromoGroupEl=document.getElementById("ep-promo-group");if(epPromoGroupEl)epPromoGroupEl.value=data.promoGroup||"";
-      // 設定活動狀態（要原價、活動倍數都有記錄，且換算回來要真的等於目前金額，才視為活動仍在跑；對不上就自我修復視為沒有活動）
+      // 設定活動狀態（要原價、活動倍數/折數都有記錄，且換算回來要真的等於目前金額，才視為活動仍在跑；對不上就自我修復視為沒有活動）
       const expectedPerItem=(data.originalAmount&&data.promoDivisor)?Math.round(data.originalAmount*(data.promoDivisor-1)/data.promoDivisor):null;
+      const expectedPctAmt=(data.originalAmount&&data.promoPct)?Math.round(data.originalAmount*data.promoPct/10):null;
       if(data.originalAmount&&data.promoDivisor&&expectedPerItem===fa){
         window.G.epPromoOriginal=data.originalAmount;
         window.G.epPromoDivisor=data.promoDivisor||null;
+        window.G.epPromoPct=null;
+      } else if(data.originalAmount&&data.promoPct&&expectedPctAmt===fa){
+        window.G.epPromoOriginal=data.originalAmount;
+        window.G.epPromoPct=data.promoPct||null;
+        window.G.epPromoDivisor=null;
       } else {
-        window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;
+        window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;window.G.epPromoPct=null;
       }
+      const epDiscPctEl=document.getElementById("ep-discount-pct");if(epDiscPctEl)epDiscPctEl.value=window.G.epPromoPct||"";
       epUpdatePromoBadge();
       document.getElementById("ep-price").value=data.finalPrice||0;
       document.getElementById("ep-price").dataset.manual="";
@@ -2777,7 +2911,7 @@ window.openModal=function(id,data){
         if(epLt)epLt.textContent="拍照 或 從相簿選擇";
         window.G.editPhotoPos=null;
       }
-      updateEpCalc(fa,data.currency||"KRW",data.catKey||"food",data.twPrice||0,data.flags||{});
+      updateEpCalc(fa,window.G.editCurrency,data.catKey||"food",data.twPrice||0,data.flags||{});
       // 填入最終售價並標記為手動，避免被建議售價蓋掉
       const epPr=document.getElementById("ep-price");
       if(epPr){epPr.value=data.finalPrice||0;epPr.dataset.manual="1";}
@@ -3893,6 +4027,7 @@ if(sf){
     ["set-rate","韓幣匯率（₩1=?台幣）","0.024","例：0.024"],
     ["set-jpy","日幣匯率（¥1=?台幣）","0.22","例：0.22"],
     ["set-thb","泰銖匯率（฿1=?台幣）","0.90","例：0.90"],
+    ["set-usd","美金匯率（$1=?台幣）","31.5","例：31.5"],
     ["set-refund","退稅率","0.07","7% → 填 0.07"],
     ["set-fee","海外刷卡手續費","0.015","1.5% → 填 0.015"],
     ["set-rebate","刷卡現金回饋","0.033","3.3% → 填 0.033"],
@@ -3906,7 +4041,7 @@ if(sf){
 }
 
 window.resetSettings=function(){
-  const def={rate:0.024,jpy:0.22,thb:0.90,refund:0.07,fee:0.015,rebate:0.033};
+  const def={rate:0.024,jpy:0.22,thb:0.90,usd:31.5,refund:0.07,fee:0.015,rebate:0.033};
   Object.entries(def).forEach(([k,v])=>{const el=document.getElementById("set-"+k);if(el)el.value=v;});
 };
 
@@ -3970,6 +4105,7 @@ onSnapshot(doc(db,"settings","main"),s=>{
     window.G.settings=d;
     if(d.rateJPY)window.G.rates.JPY=d.rateJPY;
     if(d.rateTHB)window.G.rates.THB=d.rateTHB;
+    if(d.rateUSD)window.G.rates.USD=d.rateUSD;
   }
 });
 
@@ -4112,7 +4248,7 @@ window.epFlagChange=function(){
   const fa=parseFloat(document.getElementById("ep-foreign")?.value)||m.foreignAmount||0;
   const twp=parseFloat(document.getElementById("ep-twprice")?.value)||0;
   const cat=window.G.editCatKey||m.catKey||"food";
-  updateEpCalc(fa,m.currency||"KRW",cat,twp,epGetFlags());
+  updateEpCalc(fa,window.G.editCurrency||m.currency||"KRW",cat,twp,epGetFlags());
 };
 
 window.epSelectCat=function(key){
@@ -4127,7 +4263,13 @@ window.epSelectCat=function(key){
   const m=window.G.activeModalData;if(!m)return;
   const fa=parseFloat(document.getElementById("ep-foreign")?.value)||m.foreignAmount||0;
   const twp=parseFloat(document.getElementById("ep-twprice")?.value)||0;
-  updateEpCalc(fa,m.currency||"KRW",key,twp,epGetFlags());
+  updateEpCalc(fa,window.G.editCurrency||m.currency||"KRW",key,twp,epGetFlags());
+};
+
+// 幣別下拉選單變動：例如原本韓幣的商品，改成用機場免稅（美金）買，直接切換即可，不用手動換算
+window.epSelectCurrency=function(cur){
+  window.G.editCurrency=cur;
+  epForeignChange();
 };
 
 window.epForeignChange=function(){
@@ -4136,7 +4278,7 @@ window.epForeignChange=function(){
   const rivalPrice=parseFloat(document.getElementById("ep-rival")?.value)||0;
   const twPrice=parseFloat(document.getElementById("ep-twprice")?.value)||0;
   const cat=window.G.editCatKey||m.catKey||"food";
-  updateEpCalc(amt,m.currency||"KRW",cat,twPrice,epGetFlags());
+  updateEpCalc(amt,window.G.editCurrency||m.currency||"KRW",cat,twPrice,epGetFlags());
 };
 function updateEpCalc(amt,cur,cat,twPrice,flags){
   if(!amt){
@@ -4177,7 +4319,8 @@ window.saveEditProd=async function(){
   const url=epGetAllUrls().join("\n");
   if(!name){showToast("名稱不能空白","error");return;}
   if(price<=0){showToast("售價必須大於0","error");return;}
-  const{beforeTax,afterTax}=calcCost(fa,m.currency||"KRW",window.isDutyFreeChannel(window.G.editChannel));
+  const editCur=window.G.editCurrency||m.currency||"KRW";
+  const{beforeTax,afterTax}=calcCost(fa,editCur,window.isDutyFreeChannel(window.G.editChannel));
   const profit=Math.round((price-afterTax)*10)/10;
   const margin=price>0?Math.round((profit/price)*100):0;
   const newCatKey=window.G.editCatKey||m.catKey||"food";
@@ -4191,8 +4334,9 @@ window.saveEditProd=async function(){
   const newNote=document.getElementById("ep-note")?.value.trim()||"";
   const originalAmt=window.G.epPromoOriginal||fa;
   const promoDivisor=window.G.epPromoDivisor||null;
+  const promoPct=window.G.epPromoPct||null;
   const promoGroup=document.getElementById("ep-promo-group")?.value.trim()||"";
-  const upd={name,foreignAmount:fa,originalAmount:originalAmt,promoDivisor,promoGroup,beforeTax,afterTax,finalPrice:price,profit,margin,twPrice,rivalPrice,url,specs:newSpecs,specImages:newSpecImages,aliases:newAliases,note:newNote,catKey:newCatKey,category:newCatObj.label,emoji:newCatObj.emoji,flags:newFlags,channel:window.G.editChannel||""};
+  const upd={name,currency:editCur,currencySymbol:CURR[editCur]?.symbol||"₩",foreignAmount:fa,originalAmount:originalAmt,promoDivisor,promoPct,promoGroup,beforeTax,afterTax,finalPrice:price,profit,margin,twPrice,rivalPrice,url,specs:newSpecs,specImages:newSpecImages,aliases:newAliases,note:newNote,catKey:newCatKey,category:newCatObj.label,emoji:newCatObj.emoji,flags:newFlags,channel:window.G.editChannel||""};
   if(window.G.editPhoto===null){/* 不動圖片 */}
   else if(window.G.editPhoto===""){upd.photo="";upd.photoPos="50% 50%";}
   else{
@@ -4205,7 +4349,7 @@ window.saveEditProd=async function(){
   let newId=oldId;
   const manualCode=(document.getElementById("ep-code")?.value||"").trim().toUpperCase();
   if(newCatKey!==(m.catKey||"food")){
-    newId=genId(newCatKey, m.currency||"KRW");
+    newId=genId(newCatKey, editCur);
   } else if(manualCode&&manualCode!==oldId){
     const hasOrders=(window.G.orders||[]).some(o=>o.productId===oldId);
     if(hasOrders){
@@ -4959,12 +5103,13 @@ window.saveSettings=async function(){
   const rate=parseFloat(document.getElementById("set-rate")?.value)||0.024;
   const rateJPY=parseFloat(document.getElementById("set-jpy")?.value)||0.22;
   const rateTHB=parseFloat(document.getElementById("set-thb")?.value)||0.90;
+  const rateUSD=parseFloat(document.getElementById("set-usd")?.value)||31.5;
   const taxRefund=parseFloat(document.getElementById("set-refund")?.value)||0.07;
   const cardFee=parseFloat(document.getElementById("set-fee")?.value)||0.015;
   const cardRebate=parseFloat(document.getElementById("set-rebate")?.value)||0.033;
-  await fbSet("settings","main",{rate,rateJPY,rateTHB,taxRefund,cardFee,cardRebate});
-  window.G.rates.KRW=rate;window.G.rates.JPY=rateJPY;window.G.rates.THB=rateTHB;
-  window.G.settings={rate,taxRefund,cardFee,cardRebate,rateJPY,rateTHB};
+  await fbSet("settings","main",{rate,rateJPY,rateTHB,rateUSD,taxRefund,cardFee,cardRebate});
+  window.G.rates.KRW=rate;window.G.rates.JPY=rateJPY;window.G.rates.THB=rateTHB;window.G.rates.USD=rateUSD;
+  window.G.settings={rate,taxRefund,cardFee,cardRebate,rateJPY,rateTHB,rateUSD};
   updateStats();renderList();
   showToast("設定已儲存，商品成本已同步更新！");
 };
@@ -5691,6 +5836,36 @@ function renderStockProductBlock(pid,orders){
   return html;
 }
 
+// 活動群組合計提醒：像락토핏這種不同口味各自不同價格、混搭湊件數才有折扣的情況，
+// 幫你把同一個活動群組（不同商品，但promoGroup欄位填一樣的名字）目前的喊單量加總，
+// 沒湊到門檻先提醒你別急著去買，湊到了才安心下單。
+function renderPromoGroupSummary(prodMap){
+  const products=window.G.products;
+  const groupTotals={};
+  Object.keys(prodMap).forEach(pid=>{
+    const p=products.find(x=>x.id===pid);
+    const grp=(p&&p.promoGroup||"").trim();
+    if(!grp)return;
+    const qty=prodMap[pid].reduce((s,o)=>s+o.qty,0);
+    if(!groupTotals[grp])groupTotals[grp]={qty:0,names:new Set()};
+    groupTotals[grp].qty+=qty;
+    groupTotals[grp].names.add(p.name);
+  });
+  const groups=Object.keys(groupTotals);
+  if(!groups.length)return"";
+  let html=`<div style="margin-bottom:14px">`;
+  groups.forEach(g=>{
+    const info=groupTotals[g];
+    const ok=info.qty>=2;
+    html+=`<div style="display:flex;align-items:center;gap:8px;background:${ok?"#F0FDF4":"#FFF9F0"};border:1.5px solid ${ok?"#86EFAC":"#FCD34D"};border-radius:10px;padding:9px 12px;margin-bottom:8px">
+      <span style="font-size:14px;flex-shrink:0">${ok?"✅":"⚠️"}</span>
+      <span style="flex:1;font-size:12px;font-weight:700;color:${ok?"#166534":"#92400E"}">🏷️ ${g}（活動群組，共 ${info.names.size} 種口味在追蹤）目前混搭喊單合計 <b>${info.qty} 件</b>${ok?"，可以去買囉":"，還沒湊到門檻，先別急著去買"}</span>
+    </div>`;
+  });
+  html+="</div>";
+  return html;
+}
+
 window.renderStockPlanContent=function(){
   let tripOrders=getTripOrders().filter(o=>o.status==="pending");
   if(window.G.stockPlanUnpurchasedOnly)tripOrders=tripOrders.filter(o=>!o.purchased);
@@ -5706,7 +5881,7 @@ window.renderStockPlanContent=function(){
     document.getElementById("stock-plan-content").innerHTML=`<div style="text-align:center;padding:32px;color:#9C7A5A;font-size:13px">${emptyMsg}</div>`;
     return;
   }
-  let html="";
+  let html=renderPromoGroupSummary(prodMap);
   if(mode==="channel"){
     // 依購買通路分組：先算出每個商品最早的喊單時間，通路內部再依時間排序
     const channelMap={};
@@ -6397,12 +6572,16 @@ if(!window.G.expenses)window.G.expenses={};  // {tripId: [{label,amount}]}
 window.addExpense=function(){
   const label=document.getElementById("exp-label")?.value.trim();
   const amount=parseFloat(document.getElementById("exp-amount")?.value)||0;
+  const currency=document.getElementById("exp-currency")?.value||"TWD";
   if(!label||!amount){showToast("請填寫項目和金額","warning");return;}
+  // 台幣以外的幣別，用目前匯率自動換算成台幣再存，統計欄位一律以台幣為準
+  const twdAmount=currency==="TWD"?amount:Math.round(amount*getRate(currency));
   const tripId=window.G.statsTripFilter==="all"?"all":window.G.statsTripFilter==="auto"?(getLatestTrip()?.id||"all"):window.G.statsTripFilter;
   if(!window.G.expenses[tripId])window.G.expenses[tripId]=[];
-  window.G.expenses[tripId].push({label,amount,id:"E"+Date.now()});
+  window.G.expenses[tripId].push({label,amount:twdAmount,origAmount:amount,origCurrency:currency,id:"E"+Date.now()});
   document.getElementById("exp-label").value="";
   document.getElementById("exp-amount").value="";
+  document.getElementById("exp-currency").value="TWD";
   // 同步存 Firebase
   fbSet("expenses",tripId,{items:window.G.expenses[tripId]});
   renderStats();
@@ -6623,7 +6802,7 @@ window.renderStats=function(){
     if(!exps.length){expEl.innerHTML=`<div style="font-size:12px;color:#9C7A5A;margin-bottom:8px">尚未記錄費用，在下方新增</div>`;}
     else{
       expEl.innerHTML=exps.map(e=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #FAF8F5">
-        <span style="font-size:13px;color:#3D2010">${e.label}</span>
+        <span style="font-size:13px;color:#3D2010">${e.label}${e.origCurrency&&e.origCurrency!=="TWD"?`<br><span style="font-size:10px;color:#9C7A5A">${CURR[e.origCurrency]?.symbol||""}${(e.origAmount||0).toLocaleString()} ${CURR[e.origCurrency]?.name||e.origCurrency}</span>`:""}</span>
         <div style="display:flex;align-items:center;gap:10px">
           <span style="font-size:13px;font-weight:700;color:#E07B39">NT$${e.amount.toLocaleString()}</span>
           <button data-tid="${tripKey}" data-eid="${e.id}" onclick="deleteExpense(this.dataset.tid,this.dataset.eid)" style="color:#C0392B;background:none;border:none;font-size:16px;cursor:pointer;line-height:1">×</button>
@@ -7096,7 +7275,7 @@ window.batchEditProducts=function(){
     const liveCalc=calcCost(fa,p.currency||"KRW",window.isDutyFreeChannel(p.channel));
     const liveAfterTax=liveCalc.afterTax;
     const liveProfit=Math.round((p.finalPrice-liveAfterTax)*10)/10;
-    const CURR_obj=({KRW:"₩",JPY:"¥",THB:"฿"})[p.currency||"KRW"]||"₩";
+    const CURR_obj=({KRW:"₩",JPY:"¥",THB:"฿",USD:"$"})[p.currency||"KRW"]||"₩";
     const catObj=CATS.find(c=>c.key===p.catKey);
     const pOrders=window.G.orders.filter(o=>o.productId===p.id);
     const pTotal=pOrders.reduce((s,o)=>s+o.qty,0);
@@ -7274,6 +7453,24 @@ window.beUpdatePromoBtnStyle=function(active){
       btn.style.outline="none";
     }
   });
+  const discBtn=document.getElementById("be-discount-btn");
+  if(discBtn){
+    if(active&&window.G.bePromoPct){
+      discBtn.style.outline="none";
+    }
+  }
+};
+window.beUpdateDiscountBtnStyle=function(activePct){
+  const discBtn=document.getElementById("be-discount-btn");
+  if(discBtn){
+    if(activePct){
+      discBtn.style.outline="2px solid #5C3A1E";
+      discBtn.style.outlineOffset="1px";
+    }else{
+      discBtn.style.outline="none";
+    }
+  }
+  if(activePct)window.beUpdatePromoBtnStyle(null);
 };
 
 window.beApplyPromo=function(divisor){
@@ -7302,8 +7499,11 @@ window.beApplyPromo=function(divisor){
       }
     });
     window.G.bePromoDivisor=null;
+    window.G.bePromoPct=null;
     window.G.bePromoOriginals={};
     beUpdatePromoBtnStyle(null);
+    beUpdateDiscountBtnStyle(null);
+    const discElReset=document.getElementById("be-discount-pct");if(discElReset)discElReset.value="";
     showToast("已取消活動，還原原價","success");
     return;
   }
@@ -7326,12 +7526,81 @@ window.beApplyPromo=function(divisor){
     if(nameInput){
       let n=nameInput.value.trim();
       n=n.replace(/（[1-4][+＋][1-4]）/g,"").trim();
+      n=n.replace(/（\d+(\.\d+)?折）/g,"").trim();
       nameInput.value=n+(n?" ":"")+tag;
     }
   });
   window.G.bePromoDivisor=divisor;
+  window.G.bePromoPct=null; // 切換成倍數活動時，清掉折數狀態，避免疊加
+  const discElClear=document.getElementById("be-discount-pct");if(discElClear)discElClear.value="";
   beUpdatePromoBtnStyle(divisor);
+  beUpdateDiscountBtnStyle(null);
   showToast(`已套用 ${tag.replace("（","").replace("）","")} 活動到所有選取商品`,"success");
+};
+
+// 批次套用「幾折」折扣：跟1+1/2+1/3+1同一套邏輯共用同一份原價快取，同折數再按一次＝取消還原，
+// 換折數或切換成1+1類活動都一律從各商品的原價重新算，不會愈按愈低
+window.beApplyDiscount=function(){
+  const cards=document.querySelectorAll("#be-product-list [data-beid]");
+  if(!cards.length)return;
+  const discEl=document.getElementById("be-discount-pct");
+  const pct=parseFloat(discEl?.value)||0;
+  window.G.bePromoOriginals=window.G.bePromoOriginals||{};
+  if(!pct||pct<=0||pct>=10){showToast("請輸入0~10之間的折數，例如7代表7折","error");return;}
+
+  // 同一折數再按一次 → 全部還原原價
+  if(window.G.bePromoPct===pct){
+    cards.forEach(card=>{
+      const pid=card.dataset.beid;
+      const p=window.G.products.find(x=>x.id===pid);if(!p)return;
+      const faInput=card.querySelector("[data-field='foreignAmount']");
+      const nameInput=card.querySelector("[data-field='name']");
+      const orig=window.G.bePromoOriginals[pid];
+      if(faInput&&orig!=null){
+        faInput.value=orig;
+        beUpdateCost(faInput,pid,p.currency||"KRW");
+      }
+      if(nameInput){
+        let n=nameInput.value.trim();
+        n=n.replace(/（\d+(\.\d+)?折）/g,"").trim();
+        nameInput.value=n;
+      }
+    });
+    window.G.bePromoPct=null;
+    window.G.bePromoOriginals={};
+    beUpdateDiscountBtnStyle(null);
+    showToast("已取消折扣，還原原價","success");
+    return;
+  }
+
+  // 套用（或切換折數／從活動價切過來）→ 一律以「第一次套用前的原幣金額」為基準重算
+  cards.forEach(card=>{
+    const pid=card.dataset.beid;
+    const p=window.G.products.find(x=>x.id===pid);if(!p)return;
+    const faInput=card.querySelector("[data-field='foreignAmount']");
+    const nameInput=card.querySelector("[data-field='name']");
+    if(!faInput)return;
+    let orig=window.G.bePromoOriginals[pid];
+    if(orig==null){
+      orig=parseFloat(faInput.value)||p.foreignAmount||p.krw||0;
+      window.G.bePromoOriginals[pid]=orig;
+    }
+    const discounted=Math.round(orig*pct/10);
+    faInput.value=discounted;
+    beUpdateCost(faInput,pid,p.currency||"KRW");
+    if(nameInput){
+      let n=nameInput.value.trim();
+      n=n.replace(/（[1-4][+＋][1-4]）/g,"").trim();
+      n=n.replace(/（\d+(\.\d+)?折）/g,"").trim();
+      const pctLabel=Number.isInteger(pct)?pct:pct.toFixed(1);
+      nameInput.value=n+(n?" ":"")+`（${pctLabel}折）`;
+    }
+  });
+  window.G.bePromoPct=pct;
+  window.G.bePromoDivisor=null; // 切換成折數時，清掉倍數活動狀態，避免疊加
+  beUpdatePromoBtnStyle(null);
+  beUpdateDiscountBtnStyle(pct);
+  showToast(`已套用 ${pct}折 到所有選取商品`,"success");
 };
 
 // 批次標記活動群組：讓不同品名的商品可以歸在同一波活動下，登記喊單時互相混搭
@@ -7975,6 +8244,8 @@ window.openQuickAdd=function(){
   const hc=document.getElementById("qa-price-hint-cost");if(hc)hc.textContent="";
   // 重置通路
   window.G.qaChannel="";
+  window.G.qaCurrency="KRW";
+  const qaCurSelReset=document.getElementById("qa-cur-select");if(qaCurSelReset)qaCurSelReset.value="KRW";
   document.querySelectorAll(".qa-ch-btn").forEach(b=>{b.style.background="white";b.style.borderColor="#E8D5B0";b.style.color="#9C7A5A";b.classList.remove("active");});
   const firstCh=document.querySelector(".qa-ch-btn");
   if(firstCh){firstCh.style.background="#5C3A1E";firstCh.style.borderColor="#5C3A1E";firstCh.style.color="white";firstCh.classList.add("active");}
@@ -8021,7 +8292,8 @@ window.openQuickAdd=function(){
   const qaSpecs=document.getElementById("qa-specs");if(qaSpecs)qaSpecs.value="";
   window.G.qaSpecsList=[];window.G.qaSpecImages=[];
   if(typeof qaRenderSpecs==="function")qaRenderSpecs();
-  window.G.qaPromoOriginal=null;window.G.qaPromoDivisor=null;
+  window.G.qaPromoOriginal=null;window.G.qaPromoDivisor=null;window.G.qaPromoPct=null;
+  const qaDiscPctReset=document.getElementById("qa-discount-pct");if(qaDiscPctReset)qaDiscPctReset.value="";
   // 清除網址
   const qaUrl=document.getElementById("qa-url");if(qaUrl)qaUrl.value="";
   document.querySelectorAll(".qa-url-extra").forEach(el=>el.parentElement?.remove());
@@ -8067,7 +8339,7 @@ window.qaCalcPrice=function(){
     return;
   }
   const cat=window.G.qaCatKey||"food"; // 預設食品類
-  const{afterTax}=calcCost(amt,"KRW",window.isDutyFreeChannel(window.G.qaChannel));
+  const{afterTax}=calcCost(amt,window.G.qaCurrency||"KRW",window.isDutyFreeChannel(window.G.qaChannel));
   const flags={
     priceType:document.getElementById("qa-flag-transparent")?.checked?"transparent":"normal",
     isCold:document.getElementById("qa-flag-cold")?.checked||false,
@@ -8277,7 +8549,7 @@ window.epSelectChannel=function(btn,ch){
     const amt=parseFloat(document.getElementById("ep-foreign")?.value)||m.foreignAmount||0;
     const twp=parseFloat(document.getElementById("ep-twprice")?.value)||0;
     const cat=window.G.editCatKey||m.catKey||"food";
-    updateEpCalc(amt,m.currency||"KRW",cat,twp,typeof epGetFlags==="function"?epGetFlags():{});
+    updateEpCalc(amt,window.G.editCurrency||m.currency||"KRW",cat,twp,typeof epGetFlags==="function"?epGetFlags():{});
   }
 };
 window.openEditCustOrOrder=function(custId, custName){
@@ -8721,6 +8993,12 @@ window.qaLiveSave=async function(){
   showToast("⚡ 已上架："+name);
 };
 
+// 幣別下拉選單變動：預設韓幣不受影響，選機場免稅這類美金通路時可以直接切換
+window.qaSelectCurrency=function(cur){
+  window.G.qaCurrency=cur;
+  qaDaisoAutoSelectBest();
+  qaCalcPrice();
+};
 window.qaSelectChannel=function(btn,ch){
   if(ch===""){
     document.querySelectorAll(".qa-ch-btn").forEach(b=>{
@@ -8777,11 +9055,12 @@ window.saveQuickAdd=async function(){
   const name=document.getElementById("qa-name")?.value.trim();
   const amt=parseFloat(document.getElementById("qa-amt")?.value)||0;
   const cat=window.G.qaCatKey||"food";
+  const qaCur=window.G.qaCurrency||"KRW";
   if(!name){showToast("請填入商品名稱","error");return;}
-  if(!amt){showToast("請填入韓幣金額","error");return;}
-  const{afterTax,beforeTax}=calcCost(amt,"KRW",window.isDutyFreeChannel(window.G.qaChannel));
+  if(!amt){showToast("請填入金額","error");return;}
+  const{afterTax,beforeTax}=calcCost(amt,qaCur,window.isDutyFreeChannel(window.G.qaChannel));
   const sugg=suggestPrice(afterTax,cat,{},0,amt);
-  const id=genId(cat,"KRW");
+  const id=genId(cat,qaCur);
   // Use product photo if available, otherwise use recognition photo
   const qaFlags={
     priceType:document.getElementById("qa-flag-transparent")?.checked?"transparent":"normal",
@@ -8814,12 +9093,13 @@ window.saveQuickAdd=async function(){
   rawQaSpecs.forEach((s,i)=>{const t=String(s).trim();if(t){qaSpecs.push(t);qaSpecImages.push(rawQaSpecImages[i]||"");}});
   const qaOriginalAmt=window.G.qaPromoOriginal||amt;
   const qaPromoDivisor=window.G.qaPromoDivisor||null;
+  const qaPromoPct=window.G.qaPromoPct||null;
   const qaPromoGroup=document.getElementById("qa-promo-group")?.value.trim()||"";
   const qaNote=document.getElementById("qa-note")?.value.trim()||"";
   await fbSet("products",id,{
     id,name,catKey:cat,category:catObj?.label||"其他",emoji:catObj?.emoji||"📦",
-    currency:"KRW",currencySymbol:"₩",foreignAmount:amt,
-    originalAmount:qaOriginalAmt,promoDivisor:qaPromoDivisor,promoGroup:qaPromoGroup,
+    currency:qaCur,currencySymbol:CURR[qaCur]?.symbol||"₩",foreignAmount:amt,
+    originalAmount:qaOriginalAmt,promoDivisor:qaPromoDivisor,promoPct:qaPromoPct,promoGroup:qaPromoGroup,
     beforeTax,afterTax,suggested:sugg2,finalPrice,profit,margin,
     flags:qaFlags,twPrice:0,url:qaGetAllUrls(),specs:qaSpecs,specImages:qaSpecImages,
     channel:window.G.qaChannel||"",note:qaNote,
@@ -8833,6 +9113,10 @@ window.saveQuickAdd=async function(){
   window.G.qaSelectedPrice=null;
   window.G.qaPromoOriginal=null;
   window.G.qaPromoDivisor=null;
+  window.G.qaPromoPct=null;
+  const qaDiscPctPost=document.getElementById("qa-discount-pct");if(qaDiscPctPost)qaDiscPctPost.value="";
+  window.G.qaCurrency="KRW";
+  const qaCurSelPost=document.getElementById("qa-cur-select");if(qaCurSelPost)qaCurSelPost.value="KRW";
   const qaSpecEl=document.getElementById("qa-specs");if(qaSpecEl)qaSpecEl.value="";
   const qaNoteEl=document.getElementById("qa-note");if(qaNoteEl)qaNoteEl.value="";
   window.G.qaSpecsList=[];window.G.qaSpecImages=[];
