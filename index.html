@@ -110,6 +110,10 @@ body.live-mode .hide-live { display: none !important; }
       <button data-cur="THB" onclick="switchCur('THB')" style="flex:1;padding:10px 4px;border-radius:10px;font-size:12px;font-weight:700;border:1px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer;text-align:center">🇹🇭<br><span style="font-size:10px">泰銖</span></button>
       <button data-cur="USD" onclick="switchCur('USD')" style="flex:1;padding:10px 4px;border-radius:10px;font-size:12px;font-weight:700;border:1px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer;text-align:center">🇺🇸<br><span style="font-size:10px">美金</span></button>
     </div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button data-pm="card" onclick="switchPaymentMethod('card')" style="flex:1;padding:8px 4px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #5C3A1E;background:#5C3A1E;color:#F5E6C8;cursor:pointer;text-align:center">💳 刷卡</button>
+      <button data-pm="cash" onclick="switchPaymentMethod('cash')" style="flex:1;padding:8px 4px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer;text-align:center">💵 現金</button>
+    </div>
   </div>
   <!-- 輸入卡：名稱 + 金額 -->
   <div style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:16px;margin-bottom:10px">
@@ -931,7 +935,10 @@ body.live-mode .hide-live { display: none !important; }
     </div>
     <!-- 4. 原幣金額 -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
-      <label style="font-size:11px;font-weight:700;color:#9C7A5A">原幣金額 <select id="ep-cur-select" onchange="window.epSelectCurrency(this.value)" style="font-size:11px;font-weight:700;color:#3D2010;background:#FDF6EC;border:1px solid #E8D5B0;border-radius:6px;padding:2px 6px;outline:none;cursor:pointer;vertical-align:middle"></select> <span id="ep-promo-active-badge" style="display:none;font-size:10px;font-weight:700;color:#166534;background:#DCFCE7;border-radius:6px;padding:2px 6px;margin-left:4px"></span></label>
+      <label style="font-size:11px;font-weight:700;color:#9C7A5A">原幣金額 <select id="ep-cur-select" onchange="window.epSelectCurrency(this.value)" style="font-size:11px;font-weight:700;color:#3D2010;background:#FDF6EC;border:1px solid #E8D5B0;border-radius:6px;padding:2px 6px;outline:none;cursor:pointer;vertical-align:middle"></select> <select id="ep-pm-select" onchange="window.epSelectPaymentMethod(this.value)" style="font-size:11px;font-weight:700;color:#3D2010;background:#FDF6EC;border:1px solid #E8D5B0;border-radius:6px;padding:2px 6px;outline:none;cursor:pointer;vertical-align:middle">
+        <option value="card">💳 刷卡</option>
+        <option value="cash">💵 現金</option>
+      </select> <span id="ep-promo-active-badge" style="display:none;font-size:10px;font-weight:700;color:#166534;background:#DCFCE7;border-radius:6px;padding:2px 6px;margin-left:4px"></span></label>
       <div style="display:flex;gap:4px">
         <button onclick="epApplyPromo(2)" style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:700;color:#92400E;cursor:pointer">1+1</button>
         <button onclick="epApplyPromo(3)" style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:700;color:#166534;cursor:pointer">2+1</button>
@@ -1317,6 +1324,9 @@ body.live-mode .hide-live { display: none !important; }
         <option value="JPY">🇯🇵 日幣（¥）</option>
         <option value="THB">🇹🇭 泰銖（฿）</option>
         <option value="USD">🇺🇸 美金（$）</option>
+      </select> <select id="qa-pm-select" onchange="window.qaSelectPaymentMethod(this.value)" style="font-size:11px;font-weight:700;color:#3D2010;background:#FDF6EC;border:1px solid #E8D5B0;border-radius:6px;padding:2px 6px;outline:none;cursor:pointer;vertical-align:middle">
+        <option value="card" selected>💳 刷卡</option>
+        <option value="cash">💵 現金</option>
       </select></label>
       <div style="display:flex;gap:4px" id="qa-promo-btns">
         <button onclick="qaApplyPromo(2)" style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:700;color:#92400E;cursor:pointer">1+1</button>
@@ -1858,12 +1868,15 @@ window.isDutyFreeChannel=function(ch){
   if(!ch)return false;
   return String(ch).split("、").some(c=>DUTY_FREE_CHANNELS.has(c.trim()));
 };
-function calcCost(amt,cur,dutyFree){
+function calcCost(amt,cur,dutyFree,paymentMethod){
   const rate=getRate(cur),tax=dutyFree?0:getTax(cur);
   const{cardFee,cardRebate}=window.G.settings;
+  // 現金支付：沒有手續費也沒有回饋，成本就是稅後金額本身，不套用刷卡的加減
+  // 刷卡支付（預設，向下相容舊資料）：海外刷卡手續費是額外成本要加，刷卡現金回饋是省下的錢要扣
+  const cardMultiplier=paymentMethod==="cash"?1:(1+cardFee-cardRebate);
   return{
     beforeTax:Math.round(amt*rate*10)/10,
-    afterTax:Math.round(amt*rate*(1-tax)*(1+cardRebate-cardFee)*10)/10
+    afterTax:Math.round(amt*rate*(1-tax)*cardMultiplier*10)/10
   };
 }
 // 訂單的「單件成本」：如果這筆訂單已經標記買到、有凍結成本快照，就用那個時間點的真實成本；
@@ -1871,7 +1884,7 @@ function calcCost(amt,cur,dutyFree){
 window.getOrderUnitCost=function(o,prod){
   if(o&&typeof o.costSnapshot==="number")return o.costSnapshot;
   if(!prod)return 0;
-  return calcCost(prod.foreignAmount||prod.krw||0,prod.currency||"KRW",window.isDutyFreeChannel(prod.channel)).afterTax;
+  return calcCost(prod.foreignAmount||prod.krw||0,prod.currency||"KRW",window.isDutyFreeChannel(prod.channel),prod.paymentMethod||"card").afterTax;
 };
 window.calcCost=calcCost;
 function snap(raw,steps){for(const s of steps)if(s>=raw)return s;return Math.ceil(raw/100)*100-1;}
@@ -2778,7 +2791,7 @@ window.refreshAllCosts=async function(){
   for(const p of prods){
     const fa=p.foreignAmount||p.krw||0;
     if(!fa)continue;
-    const{beforeTax,afterTax}=calcCost(fa,p.currency||"KRW",window.isDutyFreeChannel(p.channel));
+    const{beforeTax,afterTax}=calcCost(fa,p.currency||"KRW",window.isDutyFreeChannel(p.channel),p.paymentMethod||"card");
     const profit=Math.round(((p.finalPrice||0)-afterTax)*10)/10;
     const margin=(p.finalPrice||0)>0?Math.round((profit/p.finalPrice)*100):0;
     // 差距小於 NT$0.1 就不用特地寫入，省一點資料庫寫入次數
@@ -2819,6 +2832,9 @@ window.openModal=function(id,data){
       if(epCurSel){
         epCurSel.innerHTML=Object.entries(CURR).map(([k,v])=>`<option value="${k}" ${k===window.G.editCurrency?"selected":""}>${v.flag} ${v.name}（${v.symbol}）</option>`).join("");
       }
+      window.G.editPaymentMethod=data.paymentMethod||"card";
+      const epPmSel=document.getElementById("ep-pm-select");
+      if(epPmSel)epPmSel.value=window.G.editPaymentMethod;
       document.getElementById("ep-code").value=data.id||"";
       document.getElementById("ep-name").value=data.name||"";
       const fa=data.foreignAmount||data.krw||0;
@@ -3134,6 +3150,16 @@ window.switchCur=function(cur){
   });
   const lbl=document.getElementById("c-sym-label");
   if(lbl)lbl.textContent=`${CURR[cur]?.flag||""} ${CURR[cur]?.name||""} (${CURR[cur]?.symbol||""})`;
+  calcUpdate();
+};
+window.switchPaymentMethod=function(pm){
+  window.G.calcPaymentMethod=pm;
+  document.querySelectorAll("[data-pm]").forEach(btn=>{
+    const a=btn.dataset.pm===pm;
+    btn.style.background=a?"#5C3A1E":"white";
+    btn.style.color=a?"#F5E6C8":"#9C7A5A";
+    btn.style.borderColor=a?"#5C3A1E":"#E8D5B0";
+  });
   calcUpdate();
 };
 
@@ -3867,7 +3893,7 @@ window.calcUpdate=function(){
     if(results)results.style.display="block";
     if(welcome)welcome.style.display="none";
     const cur=window.G.currency;
-    const{beforeTax,afterTax}=calcCost(amt,cur,window.isDutyFreeChannel(window.G.calcChannel));
+    const{beforeTax,afterTax}=calcCost(amt,cur,window.isDutyFreeChannel(window.G.calcChannel),window.G.calcPaymentMethod||"card");
     const cat=window.G.calcCat||"food";
     const sugg=suggestPrice(afterTax,cat,flags,twPrice,amt);
     const final=custom||sugg;
@@ -4067,13 +4093,19 @@ onSnapshot(collection(db,"customers"),s=>{
   clearTimeout(window.G._custRenderTimer);
   window.G._custRenderTimer=setTimeout(()=>renderIfActiveElseMarkDirty("customers",renderCustomers),150);
 });
-// 載入 LINE 綁定資料
+// 載入 LINE 綁定資料（同一個顯示名稱可能對應到不只一個真實的人，所以用陣列保留全部，不能只留一筆）
 (async()=>{
   try{
     const {getDocs,collection:col}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
     const snap=await getDocs(col(db,"line_users"));
     const map={};
-    snap.docs.forEach(d=>{const data=d.data();map[(data.displayName||"").trim().toLowerCase()]=data;});
+    snap.docs.forEach(d=>{
+      const data=d.data();
+      const key=(data.displayName||"").trim().toLowerCase();
+      if(!key)return;
+      if(!map[key])map[key]=[];
+      map[key].push(data);
+    });
     window.G.lineUserMap=map;
     renderIfActiveElseMarkDirty("customers",renderCustomers);
   }catch(e){console.warn("line_users載入失敗",e);}
@@ -4118,7 +4150,7 @@ window.saveProduct=async function(){
   const cat=window.G.calcCat||"food";
   const flags=window.G.calcFlags||{};
   const twPrice=window.G.calcTwPrice||0;
-  const{beforeTax,afterTax}=calcCost(amt,cur,window.isDutyFreeChannel(window.G.calcChannel));
+  const{beforeTax,afterTax}=calcCost(amt,cur,window.isDutyFreeChannel(window.G.calcChannel),window.G.calcPaymentMethod||"card");
   const sugg=suggestPrice(afterTax,cat,flags,twPrice,amt);
   const final=window.G.calcCustom||sugg;
   const profit=Math.round((final-afterTax)*10)/10;
@@ -4131,10 +4163,17 @@ window.saveProduct=async function(){
   const photo=window.G.calcPhoto||"";
   const photoPos=photo?(window.G.calcPhotoPos||{x:50,y:50}):{x:50,y:50};
   const photoPosCss=`${photoPos.x}% ${photoPos.y}%`;
-  await fbSet("products",id,{name:name.trim(),catKey:cat,category:catObj?.label||"其他",emoji:catObj?.emoji||"📦",currency:cur,currencySymbol:CURR[cur]?.symbol||"₩",foreignAmount:amt,originalAmount:window.G.calcPromoOriginal||amt,beforeTax,afterTax,suggested:sugg,finalPrice:final,profit,margin,twPrice,rivalPrice,url,specs,photo,photoPos:photoPosCss,flags,channel:window.G.calcChannel||"",createdAt:Date.now()});
+  await fbSet("products",id,{name:name.trim(),catKey:cat,category:catObj?.label||"其他",emoji:catObj?.emoji||"📦",currency:cur,currencySymbol:CURR[cur]?.symbol||"₩",foreignAmount:amt,originalAmount:window.G.calcPromoOriginal||amt,paymentMethod:window.G.calcPaymentMethod||"card",beforeTax,afterTax,suggested:sugg,finalPrice:final,profit,margin,twPrice,rivalPrice,url,specs,photo,photoPos:photoPosCss,flags,channel:window.G.calcChannel||"",createdAt:Date.now()});
   ["c-name","c-amt","c-custom","c-twprice","c-rival","c-specs","c-url"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});document.querySelectorAll(".c-url-extra").forEach(el=>el.parentElement.remove());
   ["flag-cold","flag-coldHigh","flag-heavy","flag-large","flag-limited"].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=false;});
   window.G.calcChannel="";
+  window.G.calcPaymentMethod="card";
+  document.querySelectorAll("[data-pm]").forEach(btn=>{
+    const a=btn.dataset.pm==="card";
+    btn.style.background=a?"#5C3A1E":"white";
+    btn.style.color=a?"#F5E6C8":"#9C7A5A";
+    btn.style.borderColor=a?"#5C3A1E":"#E8D5B0";
+  });
   document.querySelectorAll(".calc-ch-btn").forEach(b=>{b.style.background="white";b.style.borderColor="#E8D5B0";b.style.color="#9C7A5A";b.classList.remove("active");});
   const firstCalcCh=document.querySelector(".calc-ch-btn");
   if(firstCalcCh){firstCalcCh.style.background="#5C3A1E";firstCalcCh.style.borderColor="#5C3A1E";firstCalcCh.style.color="white";firstCalcCh.classList.add("active");}
@@ -4271,6 +4310,11 @@ window.epSelectCurrency=function(cur){
   window.G.editCurrency=cur;
   epForeignChange();
 };
+// 付款方式：預設刷卡不受影響，現金支付時不套用刷卡手續費/回饋調整
+window.epSelectPaymentMethod=function(pm){
+  window.G.editPaymentMethod=pm;
+  epForeignChange();
+};
 
 window.epForeignChange=function(){
   const m=window.G.activeModalData;if(!m)return;
@@ -4290,7 +4334,7 @@ function updateEpCalc(amt,cur,cat,twPrice,flags){
     return;
   }
   twPrice=twPrice||0;flags=flags||{};
-  const{beforeTax,afterTax}=calcCost(amt,cur,window.isDutyFreeChannel(window.G.editChannel));
+  const{beforeTax,afterTax}=calcCost(amt,cur,window.isDutyFreeChannel(window.G.editChannel),window.G.editPaymentMethod||"card");
   const sugg=suggestPrice(afterTax,cat,flags,twPrice,amt);
   const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
   set("ep-before",`NT$ ${beforeTax}`);
@@ -4320,7 +4364,8 @@ window.saveEditProd=async function(){
   if(!name){showToast("名稱不能空白","error");return;}
   if(price<=0){showToast("售價必須大於0","error");return;}
   const editCur=window.G.editCurrency||m.currency||"KRW";
-  const{beforeTax,afterTax}=calcCost(fa,editCur,window.isDutyFreeChannel(window.G.editChannel));
+  const editPm=window.G.editPaymentMethod||"card";
+  const{beforeTax,afterTax}=calcCost(fa,editCur,window.isDutyFreeChannel(window.G.editChannel),editPm);
   const profit=Math.round((price-afterTax)*10)/10;
   const margin=price>0?Math.round((profit/price)*100):0;
   const newCatKey=window.G.editCatKey||m.catKey||"food";
@@ -4336,7 +4381,7 @@ window.saveEditProd=async function(){
   const promoDivisor=window.G.epPromoDivisor||null;
   const promoPct=window.G.epPromoPct||null;
   const promoGroup=document.getElementById("ep-promo-group")?.value.trim()||"";
-  const upd={name,currency:editCur,currencySymbol:CURR[editCur]?.symbol||"₩",foreignAmount:fa,originalAmount:originalAmt,promoDivisor,promoPct,promoGroup,beforeTax,afterTax,finalPrice:price,profit,margin,twPrice,rivalPrice,url,specs:newSpecs,specImages:newSpecImages,aliases:newAliases,note:newNote,catKey:newCatKey,category:newCatObj.label,emoji:newCatObj.emoji,flags:newFlags,channel:window.G.editChannel||""};
+  const upd={name,currency:editCur,currencySymbol:CURR[editCur]?.symbol||"₩",paymentMethod:editPm,foreignAmount:fa,originalAmount:originalAmt,promoDivisor,promoPct,promoGroup,beforeTax,afterTax,finalPrice:price,profit,margin,twPrice,rivalPrice,url,specs:newSpecs,specImages:newSpecImages,aliases:newAliases,note:newNote,catKey:newCatKey,category:newCatObj.label,emoji:newCatObj.emoji,flags:newFlags,channel:window.G.editChannel||""};
   if(window.G.editPhoto===null){/* 不動圖片 */}
   else if(window.G.editPhoto===""){upd.photo="";upd.photoPos="50% 50%";}
   else{
@@ -4433,7 +4478,7 @@ window.deleteCustomer=async function(id){
   const c=window.G.customers.find(x=>x.id===id);
   // 刪除該客戶的所有訂單
   const relatedOrders=window.G.orders.filter(o=>{
-    if(o.customerId&&o.customerId===id)return true;
+    if(o.customerId)return o.customerId===id; // 有customerId就精準比對，不能再用名字猜，避免誤刪別人的訂單
     if(!c)return false;
     const nm=(c.communityName||"").trim().toLowerCase();
     const ln=(c.lineName||"").trim().toLowerCase();
@@ -4646,7 +4691,7 @@ window.moRefreshHistory=function(){
   const tripOrds=(window.G.orders||[]).filter(o=>{
     const belongs=o.tripId?o.tripId===targetTripId:(detectTripForOrder(o)?.id===targetTripId);
     if(!belongs)return false;
-    if(id&&o.customerId&&o.customerId===id)return true;
+    if(id&&o.customerId)return o.customerId===id; // 有customerId就精準比對，不能再退回名字猜
     const cn=community.trim().toLowerCase();
     return cn&&(o.communityName||o.buyerName||"").trim().toLowerCase()===cn;
   });
@@ -4776,7 +4821,11 @@ window.addOrder=async function(){
   const tripId=window.G.moSelectedTripId||"";
   const orderType=window.G.moOrderType||"onsite";
   const orderTypeLabel=orderType==="onsite"?"🛍️現場":"📱代買";
-  const onsiteCost=orderType==="onsite"?calcCost(prod.foreignAmount||prod.krw||0,prod.currency||"KRW",window.isDutyFreeChannel(prod.channel)).afterTax:null;
+  // 現場購買＝當下立刻買了，只問一次這一整批（主商品＋所有混搭口味）是刷卡還現金，不用每個都問
+  const pmThisBatch=orderType==="onsite"
+    ?(confirm("這筆現場購買，這次是刷卡付款嗎？\n\n【確定】＝刷卡\n【取消】＝現金")?"card":"cash")
+    :null;
+  const onsiteCost=orderType==="onsite"?calcCost(prod.foreignAmount||prod.krw||0,prod.currency||"KRW",window.isDutyFreeChannel(prod.channel),pmThisBatch).afterTax:null;
   let totalKinds=0;
   let lastSpecLabel="";
 
@@ -4788,7 +4837,7 @@ window.addOrder=async function(){
     for(const s of specKeys){
       const q=specSel[s]||1;
       const oid="O"+Date.now()+"_s"+(idx++);
-      await fbSet("orders",oid,{productId,productName:cleanProductName(prod.name),productEmoji:prod.emoji,customerId,communityName,lineName,buyerName:communityName||lineName,qty:q,unitPrice:prod.finalPrice,total:prod.finalPrice*q,status:"pending",tripId,orderType,spec:s,purchased:orderType==="onsite",costSnapshot:onsiteCost,createdAt:Date.now()});
+      await fbSet("orders",oid,{productId,productName:cleanProductName(prod.name),productEmoji:prod.emoji,customerId,communityName,lineName,buyerName:communityName||lineName,qty:q,unitPrice:prod.finalPrice,total:prod.finalPrice*q,status:"pending",tripId,orderType,spec:s,purchased:orderType==="onsite",costSnapshot:onsiteCost,paymentMethodSnapshot:pmThisBatch,createdAt:Date.now()});
       totalKinds++;
     }
     lastSpecLabel=`（${specKeys.join("、")}）`;
@@ -4798,7 +4847,7 @@ window.addOrder=async function(){
     // 有多個規格選項時，必須選擇規格才能登記
     if(prod?.specs?.length>1&&!spec){showToast("請先選擇規格！","error");return;}
     const id="O"+Date.now();
-    await fbSet("orders",id,{productId,productName:cleanProductName(prod.name),productEmoji:prod.emoji,customerId,communityName,lineName,buyerName:communityName||lineName,qty:qtyFinal,unitPrice:prod.finalPrice,total:prod.finalPrice*qtyFinal,status:"pending",tripId,orderType,spec,purchased:orderType==="onsite",costSnapshot:onsiteCost,createdAt:Date.now()});
+    await fbSet("orders",id,{productId,productName:cleanProductName(prod.name),productEmoji:prod.emoji,customerId,communityName,lineName,buyerName:communityName||lineName,qty:qtyFinal,unitPrice:prod.finalPrice,total:prod.finalPrice*qtyFinal,status:"pending",tripId,orderType,spec,purchased:orderType==="onsite",costSnapshot:onsiteCost,paymentMethodSnapshot:pmThisBatch,createdAt:Date.now()});
     totalKinds=1;
     lastSpecLabel=spec?" ("+spec+")":"";
   }
@@ -4810,8 +4859,8 @@ window.addOrder=async function(){
     const sp=window.G.products.find(x=>x.id===item.productId);if(!sp)continue;
     const mixId="O"+Date.now()+"_m"+(mixIdx++);
     const mixSpec=(sp.specs&&sp.specs.length?sp.specs.join(","):"");
-    const mixCost=orderType==="onsite"?calcCost(sp.foreignAmount||sp.krw||0,sp.currency||"KRW",window.isDutyFreeChannel(sp.channel)).afterTax:null;
-    await fbSet("orders",mixId,{productId:sp.id,productName:cleanProductName(sp.name),productEmoji:sp.emoji,customerId,communityName,lineName,buyerName:communityName||lineName,qty:item.qty,unitPrice:sp.finalPrice,total:sp.finalPrice*item.qty,status:"pending",tripId,orderType,spec:mixSpec,purchased:orderType==="onsite",costSnapshot:mixCost,createdAt:Date.now()});
+    const mixCost=orderType==="onsite"?calcCost(sp.foreignAmount||sp.krw||0,sp.currency||"KRW",window.isDutyFreeChannel(sp.channel),pmThisBatch).afterTax:null;
+    await fbSet("orders",mixId,{productId:sp.id,productName:cleanProductName(sp.name),productEmoji:sp.emoji,customerId,communityName,lineName,buyerName:communityName||lineName,qty:item.qty,unitPrice:sp.finalPrice,total:sp.finalPrice*item.qty,status:"pending",tripId,orderType,spec:mixSpec,purchased:orderType==="onsite",costSnapshot:mixCost,paymentMethodSnapshot:orderType==="onsite"?pmThisBatch:null,createdAt:Date.now()});
     totalKinds++;
   }
   window.G.moMixItems=[];
@@ -4956,13 +5005,22 @@ window.eoAddProduct=async function(productId,spec){
   if(!c){showToast("找不到客戶","error");window.G.eoAdding=false;return;}
   const tripId=window.G.moSelectedTripId||getLatestTrip()?.id||"";
   const eoType=window.G.eoOrderType||"onsite";
+  // 現場購買：這一整輪登記（可能陸續加好幾個商品/口味）只問第一次，之後同一輪都套用同一個答案，不會每加一個就跳一次
+  let pmThisSession=null;
+  if(eoType==="onsite"){
+    if(window.G.eoSessionPaymentMethod==null){
+      window.G.eoSessionPaymentMethod=confirm("這一輪現場購買，是刷卡付款嗎？\n\n【確定】＝刷卡\n【取消】＝現金")?"card":"cash";
+    }
+    pmThisSession=window.G.eoSessionPaymentMethod;
+  }
   const id="O"+Date.now();
   const newOrder={id,productId,productName:cleanProductName(p.name),productEmoji:p.emoji||"📦",
     customerId:cid,communityName:c.communityName||"",lineName:c.lineName||"",
     buyerName:c.communityName||c.lineName||"",
     qty:1,unitPrice:p.finalPrice,discountPrice:p.finalPrice,total:p.finalPrice,spec:finalSpec,
     status:"pending",tripId,orderType:eoType,purchased:eoType==="onsite",
-    costSnapshot:eoType==="onsite"?calcCost(p.foreignAmount||p.krw||0,p.currency||"KRW",window.isDutyFreeChannel(p.channel)).afterTax:null,
+    costSnapshot:eoType==="onsite"?calcCost(p.foreignAmount||p.krw||0,p.currency||"KRW",window.isDutyFreeChannel(p.channel),pmThisSession).afterTax:null,
+    paymentMethodSnapshot:pmThisSession,
     createdAt:Date.now()};
   // 暫存，不立即寫入 Firebase
   if(!window.G.eoPendingAdd)window.G.eoPendingAdd=[];
@@ -5520,7 +5578,7 @@ window.boConfirm=async function(){
     const p=products.find(x=>x.id===item.productId);
     if(!p)continue;
     const id="ord_"+Date.now()+"_"+i;
-    const batchCost=orderType==="onsite"?calcCost(p.foreignAmount||p.krw||0,p.currency||"KRW",window.isDutyFreeChannel(p.channel)).afterTax:null;
+    const batchCost=orderType==="onsite"?calcCost(p.foreignAmount||p.krw||0,p.currency||"KRW",window.isDutyFreeChannel(p.channel),p.paymentMethod||"card").afterTax:null;
     await fbSet("orders",id,{
       productId:item.productId,productName:p.name,productEmoji:p.emoji,
       customerId,communityName,lineName:lineName||"",buyerName:communityName,
@@ -7009,7 +7067,7 @@ window.renderList=function(){
   } else if(sortMode==="profit"){
     const liveProfit=p=>{
       const fa=p.foreignAmount||p.krw||0;
-      const{afterTax}=calcCost(fa,p.currency||"KRW",window.isDutyFreeChannel(p.channel));
+      const{afterTax}=calcCost(fa,p.currency||"KRW",window.isDutyFreeChannel(p.channel),p.paymentMethod||"card");
       return (p.finalPrice||0)-afterTax;
     };
     filtered.sort((a,b)=>liveProfit(b)-liveProfit(a));
@@ -7061,7 +7119,7 @@ window.renderList=function(){
       const cur=CURR[p.currency||"KRW"];
       const pOrders=getTripOrders().filter(o=>o.productId===p.id);
       const pTotal=pOrders.reduce((s,o)=>s+o.qty,0);
-      const liveAfterTax=Math.round(calcCost(p.foreignAmount||0,p.currency||"KRW",window.isDutyFreeChannel(p.channel)).afterTax*10)/10;
+      const liveAfterTax=Math.round(calcCost(p.foreignAmount||0,p.currency||"KRW",window.isDutyFreeChannel(p.channel),p.paymentMethod||"card").afterTax*10)/10;
       const badgeHtml=pOrders.length>0?('<div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:5px">'+pOrders.map(o=>'<div style="display:inline-flex;align-items:center;gap:3px;background:#C5A880;color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px"><span>'+(o.communityName||o.lineName||"客人")+'</span><button data-oid="'+o.id+'" onclick="event.stopPropagation();deleteOrderFromGrid(this.dataset.oid)" style="background:none;border:none;color:white;font-size:13px;cursor:pointer;padding:0 0 0 2px;line-height:1;font-weight:900">×</button></div>').join("")+'</div>'):'' ;
       return '<div onclick="openMoFromGrid(\''+p.id+'\')" style="background:white;border-radius:14px;border:1px solid #E8D5B0;overflow:hidden;cursor:pointer">'
         +'<div style="width:100%;aspect-ratio:1/1;background:#FAF8F5;display:flex;align-items:center;justify-content:center;overflow:hidden">'
@@ -7088,7 +7146,7 @@ window.renderList=function(){
     const checked=selectedProducts.has(p.id);
     // ── 動態重算：用即時匯率，不依賴 Firebase 舊快照 ──────────────────
     const fa=p.foreignAmount||p.krw||0;
-    const liveCalc=calcCost(fa,p.currency||"KRW",window.isDutyFreeChannel(p.channel));
+    const liveCalc=calcCost(fa,p.currency||"KRW",window.isDutyFreeChannel(p.channel),p.paymentMethod||"card");
     const liveAfterTax=liveCalc.afterTax;
     const liveBeforeTax=liveCalc.beforeTax;
     const liveProfit=Math.round((p.finalPrice-liveAfterTax)*10)/10;
@@ -7183,6 +7241,7 @@ window.openEditOrd=function(oid){
   const cid=o.customerId||"";
   window.G.activeEordCustId=cid;
   window.G.eoPendingAdd=[];
+  window.G.eoSessionPaymentMethod=null;
   if(typeof eoSetType==="function")eoSetType("onsite");
   const sr=document.getElementById("eo-prod-search");if(sr)sr.value="";
   const rr=document.getElementById("eo-prod-results");if(rr)rr.style.display="none";
@@ -7289,7 +7348,7 @@ window.batchEditProducts=function(){
     const p=window.G.products.find(x=>x.id===id);if(!p)return "";
     const fa=p.foreignAmount||p.krw||0;
     const cur=window.CATS?window.G.products:null;
-    const liveCalc=calcCost(fa,p.currency||"KRW",window.isDutyFreeChannel(p.channel));
+    const liveCalc=calcCost(fa,p.currency||"KRW",window.isDutyFreeChannel(p.channel),p.paymentMethod||"card");
     const liveAfterTax=liveCalc.afterTax;
     const liveProfit=Math.round((p.finalPrice-liveAfterTax)*10)/10;
     const CURR_obj=({KRW:"₩",JPY:"¥",THB:"฿",USD:"$"})[p.currency||"KRW"]||"₩";
@@ -7358,7 +7417,7 @@ window.batchEditProducts=function(){
 window.beUpdateCost=function(input,pid,currency){
   const fa=parseFloat(input.value)||0;
   const pForChannel=window.G.products.find(x=>x.id===pid);
-  const{afterTax}=calcCost(fa,currency||"KRW",window.isDutyFreeChannel(pForChannel?.channel));
+  const{afterTax}=calcCost(fa,currency||"KRW",window.isDutyFreeChannel(pForChannel?.channel),pForChannel?.paymentMethod||"card");
   const suggest=Math.ceil(afterTax*1.3);
   const costEl=document.getElementById("be-cost-"+pid);
   const suggestEl=document.getElementById("be-suggest-"+pid);
@@ -7375,7 +7434,7 @@ window.beUpdateProfit=function(input,pid){
   const p=window.G.products.find(x=>x.id===pid);if(!p)return;
   const newPrice=parseFloat(input.value)||0;
   const fa=p.foreignAmount||p.krw||0;
-  const{afterTax}=calcCost(fa,p.currency||"KRW",window.isDutyFreeChannel(p.channel));
+  const{afterTax}=calcCost(fa,p.currency||"KRW",window.isDutyFreeChannel(p.channel),p.paymentMethod||"card");
   const profit=Math.round((newPrice-afterTax)*10)/10;
   const margin=newPrice>0?Math.round((profit/newPrice)*100):0;
   const profitEl=document.getElementById("be-profit-"+pid);
@@ -7399,7 +7458,7 @@ window.previewBatchQuick=function(){
     const p=window.G.products.find(x=>x.id===id);if(!p)return;
     // 用目前匯率即時重算成本，跟卡片上顯示的「成本」口徑一致，不要用資料庫裡可能是舊匯率算出的存值
     const fa=p.foreignAmount||p.krw||0;
-    const{afterTax}=calcCost(fa,p.currency||"KRW",window.isDutyFreeChannel(p.channel));
+    const{afterTax}=calcCost(fa,p.currency||"KRW",window.isDutyFreeChannel(p.channel),p.paymentMethod||"card");
     const cost=afterTax||0;
     let newPrice;
     if(mode==="fixed")newPrice=val;
@@ -7663,7 +7722,7 @@ window.saveBatchEdit=async function(){
     const newFa=parseFloat(card.querySelector("[data-field='foreignAmount']")?.value)||p.foreignAmount||p.krw||0;
     const newSpecs=(card.querySelector("[data-field='specs']")?.value.trim()||"").split(",").map(s=>s.trim()).filter(Boolean);
     const newAliases=(card.querySelector("[data-field='aliases']")?.value.trim()||"").split(",").map(s=>s.trim()).filter(Boolean);
-    const{beforeTax,afterTax}=calcCost(newFa,p.currency||"KRW",window.isDutyFreeChannel(p.channel));
+    const{beforeTax,afterTax}=calcCost(newFa,p.currency||"KRW",window.isDutyFreeChannel(p.channel),p.paymentMethod||"card");
     const profit=Math.round((newPrice-afterTax)*10)/10;
     const margin=newPrice>0?Math.round((profit/newPrice)*100):0;
     // 如果這張卡片有透過活動按鈕（1+1/2+1/3+1）套用過，一併記錄原價跟倍數，避免之後修改時抓不到原價
@@ -7698,9 +7757,10 @@ window.renderCustomers=function(){
     const allOrders=window.G.orders;
     filtered=filtered.filter(c=>{
       return allOrders.some(o=>{
-        const match=(o.customerId&&o.customerId===c.id)||
-          ((c.communityName||"").trim().toLowerCase()===(o.communityName||o.buyerName||"").trim().toLowerCase())||
-          ((c.lineName||"").trim().toLowerCase()===(o.lineName||"").trim().toLowerCase()&&(c.lineName||"")!=="");
+        const match=o.customerId
+          ?o.customerId===c.id
+          :(((c.communityName||"").trim().toLowerCase()===(o.communityName||o.buyerName||"").trim().toLowerCase())||
+            ((c.lineName||"").trim().toLowerCase()===(o.lineName||"").trim().toLowerCase()&&(c.lineName||"")!==""));
         return match&&o.orderType==="preorder"&&!o.purchased;  // 代買查詢不限趟次
       });
     });
@@ -7710,11 +7770,11 @@ window.renderCustomers=function(){
     container.innerHTML=`<div style="background:white;border-radius:14px;padding:48px 20px;text-align:center;border:1px solid #E8D5B0"><div style="font-size:32px;margin-bottom:8px">👥</div><div style="font-weight:700;color:#3D2010">${customers.length===0?"還沒有客戶資料":"找不到符合的客戶"}</div></div>`;return;}
   // 排序：預設「待對帳優先」；也可以切成「筆畫排序」方便直接找特定客戶
   const custLatest=c=>{
-    const cOrds=orders.filter(o=>o.customerId===c.id||(o.communityName||o.buyerName||"").trim().toLowerCase()===(c.communityName||"").trim().toLowerCase());
+    const cOrds=orders.filter(o=>o.customerId?o.customerId===c.id:(o.communityName||o.buyerName||"").trim().toLowerCase()===(c.communityName||"").trim().toLowerCase());
     return cOrds.length?Math.max(...cOrds.map(o=>o.createdAt||0)):c.createdAt||0;
   };
   const custPendingCount=c=>{
-    const cOrds=orders.filter(o=>o.customerId===c.id||(o.communityName||o.buyerName||"").trim().toLowerCase()===(c.communityName||"").trim().toLowerCase());
+    const cOrds=orders.filter(o=>o.customerId?o.customerId===c.id:(o.communityName||o.buyerName||"").trim().toLowerCase()===(c.communityName||"").trim().toLowerCase());
     return cOrds.filter(o=>o.status==="pending").length;
   };
   const sortMode=window.G.custSortMode||"pending";
@@ -7733,7 +7793,8 @@ window.renderCustomers=function(){
     const cName=(c.communityName||"").trim().toLowerCase();
     const cLine=(c.lineName||"").trim().toLowerCase();
     const cO=orders.filter(o=>{
-      if(o.customerId&&o.customerId===c.id)return true;
+      if(o.customerId)return o.customerId===c.id; // 有customerId就精準比對到底，不能再退回名字猜，不然同名客戶的訂單會互相污染顯示
+      // 只有真的沒有customerId的舊資料（早期喊單留下的），才用名字比對相容
       const oName=(o.communityName||o.buyerName||"").trim().toLowerCase();
       const oLine=(o.lineName||"").trim().toLowerCase();
       if(cName&&oName&&cName===oName)return true;
@@ -7819,10 +7880,12 @@ window.renderCustomers=function(){
               if(!c.lineName)return "";
               const map=window.G.lineUserMap||{};
               const key=(c.lineName||c.communityName||"").trim().toLowerCase();
-              const bound=!!map[key];
-              const badge=bound
-                ?'<span style="background:#06C755;color:white;font-size:9px;font-weight:700;padding:1px 6px;border-radius:99px;margin-left:4px">已綁定</span>'
-                :'<span style="background:#E8D5B0;color:#9C7A5A;font-size:9px;font-weight:700;padding:1px 6px;border-radius:99px;margin-left:4px">未綁定</span>';
+              const matchesArr=map[key]||[];
+              const badge=matchesArr.length>1
+                ?`<span title="有 ${matchesArr.length} 位LINE用戶用同一個顯示名稱，出貨發送前系統會讓你確認是哪一位" style="background:#F59E0B;color:white;font-size:9px;font-weight:700;padding:1px 6px;border-radius:99px;margin-left:4px">⚠️ 同名${matchesArr.length}筆</span>`
+                :matchesArr.length===1
+                  ?'<span style="background:#06C755;color:white;font-size:9px;font-weight:700;padding:1px 6px;border-radius:99px;margin-left:4px">已綁定</span>'
+                  :'<span style="background:#E8D5B0;color:#9C7A5A;font-size:9px;font-weight:700;padding:1px 6px;border-radius:99px;margin-left:4px">未綁定</span>';
               return "<div style=\"font-size:12px;color:#9C7A5A;display:flex;align-items:center\">LINE："+c.lineName+badge+"</div>";
             })()}
           </div>
@@ -8067,13 +8130,20 @@ window.togglePurchased=async function(oid){
     // 標記為「已購買」的這一刻，把當下的成本凍結存起來，之後就算匯率變動，這筆訂單的利潤也不會再跟著漂移
     const prod=window.G.products.find(x=>x.id===o.productId);
     if(prod){
-      upd.costSnapshot=calcCost(prod.foreignAmount||prod.krw||0,prod.currency||"KRW",window.isDutyFreeChannel(prod.channel)).afterTax;
+      // 同一款商品，這次可能刷卡買、下次可能現金買，所以每次標記已買到都要問一次，
+      // 不能永遠套用商品身上那個「預設」付款方式——這裡問的是「這一次實際購入」用的方式
+      const defaultPm=prod.paymentMethod||"card";
+      const useCard=confirm(`這筆「${cleanProductName(prod.name)}」這次是刷卡付款嗎？\n\n【確定】＝刷卡\n【取消】＝現金`);
+      const pmThisTime=useCard?"card":"cash";
+      upd.costSnapshot=calcCost(prod.foreignAmount||prod.krw||0,prod.currency||"KRW",window.isDutyFreeChannel(prod.channel),pmThisTime).afterTax;
       upd.costSnapshotAt=Date.now();
+      upd.paymentMethodSnapshot=pmThisTime;
     }
   } else {
     // 取消勾選：把舊的凍結成本清掉，退回「即時估算」狀態，避免在還沒真的買之前，誤用上一次的舊快照
     upd.costSnapshot=null;
     upd.costSnapshotAt=null;
+    upd.paymentMethodSnapshot=null;
   }
   await fbUpd("orders",oid,upd);
   showToast(next?"✓ 已標記為買到了！":"已取消買到標記");
@@ -8087,7 +8157,7 @@ window.openCustHistory=function(cid){
   const name=c.communityName||c.lineName||"客戶";
   // 取所有趟次的訂單
   const allOrders=window.G.orders.filter(o=>{
-    if(o.customerId&&o.customerId===cid)return true;
+    if(o.customerId)return o.customerId===cid;
     const cn=(c.communityName||"").trim().toLowerCase();
     const ln=(c.lineName||"").trim().toLowerCase();
     const on=(o.communityName||o.buyerName||"").trim().toLowerCase();
@@ -8165,7 +8235,7 @@ window.copyDepositOrder=function(cid,buyerKey){
     const c=window.G.customers.find(x=>x.id===cid);if(!c)return;
     name=c.communityName||c.lineName||"客戶";
     orders=window.G.orders.filter(o=>{
-      if(o.customerId&&o.customerId===cid)return true;
+      if(o.customerId)return o.customerId===cid;
       const nm=(c.communityName||"").trim().toLowerCase();
       const ln=(c.lineName||"").trim().toLowerCase();
       const on=(o.communityName||o.buyerName||"").trim().toLowerCase();
@@ -8206,7 +8276,7 @@ window.copyDepositOrder=function(cid,buyerKey){
 window.copyCustOrder=function(cid){
   const c=window.G.customers.find(x=>x.id===cid);if(!c)return;
   const cO=getTripOrders().filter(o=>{
-    if(o.customerId&&o.customerId===cid)return true;
+    if(o.customerId)return o.customerId===cid;
     const nm=(c.communityName||"").trim().toLowerCase();
     const ln=(c.lineName||"").trim().toLowerCase();
     const on=(o.communityName||o.buyerName||"").trim().toLowerCase();
@@ -8306,6 +8376,8 @@ window.openQuickAdd=function(){
   window.G.qaChannel="";
   window.G.qaCurrency="KRW";
   const qaCurSelReset=document.getElementById("qa-cur-select");if(qaCurSelReset)qaCurSelReset.value="KRW";
+  window.G.qaPaymentMethod="card";
+  const qaPmSelReset=document.getElementById("qa-pm-select");if(qaPmSelReset)qaPmSelReset.value="card";
   document.querySelectorAll(".qa-ch-btn").forEach(b=>{b.style.background="white";b.style.borderColor="#E8D5B0";b.style.color="#9C7A5A";b.classList.remove("active");});
   const firstCh=document.querySelector(".qa-ch-btn");
   if(firstCh){firstCh.style.background="#5C3A1E";firstCh.style.borderColor="#5C3A1E";firstCh.style.color="white";firstCh.classList.add("active");}
@@ -8399,7 +8471,7 @@ window.qaCalcPrice=function(){
     return;
   }
   const cat=window.G.qaCatKey||"food"; // 預設食品類
-  const{afterTax}=calcCost(amt,window.G.qaCurrency||"KRW",window.isDutyFreeChannel(window.G.qaChannel));
+  const{afterTax}=calcCost(amt,window.G.qaCurrency||"KRW",window.isDutyFreeChannel(window.G.qaChannel),window.G.qaPaymentMethod||"card");
   const flags={
     priceType:document.getElementById("qa-flag-transparent")?.checked?"transparent":"normal",
     isCold:document.getElementById("qa-flag-cold")?.checked||false,
@@ -8648,6 +8720,7 @@ window.doQuickAddOrder=function(custId, custName){
   if(activeTabPage){window.G._eoHiddenTab=activeTabPage;activeTabPage.classList.remove("active");}
   window.G.activeEordCustId=custId;
   window.G.eoPendingAdd=[];
+  window.G.eoSessionPaymentMethod=null;
   if(typeof eoSetType==="function")eoSetType("onsite");
   const sr=document.getElementById("eo-prod-search");if(sr)sr.value="";
   const rr=document.getElementById("eo-prod-results");if(rr)rr.style.display="none";
@@ -8819,22 +8892,45 @@ window.openLineNotify=async function(custId){
   // 查詢 Firebase line_users 取得 LINE User ID
   statusEl.textContent="🔍 查詢中...";
   statusEl.style.color="#9C7A5A";
+  const pickerEl=document.getElementById("ln-line-id-picker");
+  if(pickerEl){pickerEl.style.display="none";pickerEl.innerHTML="";}
   sendBtn.disabled=true;
   window.G._lineNotifyCustId=custId;
   window.G._lineUserId=null;
   try {
-    // 用客人的 lineName 或 communityName 比對 line_users
+    // 用客人的 lineName 或 communityName 比對 line_users——同一個顯示名稱可能對應到不只一個真實帳號，
+    // 全部找出來，超過1筆絕對不能自動選第一筆，要讓你自己確認是哪一位，避免出貨通知傳錯人
     const {getDocs,collection:col}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
     const snap=await getDocs(col(db,"line_users"));
     const lineUsers=snap.docs.map(d=>d.data());
-    // 嘗試比對 displayName
     const lineName=(c.lineName||c.communityName||"").trim().toLowerCase();
-    const found=lineUsers.find(u=>(u.displayName||"").trim().toLowerCase()===lineName);
-    if(found){
-      window.G._lineUserId=found.userId;
-      statusEl.textContent=`✅ LINE 帳號：${found.displayName}`;
+    const matches=lineUsers.filter(u=>(u.displayName||"").trim().toLowerCase()===lineName);
+    if(matches.length===1){
+      window.G._lineUserId=matches[0].userId;
+      statusEl.textContent=`✅ LINE 帳號：${matches[0].displayName}`;
       statusEl.style.color="#16A34A";
       sendBtn.disabled=false;
+    } else if(matches.length>1){
+      statusEl.innerHTML=`⚠️ 有 ${matches.length} 位LINE用戶顯示名稱都是「${c.lineName||c.communityName}」，請確認是哪一位再送出`;
+      statusEl.style.color="#D97706";
+      sendBtn.disabled=true;
+      if(pickerEl){
+        pickerEl.style.display="block";
+        pickerEl.innerHTML=`<div style="font-size:11px;font-weight:700;color:#92400E;margin-bottom:8px">👇 請選擇正確的LINE帳號</div>`+
+          matches.map((u,i)=>{
+            const uidShort=(u.userId||"").slice(0,6)+"..."+(u.userId||"").slice(-4);
+            const avatar=u.pictureUrl?`<img src="${u.pictureUrl}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0"/>`:`<div style="width:32px;height:32px;border-radius:50%;background:#E8D5B0;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px">👤</div>`;
+            const status=u.statusMessage?`<div style="font-size:10px;color:#9C7A5A">${u.statusMessage}</div>`:"";
+            return `<div data-uid="${u.userId}" data-uname="${(u.displayName||"").replace(/"/g,"&quot;")}" onclick="window.lnSelectLineUser(this.dataset.uid,this.dataset.uname)" style="display:flex;align-items:center;gap:8px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer">
+              ${avatar}
+              <div style="flex:1;min-width:0">
+                <div style="font-size:12px;font-weight:700;color:#3D2010">${u.displayName||"（無名稱）"}</div>
+                ${status}
+                <div style="font-size:9px;color:#B0906A;font-family:monospace">${uidShort}</div>
+              </div>
+            </div>`;
+          }).join("");
+      }
     } else {
       statusEl.innerHTML=`⚠️ 找不到此客人的 LINE ID<br><span style="font-size:10px;color:#9C7A5A">請確認客人曾傳訊息給官方帳號</span>`;
       statusEl.style.color="#D97706";
@@ -8846,6 +8942,25 @@ window.openLineNotify=async function(custId){
     sendBtn.disabled=true;
   }
   modal.style.display="flex";
+};
+
+// 從同名多筆的LINE帳號清單中，手動選定正確的那一位
+window.lnSelectLineUser=function(userId,displayName){
+  window.G._lineUserId=userId;
+  const statusEl=document.getElementById("ln-line-id-status");
+  const sendBtn=document.getElementById("ln-send-btn");
+  const pickerEl=document.getElementById("ln-line-id-picker");
+  if(statusEl){
+    statusEl.textContent=`✅ 已選定 LINE 帳號：${displayName}`;
+    statusEl.style.color="#16A34A";
+  }
+  if(pickerEl){
+    pickerEl.querySelectorAll("[data-uid]").forEach(el=>{
+      el.style.border=el.dataset.uid===userId?"2px solid #06C755":"1px solid #E8D5B0";
+      el.style.background=el.dataset.uid===userId?"#F0FFF4":"white";
+    });
+  }
+  if(sendBtn)sendBtn.disabled=false;
 };
 
 window.sendLineNotify=async function(){
@@ -9059,6 +9174,11 @@ window.qaSelectCurrency=function(cur){
   qaDaisoAutoSelectBest();
   qaCalcPrice();
 };
+// 付款方式：預設刷卡不受影響，現金支付時不套用刷卡手續費/回饋調整
+window.qaSelectPaymentMethod=function(pm){
+  window.G.qaPaymentMethod=pm;
+  qaCalcPrice();
+};
 window.qaSelectChannel=function(btn,ch){
   if(ch===""){
     document.querySelectorAll(".qa-ch-btn").forEach(b=>{
@@ -9118,7 +9238,7 @@ window.saveQuickAdd=async function(){
   const qaCur=window.G.qaCurrency||"KRW";
   if(!name){showToast("請填入商品名稱","error");return;}
   if(!amt){showToast("請填入金額","error");return;}
-  const{afterTax,beforeTax}=calcCost(amt,qaCur,window.isDutyFreeChannel(window.G.qaChannel));
+  const{afterTax,beforeTax}=calcCost(amt,qaCur,window.isDutyFreeChannel(window.G.qaChannel),window.G.qaPaymentMethod||"card");
   const sugg=suggestPrice(afterTax,cat,{},0,amt);
   const id=genId(cat,qaCur);
   // Use product photo if available, otherwise use recognition photo
@@ -9158,7 +9278,7 @@ window.saveQuickAdd=async function(){
   const qaNote=document.getElementById("qa-note")?.value.trim()||"";
   await fbSet("products",id,{
     id,name,catKey:cat,category:catObj?.label||"其他",emoji:catObj?.emoji||"📦",
-    currency:qaCur,currencySymbol:CURR[qaCur]?.symbol||"₩",foreignAmount:amt,
+    currency:qaCur,currencySymbol:CURR[qaCur]?.symbol||"₩",paymentMethod:window.G.qaPaymentMethod||"card",foreignAmount:amt,
     originalAmount:qaOriginalAmt,promoDivisor:qaPromoDivisor,promoPct:qaPromoPct,promoGroup:qaPromoGroup,
     beforeTax,afterTax,suggested:sugg2,finalPrice,profit,margin,
     flags:qaFlags,twPrice:0,url:qaGetAllUrls(),specs:qaSpecs,specImages:qaSpecImages,
@@ -9177,6 +9297,8 @@ window.saveQuickAdd=async function(){
   const qaDiscPctPost=document.getElementById("qa-discount-pct");if(qaDiscPctPost)qaDiscPctPost.value="";
   window.G.qaCurrency="KRW";
   const qaCurSelPost=document.getElementById("qa-cur-select");if(qaCurSelPost)qaCurSelPost.value="KRW";
+  window.G.qaPaymentMethod="card";
+  const qaPmSelPost=document.getElementById("qa-pm-select");if(qaPmSelPost)qaPmSelPost.value="card";
   const qaSpecEl=document.getElementById("qa-specs");if(qaSpecEl)qaSpecEl.value="";
   const qaNoteEl=document.getElementById("qa-note");if(qaNoteEl)qaNoteEl.value="";
   window.G.qaSpecsList=[];window.G.qaSpecImages=[];
@@ -9390,6 +9512,7 @@ window.lbTouchEnd=function(e){
     <!-- 物流區塊（預設隱藏）-->
     <div id="ln-delivery-section" style="display:none">
       <div id="ln-line-id-status" style="font-size:11px;margin-bottom:12px"></div>
+      <div id="ln-line-id-picker" style="display:none;margin-bottom:12px;border:1.5px solid #FCD34D;background:#FFFBEB;border-radius:10px;padding:10px"></div>
       <label style="display:block;font-size:12px;font-weight:700;color:#9C7A5A;margin-bottom:6px">物流單號</label>
       <input type="text" id="ln-tracking" placeholder="請輸入物流單號" style="width:100%;background:#FAF8F5;border:1.5px solid #E8D5B0;border-radius:10px;padding:12px 14px;font-size:15px;outline:none;box-sizing:border-box;margin-bottom:12px"/>
       <div style="background:#F0FFF4;border:1px solid #86EFAC;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#166534">
