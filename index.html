@@ -364,9 +364,9 @@ body.live-mode .hide-live { display: none !important; }
   <div id="product-toolbar" style="display:flex;gap:6px;margin-bottom:8px;align-items:center">
     <button id="list-view-toggle" onclick="toggleListView()" style="background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:7px 12px;font-size:16px;cursor:pointer" title="切換顯示模式">☰</button>
     <button onclick="exportProductCSV()" style="flex:1;font-size:11px;background:#EBF5FB;color:#2980B9;border:1px solid #AED6F1;padding:7px 4px;border-radius:8px;font-weight:700;cursor:pointer">匯出商品庫</button>
-    <button onclick="showStockPlan()" style="flex:1;font-size:11px;background:#FFF3E0;color:#E07B39;border:1px solid #FFCC80;padding:7px 4px;border-radius:8px;font-weight:700;cursor:pointer">📦 備貨清單</button>
-    <button onclick="showPromoGroups()" style="flex:1;font-size:11px;background:#FDF2E9;color:#C0392B;border:1px solid #F1948A;padding:7px 4px;border-radius:8px;font-weight:700;cursor:pointer">🎯 行銷活動</button>
-    <button onclick="showDupProductScan()" style="flex:1;font-size:11px;background:#FFF9F0;color:#92400E;border:1px solid #FCD34D;padding:7px 4px;border-radius:8px;font-weight:700;cursor:pointer">⚠️ 檢查重複</button>
+    <button onclick="showStockPlan()" style="flex:1;font-size:11px;background:#FFF3E0;color:#E07B39;border:1px solid #FFCC80;padding:7px 4px;border-radius:8px;font-weight:700;cursor:pointer">備貨清單</button>
+    <button onclick="showPromoGroups()" style="flex:1;font-size:11px;background:#FDF2E9;color:#C0392B;border:1px solid #F1948A;padding:7px 4px;border-radius:8px;font-weight:700;cursor:pointer">行銷活動</button>
+    <button onclick="showDupProductScan()" style="flex:1;font-size:11px;background:#FFF9F0;color:#92400E;border:1px solid #FCD34D;padding:7px 4px;border-radius:8px;font-weight:700;cursor:pointer">檢查重複</button>
   </div>
   <div class="hide-live" style="display:flex;gap:4px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:99px;padding:3px;margin-bottom:8px">
     <button id="list-sort-default" onclick="setListSortMode('default')" style="flex:1;font-size:12px;font-weight:700;padding:8px 4px;border-radius:99px;border:none;background:#C5A880;color:white;cursor:pointer;transition:background 0.15s,color 0.15s">🕐 上架順序</button>
@@ -497,17 +497,17 @@ body.live-mode .hide-live { display: none !important; }
       <button onclick="document.getElementById('exp-label').value='📱 電話網路費';document.getElementById('exp-amount').focus()" style="font-size:10px;background:#FAF8F5;color:#9C7A5A;border:1px solid #E8D5B0;padding:4px 8px;border-radius:99px;cursor:pointer">📱 電話費</button>
       <button onclick="document.getElementById('exp-label').value='🛒 其他費用';document.getElementById('exp-amount').focus()" style="font-size:10px;background:#FAF8F5;color:#9C7A5A;border:1px solid #E8D5B0;padding:4px 8px;border-radius:99px;cursor:pointer">🛒 其他</button>
     </div>
-    <div style="display:flex;gap:8px">
-      <input type="text" id="exp-label" placeholder="項目（例如：機票）" style="flex:1;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;font-size:13px;outline:none"/>
-      <input type="text" inputmode="numeric" id="exp-amount" placeholder="金額" style="width:84px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;font-size:13px;outline:none"/>
-      <select id="exp-currency" style="width:68px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px 4px;font-size:12px;font-weight:700;color:#3D2010;outline:none">
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <input type="text" id="exp-label" placeholder="項目（例如：機票）" style="flex:1;min-width:0;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;font-size:13px;outline:none"/>
+      <input type="text" inputmode="numeric" id="exp-amount" placeholder="金額" style="width:76px;flex-shrink:0;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px 8px;font-size:13px;outline:none"/>
+      <select id="exp-currency" style="width:62px;flex-shrink:0;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px 2px;font-size:11px;font-weight:700;color:#3D2010;outline:none">
         <option value="TWD">🇹🇼 台幣</option>
         <option value="KRW">🇰🇷 韓幣</option>
         <option value="JPY">🇯🇵 日幣</option>
         <option value="THB">🇹🇭 泰銖</option>
         <option value="USD">🇺🇸 美金</option>
       </select>
-      <button onclick="addExpense()" style="background:#C5A880;color:white;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer">＋</button>
+      <button onclick="addExpense()" style="flex-shrink:0;background:#C5A880;color:white;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer">＋</button>
     </div>
     <div style="font-size:10px;color:#9C7A5A;margin-top:6px">💡 選韓幣/日幣/泰銖/美金時，直接輸入當地金額，系統會用目前匯率自動換算成台幣計入統計</div>
   </div>
@@ -945,7 +945,7 @@ body.live-mode .hide-live { display: none !important; }
         <button onclick="epApplyPromo(4)" style="background:#EDE9FE;border:1px solid #C4B5FD;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:700;color:#5B21B6;cursor:pointer">3+1</button>
       </div>
     </div>
-    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap">
       <span style="font-size:11px;font-weight:700;color:#9C7A5A;flex-shrink:0">或輸入折數</span>
       <input type="text" inputmode="decimal" id="ep-discount-pct" placeholder="例如7＝7折" style="width:70px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:4px 8px;font-size:12px;outline:none"/>
       <button onclick="window.epApplyDiscount()" style="background:#FFE0B2;border:1px solid #FFB74D;border-radius:8px;padding:3px 10px;font-size:11px;font-weight:700;color:#E65100;cursor:pointer;white-space:nowrap;flex-shrink:0">套用折扣</button>
@@ -1334,7 +1334,7 @@ body.live-mode .hide-live { display: none !important; }
         <button onclick="qaApplyPromo(4)" style="background:#EDE9FE;border:1px solid #C4B5FD;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:700;color:#5B21B6;cursor:pointer">3+1</button>
       </div>
     </div>
-    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap">
       <span style="font-size:11px;font-weight:700;color:#9C7A5A;flex-shrink:0">或輸入折數</span>
       <input type="text" inputmode="decimal" id="qa-discount-pct" placeholder="例如7＝7折" style="width:70px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:4px 8px;font-size:12px;outline:none"/>
       <button onclick="window.qaApplyDiscount()" style="background:#FFE0B2;border:1px solid #FFB74D;border-radius:8px;padding:3px 10px;font-size:11px;font-weight:700;color:#E65100;cursor:pointer;white-space:nowrap;flex-shrink:0">套用折扣</button>
