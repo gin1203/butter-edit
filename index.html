@@ -1091,6 +1091,10 @@ body.live-mode .hide-live { display: none !important; }
       <!-- 新增商品到訂單 -->
       <div style="margin-bottom:10px">
         <div style="font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:6px">＋ 新增商品到此訂單</div>
+        <div id="eo-trip-picker" style="background:#FDF6EC;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;margin-bottom:8px">
+          <div style="font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:6px">✈️ 這次新增的商品要歸屬哪個趟次？</div>
+          <div id="eo-trip-picker-btns" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+        </div>
         <div style="display:flex;gap:6px;margin-bottom:8px">
           <button id="eo-type-onsite" onclick="eoSetType('onsite')"
             style="flex:1;padding:7px 6px;border-radius:10px;border:2px solid #5C3A1E;background:#5C3A1E;color:#F5E6C8;font-size:11px;font-weight:700;cursor:pointer">🛍️ 現場購買</button>
@@ -2456,9 +2460,25 @@ window.epAddUrlRow=function(){
   const idx=list.children.length;
   const div=document.createElement("div");
   div.style.cssText="position:relative";
-  div.innerHTML=`<input type="url" class="ep-url-extra" placeholder="https://..." style="width:100%;background:#EAF4FD;border:1px solid #90CAF9;border-radius:10px;padding:10px 44px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
+  div.innerHTML=`<input type="url" class="ep-url-extra" placeholder="https://..." oninput="window.epUrlExtraPreview(this)" style="width:100%;background:#EAF4FD;border:1px solid #90CAF9;border-radius:10px;padding:10px 74px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
+    <a href="#" target="_blank" rel="noopener" class="ep-url-extra-link" onclick="return window.epUrlExtraLinkClick(this)" style="position:absolute;right:38px;top:50%;transform:translateY(-50%);font-size:20px;text-decoration:none;opacity:0.3" title="開啟連結">🔗</a>
     <button onclick="this.parentElement.remove()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#F1948A;font-size:18px;line-height:1">✕</button>`;
   list.appendChild(div);
+};
+// 額外網址列的連結圖示：輸入時即時更新可不可點，避免像主網址那樣只能刪除、不能直接開啟
+window.epUrlExtraPreview=function(inputEl){
+  const val=(inputEl.value||"").trim();
+  const link=inputEl.nextElementSibling;
+  if(!link)return;
+  if(val.startsWith("http")){
+    link.href=val;link.style.opacity="1";link.style.pointerEvents="auto";
+  } else {
+    link.href="#";link.style.opacity="0.3";link.style.pointerEvents="none";
+  }
+};
+window.epUrlExtraLinkClick=function(linkEl){
+  const input=linkEl.previousElementSibling;
+  return !!(input&&input.value.trim().startsWith("http"));
 };
 window.epGetAllUrls=function(){
   const main=document.getElementById("ep-url")?.value.trim()||"";
@@ -2858,6 +2878,9 @@ window.openModal=function(id,data){
   }
   if(id==="modal-eprod"&&data){
     setTimeout(()=>{
+      // 保險起見：每次開啟編輯商品，一律先清掉「選取規格貼圖」的殘留狀態，
+      // 避免上次沒清乾淨（例如用了繞過closeModal的方式關閉）導致這次打開又卡在舊的選取上
+      window.G.specPasteTarget=null;
       const cur=CURR[data.currency||"KRW"];
       window.G.editCurrency=data.currency||"KRW";
       const epCurSel=document.getElementById("ep-cur-select");
@@ -2905,7 +2928,7 @@ window.openModal=function(id,data){
       const urlList=document.getElementById("ep-url-list");
       if(urlList)[...urlList.querySelectorAll(".ep-url-extra")].forEach(el=>el.parentElement.remove());
       // 新增額外網址
-      urls.slice(1).forEach(u=>{epAddUrlRow();const inputs=document.querySelectorAll(".ep-url-extra");inputs[inputs.length-1].value=u;});
+      urls.slice(1).forEach(u=>{epAddUrlRow();const inputs=document.querySelectorAll(".ep-url-extra");const lastInput=inputs[inputs.length-1];lastInput.value=u;window.epUrlExtraPreview(lastInput);});
       // 類別選擇格
       window.G.editCatKey=data.catKey||"food";
       // 通路選擇還原
@@ -3565,9 +3588,16 @@ window.epSpecImgClear=function(idx){
   showToast("已移除規格照片","success");
 };
 window.epSpecImgArm=function(idx){
+  const cur=window.G.specPasteTarget;
+  // 再點一次同一個已選取的規格圖示 → 取消選取，不用只能靠關閉視窗或重新整理頁面才能清掉
+  if(cur&&cur.type==="ep"&&cur.idx===idx){
+    window.G.specPasteTarget=null;
+    epRenderSpecs();
+    return;
+  }
   window.G.specPasteTarget={type:"ep",idx};
   epRenderSpecs();
-  showToast("📋 已選取這個規格，直接 Ctrl+V 貼上圖片即可","success");
+  showToast("📋 已選取這個規格，直接 Ctrl+V 貼上圖片即可（再點一次可取消）","success");
 };
 window.epSpecImgBrowse=function(idx){
   window.G.specPasteTarget={type:"ep",idx};
@@ -4536,6 +4566,44 @@ function updateEpCalc(amt,cur,cat,twPrice,flags){
   if(warn)warn.style.display=profit<0?"block":"none";
 }
 
+// 規格圖片超過Firestore 1MB上限時的智慧裁切：
+// 先保留「跟原本存的商品資料一模一樣、沒有改動」的舊照片不動，
+// 這次新增/修改過的照片依照原本排列順序，一張一張試著塞進去，
+// 塞到快超過容量上限就停下來，讓已經塞進去的先存檔，剩下塞不下的維持空白、下次再補
+function epTrimSpecImagesToFit(upd,newSpecs,newSpecImages,m){
+  const SAFE_BYTES=900000; // 留一點安全空間，不要卡在1,048,576的邊緣
+  const origMap={};
+  (m.specs||[]).forEach((s,i)=>{origMap[s]=(m.specImages||[])[i]||"";});
+  const finalImages=newSpecs.map((s,i)=>{
+    const orig=origMap[s]||"";
+    const cur=newSpecImages[i]||"";
+    return cur===orig?cur:""; // 一開始只保留跟原本一樣（沒改動過）的舊照片
+  });
+  const newIdxs=[];
+  newSpecs.forEach((s,i)=>{
+    const orig=origMap[s]||"";
+    const cur=newSpecImages[i]||"";
+    if(cur&&cur!==orig)newIdxs.push(i); // 這次新增或換掉的照片，才需要額外嘗試塞入
+  });
+  let addedCount=0;
+  for(const i of newIdxs){
+    const trialImages=[...finalImages];
+    trialImages[i]=newSpecImages[i];
+    const size=JSON.stringify({...upd,specImages:trialImages}).length;
+    if(size<=SAFE_BYTES){
+      finalImages[i]=newSpecImages[i];
+      addedCount++;
+    } else {
+      break; // 這張塞不下了，後面也大概率塞不下，先停在這裡，讓已經加進去的先存檔
+    }
+  }
+  return{finalImages,addedCount,totalNew:newIdxs.length};
+}
+function epOverCapacityMsg(addedCount,totalNew){
+  if(addedCount===0)return"⚠️ 規格圖片太多，這次新增/修改的照片一張都塞不下（容量已滿），其他資料都已存好，麻煩先刪掉幾張舊照片再補新的";
+  if(addedCount<totalNew)return`⚠️ 規格圖片太多超過容量上限，這次新增/修改的 ${totalNew} 張裡只塞得下 ${addedCount} 張，其他資料都已存好，剩下的可以下次再分批補`;
+  return"商品已更新";
+}
 window.saveEditProd=async function(){
   const m=window.G.activeModalData;if(!m)return;
   const name=document.getElementById("ep-name")?.value.trim();
@@ -4604,12 +4672,36 @@ window.saveEditProd=async function(){
   if(newId!==oldId){
     upd.id=newId;
     // 用新 ID 建立，刪除舊的
-    await fbSet("products",newId,{...m,...upd,id:newId});
+    try{
+      await fbSet("products",newId,{...m,...upd,id:newId});
+    }catch(err){
+      const msg=(err&&err.message)||String(err);
+      if(!/exceeds the maximum allowed size|bytes/i.test(msg)){
+        alert("儲存失敗，請把這段錯誤訊息截圖給開發者：\n\n"+msg);
+        return;
+      }
+      const{finalImages,addedCount,totalNew}=epTrimSpecImagesToFit(upd,newSpecs,newSpecImages,m);
+      await fbSet("products",newId,{...m,...upd,id:newId,specImages:finalImages});
+      showToast(epOverCapacityMsg(addedCount,totalNew),"warning");
+    }
     await fbDel("products",oldId);
     closeModal("modal-eprod");showToast("商品已更新，料號已更新為 "+newId);renderCustomers();renderInvoice();
     return;
   }
-  await fbUpd("products",m.id,upd);
+  try{
+    await fbUpd("products",m.id,upd);
+  }catch(err){
+    const msg=(err&&err.message)||String(err);
+    if(!/exceeds the maximum allowed size|bytes/i.test(msg)){
+      alert("儲存失敗，請把這段錯誤訊息截圖給開發者：\n\n"+msg);
+      return;
+    }
+    // 規格圖片太多，資料超過1MB上限：不是整個不帶圖片存，而是保留原本已經存好的照片不動，
+    // 這次新增/修改的照片依序嘗試塞進去，塞得下多少算多少，塞不下的部分維持原狀、留到下次繼續補
+    const{finalImages,addedCount,totalNew}=epTrimSpecImagesToFit(upd,newSpecs,newSpecImages,m);
+    await fbUpd("products",m.id,{...upd,specImages:finalImages});
+    showToast(epOverCapacityMsg(addedCount,totalNew),"warning");
+  }
   // 記錄歷史價格（只有價格或韓幣原價變動才記錄）
   if(m.finalPrice!==price||m.foreignAmount!==fa){
     const tripName=(getLatestTrip()||{}).name||"";
@@ -4623,7 +4715,8 @@ window.saveEditProd=async function(){
 
 window.copyLineFormat=function(id){
   const p=window.G.products.find(x=>x.id===id);if(!p)return;
-  const text=`【${cleanProductName(p.name)}】\n商品售價：NT$ ${p.finalPrice.toLocaleString()}`;
+  const specLine=(p.specs&&p.specs.length)?`\n規格：${p.specs.join("、")}`:"";
+  const text=`【${cleanProductName(p.name)}】${specLine}\n售價：NT$ ${p.finalPrice.toLocaleString()}`;
   navigator.clipboard?.writeText(text).then(()=>showToast("報價已複製！")).catch(()=>{
     const ta=document.createElement("textarea");ta.value=text;ta.style.position="fixed";
     document.body.appendChild(ta);ta.focus();ta.select();
@@ -4964,11 +5057,11 @@ document.addEventListener("click",function(e){
 // ── 混搭多口味（1+1類活動同時登記多個商品）───────────────────────────
 window.G.moMixItems=[];
 window.G.moMixSiblings=[];
-window.moMixLabel=function(sp,showName){
+window.moMixLabel=function(sp,showName,spec){
   const baseName=cleanProductName(sp.name||"");
-  const spec=(sp.specs&&sp.specs.length?sp.specs.join(","):"");
-  if(!showName)return spec||baseName;
-  return spec?`${baseName} · ${spec}`:baseName;
+  const s=spec!==undefined?spec:"";
+  if(!showName)return s||baseName;
+  return s?`${baseName} · ${s}`:baseName;
 };
 // 判斷混搭清單裡的商品是不是都同一個品名：都一樣就只顯示口味即可，不用每個按鈕都重複品名
 window.moMixNeedsName=function(){
@@ -4980,10 +5073,20 @@ window.moRenderMixSiblingBtns=function(){
   const container=document.getElementById("mo-mix-siblings");if(!container)return;
   const siblings=window.G.moMixSiblings||[];
   const showName=moMixNeedsName();
-  container.innerHTML=siblings.map(sp=>{
-    const active=(window.G.moMixItems||[]).some(x=>x.productId===sp.id);
-    const label=moMixLabel(sp,showName);
-    return `<button data-pid="${sp.id}" onclick="moAddMixItem(this.dataset.pid)" style="padding:5px 12px;border-radius:8px;font-size:12px;font-weight:700;border:1.5px solid ${active?"#7C3AED":"#DDD6FE"};background:${active?"#7C3AED":"white"};color:${active?"white":"#6D28D9"};cursor:pointer">${active?"✓ ":"+ "}${label}</button>`;
+  // 混搭的商品如果自己也有好幾種規格/口味（例如義大利麵脆片有蒜香橄欖油、蒜香番茄、奶油蘑菇），
+  // 要讓每個口味各自變成一個可以選的按鈕，不能整個商品綁成一顆按鈕、選了卻分不出是哪個口味
+  const buttons=[];
+  siblings.forEach(sp=>{
+    const specs=(sp.specs&&sp.specs.length)?sp.specs:[""];
+    specs.forEach(spec=>{
+      buttons.push({sp,spec});
+    });
+  });
+  container.innerHTML=buttons.map(({sp,spec})=>{
+    const active=(window.G.moMixItems||[]).some(x=>x.productId===sp.id&&(x.spec||"")===spec);
+    const label=moMixLabel(sp,showName,spec);
+    const specEsc=spec.replace(/"/g,"&quot;");
+    return `<button data-pid="${sp.id}" data-spec="${specEsc}" onclick="moAddMixItem(this.dataset.pid,this.dataset.spec)" style="padding:5px 12px;border-radius:8px;font-size:12px;font-weight:700;border:1.5px solid ${active?"#7C3AED":"#DDD6FE"};background:${active?"#7C3AED":"white"};color:${active?"white":"#6D28D9"};cursor:pointer">${active?"✓ ":"+ "}${label}</button>`;
   }).join("");
 };
 window.moRenderMixRows=function(){
@@ -4991,32 +5094,36 @@ window.moRenderMixRows=function(){
   const showName=moMixNeedsName();
   rows.innerHTML=(window.G.moMixItems||[]).map(item=>{
     const sp=window.G.products.find(x=>x.id===item.productId);if(!sp)return"";
-    const label=moMixLabel(sp,showName);
+    const label=moMixLabel(sp,showName,item.spec||"");
+    const specEsc=(item.spec||"").replace(/'/g,"\\'");
     return `<div style="display:flex;align-items:center;gap:8px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;margin-bottom:6px">
       <span style="flex:1;font-size:12px;font-weight:700;color:#3D2010">${sp.emoji||"📦"} ${label}</span>
       <div style="display:flex;align-items:center;gap:4px;border:1px solid #E8D5B0;border-radius:6px;overflow:hidden">
-        <button data-pid="${sp.id}" onclick="moMixQtyAdj(this.dataset.pid,-1)" style="width:24px;height:24px;border:none;background:#FAF8F5;color:#9C7A5A;font-weight:700;cursor:pointer">－</button>
+        <button data-pid="${sp.id}" data-spec="${specEsc}" onclick="moMixQtyAdj(this.dataset.pid,this.dataset.spec,-1)" style="width:24px;height:24px;border:none;background:#FAF8F5;color:#9C7A5A;font-weight:700;cursor:pointer">－</button>
         <span style="width:24px;text-align:center;font-size:12px;font-weight:900">${item.qty}</span>
-        <button data-pid="${sp.id}" onclick="moMixQtyAdj(this.dataset.pid,1)" style="width:24px;height:24px;border:none;background:#FAF8F5;color:#9C7A5A;font-weight:700;cursor:pointer">＋</button>
+        <button data-pid="${sp.id}" data-spec="${specEsc}" onclick="moMixQtyAdj(this.dataset.pid,this.dataset.spec,1)" style="width:24px;height:24px;border:none;background:#FAF8F5;color:#9C7A5A;font-weight:700;cursor:pointer">＋</button>
       </div>
-      <button data-pid="${sp.id}" onclick="moRemoveMixItem(this.dataset.pid)" style="font-size:11px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:3px 8px;border-radius:6px;cursor:pointer">移除</button>
+      <button data-pid="${sp.id}" data-spec="${specEsc}" onclick="moRemoveMixItem(this.dataset.pid,this.dataset.spec)" style="font-size:11px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:3px 8px;border-radius:6px;cursor:pointer">移除</button>
     </div>`;
   }).join("");
 };
-window.moAddMixItem=function(pid){
+window.moAddMixItem=function(pid,spec){
+  spec=spec||"";
   window.G.moMixItems=window.G.moMixItems||[];
-  const idx=window.G.moMixItems.findIndex(x=>x.productId===pid);
+  const idx=window.G.moMixItems.findIndex(x=>x.productId===pid&&(x.spec||"")===spec);
   if(idx>=0)window.G.moMixItems.splice(idx,1);
-  else window.G.moMixItems.push({productId:pid,qty:1});
+  else window.G.moMixItems.push({productId:pid,spec,qty:1});
   moRenderMixSiblingBtns();moRenderMixRows();
 };
-window.moMixQtyAdj=function(pid,delta){
-  const item=(window.G.moMixItems||[]).find(x=>x.productId===pid);if(!item)return;
+window.moMixQtyAdj=function(pid,spec,delta){
+  spec=spec||"";
+  const item=(window.G.moMixItems||[]).find(x=>x.productId===pid&&(x.spec||"")===spec);if(!item)return;
   item.qty=Math.max(1,item.qty+delta);
   moRenderMixRows();
 };
-window.moRemoveMixItem=function(pid){
-  window.G.moMixItems=(window.G.moMixItems||[]).filter(x=>x.productId!==pid);
+window.moRemoveMixItem=function(pid,spec){
+  spec=spec||"";
+  window.G.moMixItems=(window.G.moMixItems||[]).filter(x=>!(x.productId===pid&&(x.spec||"")===spec));
   moRenderMixSiblingBtns();moRenderMixRows();
 };
 
@@ -5097,7 +5204,7 @@ window.addOrder=async function(){
   for(const item of mixItems){
     const sp=window.G.products.find(x=>x.id===item.productId);if(!sp)continue;
     const mixId="O"+Date.now()+"_m"+(mixIdx++);
-    const mixSpec=(sp.specs&&sp.specs.length?sp.specs.join(","):"");
+    const mixSpec=item.spec||"";
     const mixCost=orderType==="onsite"?calcCost(sp.foreignAmount||sp.krw||0,sp.currency||"KRW",window.isDutyFreeChannel(sp.channel),pmThisBatch).afterTax:null;
     await fbSet("orders",mixId,{productId:sp.id,productName:cleanProductName(sp.name),productEmoji:sp.emoji,customerId,communityName,lineName,buyerName:communityName||lineName,qty:item.qty,unitPrice:sp.finalPrice,total:sp.finalPrice*item.qty,status:"pending",tripId,orderType,spec:mixSpec,purchased:orderType==="onsite",costSnapshot:mixCost,paymentMethodSnapshot:orderType==="onsite"?pmThisBatch:null,createdAt:Date.now()});
     totalKinds++;
@@ -5193,7 +5300,8 @@ window.eoSearchProducts=function(q){
   if(!res)return;
   if(!q.trim()){res.style.display="none";return;}
   const kw=q.trim().toLowerCase();
-  const matches=window.G.products.filter(p=>!p.archived&&((p.name||"").toLowerCase().includes(kw)||(p.id||"").toLowerCase().includes(kw))).slice(0,8);
+  const specText=p=>(Array.isArray(p.specs)?p.specs.join("、"):(p.specs||""));
+  const matches=window.G.products.filter(p=>!p.archived&&((p.name||"").toLowerCase().includes(kw)||(p.id||"").toLowerCase().includes(kw)||specText(p).toLowerCase().includes(kw))).slice(0,8);
   if(!matches.length){res.style.display="none";return;}
   res.style.display="block";
   res.innerHTML=matches.map(p=>{
@@ -5212,6 +5320,27 @@ window.eoSearchProducts=function(q){
 };
 
 window.G.eoOrderType="onsite"; // 預設現場購買
+// 新增商品到訂單時，直接把「歸屬趟次」放在畫面上讓使用者當下選擇，不要只靠之前有沒有切換過頁面上方的篩選器，
+// 容易忘記切換、導致新增的商品跑到錯的趟次去
+window.eoRenderTripPicker=function(){
+  const box=document.getElementById("eo-trip-picker-btns");
+  if(!box)return;
+  const trips=(window.G.trips||[]).slice().sort((a,b)=>(b.startDate||"").localeCompare(a.startDate||""));
+  if(!trips.length){box.innerHTML='<span style="font-size:11px;color:#C5A880">尚未建立任何趟次</span>';return;}
+  // 預設值：優先用頁面上方目前選的趟次篩選（如果不是「全部」），不然就用系統猜的最新趟次
+  if(!window.G.moSelectedTripId){
+    const filterTrip=(window.G.tripFilter&&window.G.tripFilter!=="all")?window.G.tripFilter:null;
+    window.G.moSelectedTripId=filterTrip||getLatestTrip()?.id||trips[0]?.id||"";
+  }
+  box.innerHTML=trips.map(t=>{
+    const active=window.G.moSelectedTripId===t.id;
+    return `<button data-tid="${t.id}" onclick="window.eoSelectTrip(this.dataset.tid)" style="padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;border:1.5px solid ${active?"#5C3A1E":"#E8D5B0"};background:${active?"#5C3A1E":"white"};color:${active?"#F5E6C8":"#9C7A5A"};cursor:pointer">${t.name||t.id}</button>`;
+  }).join("");
+};
+window.eoSelectTrip=function(tid){
+  window.G.moSelectedTripId=tid;
+  eoRenderTripPicker();
+};
 window.eoSetType=function(type){
   window.G.eoOrderType=type;
   const onsite=document.getElementById("eo-type-onsite");
@@ -7533,9 +7662,12 @@ window.renderList=function(){
           pOrders.forEach(o=>{const key=o.spec||"";if(!key)return;map[key]=(map[key]||0)+o.qty;});
           const keys=Object.keys(map);
           if(keys.length<2)return""; // 只有0或1種規格時，跟上面的總數重複，不用另外顯示
-          return `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">${keys.sort((a,b)=>map[b]-map[a]).map(k=>`<span style="font-size:10px;font-weight:700;background:#FDF6EC;color:#9C7A5A;border:1px solid #E8D5B0;border-radius:99px;padding:3px 10px">${k}：${map[k]}件</span>`).join("")}</div>`;
+          return `<div style="margin-bottom:10px">
+            <div style="font-size:9px;font-weight:700;color:#90A4AE;margin-bottom:4px">📊 各規格統計</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">${keys.sort((a,b)=>map[b]-map[a]).map(k=>`<span style="font-size:10px;font-weight:700;background:#E3F2FD;color:#1565C0;border:1px solid #90CAF9;border-radius:99px;padding:3px 10px">${k}：${map[k]}件</span>`).join("")}</div>
+          </div>`;
         })()}
-        ${pOrders.length>0?`<div style="display:flex;flex-direction:column;gap:4px">${(()=>{const sorted=[...pOrders].sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));return sorted.map((o,i)=>{return`<div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="flex-shrink:0;font-size:10px;font-weight:900;color:#9C7A5A;min-width:18px">#${i+1}</span><span style="flex:1;display:inline-flex;align-items:center;gap:4px;font-weight:700;background:#EBF7EE;color:#2E7D32;border:1px solid #C8E6C9;padding:3px 8px;border-radius:99px">${o.communityName||o.buyerName}${o.spec?` <span style="background:#C8E6C9;border-radius:4px;padding:0 4px;font-size:10px">${o.spec}</span>`:""} ×${o.qty}</span><button onclick="deleteOrder('${o.id}')" style="color:#E53935;background:none;border:none;cursor:pointer;font-weight:900;font-size:14px;line-height:1;flex-shrink:0">×</button></div>`;}).join("");})()}</div>`:`<div style="font-size:10px;color:#9C7A5A;font-style:italic">尚無喊單</div>`}
+        ${pOrders.length>0?`<div style="font-size:9px;font-weight:700;color:#90A4AE;margin-bottom:4px">📋 喊單明細</div><div style="display:flex;flex-direction:column;gap:5px">${(()=>{const sorted=[...pOrders].sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));return sorted.map((o,i)=>{return`<div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="flex-shrink:0;font-size:10px;font-weight:900;color:#9C7A5A;min-width:18px">#${i+1}</span><span style="flex:1;display:inline-flex;align-items:center;gap:4px;font-weight:700;background:#EBF7EE;color:#2E7D32;border:1px solid #C8E6C9;padding:3px 8px;border-radius:99px">${o.communityName||o.buyerName}${o.spec?` <span style="background:#C8E6C9;border-radius:4px;padding:0 4px;font-size:10px">${o.spec}</span>`:""} ×${o.qty}</span><button onclick="deleteOrder('${o.id}')" style="color:#E53935;background:none;border:none;cursor:pointer;font-weight:900;font-size:14px;line-height:1;flex-shrink:0">×</button></div>`;}).join("");})()}</div>`:`<div style="font-size:10px;color:#9C7A5A;font-style:italic">尚無喊單</div>`}
       </div>
     </div>`;
   }).join("");
@@ -7564,6 +7696,8 @@ window.openEditOrd=function(oid){
   window.G.activeEordCustId=cid;
   window.G.eoPendingAdd=[];
   window.G.eoSessionPaymentMethod=null;
+  window.G.moSelectedTripId=null;
+  if(typeof eoRenderTripPicker==="function")eoRenderTripPicker();
   if(typeof eoSetType==="function")eoSetType("onsite");
   const sr=document.getElementById("eo-prod-search");if(sr)sr.value="";
   const rr=document.getElementById("eo-prod-results");if(rr)rr.style.display="none";
@@ -9043,6 +9177,8 @@ window.doQuickAddOrder=function(custId, custName){
   window.G.activeEordCustId=custId;
   window.G.eoPendingAdd=[];
   window.G.eoSessionPaymentMethod=null;
+  window.G.moSelectedTripId=null;
+  if(typeof eoRenderTripPicker==="function")eoRenderTripPicker();
   if(typeof eoSetType==="function")eoSetType("onsite");
   const sr=document.getElementById("eo-prod-search");if(sr)sr.value="";
   const rr=document.getElementById("eo-prod-results");if(rr)rr.style.display="none";
