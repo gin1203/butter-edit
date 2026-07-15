@@ -942,17 +942,21 @@ body.live-mode .hide-live { display: none !important; }
         <a id="ep-url-link" href="#" target="_blank" rel="noopener" onclick="return !!(document.getElementById('ep-url').value.startsWith('http'))" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:20px;text-decoration:none;opacity:0.3;pointer-events:none" title="開啟連結">🔗</a>
       </div>
     </div>
-    <!-- 4. 原幣金額 -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
-      <label style="font-size:11px;font-weight:700;color:#9C7A5A">原幣金額 <select id="ep-cur-select" onchange="window.epSelectCurrency(this.value)" style="font-size:11px;font-weight:700;color:#3D2010;background:#FDF6EC;border:1px solid #E8D5B0;border-radius:6px;padding:2px 6px;outline:none;cursor:pointer;vertical-align:middle"></select> <select id="ep-pm-select" onchange="window.epSelectPaymentMethod(this.value)" style="font-size:11px;font-weight:700;color:#3D2010;background:#FDF6EC;border:1px solid #E8D5B0;border-radius:6px;padding:2px 6px;outline:none;cursor:pointer;vertical-align:middle">
-        <option value="card">💳 刷卡</option>
-        <option value="cash">💵 現金</option>
-      </select> <span id="ep-promo-active-badge" style="display:none;font-size:10px;font-weight:700;color:#166534;background:#DCFCE7;border-radius:6px;padding:2px 6px;margin-left:4px"></span></label>
-      <div style="display:flex;gap:4px">
-        <button onclick="epApplyPromo(2)" style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:700;color:#92400E;cursor:pointer">1+1</button>
-        <button onclick="epApplyPromo(3)" style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:700;color:#166534;cursor:pointer">2+1</button>
-        <button onclick="epApplyPromo(4)" style="background:#EDE9FE;border:1px solid #C4B5FD;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:700;color:#5B21B6;cursor:pointer">3+1</button>
+    <!-- 4. 原幣金額（獨立一行）+ 付款方式（獨立一行）+ 活動按鈕（獨立一行），手機版才不會擠成一團 -->
+    <div style="margin-bottom:8px">
+      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:4px">原幣金額 <span id="ep-promo-active-badge" style="display:none;font-size:10px;font-weight:700;color:#166534;background:#DCFCE7;border-radius:6px;padding:2px 6px;margin-left:4px"></span></label>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <select id="ep-cur-select" onchange="window.epSelectCurrency(this.value)" style="flex:1;min-width:110px;font-size:12px;font-weight:700;color:#3D2010;background:#FDF6EC;border:1px solid #E8D5B0;border-radius:8px;padding:6px 8px;outline:none;cursor:pointer"></select>
+        <select id="ep-pm-select" onchange="window.epSelectPaymentMethod(this.value)" style="flex:1;min-width:90px;font-size:12px;font-weight:700;color:#3D2010;background:#FDF6EC;border:1px solid #E8D5B0;border-radius:8px;padding:6px 8px;outline:none;cursor:pointer">
+          <option value="card">💳 刷卡</option>
+          <option value="cash">💵 現金</option>
+        </select>
       </div>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:8px">
+      <button onclick="epApplyPromo(2)" style="flex:1;background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:6px 4px;font-size:12px;font-weight:700;color:#92400E;cursor:pointer">1+1</button>
+      <button onclick="epApplyPromo(3)" style="flex:1;background:#DCFCE7;border:1px solid #86EFAC;border-radius:8px;padding:6px 4px;font-size:12px;font-weight:700;color:#166534;cursor:pointer">2+1</button>
+      <button onclick="epApplyPromo(4)" style="flex:1;background:#EDE9FE;border:1px solid #C4B5FD;border-radius:8px;padding:6px 4px;font-size:12px;font-weight:700;color:#5B21B6;cursor:pointer">3+1</button>
     </div>
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap">
       <span style="font-size:11px;font-weight:700;color:#9C7A5A;flex-shrink:0">或輸入折數</span>
@@ -962,7 +966,7 @@ body.live-mode .hide-live { display: none !important; }
     </div>
     <div style="position:relative;margin-bottom:6px">
       <input type="text" inputmode="numeric" id="ep-foreign" oninput="window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;window.G.epPromoPct=null;epForeignChange();epUpdatePromoBadge();" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 40px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
-      <button type="button" onmousedown="event.preventDefault()" ontouchstart="event.preventDefault()" onclick="event.stopPropagation();document.getElementById('ep-foreign').value='';window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;window.G.epPromoPct=null;const pr=document.getElementById('ep-price');if(pr){pr.value='';delete pr.dataset.manual;}epForeignChange();epUpdatePromoBadge();document.getElementById('ep-foreign').blur();" style="position:absolute;right:0;top:0;bottom:0;width:40px;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer;color:#C5A880;font-size:18px;padding:0;line-height:1">✕</button>
+      <button type="button" onmousedown="event.preventDefault()" onclick="event.stopPropagation();document.getElementById('ep-foreign').value='';window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;window.G.epPromoPct=null;const pr=document.getElementById('ep-price');if(pr){pr.value='';delete pr.dataset.manual;}epForeignChange();epUpdatePromoBadge();document.getElementById('ep-foreign').blur();" style="position:absolute;right:0;top:0;bottom:0;width:40px;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer;color:#C5A880;font-size:18px;padding:0;line-height:1">✕</button>
     </div>
     <!-- 4b. 活動群組（選填，不同品名但同一波活動要一起混搭時填一樣的名字） -->
     <div style="margin-bottom:6px">
@@ -995,7 +999,7 @@ body.live-mode .hide-live { display: none !important; }
         <div id="ep-final-display" style="font-size:16px;font-weight:900;color:#C0392B;min-width:80px">-</div>
         <div style="flex:1;position:relative">
           <input type="text" inputmode="numeric" id="ep-price" onfocus="this.dataset.manual='1'" oninput="epRivalCheck()" placeholder="✏️ 自訂金額" style="width:100%;background:white;border:1.5px solid #FF6B6B;border-radius:8px;padding:8px 36px 8px 12px;font-size:16px;font-weight:700;color:#3D2010;outline:none;box-sizing:border-box"/>
-          <button type="button" onmousedown="event.preventDefault()" ontouchstart="event.preventDefault()" onclick="event.stopPropagation();const el=document.getElementById('ep-price');if(el){el.value='';el.dataset.manual='';epForeignChange();epRivalCheck();el.blur();}" style="position:absolute;right:2px;top:0;bottom:0;width:36px;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer;color:#FF6B6B;font-size:18px;line-height:1;padding:0">✕</button>
+          <button type="button" onmousedown="event.preventDefault()" onclick="event.stopPropagation();const el=document.getElementById('ep-price');if(el){el.value='';el.dataset.manual='';epForeignChange();epRivalCheck();el.blur();}" style="position:absolute;right:2px;top:0;bottom:0;width:36px;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer;color:#FF6B6B;font-size:18px;line-height:1;padding:0">✕</button>
         </div>
       </div>
     </div>
