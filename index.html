@@ -416,8 +416,9 @@ body.live-mode .hide-live { display: none !important; }
     <button id="cust-sort-stroke" onclick="setCustSortMode('stroke')" style="flex:1;font-size:12px;font-weight:700;padding:8px 4px;border-radius:99px;border:none;background:white;color:#9C7A5A;cursor:pointer;transition:background 0.15s,color 0.15s">筆畫排序</button>
   </div>
   <div style="display:flex;gap:4px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:99px;padding:3px;margin-bottom:8px">
-    <button id="cust-view-all" onclick="setCustUnpurchasedView(false)" style="flex:1;font-size:12px;font-weight:700;padding:8px 4px;border-radius:99px;border:none;background:#C5A880;color:white;cursor:pointer;transition:background 0.15s,color 0.15s">全部訂單</button>
-    <button id="cust-view-unpurchased" onclick="setCustUnpurchasedView(true)" style="flex:1;font-size:12px;font-weight:700;padding:8px 4px;border-radius:99px;border:none;background:white;color:#9C7A5A;cursor:pointer;transition:background 0.15s,color 0.15s">🛒 待購代買</button>
+    <button id="cust-view-all" onclick="setCustViewFilter('all')" style="flex:1;font-size:12px;font-weight:700;padding:8px 4px;border-radius:99px;border:none;background:#C5A880;color:white;cursor:pointer;transition:background 0.15s,color 0.15s">全部訂單</button>
+    <button id="cust-view-unpurchased" onclick="setCustViewFilter('unpurchased')" style="flex:1;font-size:12px;font-weight:700;padding:8px 4px;border-radius:99px;border:none;background:white;color:#9C7A5A;cursor:pointer;transition:background 0.15s,color 0.15s">待購代買</button>
+    <button id="cust-view-quote" onclick="setCustViewFilter('quote')" style="flex:1;font-size:12px;font-weight:700;padding:8px 4px;border-radius:99px;border:none;background:white;color:#9C7A5A;cursor:pointer;transition:background 0.15s,color 0.15s">待報價</button>
   </div>
   <button onclick="openBatchOrder()" style="width:100%;margin-bottom:8px;padding:9px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #FFCC80;background:#FFF3E0;color:#E07B39;cursor:pointer">📋 批次貼上喊單文字</button>
   <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#9C7A5A;margin-bottom:8px;cursor:pointer">
@@ -1558,7 +1559,7 @@ window.G={
   currency:"KRW",
   calcCat:"food",
   listSearch:"",listFilterCat:"all",listFilterCurrency:"all",
-  custSearch:"",custUnpurchased:false,
+  custSearch:"",custViewFilter:"all",
   invSearch:"",orderFilter:"all",
   tripFilter:"all",  // "auto"=依時間自動, "all"=全部, 或 tripId
   selectedProducts:new Set(),
@@ -2623,7 +2624,7 @@ const SUBCAT_MAP = {
     {key:"護髮",    label:"💆 護髮/頭皮",     kw:["護髮","養髮","頭皮","頭髮","洗髮","潤髮","髮膜","haircare","hair care","shampoo"]},
     {key:"保濕",    label:"💧 保濕/乳液",     kw:["保濕","乳液","面霜","face cream","水乳","精華","essence","serum","安瓶"]},
     {key:"眼霜",    label:"👁️ 眼部",          kw:["眼霜","眼膜","眼部","eye cream","eye"]},
-    {key:"面膜",    label:"🎭 面膜",          kw:["面膜","mask","sheet mask"]},
+    {key:"面膜",    label:"🎭 面膜",          kw:["面膜","mask","sheet mask","棉片","化妝棉","toner pad","cotton pad"]},
     {key:"清潔",    label:"🫧 清潔/卸妝",    kw:["洗面","清潔","卸妝","泡沫","foam","cleanser","toner","化妝水"]},
     {key:"彩妝",    label:"💄 彩妝",          kw:["唇膏","口紅","粉底","氣墊","眼影","睫毛","腮紅","修容","highlight","妝前","妝前乳","妝前膏","primer","定妝","定妝噴霧","setting spray","隱形毛孔","遮瑕"]},
     {key:"香水",    label:"🌸 香氛/香水",    kw:["香水","perfume","香氛","body mist","身體噴霧"]},
@@ -6297,17 +6298,26 @@ window.showStockPlan=function(){
   const tripOrders=getTripOrders().filter(o=>o.status==="pending");
   const products=window.G.products;
   if(!tripOrders.length){showToast("目前沒有待購買的喊單","warning");return;}
-  const filterBtn=document.getElementById("sp-filter-unpurchased");
-  if(filterBtn){
-    const on=window.G.stockPlanUnpurchasedOnly;
-    filterBtn.style.background=on?"#7C3AED":"#FEF3C7";
-    filterBtn.style.color=on?"white":"#92400E";
-    filterBtn.style.borderColor=on?"#7C3AED":"#FCD34D";
-    filterBtn.textContent=on?"🛒 只看待購買（篩選中）":"🛒 只看待購買";
-  }
+  window.setStockPlanViewMode(window.G.stockPlanViewMode||"buy");
   setStockPlanMode(window.G.stockPlanMode||"time");
   const m=document.getElementById("modal-stock-plan");
   m.style.display="flex";
+};
+
+// 待購買／待報價分頁切換：跟時間/通路那組是同一種切換分頁的邏輯，不是額外浮動的提示框
+window.setStockPlanViewMode=function(mode){
+  window.G.stockPlanViewMode=mode;
+  const buyBtn=document.getElementById("sp-view-buy");
+  const quoteBtn=document.getElementById("sp-view-quote");
+  const subFilterRow=document.getElementById("sp-buy-subfilter-row");
+  if(buyBtn&&quoteBtn){
+    const on={background:"#C5A880",color:"white",borderColor:"#C5A880"};
+    const off={background:"white",color:"#9C7A5A",borderColor:"#E8D5B0"};
+    Object.assign(buyBtn.style,mode==="buy"?on:off);
+    Object.assign(quoteBtn.style,mode==="quote"?on:off);
+  }
+  if(subFilterRow)subFilterRow.style.display=mode==="buy"?"block":"none";
+  window.renderStockPlanContent();
 };
 
 window.setStockPlanMode=function(mode){
@@ -6420,7 +6430,105 @@ function renderPromoGroupSummary(prodMap){
   return html;
 }
 
+// 待報價的單一商品卡片：樣式比照待購買（商品照片+名稱在最上面，底下依規格分組，
+// 每筆訂單顯示客人名字），只是把「給貨/待購買」按鈕換成「轉正式訂單」
+function renderQuoteProductBlock(pid,orders){
+  const products=window.G.products;
+  const p=products.find(x=>x.id===pid);
+  if(!p)return"";
+  orders=[...orders].sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+  const total=orders.reduce((s,o)=>s+o.qty,0);
+  const specGroups={};
+  orders.forEach(o=>{
+    const key=o.spec||"";
+    if(!specGroups[key])specGroups[key]=[];
+    specGroups[key].push(o);
+  });
+  let html=`<div style="background:#F0F8FF;border:1px solid #90CAF9;border-radius:14px;padding:14px;margin-bottom:12px">`;
+  html+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px">`;
+  html+=`<div style="display:flex;align-items:center;gap:8px;min-width:0">`;
+  if(p.photo){
+    html+=`<div onclick="openLightbox('${p.id}')" style="flex-shrink:0;width:36px;height:36px;border-radius:8px;overflow:hidden;background:white;border:1px solid #90CAF9;cursor:zoom-in"><img src="${p.photo}" style="width:100%;height:100%;object-fit:cover;object-position:${p.photoPos||"50% 50%"};display:block" loading="lazy"/></div>`;
+  }
+  html+=`<div style="font-size:13px;font-weight:900;color:#3D2010">${p.emoji||"📦"} ${cleanProductName(p.name)}</div>`;
+  html+=`</div>`;
+  html+=`<div style="flex-shrink:0;font-size:12px;font-weight:700;color:#0277BD;background:#E3F2FD;border:1px solid #90CAF9;padding:3px 10px;border-radius:99px">共 ${total} 個</div>`;
+  html+=`</div>`;
+  Object.keys(specGroups).forEach(spec=>{
+    const sOrders=specGroups[spec];
+    const sTotal=sOrders.reduce((s,o)=>s+o.qty,0);
+    if(spec){
+      html+=`<div style="font-size:13px;font-weight:900;color:#0277BD;margin-bottom:8px;margin-top:8px;padding:6px 12px;background:#E3F2FD;border-left:3px solid #0277BD;border-radius:0 8px 8px 0">🏷️ ${spec} <span style="font-size:11px;font-weight:700;color:#5C3A1E">— ${sTotal}個</span></div>`;
+    }
+    sOrders.forEach((o,i)=>{
+      const buyer=o.communityName||o.buyerName||"?";
+      html+=`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px;padding:8px 10px;background:white;border-radius:10px;border:1px solid #90CAF9">`;
+      html+=`<span style="font-size:10px;font-weight:900;color:#5C3A1E;min-width:20px">#${i+1}</span>`;
+      html+=`<span style="flex:1;font-size:13px;font-weight:700;color:#3D2010">${buyer} ×${o.qty}</span>`;
+      html+=`<button data-oid="${o.id}" onclick="openSendQuote(this.dataset.oid)" style="flex-shrink:0;font-size:11px;font-weight:700;padding:5px 10px;border-radius:8px;cursor:pointer;border:1px solid #6EE7B7;background:#D1FAE5;color:#065F46">📤 傳送報價</button>`;
+      html+=`<button data-oid="${o.id}" onclick="quoteConvert(this.dataset.oid)" style="flex-shrink:0;font-size:11px;font-weight:700;padding:5px 10px;border-radius:8px;cursor:pointer;border:1px solid #90CAF9;background:#E3F2FD;color:#0277BD">🔄 轉正式訂單</button>`;
+      html+=`</div>`;
+    });
+  });
+  html+=`</div>`;
+  return html;
+}
+// 待報價分頁：跟待購買分頁一樣支援時間/通路排序，是切換分頁而不是額外浮動的提示框
+function renderStockPlanQuoteContent(){
+  const quoteOrders=getTripOrders().filter(o=>o.orderType==="quote");
+  const container=document.getElementById("stock-plan-content");
+  if(!container)return;
+  if(!quoteOrders.length){
+    container.innerHTML=`<div style="text-align:center;padding:32px;color:#9C7A5A;font-size:13px">🎉 目前沒有待報價中的商品</div>`;
+    return;
+  }
+  const products=window.G.products;
+  const mode=window.G.stockPlanMode||"time";
+  const prodMap={};
+  quoteOrders.forEach(o=>{
+    if(!prodMap[o.productId])prodMap[o.productId]=[];
+    prodMap[o.productId].push(o);
+  });
+  if(mode==="channel"){
+    const channelMap={};
+    Object.keys(prodMap).forEach(pid=>{
+      const p=products.find(x=>x.id===pid);
+      const ch=(p&&p.channel&&p.channel.trim())?p.channel.trim():"未指定／逛街商圈";
+      if(!channelMap[ch])channelMap[ch]=[];
+      channelMap[ch].push(pid);
+    });
+    const channels=Object.keys(channelMap).sort();
+    // 通路篩選按鈕列：跟待購買分頁一樣，可以切到只看單一通路
+    const filter=window.G.stockPlanChannelFilter||"all";
+    let filterHtml=`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">`;
+    filterHtml+=`<button onclick="setStockPlanChannelFilter('all')" style="font-size:12px;font-weight:700;padding:6px 14px;border-radius:99px;border:1.5px solid ${filter==="all"?"#0277BD":"#E8D5B0"};background:${filter==="all"?"#0277BD":"white"};color:${filter==="all"?"white":"#9C7A5A"};cursor:pointer">全部</button>`;
+    channels.forEach(ch=>{
+      const active=filter===ch;
+      const pids=channelMap[ch];
+      const chTotal=pids.reduce((s,pid)=>s+prodMap[pid].reduce((s2,o)=>s2+o.qty,0),0);
+      filterHtml+=`<button onclick="setStockPlanChannelFilter('${ch.replace(/'/g,"\\'")}')" style="font-size:12px;font-weight:700;padding:6px 14px;border-radius:99px;border:1.5px solid ${active?"#2563EB":"#E8D5B0"};background:${active?"#2563EB":"white"};color:${active?"white":"#9C7A5A"};cursor:pointer">🏪 ${ch} (${chTotal})</button>`;
+    });
+    filterHtml+=`</div>`;
+    container.innerHTML=filterHtml+channels.filter(ch=>filter==="all"||filter===ch).map(ch=>`
+      <div style="margin-bottom:16px">
+        <div style="font-size:12px;font-weight:700;color:#0277BD;background:#E3F2FD;border-radius:8px;padding:6px 10px;margin-bottom:8px">🏪 ${ch}（${channelMap[ch].length}項）</div>
+        ${channelMap[ch].map(pid=>renderQuoteProductBlock(pid,prodMap[pid])).join("")}
+      </div>`).join("");
+  } else {
+    // 依每個商品最早的喊單時間排序
+    const pidsByTime=Object.keys(prodMap).sort((a,b)=>{
+      const ta=Math.min(...prodMap[a].map(o=>o.createdAt||0));
+      const tb=Math.min(...prodMap[b].map(o=>o.createdAt||0));
+      return ta-tb;
+    });
+    container.innerHTML=pidsByTime.map(pid=>renderQuoteProductBlock(pid,prodMap[pid])).join("");
+  }
+}
 window.renderStockPlanContent=function(){
+  if((window.G.stockPlanViewMode||"buy")==="quote"){
+    renderStockPlanQuoteContent();
+    return;
+  }
   let tripOrders=getTripOrders().filter(o=>o.status==="pending"&&o.orderType!=="quote");
   if(window.G.stockPlanUnpurchasedOnly)tripOrders=tripOrders.filter(o=>!o.purchased);
   const products=window.G.products;
@@ -8234,11 +8342,11 @@ window.saveBatchEdit=async function(){
 
 window.renderCustomers=function(){
   const container=document.getElementById("customer-cards");if(!container)return;
-  const{customers,custSearch,custUnpurchased,selectedCustomers}=window.G;
+  const{customers,custSearch,custViewFilter,selectedCustomers}=window.G;
   const orders=getTripOrders();
   let filtered=custSearch?customers.filter(c=>{const s=custSearch.toLowerCase();return(c.communityName||"").toLowerCase().includes(s)||(c.lineName||"").toLowerCase().includes(s)||(c.phone||"").includes(s);}):customers;
-  // 篩選有未購入代買單的客戶
-  if(custUnpurchased){
+  // 篩選有未購入代買單／待報價的客戶
+  if(custViewFilter==="unpurchased"||custViewFilter==="quote"){
     const allOrders=window.G.orders;
     filtered=filtered.filter(c=>{
       return allOrders.some(o=>{
@@ -8246,7 +8354,8 @@ window.renderCustomers=function(){
           ?o.customerId===c.id
           :(((c.communityName||"").trim().toLowerCase()===(o.communityName||o.buyerName||"").trim().toLowerCase())||
             ((c.lineName||"").trim().toLowerCase()===(o.lineName||"").trim().toLowerCase()&&(c.lineName||"")!==""));
-        return match&&o.orderType==="preorder"&&!o.purchased;  // 代買查詢不限趟次
+        if(!match)return false;
+        return custViewFilter==="unpurchased"?(o.orderType==="preorder"&&!o.purchased):o.orderType==="quote"; // 代買/待報價查詢都不限趟次
       });
     });
   }
@@ -8290,8 +8399,10 @@ window.renderCustomers=function(){
     const cT=cO.filter(o=>o.orderType!=="quote").reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0)-cDisc;
     const cP=cO.filter(o=>o.status==="pending"&&o.orderType!=="quote").length;
     const cQuoteCount=cO.filter(o=>o.orderType==="quote").length;
-    // 開啟「🛒 待購代買」篩選時，卡片內的商品明細也只顯示尚未購買的代買項目，不要連已買到/現場購買的一起列出
-    const cODisplay=custUnpurchased?cO.filter(o=>o.orderType==="preorder"&&!o.purchased):cO;
+    // 開啟「待購代買」篩選時，卡片內的商品明細也只顯示尚未購買的代買項目；開啟「待報價」篩選時只顯示待報價項目
+    const cODisplay=custViewFilter==="unpurchased"?cO.filter(o=>o.orderType==="preorder"&&!o.purchased)
+      :custViewFilter==="quote"?cO.filter(o=>o.orderType==="quote")
+      :cO;
     // 依「同商品＋同規格」分組合併顯示，避免同一位客人多次追加喊同個商品時被拆成一堆重複的行；
     // 資料本身仍然各自獨立存放在 orders，只是「顯示」用分組，點開群組才會看到底下個別訂單，
     // 每筆訂單原本的已購買切換／刪除／移趟功能完全不受影響
@@ -8327,6 +8438,7 @@ window.renderCustomers=function(){
         </div>
         <div style="display:flex;align-items:center;gap:5px;flex:0 0 auto">
           <span style="font-size:11px;font-weight:700;color:#3D2010">${isQuote?"約 ":""}NT$${(dp*o.qty).toLocaleString()}</span>
+          ${isQuote?`<button data-oid="${o.id}" onclick="event.stopPropagation();openSendQuote(this.dataset.oid)" style="font-size:10px;color:#065F46;background:#D1FAE5;border:1px solid #6EE7B7;padding:2px 6px;border-radius:5px;cursor:pointer;font-weight:700">📤 傳送報價</button>`:""}
           ${isQuote?`<button data-oid="${o.id}" onclick="event.stopPropagation();quoteConvert(this.dataset.oid)" style="font-size:10px;color:#0277BD;background:#E3F2FD;border:1px solid #90CAF9;padding:2px 6px;border-radius:5px;cursor:pointer;font-weight:700">🔄 轉正式訂單</button>`:""}
           ${dp>=1000&&!isQuote?`<button data-oid="${o.id}" onclick="copySingleDeposit(this.dataset.oid)" style="font-size:9px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:2px 5px;border-radius:5px;cursor:pointer;font-weight:700">訂金</button>`:""}
           ${o.tracking?`<span style="font-size:9px;color:#6090B0;background:#EAF4FD;border:1px solid #BDD9F0;padding:2px 5px;border-radius:5px">📦</span>`:""}
@@ -8430,13 +8542,16 @@ window.toggleCustOrderGroup=function(cid,gk){
   else window.G.custOrderGroupExpandedSet.add(key);
   renderCustomers();
 };
-window.setCustUnpurchasedView=function(on){
-  window.G.custUnpurchased=on;
+window.setCustViewFilter=function(mode){
+  window.G.custViewFilter=mode;
   const allBtn=document.getElementById("cust-view-all");
   const upBtn=document.getElementById("cust-view-unpurchased");
-  if(allBtn&&upBtn){
-    Object.assign(allBtn.style,on?{background:"white",color:"#9C7A5A"}:{background:"#C5A880",color:"white"});
-    Object.assign(upBtn.style,on?{background:"#7C3AED",color:"white"}:{background:"white",color:"#9C7A5A"});
+  const quoteBtn=document.getElementById("cust-view-quote");
+  if(allBtn&&upBtn&&quoteBtn){
+    [allBtn,upBtn,quoteBtn].forEach(b=>Object.assign(b.style,{background:"white",color:"#9C7A5A"}));
+    const map={all:allBtn,unpurchased:upBtn,quote:quoteBtn};
+    const active=map[mode];
+    if(active)Object.assign(active.style,{background:mode==="all"?"#C5A880":"#7C3AED",color:"white"});
   }
   renderCustomers();
 };
@@ -8614,29 +8729,111 @@ window.renderInvoice=function(){
 // ── 已購入切換（代買單專用）────────────────────────────────────────
 // 待報價一鍵轉正式訂單：先確認/修改最終價格，再選現場購買或記事本+1，
 // 轉換後才會開始算進待對帳/統計，之前只是佔位用的價格會被換成這裡確認的正確金額
-window.quoteConvert=async function(oid){
+// 轉正式訂單：改用專屬小視窗，把原幣金額/成本/建議售價/付款方式全部放在同一個畫面上即時試算，
+// 不要再用一連串瀏覽器 prompt/confirm 對話框，那種方式看不到完整脈絡、也容易有畫面沒更新的問題
+window.quoteConvert=function(oid){
   const o=window.G.orders.find(x=>x.id===oid);if(!o)return;
-  const curPrice=o.discountPrice||o.unitPrice||0;
-  const priceInput=prompt(`確認「${cleanProductName((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品")}」的最終單價：`,curPrice);
-  if(priceInput===null)return; // 取消就不動作
-  const finalPrice=parseFloat(priceInput);
-  if(isNaN(finalPrice)||finalPrice<=0){showToast("請輸入正確的價格","error");return;}
-  const useOnsite=confirm("這筆要轉成哪一種？\n\n【確定】＝現場購買（人在賣場、直接帶走）\n【取消】＝記事本+1（已離開、之後代買）");
-  const newType=useOnsite?"onsite":"preorder";
+  const prod=window.G.products.find(x=>x.id===o.productId);
+  if(!prod){showToast("找不到商品資料，無法自動換算，請改用商品頁編輯後再處理","error");return;}
+  window.G.qcOid=oid;
+  window.G.qcOrderType="onsite";
+  window.G.qcPaymentMethod="card";
+  const nameEl=document.getElementById("qc-product-name");
+  if(nameEl)nameEl.textContent=`${prod.emoji||"📦"} ${cleanProductName(prod.name)}${o.spec?" ("+o.spec+")":""} ×${o.qty}`;
+  const symEl=document.getElementById("qc-cur-sym");
+  if(symEl)symEl.textContent=` (${CURR[prod.currency]?.symbol||""})`;
+  const foreignEl=document.getElementById("qc-foreign");
+  if(foreignEl)foreignEl.value=prod.foreignAmount||prod.krw||0;
+  window.qcSetType("onsite");
+  window.qcSetPm("card");
+  window.qcRecalc();
+  const m=document.getElementById("modal-quote-convert");
+  if(m)m.style.display="flex";
+};
+// 即時試算：原幣金額一改，成本/建議售價/最終售價欄位就跟著更新
+window.qcRecalc=function(){
+  const oid=window.G.qcOid;
+  const o=window.G.orders.find(x=>x.id===oid);if(!o)return;
+  const prod=window.G.products.find(x=>x.id===o.productId);if(!prod)return;
+  const foreignAmt=parseFloat(document.getElementById("qc-foreign")?.value)||0;
+  const pm=window.G.qcOrderType==="onsite"?window.G.qcPaymentMethod:(prod.paymentMethod||"card");
+  const{afterTax}=calcCost(foreignAmt,prod.currency||"KRW",window.isDutyFreeChannel(prod.channel),pm);
+  const suggested=suggestPrice(afterTax,prod.catKey||"food",prod.flags||{},prod.twPrice||0,foreignAmt);
+  const costEl=document.getElementById("qc-cost");if(costEl)costEl.textContent="NT$"+afterTax;
+  const suggEl=document.getElementById("qc-suggested");if(suggEl)suggEl.textContent="NT$"+suggested;
+  const finalEl=document.getElementById("qc-final-price");
+  if(finalEl&&!finalEl.dataset.manual)finalEl.value=suggested;
+  // 利潤：用「最終售價」欄位目前的值去算（不管是建議售價還是使用者自己改過的），這樣手動調整售價時利潤也會跟著即時更新
+  const profitEl=document.getElementById("qc-profit");
+  if(profitEl){
+    const curFinal=parseFloat(finalEl?.value)||0;
+    const profit=Math.round((curFinal-afterTax)*10)/10;
+    profitEl.textContent="NT$"+profit;
+    profitEl.style.color=profit>=0?"#2E7D32":"#C0392B";
+  }
+  const currentForeign=prod.foreignAmount||prod.krw||0;
+  const updRow=document.getElementById("qc-update-prod-row");
+  if(updRow)updRow.style.display=(foreignAmt!==currentForeign&&foreignAmt>0)?"block":"none";
+};
+window.qcSetType=function(type){
+  window.G.qcOrderType=type;
+  const onsite=document.getElementById("qc-type-onsite");
+  const preorder=document.getElementById("qc-type-preorder");
+  const pmRow=document.getElementById("qc-payment-row");
+  if(onsite&&preorder){
+    Object.assign(onsite.style,type==="onsite"?{background:"#5C3A1E",color:"#F5E6C8",borderColor:"#5C3A1E"}:{background:"white",color:"#9C7A5A",borderColor:"#E8D5B0"});
+    Object.assign(preorder.style,type==="preorder"?{background:"#5C3A1E",color:"#F5E6C8",borderColor:"#5C3A1E"}:{background:"white",color:"#9C7A5A",borderColor:"#E8D5B0"});
+  }
+  if(pmRow)pmRow.style.display=type==="onsite"?"block":"none";
+  window.qcRecalc();
+};
+window.qcSetPm=function(pm){
+  window.G.qcPaymentMethod=pm;
+  const cardBtn=document.getElementById("qc-pm-card");
+  const cashBtn=document.getElementById("qc-pm-cash");
+  if(cardBtn&&cashBtn){
+    Object.assign(cardBtn.style,pm==="card"?{background:"#5C3A1E",color:"#F5E6C8",borderColor:"#5C3A1E"}:{background:"white",color:"#9C7A5A",borderColor:"#E8D5B0"});
+    Object.assign(cashBtn.style,pm==="cash"?{background:"#5C3A1E",color:"#F5E6C8",borderColor:"#5C3A1E"}:{background:"white",color:"#9C7A5A",borderColor:"#E8D5B0"});
+  }
+  window.qcRecalc();
+};
+window.qcConfirm=async function(){
+  const oid=window.G.qcOid;
+  const o=window.G.orders.find(x=>x.id===oid);if(!o)return;
+  const prod=window.G.products.find(x=>x.id===o.productId);if(!prod)return;
+  const foreignAmt=parseFloat(document.getElementById("qc-foreign")?.value)||0;
+  const finalPrice=parseFloat(document.getElementById("qc-final-price")?.value)||0;
+  if(foreignAmt<=0){showToast("請輸入正確的原幣金額","error");return;}
+  if(finalPrice<=0){showToast("請輸入正確的最終售價","error");return;}
+  const newType=window.G.qcOrderType;
+  const useOnsite=newType==="onsite";
+  const pm=useOnsite?window.G.qcPaymentMethod:(prod.paymentMethod||"card");
+  const{beforeTax,afterTax}=calcCost(foreignAmt,prod.currency||"KRW",window.isDutyFreeChannel(prod.channel),pm);
   const upd={orderType:newType,unitPrice:finalPrice,discountPrice:finalPrice,total:finalPrice*o.qty,purchased:useOnsite};
   if(useOnsite){
-    const prod=window.G.products.find(x=>x.id===o.productId);
-    const pm=confirm("這筆是刷卡付款嗎？\n\n【確定】＝刷卡\n【取消】＝現金")?"card":"cash";
-    if(prod){
-      upd.costSnapshot=calcCost(prod.foreignAmount||prod.krw||0,prod.currency||"KRW",window.isDutyFreeChannel(prod.channel),pm).afterTax;
-      upd.costSnapshotAt=Date.now();
-    }
-    upd.paymentMethodSnapshot=pm;
+    upd.costSnapshot=afterTax;upd.costSnapshotAt=Date.now();upd.paymentMethodSnapshot=pm;
   } else {
     upd.costSnapshot=null;upd.costSnapshotAt=null;upd.paymentMethodSnapshot=null;
   }
   await fbUpd("orders",oid,upd);
+  Object.assign(o,upd);
+  const currentForeign=prod.foreignAmount||prod.krw||0;
+  const updCheckbox=document.getElementById("qc-update-prod");
+  if(foreignAmt!==currentForeign&&updCheckbox&&updCheckbox.checked){
+    const suggested=suggestPrice(afterTax,prod.catKey||"food",prod.flags||{},prod.twPrice||0,foreignAmt);
+    // 用這次實際確認的最終售價當作商品新的售價（不是重新算的建議售價），
+    // 不然商品卡片上顯示的售價會停在舊的建議售價，跟你剛剛確認的售價對不起來
+    const profit=Math.round((finalPrice-afterTax)*10)/10;
+    const margin=finalPrice>0?Math.round((profit/finalPrice)*100):0;
+    await fbUpd("products",prod.id,{foreignAmount:foreignAmt,beforeTax,afterTax,suggested,finalPrice,profit,margin});
+    Object.assign(prod,{foreignAmount:foreignAmt,beforeTax,afterTax,suggested,finalPrice,profit,margin});
+  }
+  const finalEl=document.getElementById("qc-final-price");if(finalEl)delete finalEl.dataset.manual;
+  closeModal("modal-quote-convert");
   showToast(`✅ 已轉成${useOnsite?"🛍️現場購買":"📱記事本+1"}，正式算進統計了`,"success");
+  renderCustomers();renderInvoice();
+  if(typeof renderStockPlanContent==="function")renderStockPlanContent();
+  setTimeout(()=>{renderCustomers();renderInvoice();},600);
 };
 window.togglePurchased=async function(oid){
   const o=window.G.orders.find(x=>x.id===oid);if(!o)return;
@@ -9511,6 +9708,107 @@ window.sendLineNotify=async function(){
   sendBtn.textContent="傳送給客人";
 };
 
+// 待報價訂單直接傳送報價給客人，不用自己複製貼上——沿用出貨通知同一套「找LINE帳號」邏輯，
+// 同名多筆一樣會列出來讓你自己選，不會傳錯人
+window.openSendQuote=async function(oid){
+  const o=window.G.orders.find(x=>x.id===oid);if(!o){showToast("找不到訂單","error");return;}
+  const prod=window.G.products.find(x=>x.id===o.productId);
+  const c=window.G.customers.find(x=>x.id===o.customerId);
+  const modal=document.getElementById("modal-send-quote");
+  const nameEl=document.getElementById("sq-cust-name");
+  const statusEl=document.getElementById("sq-line-id-status");
+  const pickerEl=document.getElementById("sq-line-id-picker");
+  const msgEl=document.getElementById("sq-message");
+  const sendBtn=document.getElementById("sq-send-btn");
+  if(!modal||!nameEl||!statusEl||!pickerEl||!msgEl||!sendBtn)return;
+  const custName=c?(c.communityName||c.lineName||"客人"):(o.communityName||o.buyerName||"客人");
+  nameEl.textContent=`👤 ${custName}`;
+  const price=o.discountPrice||o.unitPrice||0;
+  const productName=cleanProductName(prod?.name||o.productName||"商品");
+  msgEl.value=`您好，關於您詢問的商品報價：\n\n📦 ${productName}${o.spec?`（${o.spec}）`:""}\n數量：${o.qty}\n💰 單價：NT$${price.toLocaleString()}\n總金額：NT$${(price*o.qty).toLocaleString()}\n\n請問要幫您登記訂購嗎？😊`;
+  pickerEl.style.display="none";pickerEl.innerHTML="";
+  statusEl.textContent="🔍 查詢中...";statusEl.style.color="#9C7A5A";
+  sendBtn.disabled=true;sendBtn.style.opacity="0.5";
+  window.G._sqLineUserId=null;
+  try{
+    const {getDocs,collection:col}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    const snap=await getDocs(col(db,"line_users"));
+    const lineUsers=snap.docs.map(d=>d.data());
+    const lineName=(c?.lineName||c?.communityName||o.lineName||o.communityName||o.buyerName||"").trim().toLowerCase();
+    const matches=lineUsers.filter(u=>(u.displayName||"").trim().toLowerCase()===lineName);
+    if(matches.length===1){
+      window.G._sqLineUserId=matches[0].userId;
+      statusEl.textContent=`✅ LINE 帳號：${matches[0].displayName}`;statusEl.style.color="#16A34A";
+      sendBtn.disabled=false;sendBtn.style.opacity="1";
+    } else if(matches.length>1){
+      statusEl.innerHTML=`⚠️ 有 ${matches.length} 位LINE用戶顯示名稱都是「${custName}」，請確認是哪一位再送出`;
+      statusEl.style.color="#D97706";sendBtn.disabled=true;sendBtn.style.opacity="0.5";
+      pickerEl.style.display="block";
+      pickerEl.innerHTML=`<div style="font-size:11px;font-weight:700;color:#92400E;margin-bottom:8px">👇 請選擇正確的LINE帳號</div>`+
+        matches.map(u=>{
+          const uidShort=(u.userId||"").slice(0,6)+"..."+(u.userId||"").slice(-4);
+          const avatar=u.pictureUrl?`<img src="${u.pictureUrl}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0"/>`:`<div style="width:32px;height:32px;border-radius:50%;background:#E8D5B0;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px">👤</div>`;
+          const status=u.statusMessage?`<div style="font-size:10px;color:#9C7A5A">${u.statusMessage}</div>`:"";
+          return `<div data-uid="${u.userId}" data-uname="${(u.displayName||"").replace(/"/g,"&quot;")}" onclick="window.sqSelectLineUser(this.dataset.uid,this.dataset.uname)" style="display:flex;align-items:center;gap:8px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer">
+            ${avatar}
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12px;font-weight:700;color:#3D2010">${u.displayName||"（無名稱）"}</div>
+              ${status}
+              <div style="font-size:9px;color:#B0906A;font-family:monospace">${uidShort}</div>
+            </div>
+          </div>`;
+        }).join("");
+    } else {
+      statusEl.innerHTML=`⚠️ 找不到此客人的 LINE ID<br><span style="font-size:10px;color:#9C7A5A">請確認客人曾傳訊息給官方帳號</span>`;
+      statusEl.style.color="#D97706";sendBtn.disabled=true;sendBtn.style.opacity="0.5";
+    }
+  } catch(e){
+    statusEl.textContent="❌ 查詢失敗："+e.message;statusEl.style.color="#C0392B";sendBtn.disabled=true;sendBtn.style.opacity="0.5";
+  }
+  modal.style.display="flex";
+};
+window.sqSelectLineUser=function(userId,displayName){
+  window.G._sqLineUserId=userId;
+  const statusEl=document.getElementById("sq-line-id-status");
+  const sendBtn=document.getElementById("sq-send-btn");
+  const pickerEl=document.getElementById("sq-line-id-picker");
+  if(statusEl){statusEl.textContent=`✅ 已選定 LINE 帳號：${displayName}`;statusEl.style.color="#16A34A";}
+  if(pickerEl){
+    pickerEl.querySelectorAll("[data-uid]").forEach(el=>{
+      el.style.border=el.dataset.uid===userId?"2px solid #06C755":"1px solid #E8D5B0";
+      el.style.background=el.dataset.uid===userId?"#F0FFF4":"white";
+    });
+  }
+  if(sendBtn){sendBtn.disabled=false;sendBtn.style.opacity="1";}
+};
+window.sendQuoteMessage=async function(){
+  const message=document.getElementById("sq-message")?.value.trim();
+  const userId=window.G._sqLineUserId;
+  const sendBtn=document.getElementById("sq-send-btn");
+  if(!message){showToast("請填入訊息內容","error");return;}
+  if(!userId){showToast("找不到客人 LINE ID","error");return;}
+  sendBtn.disabled=true;sendBtn.textContent="傳送中...";
+  try{
+    const resp=await fetch("https://butter-ai.kueigin.workers.dev",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","X-Service":"line-quote"},
+      body:JSON.stringify({userId,message}),
+    });
+    const result=await resp.json();
+    if(result.success){
+      showToast("✅ 報價已傳送給客人！");
+      document.getElementById("modal-send-quote").style.display="none";
+    } else {
+      showToast("傳送失敗："+JSON.stringify(result.error),"error");
+    }
+  } catch(e){
+    showToast("傳送失敗："+e.message,"error");
+  }
+  sendBtn.disabled=false;
+  sendBtn.style.opacity="1";
+  sendBtn.textContent="傳送給客人";
+};
+
 window.G.qaLiveMode=false;
 window.G.qaLiveCustomPrice=null;
 window.G.qaLiveImgB64=null;
@@ -9868,11 +10166,70 @@ window.swUpdate = function(){
 };
 </script>
 <!-- 備貨清單 Modal -->
+<!-- 待報價轉正式訂單 Modal -->
+<div id="modal-quote-convert" class="modal-overlay" style="display:none;position:fixed;inset:0;z-index:60;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;padding:16px">
+  <div onclick="event.stopPropagation()" style="background:white;border-radius:16px;width:100%;max-width:420px;padding:20px;max-height:90vh;overflow-y:auto;box-sizing:border-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <h3 style="margin:0;font-size:15px;font-weight:900;color:#3D2010">🔄 轉正式訂單</h3>
+      <button onclick="closeModal('modal-quote-convert')" style="font-size:22px;color:#9C7A5A;background:none;border:none;cursor:pointer;line-height:1">×</button>
+    </div>
+    <div id="qc-product-name" style="font-size:13px;font-weight:700;color:#3D2010;margin-bottom:12px;background:#FDF6EC;border-radius:8px;padding:8px 10px"></div>
+
+    <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:4px">原幣金額<span id="qc-cur-sym"></span>（現在查到多少，價格沒變就不用改）</label>
+    <input type="text" inputmode="numeric" id="qc-foreign" oninput="qcRecalc()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:16px;font-weight:700;outline:none;box-sizing:border-box;margin-bottom:10px"/>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+      <div style="background:#FDF6EC;border:1px solid #E8D5B0;border-radius:10px;padding:8px;text-align:center">
+        <div style="font-size:10px;color:#9C7A5A;font-weight:700">成本</div>
+        <div id="qc-cost" style="font-size:14px;font-weight:900;color:#7A5C3A">-</div>
+      </div>
+      <div style="background:#E8F5E9;border:1px solid #A5D6A7;border-radius:10px;padding:8px;text-align:center">
+        <div style="font-size:10px;color:#2E7D32;font-weight:700">利潤</div>
+        <div id="qc-profit" style="font-size:14px;font-weight:900;color:#2E7D32">-</div>
+      </div>
+      <div style="background:#F5E6C8;border:1px solid #C5A880;border-radius:10px;padding:8px;text-align:center">
+        <div style="font-size:10px;color:#9C7A5A;font-weight:700">建議售價</div>
+        <div id="qc-suggested" style="font-size:14px;font-weight:900;color:#3D2010">-</div>
+      </div>
+    </div>
+
+    <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:4px">最終售價 (NT$)（可直接用建議售價，或自己改）</label>
+    <input type="text" inputmode="numeric" id="qc-final-price" oninput="this.dataset.manual='1';qcRecalc();" style="width:100%;background:#FEF3E2;border:1.5px solid #E07B39;border-radius:10px;padding:10px 14px;font-size:16px;font-weight:900;color:#E07B39;outline:none;box-sizing:border-box;margin-bottom:14px"/>
+
+    <div style="font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:6px">📌 喊單類型</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button id="qc-type-onsite" onclick="qcSetType('onsite')" style="flex:1;padding:9px 6px;border-radius:10px;border:2px solid #5C3A1E;background:#5C3A1E;color:#F5E6C8;font-size:12px;font-weight:700;cursor:pointer">🛍️ 現場購買</button>
+      <button id="qc-type-preorder" onclick="qcSetType('preorder')" style="flex:1;padding:9px 6px;border-radius:10px;border:2px solid #E8D5B0;background:white;color:#9C7A5A;font-size:12px;font-weight:700;cursor:pointer">📱 記事本+1</button>
+    </div>
+
+    <div id="qc-payment-row" style="margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:6px">付款方式</div>
+      <div style="display:flex;gap:8px">
+        <button id="qc-pm-card" onclick="qcSetPm('card')" style="flex:1;padding:8px;border-radius:10px;border:2px solid #5C3A1E;background:#5C3A1E;color:#F5E6C8;font-size:12px;font-weight:700;cursor:pointer">💳 刷卡</button>
+        <button id="qc-pm-cash" onclick="qcSetPm('cash')" style="flex:1;padding:8px;border-radius:10px;border:2px solid #E8D5B0;background:white;color:#9C7A5A;font-size:12px;font-weight:700;cursor:pointer">💵 現金</button>
+      </div>
+    </div>
+
+    <div id="qc-update-prod-row" style="display:none;margin-bottom:14px">
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#5C3A1E;background:#FFF9F0;border:1px solid #FCD34D;border-radius:10px;padding:10px;cursor:pointer">
+        <input type="checkbox" id="qc-update-prod" checked style="width:16px;height:16px;flex-shrink:0"/>
+        <span>原幣金額有變動，順便更新商品本身（原幣、成本、售價都會換成這次的），之後其他客人喊單也套用這個新價格</span>
+      </label>
+    </div>
+
+    <button onclick="qcConfirm()" style="width:100%;background:#C5A880;color:white;border:none;border-radius:10px;padding:14px;font-size:14px;font-weight:700;cursor:pointer">✅ 確認轉換</button>
+  </div>
+</div>
+
 <div id="modal-stock-plan" class="modal-overlay" style="display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,0.45);align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
   <div style="background:white;border-radius:20px;width:100%;max-width:480px;padding:24px;margin:auto">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <h3 style="margin:0;font-size:16px;font-weight:900;color:#3D2010">📦 備貨清單</h3>
       <button onclick="document.getElementById('modal-stock-plan').style.display='none'" style="font-size:24px;color:#9C7A5A;background:none;border:none;cursor:pointer">×</button>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:10px">
+      <button id="sp-view-buy" onclick="setStockPlanViewMode('buy')" style="flex:1;font-size:12px;font-weight:700;padding:9px 8px;border-radius:10px;border:1.5px solid #C5A880;background:#C5A880;color:white;cursor:pointer">🛒 待購買</button>
+      <button id="sp-view-quote" onclick="setStockPlanViewMode('quote')" style="flex:1;font-size:12px;font-weight:700;padding:9px 8px;border-radius:10px;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">📋 待報價</button>
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px">
       <div id="stock-plan-desc" style="font-size:11px;color:#9C7A5A">依喊單時間排序，方便確認缺貨截止點</div>
@@ -9881,7 +10238,7 @@ window.swUpdate = function(){
         <button id="sp-mode-channel" onclick="setStockPlanMode('channel')" style="font-size:12px;font-weight:700;padding:6px 12px;border-radius:99px;border:none;background:white;color:#9C7A5A;cursor:pointer;transition:background 0.15s,color 0.15s">🏪 通路</button>
       </div>
     </div>
-    <div style="margin-bottom:14px">
+    <div id="sp-buy-subfilter-row" style="margin-bottom:14px">
       <button id="sp-filter-unpurchased" onclick="setStockPlanUnpurchasedOnly(!window.G.stockPlanUnpurchasedOnly)" style="width:100%;font-size:12px;font-weight:700;padding:8px 12px;border-radius:10px;border:1.5px solid #FCD34D;background:#FEF3C7;color:#92400E;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">🛒 只看待購買</button>
     </div>
     <div id="stock-plan-content"></div>
@@ -10013,6 +10370,22 @@ window.lbTouchEnd=function(e){
 
 
 <!-- LINE 出貨通知 Modal -->
+<!-- 待報價傳送報價給客人 Modal -->
+<div id="modal-send-quote" class="modal-overlay" style="display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;padding:16px">
+  <div onclick="event.stopPropagation()" style="background:white;border-radius:16px;width:100%;max-width:420px;padding:20px;max-height:90vh;overflow-y:auto;box-sizing:border-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <h3 style="margin:0;font-size:15px;font-weight:900;color:#3D2010">📤 傳送報價給客人</h3>
+      <button onclick="closeModal('modal-send-quote')" style="font-size:22px;color:#9C7A5A;background:none;border:none;cursor:pointer;line-height:1">×</button>
+    </div>
+    <div id="sq-cust-name" style="font-size:13px;font-weight:700;color:#3D2010;margin-bottom:10px;background:#FDF6EC;border-radius:8px;padding:8px 10px"></div>
+    <div id="sq-line-id-status" style="font-size:11px;margin-bottom:12px"></div>
+    <div id="sq-line-id-picker" style="display:none;margin-bottom:12px;border:1.5px solid #FCD34D;background:#FFFBEB;border-radius:10px;padding:10px"></div>
+    <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:4px">訊息內容（可以自己修改）</label>
+    <textarea id="sq-message" rows="7" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;font-size:13px;outline:none;box-sizing:border-box;margin-bottom:14px;resize:vertical;font-family:inherit"></textarea>
+    <button id="sq-send-btn" onclick="sendQuoteMessage()" disabled style="width:100%;background:#06C755;color:white;border:none;border-radius:10px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;opacity:0.5">傳送給客人</button>
+  </div>
+</div>
+
 <div id="modal-line-notify" class="modal-overlay" style="display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;padding:20px">
   <div style="background:white;border-radius:20px;width:100%;max-width:400px;padding:24px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
