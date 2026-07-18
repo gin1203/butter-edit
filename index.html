@@ -8551,7 +8551,7 @@ window.setCustViewFilter=function(mode){
     [allBtn,upBtn,quoteBtn].forEach(b=>Object.assign(b.style,{background:"white",color:"#9C7A5A"}));
     const map={all:allBtn,unpurchased:upBtn,quote:quoteBtn};
     const active=map[mode];
-    if(active)Object.assign(active.style,{background:mode==="all"?"#C5A880":"#7C3AED",color:"white"});
+    if(active)Object.assign(active.style,{background:mode==="all"?"#C5A880":mode==="quote"?"#0277BD":"#7C3AED",color:"white"});
   }
   renderCustomers();
 };
