@@ -6465,8 +6465,8 @@ function renderQuoteProductBlock(pid,orders){
       html+=`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px;padding:8px 10px;background:white;border-radius:10px;border:1px solid #90CAF9">`;
       html+=`<span style="font-size:10px;font-weight:900;color:#5C3A1E;min-width:20px">#${i+1}</span>`;
       html+=`<span style="flex:1;font-size:13px;font-weight:700;color:#3D2010">${buyer} ×${o.qty}</span>`;
-      html+=`<button data-oid="${o.id}" onclick="openSendQuote(this.dataset.oid)" style="flex-shrink:0;font-size:11px;font-weight:700;padding:5px 10px;border-radius:8px;cursor:pointer;border:1px solid #6EE7B7;background:#D1FAE5;color:#065F46">📤 傳送報價</button>`;
-      html+=`<button data-oid="${o.id}" onclick="quoteConvert(this.dataset.oid)" style="flex-shrink:0;font-size:11px;font-weight:700;padding:5px 10px;border-radius:8px;cursor:pointer;border:1px solid #90CAF9;background:#E3F2FD;color:#0277BD">🔄 轉正式訂單</button>`;
+      html+=`<button data-oid="${o.id}" onclick="openSendQuote(this.dataset.oid)" style="flex-shrink:0;font-size:11px;font-weight:700;padding:5px 10px;border-radius:8px;cursor:pointer;border:1px solid #6EE7B7;background:#D1FAE5;color:#065F46">傳送報價</button>`;
+      html+=`<button data-oid="${o.id}" onclick="quoteConvert(this.dataset.oid)" style="flex-shrink:0;font-size:11px;font-weight:700;padding:5px 10px;border-radius:8px;cursor:pointer;border:1px solid #C4B5FD;background:#EDE9FE;color:#5B21B6">轉正式訂單</button>`;
       html+=`</div>`;
     });
   });
@@ -8438,8 +8438,8 @@ window.renderCustomers=function(){
         </div>
         <div style="display:flex;align-items:center;gap:5px;flex:0 0 auto">
           <span style="font-size:11px;font-weight:700;color:#3D2010">${isQuote?"約 ":""}NT$${(dp*o.qty).toLocaleString()}</span>
-          ${isQuote?`<button data-oid="${o.id}" onclick="event.stopPropagation();openSendQuote(this.dataset.oid)" style="font-size:10px;color:#065F46;background:#D1FAE5;border:1px solid #6EE7B7;padding:2px 6px;border-radius:5px;cursor:pointer;font-weight:700">📤 傳送報價</button>`:""}
-          ${isQuote?`<button data-oid="${o.id}" onclick="event.stopPropagation();quoteConvert(this.dataset.oid)" style="font-size:10px;color:#0277BD;background:#E3F2FD;border:1px solid #90CAF9;padding:2px 6px;border-radius:5px;cursor:pointer;font-weight:700">🔄 轉正式訂單</button>`:""}
+          ${isQuote?`<button data-oid="${o.id}" onclick="event.stopPropagation();openSendQuote(this.dataset.oid)" style="font-size:10px;color:#065F46;background:#D1FAE5;border:1px solid #6EE7B7;padding:2px 6px;border-radius:5px;cursor:pointer;font-weight:700">傳送報價</button>`:""}
+          ${isQuote?`<button data-oid="${o.id}" onclick="event.stopPropagation();quoteConvert(this.dataset.oid)" style="font-size:10px;color:#5B21B6;background:#EDE9FE;border:1px solid #C4B5FD;padding:2px 6px;border-radius:5px;cursor:pointer;font-weight:700">轉正式訂單</button>`:""}
           ${dp>=1000&&!isQuote?`<button data-oid="${o.id}" onclick="copySingleDeposit(this.dataset.oid)" style="font-size:9px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:2px 5px;border-radius:5px;cursor:pointer;font-weight:700">訂金</button>`:""}
           ${o.tracking?`<span style="font-size:9px;color:#6090B0;background:#EAF4FD;border:1px solid #BDD9F0;padding:2px 5px;border-radius:5px">📦</span>`:""}
           <button data-oid="${o.id}" onclick="event.stopPropagation();openMoveTrip(this.dataset.oid)" style="font-size:10px;color:#0277BD;background:#E3F2FD;border:1px solid #90CAF9;padding:2px 5px;border-radius:5px;cursor:pointer">移趟</button>
@@ -9725,7 +9725,10 @@ window.openSendQuote=async function(oid){
   nameEl.textContent=`👤 ${custName}`;
   const price=o.discountPrice||o.unitPrice||0;
   const productName=cleanProductName(prod?.name||o.productName||"商品");
-  msgEl.value=`您好，關於您詢問的商品報價：\n\n📦 ${productName}${o.spec?`（${o.spec}）`:""}\n數量：${o.qty}\n💰 單價：NT$${price.toLocaleString()}\n總金額：NT$${(price*o.qty).toLocaleString()}\n\n請問要幫您登記訂購嗎？😊`;
+  const priceLines=o.qty>1
+    ?`數量：${o.qty}\n💰 單價：NT$${price.toLocaleString()}\n總金額：NT$${(price*o.qty).toLocaleString()}`
+    :`💰 報價：NT$${price.toLocaleString()}`;
+  msgEl.value=`您好，關於您詢問的商品報價：\n\n📦 ${productName}${o.spec?`（${o.spec}）`:""}\n${priceLines}\n\n請問要幫您登記訂購嗎？😊`;
   pickerEl.style.display="none";pickerEl.innerHTML="";
   statusEl.textContent="🔍 查詢中...";statusEl.style.color="#9C7A5A";
   sendBtn.disabled=true;sendBtn.style.opacity="0.5";
