@@ -5481,16 +5481,41 @@ window.eoPickSpecThenAdd=function(productId){
     return;
   }
   res.innerHTML=`<div style="padding:10px 12px">
-    <div style="font-size:12px;font-weight:700;color:#3D2010;margin-bottom:8px">${p.name}　請選規格（可以連續點好幾個口味）：</div>
+    <div style="font-size:12px;font-weight:700;color:#3D2010;margin-bottom:8px">${p.name}　請選規格（選好可直接調整數量）：</div>
     <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
       ${specs.map(s=>{
         const qty=pendingQty(s);
-        const picked=qty>0;
-        return `<button onclick="eoAddProduct('${productId}','${s.replace(/'/g,"\\'")}')" style="background:${picked?"#DCFCE7":"#FDF6EC"};border:1px solid ${picked?"#86EFAC":"#E8D5B0"};border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;color:${picked?"#166534":"#5C3A1E"};cursor:pointer">${picked?"✓ ":""}${s}${picked?` ×${qty}`:""}</button>`;
+        const specEsc=s.replace(/'/g,"\\'");
+        if(qty>0){
+          return `<div style="display:flex;align-items:center;gap:0;background:#DCFCE7;border:1px solid #86EFAC;border-radius:8px;overflow:hidden">
+            <span style="padding:0 8px;font-size:12px;font-weight:700;color:#166534;white-space:nowrap">✓ ${s}</span>
+            <button onclick="eoAdjustPendingSpec('${productId}','${specEsc}',-1)" style="width:28px;height:30px;flex-shrink:0;border:none;border-left:1px solid #86EFAC;background:transparent;color:#166534;font-weight:900;cursor:pointer;font-size:14px">－</button>
+            <span style="min-width:20px;text-align:center;font-size:12px;font-weight:900;color:#166534;flex-shrink:0">${qty}</span>
+            <button onclick="eoAdjustPendingSpec('${productId}','${specEsc}',1)" style="width:28px;height:30px;flex-shrink:0;border:none;border-left:1px solid #86EFAC;background:transparent;color:#166534;font-weight:900;cursor:pointer;font-size:14px">＋</button>
+          </div>`;
+        }
+        return `<button onclick="eoAddProduct('${productId}','${specEsc}')" style="background:#FDF6EC;border:1px solid #E8D5B0;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;color:#5C3A1E;cursor:pointer">${s}</button>`;
       }).join("")}
     </div>
     <button onclick="window.eoCloseSpecPicker()" style="width:100%;background:#F5E6C8;border:1px solid #C5A880;border-radius:8px;padding:8px;font-size:12px;font-weight:700;color:#5C3A1E;cursor:pointer">✓ 選好了，關閉</button>
   </div>`;
+};
+window.eoAdjustPendingSpec=function(productId,spec,delta){
+  const item=(window.G.eoPendingAdd||[]).find(x=>x.productId===productId&&(x.spec||"")===spec);
+  if(!item)return;
+  item.qty=Math.max(0,item.qty+delta);
+  if(item.qty===0){
+    window.G.eoPendingAdd=(window.G.eoPendingAdd||[]).filter(x=>x!==item);
+  } else {
+    item.total=(item.discountPrice||item.unitPrice)*item.qty;
+  }
+  eoRenderPending();
+  // 重新渲染規格選擇畫面，讓數量即時反映在按鈕上
+  if(spec.includes(" / ")){
+    window.eoPickSpecTierColor(productId,spec.split(" / ")[0]);
+  } else {
+    window.eoPickSpecThenAdd(productId);
+  }
 };
 window.eoCloseSpecPicker=function(){
   const search=document.getElementById("eo-prod-search");if(search)search.value="";
@@ -5516,8 +5541,16 @@ window.eoPickSpecTierColor=function(productId,color){
       ${sizes.map(sz=>{
         const fullSpec=color+" / "+sz;
         const qty=pendingQty(fullSpec);
-        const picked=qty>0;
-        return `<button onclick="eoAddProduct('${productId}','${fullSpec.replace(/'/g,"\\'")}')" style="background:${picked?"#DCFCE7":"#FDF6EC"};border:1px solid ${picked?"#86EFAC":"#E8D5B0"};border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;color:${picked?"#166534":"#5C3A1E"};cursor:pointer">${picked?"✓ ":""}${sz}${picked?` ×${qty}`:""}</button>`;
+        const fullSpecEsc=fullSpec.replace(/'/g,"\\'");
+        if(qty>0){
+          return `<div style="display:flex;align-items:center;gap:0;background:#DCFCE7;border:1px solid #86EFAC;border-radius:8px;overflow:hidden">
+            <span style="padding:0 8px;font-size:12px;font-weight:700;color:#166534;white-space:nowrap">✓ ${sz}</span>
+            <button onclick="eoAdjustPendingSpec('${productId}','${fullSpecEsc}',-1)" style="width:28px;height:30px;flex-shrink:0;border:none;border-left:1px solid #86EFAC;background:transparent;color:#166534;font-weight:900;cursor:pointer;font-size:14px">－</button>
+            <span style="min-width:20px;text-align:center;font-size:12px;font-weight:900;color:#166534;flex-shrink:0">${qty}</span>
+            <button onclick="eoAdjustPendingSpec('${productId}','${fullSpecEsc}',1)" style="width:28px;height:30px;flex-shrink:0;border:none;border-left:1px solid #86EFAC;background:transparent;color:#166534;font-weight:900;cursor:pointer;font-size:14px">＋</button>
+          </div>`;
+        }
+        return `<button onclick="eoAddProduct('${productId}','${fullSpecEsc}')" style="background:#FDF6EC;border:1px solid #E8D5B0;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;color:#5C3A1E;cursor:pointer">${sz}</button>`;
       }).join("")}
     </div>
     <button onclick="window.eoCloseSpecPicker()" style="width:100%;background:#F5E6C8;border:1px solid #C5A880;border-radius:8px;padding:8px;font-size:12px;font-weight:700;color:#5C3A1E;cursor:pointer">✓ 選好了，關閉</button>
