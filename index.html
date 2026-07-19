@@ -747,10 +747,10 @@ body.live-mode .hide-live { display: none !important; }
     </div>
     <div id="mo-qty-section">
       <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">數量</label>
-      <div style="display:flex;align-items:center;gap:0;margin-bottom:14px;border:1px solid #E8D5B0;border-radius:10px;overflow:hidden;background:#FAF8F5">
-        <button onclick="moQtyAdj(-1)" style="-webkit-appearance:none;appearance:none;width:48px;height:48px;font-size:22px;font-weight:700;border:none;background:transparent;color:#9C7A5A;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;margin:0">－</button>
-        <input type="text" inputmode="numeric" id="mo-qty" value="1" oninput="moQtyClamp()" style="flex:1;border:none;background:transparent;text-align:center;font-size:20px;font-weight:900;color:#3D2010;outline:none;padding:0"/>
-        <button onclick="moQtyAdj(1)" style="-webkit-appearance:none;appearance:none;width:48px;height:48px;font-size:22px;font-weight:700;border:none;background:transparent;color:#9C7A5A;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;margin:0">＋</button>
+      <div style="display:flex;align-items:center;gap:0;margin-bottom:14px;border:1px solid #E8D5B0;border-radius:10px;overflow:hidden;background:#FAF8F5;width:180px;max-width:100%">
+        <button onclick="moQtyAdj(-1)" style="-webkit-appearance:none;appearance:none;width:52px;height:48px;font-size:22px;font-weight:700;border:none;background:transparent;color:#9C7A5A;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;margin:0">－</button>
+        <input type="text" inputmode="numeric" id="mo-qty" value="1" oninput="moQtyClamp()" style="width:76px;flex-shrink:0;border:none;background:transparent;text-align:center;font-size:20px;font-weight:900;color:#3D2010;outline:none;padding:0"/>
+        <button onclick="moQtyAdj(1)" style="-webkit-appearance:none;appearance:none;width:52px;height:48px;font-size:22px;font-weight:700;border:none;background:transparent;color:#9C7A5A;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;margin:0">＋</button>
       </div>
     </div>
     <!-- 規格備註 -->
@@ -3124,12 +3124,11 @@ window.openModal=function(id,data){
           specArea.style.display="block";
           specBtns.innerHTML=specs.map((s,i)=>{
             const img=(p?.specImages||[])[i]||"";
-            const imgHtml=img
-              ?`<img onclick="event.stopPropagation();lbOpen('${img}')" src="${img}" draggable="false" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:8px;cursor:zoom-in;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent"/><span style="position:absolute;bottom:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,0.55);color:white;font-size:10px;display:flex;align-items:center;justify-content:center;pointer-events:none">🔍</span>`
+            const zoomBtn=img?`<span onclick="event.stopPropagation();lbOpen('${img}')" style="position:absolute;inset:0;cursor:zoom-in"><img src="${img}" draggable="false" style="width:100%;height:100%;object-fit:cover;display:block;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent"/><span style="position:absolute;bottom:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,0.55);color:white;font-size:10px;display:flex;align-items:center;justify-content:center;pointer-events:none">🔍</span></span>`
               :`<span style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:20px;color:#C5A880">📐</span>`;
-            return `<div class="mo-spec-card" data-spec="${s.replace(/"/g,"&quot;")}" onclick="moSelectSpec('${s}',this)" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px;border-radius:12px;font-size:13px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer;width:84px">
-              <span style="width:68px;height:68px;border-radius:8px;background:#FAF8F5;overflow:hidden;flex-shrink:0;position:relative;display:block">${imgHtml}</span>
-              <span>${s}</span>
+            return `<div class="mo-spec-card" data-spec="${s.replace(/"/g,"&quot;")}" style="display:flex;flex-direction:column;align-items:stretch;border-radius:12px;font-size:12px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;width:84px;overflow:hidden">
+              <span style="width:100%;height:68px;background:#FAF8F5;flex-shrink:0;position:relative;display:block">${zoomBtn}</span>
+              <button type="button" data-spec="${s.replace(/"/g,"&quot;")}" onclick="moSelectSpec(this.dataset.spec,this.closest('.mo-spec-card'))" style="width:100%;border:none;border-top:1px solid rgba(0,0,0,0.08);background:transparent;color:inherit;font:inherit;font-weight:700;padding:8px 4px;cursor:pointer;min-height:36px;-webkit-tap-highlight-color:transparent">${s}</button>
             </div>`;
           }).join("");
           // 只有一個規格選項時自動選取
@@ -4900,12 +4899,11 @@ window.moSelectSpecTierColor=function(color){
     </div>`+
     matches.map(t=>{
       const size=t.spec.split(" / ").slice(1).join(" / ");
-      const imgHtml=t.img
-        ?`<img onclick="event.stopPropagation();lbOpen('${t.img}')" src="${t.img}" draggable="false" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:8px;cursor:zoom-in"/>`
+      const zoomBtn=t.img?`<span onclick="event.stopPropagation();lbOpen('${t.img}')" style="position:absolute;inset:0;cursor:zoom-in"><img src="${t.img}" draggable="false" style="width:100%;height:100%;object-fit:cover;display:block"/><span style="position:absolute;bottom:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,0.55);color:white;font-size:10px;display:flex;align-items:center;justify-content:center;pointer-events:none">🔍</span></span>`
         :`<span style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:20px;color:#C5A880">📐</span>`;
-      return `<div class="mo-spec-card" data-spec="${t.spec.replace(/"/g,"&quot;")}" onclick="moSelectSpec('${t.spec.replace(/'/g,"\\'")}',this)" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px;border-radius:12px;font-size:13px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer;width:84px">
-        <span style="width:68px;height:68px;border-radius:8px;background:#FAF8F5;overflow:hidden;flex-shrink:0;position:relative;display:block">${imgHtml}</span>
-        <span>${size}</span>
+      return `<div class="mo-spec-card" data-spec="${t.spec.replace(/"/g,"&quot;")}" style="display:flex;flex-direction:column;align-items:stretch;border-radius:12px;font-size:12px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;width:84px;overflow:hidden">
+        <span style="width:100%;height:68px;background:#FAF8F5;flex-shrink:0;position:relative;display:block">${zoomBtn}</span>
+        <button type="button" data-spec="${t.spec.replace(/"/g,"&quot;")}" onclick="moSelectSpec(this.dataset.spec,this.closest('.mo-spec-card'))" style="width:100%;border:none;border-top:1px solid rgba(0,0,0,0.08);background:transparent;color:inherit;font:inherit;font-weight:700;padding:8px 4px;cursor:pointer;min-height:36px;-webkit-tap-highlight-color:transparent">${size}</button>
       </div>`;
     }).join("");
 };
