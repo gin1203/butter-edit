@@ -290,6 +290,8 @@ body.live-mode .hide-live { display: none !important; }
         <button class="calc-ch-btn" data-ch="Point of View" onclick="calcSelectChannel(this,'Point of View')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Point of View</button>
         <button class="calc-ch-btn" data-ch="BUTTER" onclick="calcSelectChannel(this,'BUTTER')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧈 BUTTER</button>
         <button class="calc-ch-btn" data-ch="新世界免稅店" onclick="calcSelectChannel(this,'新世界免稅店')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛬 新世界免稅店（機場提貨）</button>
+        <button class="calc-ch-btn" data-ch="新羅免稅店" onclick="calcSelectChannel(this,'新羅免稅店')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛬 新羅免稅店（機場提貨）</button>
+        <button class="calc-ch-btn" data-ch="樂天免稅店" onclick="calcSelectChannel(this,'樂天免稅店')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛬 樂天免稅店（機場提貨）</button>
         <button class="calc-ch-btn" data-ch="新世界/樂天百貨" onclick="calcSelectChannel(this,'新世界/樂天百貨')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏢 百貨專櫃（含稅可退稅）</button>
         <button class="calc-ch-btn" data-ch="廣藏市場" onclick="calcSelectChannel(this,'廣藏市場')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏮 廣藏市場</button>
         <button class="calc-ch-btn" data-ch="藥局" onclick="calcSelectChannel(this,'藥局')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">💊 藥局</button>
@@ -305,8 +307,12 @@ body.live-mode .hide-live { display: none !important; }
           <input type="text" inputmode="decimal" id="c-twprice" oninput="calcUpdate()" placeholder="例如：4900" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
         </div>
         <div>
-          <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">👥 同行售價（NT$）</label>
-          <input type="text" inputmode="numeric" id="c-rival" oninput="calcUpdate()" placeholder="例如：149" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
+          <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">👥 同行售價（NT$，可新增多筆）</label>
+          <div id="c-rival-chips" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:5px"></div>
+          <div style="display:flex;gap:5px">
+            <input type="text" id="c-rival-new" placeholder="例如：小美代購 149" onkeydown="if((event.key==='Enter')&&!event.isComposing&&event.keyCode!==229){event.preventDefault();calcAddRival(this.value);this.value='';}" style="flex:1;min-width:0;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 10px;font-size:13px;outline:none;box-sizing:border-box"/>
+            <button type="button" onclick="calcAddRival(document.getElementById('c-rival-new').value);document.getElementById('c-rival-new').value='';" style="flex-shrink:0;background:#C5A880;color:white;border:none;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer">新增</button>
+          </div>
         </div>
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
@@ -1033,6 +1039,8 @@ body.live-mode .hide-live { display: none !important; }
         <button class="ep-ch-btn" data-ch="Point of View" onclick="epSelectChannel(this,'Point of View')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">👁 Point of View</button>
         <button class="ep-ch-btn" data-ch="BUTTER" onclick="epSelectChannel(this,'BUTTER')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧈 BUTTER</button>
         <button class="ep-ch-btn" data-ch="新世界免稅店" onclick="epSelectChannel(this,'新世界免稅店')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛬 新世界免稅店（機場提貨）</button>
+        <button class="ep-ch-btn" data-ch="新羅免稅店" onclick="epSelectChannel(this,'新羅免稅店')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛬 新羅免稅店（機場提貨）</button>
+        <button class="ep-ch-btn" data-ch="樂天免稅店" onclick="epSelectChannel(this,'樂天免稅店')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛬 樂天免稅店（機場提貨）</button>
         <button class="ep-ch-btn" data-ch="新世界/樂天百貨" onclick="epSelectChannel(this,'新世界/樂天百貨')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 百貨專櫃（含稅可退稅）</button>
         <button class="ep-ch-btn" data-ch="廣藏市場" onclick="epSelectChannel(this,'廣藏市場')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧡 廣藏市場</button>
         <button class="ep-ch-btn" data-ch="藥局" onclick="epSelectChannel(this,'藥局')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">💊 藥局</button>
@@ -1058,8 +1066,12 @@ body.live-mode .hide-live { display: none !important; }
         <input type="text" inputmode="decimal" id="ep-twprice" placeholder="例如：4900" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none"/>
       </div>
       <div>
-        <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">👥 同行參考價 (NT$)</label>
-        <input type="text" inputmode="numeric" id="ep-rival" placeholder="例如：149" oninput="epRivalCheck()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none"/>
+        <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">👥 同行參考價 (NT$，可新增多筆)</label>
+        <div id="ep-rival-chips" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:5px"></div>
+        <div style="display:flex;gap:5px">
+          <input type="text" id="ep-rival-new" placeholder="例如：小美代購 149" onkeydown="if((event.key==='Enter')&&!event.isComposing&&event.keyCode!==229){event.preventDefault();epAddRival(this.value);this.value='';}" style="flex:1;min-width:0;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 10px;font-size:13px;outline:none;box-sizing:border-box"/>
+          <button type="button" onclick="epAddRival(document.getElementById('ep-rival-new').value);document.getElementById('ep-rival-new').value='';" style="flex-shrink:0;background:#C5A880;color:white;border:none;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer">新增</button>
+        </div>
       </div>
     </div>
     <div id="ep-rival-msg" style="display:none;border-radius:10px;padding:8px 14px;margin-bottom:10px;font-size:12px;font-weight:700"></div>
@@ -1450,6 +1462,8 @@ body.live-mode .hide-live { display: none !important; }
         <button class="qa-ch-btn" data-ch="Point of View" onclick="qaSelectChannel(this,'Point of View')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Point of View</button>
         <button class="qa-ch-btn" data-ch="BUTTER" onclick="qaSelectChannel(this,'BUTTER')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧈 BUTTER</button>
         <button class="qa-ch-btn" data-ch="新世界免稅店" onclick="qaSelectChannel(this,'新世界免稅店')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛬 新世界免稅店（機場提貨）</button>
+        <button class="qa-ch-btn" data-ch="新羅免稅店" onclick="qaSelectChannel(this,'新羅免稅店')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛬 新羅免稅店（機場提貨）</button>
+        <button class="qa-ch-btn" data-ch="樂天免稅店" onclick="qaSelectChannel(this,'樂天免稅店')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛬 樂天免稅店（機場提貨）</button>
         <button class="qa-ch-btn" data-ch="新世界/樂天百貨" onclick="qaSelectChannel(this,'新世界/樂天百貨')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏢 百貨專櫃（含稅可退稅）</button>
         <button class="qa-ch-btn" data-ch="廣藏市場" onclick="qaSelectChannel(this,'廣藏市場')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏮 廣藏市場</button>
         <button class="qa-ch-btn" data-ch="藥局" onclick="qaSelectChannel(this,'藥局')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">💊 藥局</button>
@@ -1919,7 +1933,7 @@ function getRate(cur){return window.G.rates[cur]||0.024;}
 function getTax(cur){return CURR[cur]?.tax||0.07;}
 // 免稅通路：這些通路買的東西本來就沒課稅（機場提貨的Duty Free），不像一般市內店面
 // 是「含稅價、事後憑護照退稅」，所以不能套用 getTax() 的退稅率，不然等於退了一筆不存在的稅。
-const DUTY_FREE_CHANNELS=new Set(["新世界免稅店"]);
+const DUTY_FREE_CHANNELS=new Set(["新世界免稅店","新羅免稅店","樂天免稅店"]);
 window.isDutyFreeChannel=function(ch){
   if(!ch)return false;
   return String(ch).split("、").some(c=>DUTY_FREE_CHANNELS.has(c.trim()));
@@ -2942,7 +2956,10 @@ window.openModal=function(id,data){
       document.getElementById("ep-price").value=data.finalPrice||0;
       document.getElementById("ep-price").dataset.manual="";
       document.getElementById("ep-twprice").value=data.twPrice||"";
-      document.getElementById("ep-rival").value=data.rivalPrice||"";
+      window.G.epRivalList=Array.isArray(data.rivalPrices)&&data.rivalPrices.length
+        ?data.rivalPrices.map(r=>({name:r.name||"",price:r.price}))
+        :(data.rivalPrice>0?[{name:"",price:data.rivalPrice}]:[]);
+      epRenderRivals();
       window.G.epSpecsList=[...(data.specs||[])];
       window.G.epSpecImages=(window.G.epSpecsList||[]).map((s,i)=>(data.specImages||[])[i]||"");
       epRenderSpecs();
@@ -3590,6 +3607,58 @@ window.epGenerateColorSizeSpecs=function(){
   epRenderSpecs();
   showToast(`已產生 ${added} 筆規格組合`,"success");
 };
+// ── 同行參考價：可新增多筆（不同代購），格式「名稱 價格」或單純「價格」───────
+function parseRivalInput(val){
+  val=(val||"").trim();
+  if(!val)return null;
+  const m=val.match(/^(.*?)\s*([0-9]+(?:\.[0-9]+)?)\s*$/);
+  if(!m)return null;
+  const price=parseFloat(m[2]);
+  if(!price||price<=0)return null;
+  return{name:m[1].trim(),price};
+}
+function renderRivalChips(list,removeFn){
+  if(!list||!list.length)return"";
+  return list.map((r,i)=>{
+    const label=r.name?`${String(r.name).replace(/</g,"&lt;")} NT$${r.price}`:`NT$${r.price}`;
+    return `<span style="display:inline-flex;align-items:center;gap:5px;background:white;border:1px solid #D8C4A0;border-radius:99px;padding:4px 6px 4px 10px;font-size:12px;color:#3D2010">${label}<button type="button" onclick="${removeFn}(${i})" style="background:#F5EDE0;border:none;border-radius:50%;width:16px;height:16px;font-size:10px;color:#9C7A5A;cursor:pointer;line-height:1;padding:0">×</button></span>`;
+  }).join("");
+}
+window.calcAddRival=function(val){
+  const parsed=parseRivalInput(val);
+  if(!parsed){showToast("請輸入正確的價格，例如「小美代購 149」或「149」","error");return;}
+  window.G.calcRivalList=window.G.calcRivalList||[];
+  window.G.calcRivalList.push(parsed);
+  window.calcRenderRivals();
+  if(typeof calcUpdate==="function")calcUpdate();
+};
+window.calcRemoveRival=function(idx){
+  (window.G.calcRivalList||[]).splice(idx,1);
+  window.calcRenderRivals();
+  if(typeof calcUpdate==="function")calcUpdate();
+};
+window.calcRenderRivals=function(){
+  const box=document.getElementById("c-rival-chips");
+  if(box)box.innerHTML=renderRivalChips(window.G.calcRivalList,"calcRemoveRival");
+};
+window.epAddRival=function(val){
+  const parsed=parseRivalInput(val);
+  if(!parsed){showToast("請輸入正確的價格，例如「小美代購 149」或「149」","error");return;}
+  window.G.epRivalList=window.G.epRivalList||[];
+  window.G.epRivalList.push(parsed);
+  window.epRenderRivals();
+  if(typeof epRivalCheck==="function")epRivalCheck();
+};
+window.epRemoveRival=function(idx){
+  (window.G.epRivalList||[]).splice(idx,1);
+  window.epRenderRivals();
+  if(typeof epRivalCheck==="function")epRivalCheck();
+};
+window.epRenderRivals=function(){
+  const box=document.getElementById("ep-rival-chips");
+  if(box)box.innerHTML=renderRivalChips(window.G.epRivalList,"epRemoveRival");
+};
+
 window.epAddSpec=function(val){
   val=(val||"").trim();
   if(!val)return;
@@ -4094,15 +4163,17 @@ window.calcUpdate=function(){
       else{if(lbl)lbl.textContent="貴";saveEl.textContent=`NT$ ${Math.abs(save).toLocaleString()}`;saveEl.style.color="#C0392B";}
       twRow.style.display="flex";
     } else if(twRow){twRow.style.display="none";}
-    // 同行比較
-    const rivalPrice=parseFloat(document.getElementById("c-rival")?.value)||0;
+    // 同行比較（可能有多筆，取最低價比較）
+    const calcRivalList=window.G.calcRivalList||[];
+    const rivalPrice=calcRivalList.length?Math.min(...calcRivalList.map(r=>r.price)):0;
     const rivalRow=document.getElementById("r-rival-row");
     if(rivalPrice>0&&rivalRow){
       const diff=final-rivalPrice;
+      const rivalLabel=calcRivalList.length>1?"最低同行":"同行";
       let bg,border,color,msg;
-      if(diff===0){bg="#F0FDF4";border="#86EFAC";color="#15803D";msg="✅ 與同行持平";}
-      else if(diff>0){bg="#FEF9EC";border="#FCD34D";color="#92400E";msg=`⚠️ 高於同行 NT$${diff}`;}
-      else{bg="#FFF1F2";border="#FDA4AF";color="#9F1239";msg=`👀 低於同行 NT$${Math.abs(diff)}`;}
+      if(diff===0){bg="#F0FDF4";border="#86EFAC";color="#15803D";msg=`✅ 與${rivalLabel}持平`;}
+      else if(diff>0){bg="#FEF9EC";border="#FCD34D";color="#92400E";msg=`⚠️ 高於${rivalLabel} NT$${diff}`;}
+      else{bg="#FFF1F2";border="#FDA4AF";color="#9F1239";msg=`👀 低於${rivalLabel} NT$${Math.abs(diff)}`;}
       rivalRow.style.cssText=`display:flex;background:${bg};border:1px solid ${border};border-radius:10px;padding:10px 14px;margin-bottom:8px;align-items:center;gap:8px;flex-wrap:wrap`;
       document.getElementById("r-rival-price").style.color=color;
       document.getElementById("r-rival-price").textContent=`NT$ ${rivalPrice}`;
@@ -4306,14 +4377,17 @@ window.saveProduct=async function(){
   const margin=final>0?Math.round((profit/final)*100):0;
   const id=genId(cat,cur);
   const catObj=CATS.find(x=>x.key===cat);
-  const rivalPrice=parseFloat(document.getElementById("c-rival")?.value)||0;
+  const calcRivalListSave=window.G.calcRivalList||[];
+  const rivalPrice=calcRivalListSave.length?Math.min(...calcRivalListSave.map(r=>r.price)):0;
+  const rivalPrices=calcRivalListSave;
   const url=cGetAllUrls();
   const specs=(document.getElementById("c-specs")?.value.trim()||"").split(",").map(s=>s.trim()).filter(Boolean);
   const photo=window.G.calcPhoto||"";
   const photoPos=photo?(window.G.calcPhotoPos||{x:50,y:50}):{x:50,y:50};
   const photoPosCss=`${photoPos.x}% ${photoPos.y}%`;
-  await fbSet("products",id,{name:name.trim(),catKey:cat,category:catObj?.label||"其他",emoji:catObj?.emoji||"📦",currency:cur,currencySymbol:CURR[cur]?.symbol||"₩",foreignAmount:amt,originalAmount:window.G.calcPromoOriginal||amt,paymentMethod:window.G.calcPaymentMethod||"card",beforeTax,afterTax,suggested:sugg,finalPrice:final,profit,margin,twPrice,rivalPrice,url,specs,photo,photoPos:photoPosCss,flags,channel:window.G.calcChannel||"",createdAt:Date.now()});
-  ["c-name","c-amt","c-custom","c-twprice","c-rival","c-specs","c-url"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});document.querySelectorAll(".c-url-extra").forEach(el=>el.parentElement.remove());
+  await fbSet("products",id,{name:name.trim(),catKey:cat,category:catObj?.label||"其他",emoji:catObj?.emoji||"📦",currency:cur,currencySymbol:CURR[cur]?.symbol||"₩",foreignAmount:amt,originalAmount:window.G.calcPromoOriginal||amt,paymentMethod:window.G.calcPaymentMethod||"card",beforeTax,afterTax,suggested:sugg,finalPrice:final,profit,margin,twPrice,rivalPrice,rivalPrices,url,specs,photo,photoPos:photoPosCss,flags,channel:window.G.calcChannel||"",createdAt:Date.now()});
+  ["c-name","c-amt","c-custom","c-twprice","c-specs","c-url"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});document.querySelectorAll(".c-url-extra").forEach(el=>el.parentElement.remove());
+  window.G.calcRivalList=[];window.calcRenderRivals();
   ["flag-cold","flag-coldHigh","flag-heavy","flag-large","flag-limited"].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=false;});
   window.G.calcChannel="";
   window.G.calcPaymentMethod="card";
@@ -4497,7 +4571,8 @@ window.epUrlPreview=function(){
 
 window.epRivalCheck=function(){
   const msgEl=document.getElementById("ep-rival-msg");
-  const rival=parseFloat(document.getElementById("ep-rival")?.value)||0;
+  const epRivalList=window.G.epRivalList||[];
+  const rival=epRivalList.length?Math.min(...epRivalList.map(r=>r.price)):0;
   const price=parseFloat(document.getElementById("ep-price")?.value)||0;
   // 更新利潤（ep-after 隱藏版 或 ep-cost 顯示版都試）
   const afterEl=document.getElementById("ep-after");
@@ -4514,10 +4589,11 @@ window.epRivalCheck=function(){
   if(!msgEl)return;
   if(rival>0&&price>0){
     const diff=price-rival;
+    const rivalLabel=epRivalList.length>1?"最低同行":"同行";
     let bg,border,color,msg;
-    if(diff===0){bg="#F0FDF4";border="#86EFAC";color="#15803D";msg="✅ 與同行持平（NT$"+rival+"）";}
-    else if(diff>0){bg="#FEF9EC";border="#FCD34D";color="#92400E";msg="⚠️ 高於同行 NT$"+diff+"（同行 NT$"+rival+"）";}
-    else{bg="#FFF1F2";border="#FDA4AF";color="#9F1239";msg="👀 低於同行 NT$"+Math.abs(diff)+"（同行 NT$"+rival+"）";}
+    if(diff===0){bg="#F0FDF4";border="#86EFAC";color="#15803D";msg=`✅ 與${rivalLabel}持平（NT$${rival}）`;}
+    else if(diff>0){bg="#FEF9EC";border="#FCD34D";color="#92400E";msg=`⚠️ 高於${rivalLabel} NT$${diff}（${rivalLabel} NT$${rival}）`;}
+    else{bg="#FFF1F2";border="#FDA4AF";color="#9F1239";msg=`👀 低於${rivalLabel} NT$${Math.abs(diff)}（${rivalLabel} NT$${rival}）`;}
     msgEl.style.cssText=`display:block;background:${bg};border:1px solid ${border};border-radius:10px;padding:8px 14px;margin-bottom:10px;font-size:12px;font-weight:700;color:${color}`;
     msgEl.textContent=msg;
   } else {
@@ -4562,7 +4638,6 @@ window.epSelectPaymentMethod=function(pm){
 window.epForeignChange=function(){
   const m=window.G.activeModalData;if(!m)return;
   const amt=parseFloat(document.getElementById("ep-foreign")?.value)||0;
-  const rivalPrice=parseFloat(document.getElementById("ep-rival")?.value)||0;
   const twPrice=parseFloat(document.getElementById("ep-twprice")?.value)||0;
   const cat=window.G.editCatKey||m.catKey||"food";
   updateEpCalc(amt,window.G.editCurrency||m.currency||"KRW",cat,twPrice,epGetFlags());
@@ -4639,7 +4714,9 @@ window.saveEditProd=async function(){
   const name=document.getElementById("ep-name")?.value.trim();
   const fa=parseFloat(document.getElementById("ep-foreign")?.value)||m.foreignAmount;
   const price=parseFloat(document.getElementById("ep-price")?.value)||0;
-  const rivalPrice=parseFloat(document.getElementById("ep-rival")?.value)||0;
+  const epRivalListSave=window.G.epRivalList||[];
+  const rivalPrice=epRivalListSave.length?Math.min(...epRivalListSave.map(r=>r.price)):0;
+  const rivalPrices=epRivalListSave;
   const twPrice=parseFloat(document.getElementById("ep-twprice")?.value)||0;
   const url=epGetAllUrls().join("\n");
   if(!name){showToast("名稱不能空白","error");return;}
@@ -4673,7 +4750,7 @@ window.saveEditProd=async function(){
   const promoDivisor=window.G.epPromoDivisor||null;
   const promoPct=window.G.epPromoPct||null;
   const promoGroup=document.getElementById("ep-promo-group")?.value.trim()||"";
-  const upd={name,currency:editCur,currencySymbol:CURR[editCur]?.symbol||"₩",paymentMethod:editPm,foreignAmount:fa,originalAmount:originalAmt,promoDivisor,promoPct,promoGroup,beforeTax,afterTax,finalPrice:price,profit,margin,twPrice,rivalPrice,url,specs:newSpecs,specImages:newSpecImages,aliases:newAliases,note:newNote,catKey:newCatKey,category:newCatObj.label,emoji:newCatObj.emoji,flags:newFlags,channel:window.G.editChannel||""};
+  const upd={name,currency:editCur,currencySymbol:CURR[editCur]?.symbol||"₩",paymentMethod:editPm,foreignAmount:fa,originalAmount:originalAmt,promoDivisor,promoPct,promoGroup,beforeTax,afterTax,finalPrice:price,profit,margin,twPrice,rivalPrice,rivalPrices,url,specs:newSpecs,specImages:newSpecImages,aliases:newAliases,note:newNote,catKey:newCatKey,category:newCatObj.label,emoji:newCatObj.emoji,flags:newFlags,channel:window.G.editChannel||""};
   if(window.G.editPhoto===null){/* 不動圖片 */}
   else if(window.G.editPhoto===""){upd.photo="";upd.photoPos="50% 50%";}
   else{
@@ -7914,7 +7991,19 @@ window.renderList=function(){
             <div style="font-size:18px;font-weight:900;color:#F4845F">NT$ ${p.finalPrice.toLocaleString()}</div>
             ${p.twPrice>0?(()=>{const diff=p.twPrice-p.finalPrice;return diff>=0?`<div style="font-size:10px;color:#4338CA;font-weight:700">台灣 NT$${p.twPrice.toLocaleString()} (省${diff.toLocaleString()})</div>`:`<div style="font-size:10px;color:#C0392B;font-weight:700">台灣 NT$${p.twPrice.toLocaleString()} (貴${Math.abs(diff).toLocaleString()})</div>`;})():""}
           </div>
-          ${p.rivalPrice>0?(()=>{const diff=p.finalPrice-p.rivalPrice;if(diff===0)return`<div style="font-size:10px;font-weight:700;color:#15803D;margin-top:3px">✅ 與同行持平（NT$${p.rivalPrice}）</div>`;if(diff>0)return`<div style="font-size:10px;font-weight:700;color:#92400E;margin-top:3px">⚠️ 高於同行 NT$${diff}（同行 NT$${p.rivalPrice}）</div>`;return`<div style="font-size:10px;font-weight:700;color:#9F1239;margin-top:3px">👀 低於同行 NT$${Math.abs(diff)}（同行 NT$${p.rivalPrice}）</div>`;})():""}
+          ${(()=>{
+            const list=Array.isArray(p.rivalPrices)&&p.rivalPrices.length?p.rivalPrices:(p.rivalPrice>0?[{name:"",price:p.rivalPrice}]:[]);
+            if(!list.length)return"";
+            const min=Math.min(...list.map(r=>r.price));
+            const diff=p.finalPrice-min;
+            const rivalLabel=list.length>1?"最低同行":"同行";
+            const listStr=list.map(r=>r.name?`${r.name} NT$${r.price}`:`NT$${r.price}`).join("、");
+            let color,msg;
+            if(diff===0){color="#15803D";msg=`✅ 與${rivalLabel}持平`;}
+            else if(diff>0){color="#92400E";msg=`⚠️ 高於${rivalLabel} NT$${diff}`;}
+            else{color="#9F1239";msg=`👀 低於${rivalLabel} NT$${Math.abs(diff)}`;}
+            return `<div style="font-size:10px;font-weight:700;color:${color};margin-top:3px">${msg}（${listStr}）</div>`;
+          })()}
           ${costChanged?`<div style="font-size:9px;color:#E07B39;font-weight:700;margin-top:2px">⚡ 匯率已變動</div>`:""}
         </div>
       </div>
