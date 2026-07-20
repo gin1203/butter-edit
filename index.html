@@ -9895,8 +9895,8 @@ window.openSendQuote=async function(oid){
   const productName=cleanProductName(prod?.name||o.productName||"商品");
   const priceLines=o.qty>1
     ?`數量：${o.qty}\n💰 單價：NT$${price.toLocaleString()}\n總金額：NT$${(price*o.qty).toLocaleString()}`
-    :`💰 報價：NT$${price.toLocaleString()}`;
-  msgEl.value=`您好，關於您詢問的商品報價：\n\n📦 ${productName}${o.spec?`（${o.spec}）`:""}\n${priceLines}\n\n請問要幫您登記訂購嗎？😊`;
+    :`💰 價格：NT$${price.toLocaleString()}`;
+  msgEl.value=`📦 ${productName}${o.spec?`（${o.spec}）`:""}\n${priceLines}\n\n請問要幫您登記訂購嗎？（直接告知數量即可）😊`;
   pickerEl.style.display="none";pickerEl.innerHTML="";
   statusEl.textContent="🔍 查詢中...";statusEl.style.color="#9C7A5A";
   sendBtn.disabled=true;sendBtn.style.opacity="0.5";
