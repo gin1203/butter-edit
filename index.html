@@ -142,7 +142,7 @@ body.live-mode .hide-live { display: none !important; }
         </div>
       </div>
       <div style="position:relative">
-        <input type="text" inputmode="numeric" id="c-amt" oninput="daisoAutoSelectBest();calcUpdate()" placeholder="請輸入金額" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:12px 40px 12px 14px;font-size:20px;font-weight:700;outline:none"/>
+        <input type="text" inputmode="decimal" id="c-amt" oninput="daisoAutoSelectBest();calcUpdate()" placeholder="請輸入金額" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:12px 40px 12px 14px;font-size:20px;font-weight:700;outline:none"/>
         <button onclick="document.getElementById('c-amt').value='';const cc=document.getElementById('c-custom');if(cc)cc.value='';calcUpdate();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
       </div>
     </div>
@@ -302,7 +302,7 @@ body.live-mode .hide-live { display: none !important; }
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
         <div>
           <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">🏷️ 台灣官方售價（NT$）</label>
-          <input type="text" inputmode="numeric" id="c-twprice" oninput="calcUpdate()" placeholder="例如：4900" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
+          <input type="text" inputmode="decimal" id="c-twprice" oninput="calcUpdate()" placeholder="例如：4900" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
         </div>
         <div>
           <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">👥 同行售價（NT$）</label>
@@ -595,11 +595,11 @@ body.live-mode .hide-live { display: none !important; }
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
       <div>
         <label style="display:block;font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:4px">原幣售價（韓圜/日圓/泰銖）</label>
-        <input type="text" inputmode="numeric" id="ps-foreign" placeholder="例如：309000" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;font-size:13px;outline:none"/>
+        <input type="text" inputmode="decimal" id="ps-foreign" placeholder="例如：309000" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;font-size:13px;outline:none"/>
       </div>
       <div>
         <label style="display:block;font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:4px">台灣官方售價（NT$）</label>
-        <input type="text" inputmode="numeric" id="ps-twprice" placeholder="例如：9080" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;font-size:13px;outline:none"/>
+        <input type="text" inputmode="decimal" id="ps-twprice" placeholder="例如：9080" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;font-size:13px;outline:none"/>
       </div>
     </div>
     <button onclick="applyPriceToCalc()" style="width:100%;background:#5C3A1E;color:#F5E6C8;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">💰 帶入定價換算頁</button>
@@ -647,7 +647,7 @@ body.live-mode .hide-live { display: none !important; }
       </div>
     </div>
     <!-- 重設密碼 -->
-    <div style="background:#FAF8F5;border-radius:10px;padding:12px">
+    <div style="background:#FAF8F5;border-radius:10px;padding:12px;margin-bottom:10px">
       <div style="font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:8px">🔑 重設他人密碼</div>
       <div style="margin-bottom:6px">
         <input type="text" id="reset-username" placeholder="帳號名稱" style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:13px;outline:none;box-sizing:border-box"/>
@@ -657,6 +657,8 @@ body.live-mode .hide-live { display: none !important; }
         <button onclick="resetAccountPwd()" style="flex-shrink:0;background:#C5A880;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer">重設</button>
       </div>
     </div>
+    <!-- 診斷殭屍帳號 -->
+    <button onclick="checkAccountStatus()" style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:10px;font-size:12px;font-weight:700;color:#9C7A5A;cursor:pointer">🔍 檢查帳號狀態（登入/新增卡住時用這個診斷）</button>
   </div>
 
   <!-- 子分類管理 -->
@@ -972,7 +974,7 @@ body.live-mode .hide-live { display: none !important; }
       <span style="font-size:10px;color:#B0906A;flex:1;text-align:right">再按一次取消</span>
     </div>
     <div style="position:relative;margin-bottom:6px">
-      <input type="text" inputmode="numeric" id="ep-foreign" oninput="window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;window.G.epPromoPct=null;epForeignChange();epUpdatePromoBadge();" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 40px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
+      <input type="text" inputmode="decimal" id="ep-foreign" oninput="window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;window.G.epPromoPct=null;epForeignChange();epUpdatePromoBadge();" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 40px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
       <button type="button" onmousedown="event.preventDefault()" onclick="event.stopPropagation();document.getElementById('ep-foreign').value='';window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;window.G.epPromoPct=null;const pr=document.getElementById('ep-price');if(pr){pr.value='';delete pr.dataset.manual;}epForeignChange();epUpdatePromoBadge();document.getElementById('ep-foreign').blur();" style="position:absolute;right:0;top:0;bottom:0;width:40px;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer;color:#C5A880;font-size:18px;padding:0;line-height:1">✕</button>
     </div>
     <!-- 4b. 活動群組（選填，不同品名但同一波活動要一起混搭時填一樣的名字） -->
@@ -1005,7 +1007,7 @@ body.live-mode .hide-live { display: none !important; }
       <div style="display:flex;align-items:center;gap:10px">
         <div id="ep-final-display" style="font-size:16px;font-weight:900;color:#C0392B;min-width:80px">-</div>
         <div style="flex:1;position:relative">
-          <input type="text" inputmode="numeric" id="ep-price" onfocus="this.dataset.manual='1'" oninput="epRivalCheck()" placeholder="✏️ 自訂金額" style="width:100%;background:white;border:1.5px solid #FF6B6B;border-radius:8px;padding:8px 36px 8px 12px;font-size:16px;font-weight:700;color:#3D2010;outline:none;box-sizing:border-box"/>
+          <input type="text" inputmode="decimal" id="ep-price" onfocus="this.dataset.manual='1'" oninput="epRivalCheck()" placeholder="✏️ 自訂金額" style="width:100%;background:white;border:1.5px solid #FF6B6B;border-radius:8px;padding:8px 36px 8px 12px;font-size:16px;font-weight:700;color:#3D2010;outline:none;box-sizing:border-box"/>
           <button type="button" onmousedown="event.preventDefault()" onclick="event.stopPropagation();const el=document.getElementById('ep-price');if(el){el.value='';el.dataset.manual='';epForeignChange();epRivalCheck();el.blur();}" style="position:absolute;right:2px;top:0;bottom:0;width:36px;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer;color:#FF6B6B;font-size:18px;line-height:1;padding:0">✕</button>
         </div>
       </div>
@@ -1053,7 +1055,7 @@ body.live-mode .hide-live { display: none !important; }
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
       <div>
         <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">🏷️ 台灣官方售價 (NT$)</label>
-        <input type="text" inputmode="numeric" id="ep-twprice" placeholder="例如：4900" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none"/>
+        <input type="text" inputmode="decimal" id="ep-twprice" placeholder="例如：4900" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none"/>
       </div>
       <div>
         <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">👥 同行參考價 (NT$)</label>
@@ -1090,6 +1092,22 @@ body.live-mode .hide-live { display: none !important; }
           <div style="font-size:10px;color:#9C7A5A;margin-bottom:3px">📦 物流單號</div>
           <input type="text" id="eo-shared-tracking" placeholder="選填" style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:13px;outline:none"/>
         </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:flex-end">
+        <div style="flex:1">
+          <div style="font-size:10px;color:#9C7A5A;margin-bottom:3px">🔖 打幾折（直接改這批的售價）</div>
+          <input type="text" inputmode="decimal" id="eo-batch-percent" placeholder="例如9＝9折" style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:13px;outline:none;box-sizing:border-box"/>
+        </div>
+        <button onclick="eoApplyBatchPercent()" style="flex-shrink:0;background:#FFE0B2;border:1px solid #FFB74D;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;color:#E65100;cursor:pointer">套用折數</button>
+        <label style="flex-shrink:0;display:flex;align-items:center;gap:5px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;cursor:pointer">
+          <input type="checkbox" id="eo-free-shipping" onchange="document.getElementById('eo-shipping-cost-wrap').style.display=this.checked?'flex':'none'" style="width:15px;height:15px"/>
+          <span style="font-size:12px;font-weight:700;color:#5C3A1E;white-space:nowrap">🚚 免運</span>
+        </label>
+      </div>
+      <div id="eo-shipping-cost-wrap" style="display:none;align-items:center;gap:6px;margin-top:6px">
+        <span style="font-size:11px;color:#9C7A5A;white-space:nowrap">我要吸收的運費</span>
+        <input type="text" inputmode="numeric" id="eo-shipping-cost" value="38" style="width:70px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:5px 8px;font-size:12px;outline:none"/>
+        <span style="font-size:11px;color:#9C7A5A">元（會直接算進成本，反映在利潤上）</span>
       </div>
       <div id="eo-discount-preview" style="display:none;margin-top:8px;background:#FFF9F0;border:1px solid #FCD34D;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;color:#92400E"></div>
     </div>
@@ -1139,7 +1157,7 @@ body.live-mode .hide-live { display: none !important; }
             <option value="add">售價全部加 NT$</option>
             <option value="sub">售價全部減 NT$</option>
           </select>
-          <input type="text" inputmode="numeric" id="be-price" placeholder="金額" oninput="previewBatchQuick()" style="width:90px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;font-size:12px;outline:none"/>
+          <input type="text" inputmode="decimal" id="be-price" placeholder="金額" oninput="previewBatchQuick()" style="width:90px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;font-size:12px;outline:none"/>
           <button onclick="applyBatchQuick()" style="background:#5C3A1E;color:#F5E6C8;border:none;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer">套用</button>
         </div>
         <div id="be-price-preview" style="font-size:11px;color:#9C7A5A;margin:-4px 0 8px 2px"></div>
@@ -1250,7 +1268,7 @@ body.live-mode .hide-live { display: none !important; }
         </div>
         <!-- 韓幣 -->
         <div style="position:relative;margin-bottom:10px">
-          <input type="text" inputmode="numeric" id="qa-live-amt" placeholder="韓幣金額 ₩" oninput="qaLiveCalc()" style="width:100%;background:white;border:1.5px solid #F59E0B;border-radius:10px;padding:12px 150px 12px 14px;font-size:20px;font-weight:900;outline:none;box-sizing:border-box"/>
+          <input type="text" inputmode="decimal" id="qa-live-amt" placeholder="韓幣金額 ₩" oninput="qaLiveCalc()" style="width:100%;background:white;border:1.5px solid #F59E0B;border-radius:10px;padding:12px 150px 12px 14px;font-size:20px;font-weight:900;outline:none;box-sizing:border-box"/>
           <div style="position:absolute;right:8px;top:50%;transform:translateY(-50%);display:flex;gap:3px;align-items:center">
             <button onclick="qaLiveApplyPromo(2)" style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:6px;padding:3px 6px;font-size:10px;font-weight:700;color:#92400E;cursor:pointer">1+1</button>
             <button onclick="qaLiveApplyPromo(3)" style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:6px;padding:3px 6px;font-size:10px;font-weight:700;color:#166534;cursor:pointer">2+1</button>
@@ -1281,7 +1299,7 @@ body.live-mode .hide-live { display: none !important; }
         </div>
         <!-- 自訂售價 -->
         <div style="position:relative;margin-bottom:12px">
-          <input type="text" inputmode="numeric" id="qa-live-custom" placeholder="✏️ 自訂售價" oninput="window.G.qaLiveCustomPrice=parseFloat(this.value)||null;qaLiveCalc();" style="width:100%;background:white;border:1.5px solid #F1948A;border-radius:10px;padding:10px 36px 10px 14px;font-size:15px;font-weight:700;color:#3D2010;outline:none;box-sizing:border-box"/>
+          <input type="text" inputmode="decimal" id="qa-live-custom" placeholder="✏️ 自訂售價" oninput="window.G.qaLiveCustomPrice=parseFloat(this.value)||null;qaLiveCalc();" style="width:100%;background:white;border:1.5px solid #F1948A;border-radius:10px;padding:10px 36px 10px 14px;font-size:15px;font-weight:700;color:#3D2010;outline:none;box-sizing:border-box"/>
           <button onclick="document.getElementById('qa-live-custom').value='';window.G.qaLiveCustomPrice=null;qaLiveCalc();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#F1948A;font-size:16px">✕</button>
         </div>
         <!-- 上架按鈕 -->
@@ -1386,7 +1404,7 @@ body.live-mode .hide-live { display: none !important; }
         <div id="qa-price-hint-profit" style="font-size:9px;font-weight:700;margin-top:2px"></div>
       </div>
       <div style="position:relative;display:flex;align-items:stretch">
-        <input type="text" inputmode="numeric" id="qa-amt" placeholder="例如：12000" oninput="window.G.qaPromoOriginal=null;window.G.qaPromoDivisor=null;window.G.qaPromoPct=null;qaDaisoAutoSelectBest();qaCalcPrice()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:11px 40px 11px 14px;font-size:18px;font-weight:700;outline:none"/>
+        <input type="text" inputmode="decimal" id="qa-amt" placeholder="例如：12000" oninput="window.G.qaPromoOriginal=null;window.G.qaPromoDivisor=null;window.G.qaPromoPct=null;qaDaisoAutoSelectBest();qaCalcPrice()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:11px 40px 11px 14px;font-size:18px;font-weight:700;outline:none"/>
         <button onclick="document.getElementById('qa-amt').value='';window.G.qaSelectedPrice=null;window.G.qaPromoOriginal=null;window.G.qaPromoDivisor=null;window.G.qaPromoPct=null;qaCalcPrice();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
       </div>
     </div>
@@ -1394,7 +1412,7 @@ body.live-mode .hide-live { display: none !important; }
     <div id="qa-quick-btns" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px"></div>
     <!-- 自訂售價獨立一列 -->
     <div style="position:relative;margin-bottom:12px">
-      <input type="text" inputmode="numeric" id="qa-custom" placeholder="✏️ 自訂售價" oninput="window.G.qaSelectedPrice=parseFloat(this.value)||null;qaCalcPrice();" style="width:100%;background:#FFF5F5;border:1.5px solid #FFAAAA;border-radius:10px;padding:10px 40px 10px 14px;font-size:15px;font-weight:700;color:#3D2010;outline:none;box-sizing:border-box"/>
+      <input type="text" inputmode="decimal" id="qa-custom" placeholder="✏️ 自訂售價" oninput="window.G.qaSelectedPrice=parseFloat(this.value)||null;qaCalcPrice();" style="width:100%;background:#FFF5F5;border:1.5px solid #FFAAAA;border-radius:10px;padding:10px 40px 10px 14px;font-size:15px;font-weight:700;color:#3D2010;outline:none;box-sizing:border-box"/>
       <button onclick="document.getElementById('qa-custom').value='';window.G.qaSelectedPrice=null;qaCalcPrice();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#FFAAAA;font-size:16px;line-height:1;padding:0">✕</button>
     </div>
 
@@ -5629,6 +5647,20 @@ window.eoPendingQtyAdj=function(i,delta){
   eoRenderPending();
 };
 
+// 打幾折：直接把目前畫面上這批訂單的售價都乘上折數重新計算，不是像折扣(NT$)那樣只從總額扣一筆固定金額
+window.eoApplyBatchPercent=function(){
+  const pctInput=parseFloat(document.getElementById("eo-batch-percent")?.value);
+  if(isNaN(pctInput)||pctInput<=0||pctInput>10){showToast("折數請輸入0~10之間的數字，例如9代表9折","error");return;}
+  const factor=pctInput/10;
+  const rows=document.querySelectorAll("#eo-order-list .eo-price");
+  if(!rows.length){showToast("沒有可以套用的訂單","warning");return;}
+  rows.forEach(input=>{
+    const cur=parseFloat(input.value)||0;
+    input.value=Math.round(cur*factor);
+  });
+  eoUpdateDiscountPreview();
+  showToast(`已把 ${rows.length} 筆訂單的售價套用 ${pctInput}折，記得按下面「儲存全部修改」才會真的存檔`,"success");
+};
 window.eoUpdateDiscountPreview=function(){
   const disc=parseFloat(document.getElementById("eo-shared-discount")?.value)||0;
   const preview=document.getElementById("eo-discount-preview");
@@ -5653,6 +5685,8 @@ window.saveAllEditOrders=async function(){
   const sharedDeposit=parseFloat(document.getElementById("eo-shared-deposit")?.value)||0;
   const sharedTracking=document.getElementById("eo-shared-tracking")?.value.trim()||"";
   const sharedDiscount=parseFloat(document.getElementById("eo-shared-discount")?.value)||0;
+  const freeShipping=document.getElementById("eo-free-shipping")?.checked||false;
+  const shippingCost=freeShipping?(parseFloat(document.getElementById("eo-shipping-cost")?.value)||0):0;
   let count=0;
   const rowArr=[...rows];
   for(let i=0;i<rowArr.length;i++){
@@ -5661,10 +5695,9 @@ window.saveAllEditOrders=async function(){
     const qty=parseInt(row.querySelector(".eo-qty")?.value)||1;
     const price=parseFloat(row.querySelector(".eo-price")?.value)||0;
     const discountNote=row.querySelector(".eo-discount-note")?.value.trim()||"";
-    // 折扣只記在第一筆
+    // 折扣、免運都只記在第一筆，避免同一件事在同一批訂單裡被記錄了好幾次
     const upd={qty,discountPrice:price,total:price*qty,depositAmt:sharedDeposit,tracking:sharedTracking,discountNote};
-    if(i===0&&sharedDiscount>0){upd.sharedDiscount=sharedDiscount;}
-    else if(i===0){upd.sharedDiscount=0;}
+    if(i===0){upd.sharedDiscount=sharedDiscount>0?sharedDiscount:0;upd.freeShipping=freeShipping;upd.shippingCost=shippingCost;}
     if(sharedDeposit>0){
       const o=window.G.orders.find(x=>x.id===oid);
       if(o&&o.status==="pending")upd.status="deposit";
@@ -7113,30 +7146,69 @@ window.createAccount=async function(){
   }
 };
 
-// 重設密碼（用 Firebase Admin REST API）
+// 重設密碼（透過 Worker 的管理員權限功能，真正能重設任何人的密碼，不需要對方的舊密碼）
 window.resetAccountPwd=async function(){
   const username=document.getElementById("reset-username")?.value.trim();
   const newPwd=document.getElementById("reset-password")?.value;
   if(!username||!newPwd||newPwd.length<6){showToast("請填帳號名稱及新密碼（6位以上）","warning");return;}
   // 找到這個 username 的 role 記錄
   const roleDoc=window.G.roles.find(r=>r.username===username);
-  if(!roleDoc){showToast("找不到帳號「"+username+"」","error");return;}
-  // 用 Firebase Admin REST API 重設密碼
+  if(!roleDoc){showToast("找不到帳號「"+username+"」，如果這個帳號登入/建立都異常，可能是殭屍帳號，用下面「檢查帳號狀態」確認","error");return;}
   try{
-    const apiKey="AIzaSyAt6Te8T9DggqFmhBzZz5iEKIXlPH11DpE";
-    const res=await fetch("https://identitytoolkit.googleapis.com/v1/accounts:update?key="+apiKey,{
+    const resp=await fetch("https://butter-ai.kueigin.workers.dev",{
       method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({localId:roleDoc.uid,password:newPwd})
+      headers:{"Content-Type":"application/json","X-Service":"admin-reset-password"},
+      body:JSON.stringify({uid:roleDoc.uid,password:newPwd}),
     });
-    const data=await res.json();
-    if(data.error){throw new Error(data.error.message);}
-    document.getElementById("reset-username").value="";
-    document.getElementById("reset-password").value="";
-    showToast("帳號「"+username+"」密碼已重設！");
+    const data=await resp.json();
+    if(data.success){
+      document.getElementById("reset-username").value="";
+      document.getElementById("reset-password").value="";
+      showToast("帳號「"+username+"」密碼已重設！");
+    } else {
+      throw new Error(JSON.stringify(data.error||data));
+    }
   }catch(e){showToast("重設失敗："+e.message,"error");}
 };
-
+// 真正刪除帳號：連底層登入帳號一起刪掉，不會變成「登入說沒有、新增又說已存在」的殭屍帳號
+window.adminDeleteAccount=async function(uid,username){
+  if(!confirm(`確定要刪除帳號「${username}」嗎？這會連同他的登入資格一起刪除，之後可以用同樣的名稱重新建立。`))return;
+  try{
+    const resp=await fetch("https://butter-ai.kueigin.workers.dev",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","X-Service":"admin-delete-account"},
+      body:JSON.stringify({uid}),
+    });
+    const data=await resp.json();
+    if(data.success){
+      showToast("帳號「"+username+"」已完整刪除");
+    } else {
+      throw new Error(JSON.stringify(data.error||data));
+    }
+  }catch(e){showToast("刪除失敗："+e.message,"error");}
+};
+// 檢查某個帳號名稱的底層登入帳號是否還存在，方便診斷「登入說沒有、新增又說已存在」這種殭屍帳號狀況
+window.checkAccountStatus=async function(){
+  const username=prompt("要檢查哪個帳號名稱？");
+  if(!username)return;
+  const email=usernameToEmail(username);
+  try{
+    const resp=await fetch("https://butter-ai.kueigin.workers.dev",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","X-Service":"admin-check-account"},
+      body:JSON.stringify({email}),
+    });
+    const data=await resp.json();
+    const inRoleList=window.G.roles.some(r=>r.username===username);
+    if(data.exists&&!inRoleList){
+      alert(`帳號「${username}」是殭屍帳號：底層登入帳號還在（uid: ${data.uid}），但角色清單裡沒有。\n\n這種狀況目前的重設密碼功能修不好它（角色清單裡找不到就沒辦法重設），建議直接用開發者工具幫你手動處理，或告訴我這個 uid，我可以幫你組一個刪除指令。`);
+    } else if(data.exists&&inRoleList){
+      alert(`帳號「${username}」狀態正常，登入帳號跟角色清單都有。`);
+    } else {
+      alert(`帳號「${username}」不存在，可以直接用「新增帳號」建立。`);
+    }
+  }catch(e){alert("檢查失敗："+e.message);}
+};
 function renderRoleList(){
   const el=document.getElementById("role-list");if(!el)return;
   if(window.G.role!=="owner"){el.innerHTML="";return;}
@@ -7148,7 +7220,7 @@ function renderRoleList(){
       <span style="font-size:10px;background:${r.role==="owner"?"#5C3A1E":"#E8D5B0"};color:${r.role==="owner"?"#F5E6C8":"#9C7A5A"};padding:2px 8px;border-radius:99px;font-weight:700">${r.role==="owner"?"👑 老闆":"👤 小幫手"}</span>
       <span style="font-size:13px;font-weight:700;color:#3D2010">${r.username||r.uid.substring(0,12)}</span>
     </div>
-    <button data-uid="${r.uid}" onclick="fbDel('roles',this.dataset.uid)" style="font-size:10px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:2px 8px;border-radius:6px;cursor:pointer">刪除帳號</button>
+    <button data-uid="${r.uid}" data-uname="${(r.username||'').replace(/"/g,"&quot;")}" onclick="adminDeleteAccount(this.dataset.uid,this.dataset.uname)" style="font-size:10px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:2px 8px;border-radius:6px;cursor:pointer">刪除帳號</button>
   </div>`).join("");
 }
 
@@ -7354,7 +7426,7 @@ window.renderCategoryHealth=function(){
     const rev=(o.discountPrice||o.unitPrice||0)*(o.qty||0);
     const unitCost=getOrderUnitCost(o,p);
     c.rev+=rev;
-    c.cost+=unitCost*(o.qty||0);
+    c.cost+=unitCost*(o.qty||0)+(o.shippingCost||0); // 免運吸收的運費算進成本，才會正確反映在利潤/毛利上
     c.qty+=(o.qty||0);
     const custKey=o.customerId||((o.communityName||o.buyerName||"")+"|"+(o.lineName||"")).trim().toLowerCase();
     if(custKey){
@@ -7671,7 +7743,7 @@ function updateStats(){
     const p=window.G.products.find(x=>x.id===o.productId);
     const afterTax=getOrderUnitCost(o,p);
     const price=p?.finalPrice||o.unitPrice||0;
-    tQ+=o.qty;tC+=afterTax*o.qty;tR+=price*o.qty;
+    tQ+=o.qty;tC+=afterTax*o.qty+(o.shippingCost||0);tR+=price*o.qty;
   });
   const profit=Math.round(tR-tC);
   const margin=tR>0?Math.round((profit/tR)*100):0;
@@ -7936,12 +8008,22 @@ window.openEditOrd=function(oid){
   const existingDeposit=cOrders.find(x=>x.depositAmt>0)?.depositAmt||"";
   const existingTracking=cOrders.find(x=>x.tracking)?.tracking||"";
   const existingDiscount=cOrders.find(x=>x.sharedDiscount>0)?.sharedDiscount||"";
+  const existingFreeShipping=cOrders.some(x=>x.freeShipping===true);
+  const existingShippingCost=cOrders.find(x=>x.shippingCost>0)?.shippingCost||38;
   const depEl=document.getElementById("eo-shared-deposit");
   const trkEl=document.getElementById("eo-shared-tracking");
   const discEl=document.getElementById("eo-shared-discount");
+  const fsEl=document.getElementById("eo-free-shipping");
+  const pctEl=document.getElementById("eo-batch-percent");
+  const scEl=document.getElementById("eo-shipping-cost");
+  const scWrap=document.getElementById("eo-shipping-cost-wrap");
   if(depEl)depEl.value=existingDeposit;
   if(trkEl)trkEl.value=existingTracking;
   if(discEl)discEl.value=existingDiscount;
+  if(fsEl)fsEl.checked=existingFreeShipping;
+  if(pctEl)pctEl.value="";
+  if(scEl)scEl.value=existingShippingCost;
+  if(scWrap)scWrap.style.display=existingFreeShipping?"flex":"none";
   const prevEl=document.getElementById("eo-discount-preview");
   if(prevEl)prevEl.style.display="none";
 
@@ -7971,7 +8053,7 @@ window.openEditOrd=function(oid){
         </div>
         <div>
           <div style="font-size:10px;color:#9C7A5A;margin-bottom:3px">售價 (NT$)</div>
-          <input type="text" inputmode="numeric" class="eo-price" value="${dp}" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:14px;font-weight:700;outline:none"/>
+          <input type="text" inputmode="decimal" class="eo-price" value="${dp}" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:14px;font-weight:700;outline:none"/>
         </div>
       </div>
       <div style="margin-top:6px">
@@ -8057,13 +8139,13 @@ window.batchEditProducts=function(){
       <!-- 韓幣原價 -->
       <div style="margin-bottom:8px">
         <div style="font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:4px">${CURR_obj} 原幣價格（改這裡會重新計算）</div>
-        <input type="text" inputmode="numeric" value="${fa}" data-field="foreignAmount" oninput="beUpdateCost(this,'${id}','${p.currency||"KRW"}')" style="width:100%;background:#FFF9F0;border:1px solid #FFCC80;border-radius:8px;padding:8px 10px;font-size:13px;font-weight:700;outline:none"/>
+        <input type="text" inputmode="decimal" value="${fa}" data-field="foreignAmount" oninput="beUpdateCost(this,'${id}','${p.currency||"KRW"}')" style="width:100%;background:#FFF9F0;border:1px solid #FFCC80;border-radius:8px;padding:8px 10px;font-size:13px;font-weight:700;outline:none"/>
       </div>
       <!-- 售價 -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
         <div>
           <div style="font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:4px">售價 (NT$)</div>
-          <input type="text" inputmode="numeric" value="${p.finalPrice}" data-field="price" oninput="beUpdateProfit(this,'${id}')" style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;font-size:13px;font-weight:700;color:#A08060;outline:none"/>
+          <input type="text" inputmode="decimal" value="${p.finalPrice}" data-field="price" oninput="beUpdateProfit(this,'${id}')" style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;font-size:13px;font-weight:700;color:#A08060;outline:none"/>
         </div>
         <div>
           <div style="font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:4px">台灣售價 (NT$，選填)</div>
@@ -8581,6 +8663,7 @@ window.renderCustomers=function(){
             <span style="font-weight:700;color:#3D2010">訂單 ${cO.length} 筆</span>
             ${cP>0?`<span style="font-weight:700;color:#E07B39">待對帳 ${cP}</span>`:""}
             ${cQuoteCount>0?`<span style="font-weight:700;color:#0277BD">📋待報價 ${cQuoteCount}</span>`:""}
+            ${cO.some(o=>o.freeShipping)?`<span style="font-weight:700;color:#2E7D32">🚚免運（吸收NT$${cO.find(o=>o.freeShipping)?.shippingCost||0}）</span>`:""}
             ${cT>0?`<span style="font-weight:700;color:#A08060">NT$${cT.toLocaleString()}</span>`:""}
           </div>
         </div>
@@ -8590,7 +8673,11 @@ window.renderCustomers=function(){
           const depositBtn=hasHigh?`<button data-cid="${c.id}" onclick="copyDepositOrder(this.dataset.cid)" style="font-size:11px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">複製訂金</button>`:"";
           const shopBtn=`<button data-cid="${c.id}" onclick="openShopModal(this.dataset.cid)" style="font-size:11px;background:#FFF3E0;color:#E65100;border:1px solid #FFCC80;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">🏪 開賣場</button>`;
           const colsNew=hasHigh?"1fr 1fr 1fr 1fr":"1fr 1fr 1fr";
-          return cO.length>0?`<div style="display:grid;grid-template-columns:${colsNew};gap:5px;margin-bottom:8px"><button data-oid="${cO[0].id}" onclick="openEditOrd(this.dataset.oid)" style="font-size:11px;background:#FDF6EC;color:#C5A880;border:1px solid #E8D5B0;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">修改</button>${depositBtn}<button data-cid="${c.id}" onclick="copyCustOrder(this.dataset.cid)" style="font-size:11px;background:#EAF4FD;color:#0277BD;border:1px solid #90D7FF;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">複製訂單</button>${shopBtn}</div>`:"";
+          if(cO.length>0){
+            return `<div style="display:grid;grid-template-columns:${colsNew};gap:5px;margin-bottom:8px"><button data-oid="${cO[0].id}" onclick="openEditOrd(this.dataset.oid)" style="font-size:11px;background:#FDF6EC;color:#C5A880;border:1px solid #E8D5B0;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">修改</button>${depositBtn}<button data-cid="${c.id}" onclick="copyCustOrder(this.dataset.cid)" style="font-size:11px;background:#EAF4FD;color:#0277BD;border:1px solid #90D7FF;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">複製訂單</button>${shopBtn}</div>`;
+          }
+          // 完全沒有訂單的客戶：也要能直接新增商品，不用等他有訂單明細才能用「修改」進去加東西
+          return `<button data-cid="${c.id}" data-cname="${(c.communityName||c.lineName||'').replace(/"/g,"&quot;")}" onclick="doQuickAddOrder(this.dataset.cid,this.dataset.cname)" style="width:100%;font-size:11px;background:#EBF5FB;color:#2980B9;border:1px solid #AED6F1;padding:8px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center;margin-bottom:8px">＋ 新增訂單</button>`;
         })()}
         ${rowsHtml?`<div style="display:flex;flex-direction:column;gap:4px">${rowsHtml}</div>`:""}
         ${!showAllOrders?`<button data-cid="${c.id}" onclick="expandCustOrders(this.dataset.cid)" style="width:100%;margin-top:6px;background:#FDF6EC;color:#B08968;border:1px dashed #E8D5B0;border-radius:8px;padding:6px;font-size:11px;font-weight:700;cursor:pointer">▼ 展開查看全部 ${groupKeys.length} 項</button>`:""}
@@ -8726,6 +8813,7 @@ window.renderInvoice=function(){
     const statusLabel={pending:"待訂金",deposit:"已付訂金",settled:"已付尾款",shipped:"已寄出",mixed:"狀態不一"};
     const totalDeposit=b.orders.reduce((s,o)=>s+(o.depositAmt||0),0);
     const bDisc=b.orders.find(o=>o.sharedDiscount>0)?.sharedDiscount||0;
+    const bShipping=b.orders.find(o=>o.freeShipping)?.shippingCost||0;
     const totalAmt=b.total-bDisc;
     const remaining=totalAmt-totalDeposit;
     return `<div style="background:white;border-radius:14px;border:1px solid ${allChecked?"#C5A880":"#E8D5B0"};margin-bottom:10px;overflow:hidden">
@@ -8790,7 +8878,7 @@ window.renderInvoice=function(){
           </div>
         </div>
         ${(()=>{
-          const netProfit=b.orders.reduce((s,o)=>{const prod=window.G.products.find(x=>x.id===o.productId)||window.G.products.find(x=>cleanProductName(x.name)===cleanProductName(o.productName||""));if(!prod)return s;return s+(( (o.discountPrice||o.unitPrice||0) -getOrderUnitCost(o,prod))*o.qty);},0)-bDisc;
+          const netProfit=b.orders.reduce((s,o)=>{const prod=window.G.products.find(x=>x.id===o.productId)||window.G.products.find(x=>cleanProductName(x.name)===cleanProductName(o.productName||""));if(!prod)return s;return s+(( (o.discountPrice||o.unitPrice||0) -getOrderUnitCost(o,prod))*o.qty);},0)-bDisc-bShipping;
           const margin=totalAmt>0?Math.round((netProfit/totalAmt)*100):0;
           return `<div class="hide-staff" style="text-align:right;margin-top:2px"><span style="font-size:11px;font-weight:700;color:${netProfit>=0?"#2E7D32":"#C0392B"}">利潤 NT$${Math.round(netProfit).toLocaleString()}（毛利${margin}%）</span></div>`;
         })()}
@@ -9523,7 +9611,13 @@ window.doQuickAddOrder=function(custId, custName){
   const depEl=document.getElementById("eo-shared-deposit");
   const trkEl=document.getElementById("eo-shared-tracking");
   const discEl=document.getElementById("eo-shared-discount");
+  const fsEl=document.getElementById("eo-free-shipping");
+  const pctEl=document.getElementById("eo-batch-percent");
+  const scEl=document.getElementById("eo-shipping-cost");
+  const scWrap=document.getElementById("eo-shipping-cost-wrap");
   if(depEl)depEl.value="";if(trkEl)trkEl.value="";if(discEl)discEl.value="";
+  if(fsEl)fsEl.checked=false;if(pctEl)pctEl.value="";
+  if(scEl)scEl.value="38";if(scWrap)scWrap.style.display="none";
   const sl={pending:"待訂金",deposit:"已付訂金",settled:"已付尾款",shipped:"已寄出"};
   const scol={pending:"#E07B39",deposit:"#9333EA",settled:"#2E7D32",shipped:"#2980B9"};
   const list=document.getElementById("eo-order-list");
@@ -9544,7 +9638,7 @@ window.doQuickAddOrder=function(custId, custName){
           <div><div style="font-size:10px;color:#9C7A5A;margin-bottom:3px">數量</div>
             <input type="text" inputmode="numeric" class="eo-qty" value="${x.qty}" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:14px;font-weight:700;outline:none"/></div>
           <div><div style="font-size:10px;color:#9C7A5A;margin-bottom:3px">售價 (NT$)</div>
-            <input type="text" inputmode="numeric" class="eo-price" value="${dp}" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:14px;font-weight:700;outline:none"/></div>
+            <input type="text" inputmode="decimal" class="eo-price" value="${dp}" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:14px;font-weight:700;outline:none"/></div>
         </div>
         <div style="margin-top:6px"><div style="font-size:10px;color:#9C7A5A;margin-bottom:3px">🏷️ 折扣／備註（選填）</div>
           <input type="text" class="eo-discount-note" value="${x.discountNote||""}" placeholder="例如：折50、贈品、會員優惠..." style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:12px;outline:none"/></div>
@@ -10253,7 +10347,7 @@ window.swUpdate = function(){
     <div id="qc-product-name" style="font-size:13px;font-weight:700;color:#3D2010;margin-bottom:12px;background:#FDF6EC;border-radius:8px;padding:8px 10px"></div>
 
     <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:4px">原幣金額<span id="qc-cur-sym"></span>（現在查到多少，價格沒變就不用改）</label>
-    <input type="text" inputmode="numeric" id="qc-foreign" oninput="qcRecalc()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:16px;font-weight:700;outline:none;box-sizing:border-box;margin-bottom:10px"/>
+    <input type="text" inputmode="decimal" id="qc-foreign" oninput="qcRecalc()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:16px;font-weight:700;outline:none;box-sizing:border-box;margin-bottom:10px"/>
 
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
       <div style="background:#FDF6EC;border:1px solid #E8D5B0;border-radius:10px;padding:8px;text-align:center">
@@ -10271,7 +10365,7 @@ window.swUpdate = function(){
     </div>
 
     <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:4px">最終售價 (NT$)（可直接用建議售價，或自己改）</label>
-    <input type="text" inputmode="numeric" id="qc-final-price" oninput="this.dataset.manual='1';qcRecalc();" style="width:100%;background:#FEF3E2;border:1.5px solid #E07B39;border-radius:10px;padding:10px 14px;font-size:16px;font-weight:900;color:#E07B39;outline:none;box-sizing:border-box;margin-bottom:14px"/>
+    <input type="text" inputmode="decimal" id="qc-final-price" oninput="this.dataset.manual='1';qcRecalc();" style="width:100%;background:#FEF3E2;border:1.5px solid #E07B39;border-radius:10px;padding:10px 14px;font-size:16px;font-weight:900;color:#E07B39;outline:none;box-sizing:border-box;margin-bottom:14px"/>
 
     <div style="font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:6px">📌 喊單類型</div>
     <div style="display:flex;gap:8px;margin-bottom:12px">
