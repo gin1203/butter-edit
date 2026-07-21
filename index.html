@@ -22,6 +22,13 @@ input,textarea,select,button{font-family:inherit}
 .tab-page.active{display:block}
 /* 連線模式：隱藏定價/成本/修改/刪除，只保留喊單相關 */
 body.live-mode .hide-live { display: none !important; }
+/* 購買通路按鈕：依類型分色系，方便一眼辨識，選中時一律變成深咖啡實心 */
+.ch-btn-super{background:#EAF4FB !important;border-color:#BEE0F5 !important;color:#2C5F7C !important}
+.ch-btn-trend{background:#FBEAF4 !important;border-color:#F3C9E0 !important;color:#8C3A66 !important}
+.ch-btn-duty{background:#EAF8F0 !important;border-color:#BFE6D0 !important;color:#2E6B4B !important}
+.ch-btn-other{background:#FDF3E0 !important;border-color:#F0D9A8 !important;color:#9C6B2E !important}
+.ch-btn-neutral{background:#F1F1F1 !important;border-color:#DADADA !important;color:#6B6B6B !important}
+.calc-ch-btn.active,.ep-ch-btn.active,.qa-ch-btn.active{background:#5C3A1E !important;border-color:#5C3A1E !important;color:white !important}
 </style>
 <script>
 </script>
@@ -276,43 +283,42 @@ body.live-mode .hide-live { display: none !important; }
     <div style="margin-top:10px">
       <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:6px">🏪 購買通路（選填）</label>
       <div id="calc-channel-btns" style="display:flex;flex-wrap:wrap;gap:6px">
-        <button class="calc-ch-btn active" data-ch="" onclick="calcSelectChannel(this,'')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #5C3A1E;background:#5C3A1E;color:white;cursor:pointer">未指定</button>
-        <button class="calc-ch-btn" data-ch="OLIVE YOUNG" onclick="calcSelectChannel(this,'OLIVE YOUNG')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧴 OLIVE YOUNG</button>
-        <button class="calc-ch-btn" data-ch="樂天超市" onclick="calcSelectChannel(this,'樂天超市')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛒 樂天超市</button>
-        <button class="calc-ch-btn" data-ch="No Brand" onclick="calcSelectChannel(this,'No Brand')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 No Brand</button>
-        <button class="calc-ch-btn" data-ch="GS25" onclick="calcSelectChannel(this,'GS25')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 GS25</button>
-        <button class="calc-ch-btn" data-ch="CU" onclick="calcSelectChannel(this,'CU')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 CU</button>
-        <button class="calc-ch-btn" data-ch="大創 DAISO" onclick="calcSelectChannel(this,'大創 DAISO')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 大創 DAISO</button>
-        <button class="calc-ch-btn" data-ch="MIMILINE" onclick="calcSelectChannel(this,'MIMILINE')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎀 MIMILINE</button>
-        <button class="calc-ch-btn" data-ch="ARTBOX" onclick="calcSelectChannel(this,'ARTBOX')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 ARTBOX</button>
-        <button class="calc-ch-btn" data-ch="29CM" onclick="calcSelectChannel(this,'29CM')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">💻 29CM</button>
-        <button class="calc-ch-btn" data-ch="Object" onclick="calcSelectChannel(this,'Object')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Object</button>
-        <button class="calc-ch-btn" data-ch="Point of View" onclick="calcSelectChannel(this,'Point of View')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Point of View</button>
-        <button class="calc-ch-btn" data-ch="BUTTER" onclick="calcSelectChannel(this,'BUTTER')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧈 BUTTER</button>
-        <button class="calc-ch-btn" data-ch="新世界免稅店" onclick="calcSelectChannel(this,'新世界免稅店')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛬 新世界免稅店（機場提貨）</button>
-        <button class="calc-ch-btn" data-ch="新羅免稅店" onclick="calcSelectChannel(this,'新羅免稅店')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛬 新羅免稅店（機場提貨）</button>
-        <button class="calc-ch-btn" data-ch="樂天免稅店" onclick="calcSelectChannel(this,'樂天免稅店')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛬 樂天免稅店（機場提貨）</button>
-        <button class="calc-ch-btn" data-ch="新世界/樂天百貨" onclick="calcSelectChannel(this,'新世界/樂天百貨')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏢 百貨專櫃（含稅可退稅）</button>
-        <button class="calc-ch-btn" data-ch="廣藏市場" onclick="calcSelectChannel(this,'廣藏市場')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏮 廣藏市場</button>
-        <button class="calc-ch-btn" data-ch="藥局" onclick="calcSelectChannel(this,'藥局')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">💊 藥局</button>
-        <button class="calc-ch-btn" data-ch="品牌官網/直營門市" onclick="calcSelectChannel(this,'品牌官網/直營門市')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 品牌官網/直營門市</button>
-        <button class="calc-ch-btn" data-ch="其他" onclick="calcSelectChannel(this,'其他')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">📦 其他</button>
+        <button class="calc-ch-btn active ch-btn-neutral" data-ch="" onclick="calcSelectChannel(this,'')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #5C3A1E;background:#5C3A1E;color:white;cursor:pointer">未指定</button>
+        <button class="calc-ch-btn ch-btn-super" data-ch="OLIVE YOUNG" onclick="calcSelectChannel(this,'OLIVE YOUNG')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧴 OLIVE YOUNG</button>
+        <button class="calc-ch-btn ch-btn-super" data-ch="樂天超市" onclick="calcSelectChannel(this,'樂天超市')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛒 樂天超市</button>
+        <button class="calc-ch-btn ch-btn-super" data-ch="No Brand" onclick="calcSelectChannel(this,'No Brand')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 No Brand</button>
+        <button class="calc-ch-btn ch-btn-super" data-ch="GS25" onclick="calcSelectChannel(this,'GS25')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 GS25</button>
+        <button class="calc-ch-btn ch-btn-super" data-ch="CU" onclick="calcSelectChannel(this,'CU')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 CU</button>
+        <button class="calc-ch-btn ch-btn-super" data-ch="大創 DAISO" onclick="calcSelectChannel(this,'大創 DAISO')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 大創 DAISO</button>
+        <button class="calc-ch-btn ch-btn-super" data-ch="7-11" onclick="calcSelectChannel(this,'7-11')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 7-11</button>
+        <button class="calc-ch-btn ch-btn-trend" data-ch="MIMILINE" onclick="calcSelectChannel(this,'MIMILINE')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎀 MIMILINE</button>
+        <button class="calc-ch-btn ch-btn-trend" data-ch="ARTBOX" onclick="calcSelectChannel(this,'ARTBOX')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 ARTBOX</button>
+        <button class="calc-ch-btn ch-btn-trend" data-ch="29CM" onclick="calcSelectChannel(this,'29CM')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">💻 29CM</button>
+        <button class="calc-ch-btn ch-btn-trend" data-ch="Object" onclick="calcSelectChannel(this,'Object')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Object</button>
+        <button class="calc-ch-btn ch-btn-trend" data-ch="Point of View" onclick="calcSelectChannel(this,'Point of View')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Point of View</button>
+        <button class="calc-ch-btn ch-btn-trend" data-ch="BUTTER" onclick="calcSelectChannel(this,'BUTTER')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧈 BUTTER</button>
+        <button class="calc-ch-btn ch-btn-duty" data-ch="新世界免稅店" onclick="calcSelectChannel(this,'新世界免稅店')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛬 新世界免稅店（機場提貨）</button>
+        <button class="calc-ch-btn ch-btn-duty" data-ch="新羅免稅店" onclick="calcSelectChannel(this,'新羅免稅店')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛬 新羅免稅店（機場提貨）</button>
+        <button class="calc-ch-btn ch-btn-duty" data-ch="樂天免稅店" onclick="calcSelectChannel(this,'樂天免稅店')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛬 樂天免稅店（機場提貨）</button>
+        <button class="calc-ch-btn ch-btn-other" data-ch="新世界/樂天百貨" onclick="calcSelectChannel(this,'新世界/樂天百貨')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏢 百貨專櫃（含稅可退稅）</button>
+        <button class="calc-ch-btn ch-btn-other" data-ch="廣藏市場" onclick="calcSelectChannel(this,'廣藏市場')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏮 廣藏市場</button>
+        <button class="calc-ch-btn ch-btn-other" data-ch="藥局" onclick="calcSelectChannel(this,'藥局')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">💊 藥局</button>
+        <button class="calc-ch-btn ch-btn-other" data-ch="品牌官網/直營門市" onclick="calcSelectChannel(this,'品牌官網/直營門市')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 品牌官網/直營門市</button>
+        <button class="calc-ch-btn ch-btn-other" data-ch="其他" onclick="calcSelectChannel(this,'其他')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">📦 其他</button>
       </div>
     </div>
     <!-- 台灣售價 & 網址 -->
     <div style="margin-top:12px">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-        <div>
-          <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">🏷️ 台灣官方售價（NT$）</label>
-          <input type="text" inputmode="decimal" id="c-twprice" oninput="calcUpdate()" placeholder="例如：4900" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
-        </div>
-        <div>
-          <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">👥 同行售價（NT$，可新增多筆）</label>
-          <div id="c-rival-chips" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:5px"></div>
-          <div style="display:flex;gap:5px">
-            <input type="text" id="c-rival-new" placeholder="例如：小美代購 149" onkeydown="if((event.key==='Enter')&&!event.isComposing&&event.keyCode!==229){event.preventDefault();calcAddRival(this.value);this.value='';}" style="flex:1;min-width:0;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 10px;font-size:13px;outline:none;box-sizing:border-box"/>
-            <button type="button" onclick="calcAddRival(document.getElementById('c-rival-new').value);document.getElementById('c-rival-new').value='';" style="flex-shrink:0;background:#C5A880;color:white;border:none;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer">新增</button>
-          </div>
+      <div style="margin-bottom:10px">
+        <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">🏷️ 台灣官方售價（NT$）</label>
+        <input type="text" inputmode="decimal" id="c-twprice" oninput="calcUpdate()" placeholder="例如：4900" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
+      </div>
+      <div style="margin-bottom:10px">
+        <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">👥 同行售價（NT$，可新增多筆）</label>
+        <div id="c-rival-chips" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:5px"></div>
+        <div style="display:flex;gap:5px">
+          <input type="text" id="c-rival-new" placeholder="例如：小美代購 149" onkeydown="if((event.key==='Enter')&&!event.isComposing&&event.keyCode!==229){event.preventDefault();calcAddRival(this.value);this.value='';}" style="flex:1;min-width:0;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 10px;font-size:13px;outline:none;box-sizing:border-box"/>
+          <button type="button" onclick="calcAddRival(document.getElementById('c-rival-new').value);document.getElementById('c-rival-new').value='';" style="flex-shrink:0;background:#C5A880;color:white;border:none;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer">新增</button>
         </div>
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
@@ -959,7 +965,7 @@ body.live-mode .hide-live { display: none !important; }
     </div>
     <!-- 4. 原幣金額（獨立一行）+ 付款方式（獨立一行）+ 活動按鈕（獨立一行），手機版才不會擠成一團 -->
     <div style="margin-bottom:8px">
-      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:4px">原幣金額 <span id="ep-promo-active-badge" style="display:none;font-size:10px;font-weight:700;color:#166534;background:#DCFCE7;border-radius:6px;padding:2px 6px;margin-left:4px"></span></label>
+      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:4px">原幣金額 <span id="ep-promo-active-badge" style="display:none;font-size:10px;font-weight:700;color:#166534;background:#DCFCE7;border-radius:6px;padding:2px 6px;margin-left:4px"></span> <button type="button" id="ep-promo-cancel-btn" onclick="window.epCancelPromo()" style="display:none;font-size:10px;font-weight:700;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;border-radius:6px;padding:2px 8px;margin-left:4px;cursor:pointer">✕ 取消折扣，還原原價</button></label>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         <select id="ep-cur-select" onchange="window.epSelectCurrency(this.value)" style="flex:1;min-width:110px;font-size:12px;font-weight:700;color:#3D2010;background:#FDF6EC;border:1px solid #E8D5B0;border-radius:8px;padding:6px 8px;outline:none;cursor:pointer"></select>
         <select id="ep-pm-select" onchange="window.epSelectPaymentMethod(this.value)" style="flex:1;min-width:90px;font-size:12px;font-weight:700;color:#3D2010;background:#FDF6EC;border:1px solid #E8D5B0;border-radius:8px;padding:6px 8px;outline:none;cursor:pointer">
@@ -1025,27 +1031,28 @@ body.live-mode .hide-live { display: none !important; }
     <div style="margin-bottom:12px">
       <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:6px">🏪 購買通路（選填）</label>
       <div id="ep-channel-btns" style="display:flex;flex-wrap:wrap;gap:6px">
-        <button class="ep-ch-btn  active" data-ch="" onclick="epSelectChannel(this,'')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #5C3A1E;background:#5C3A1E;color:white;cursor:pointer">未指定</button>
-        <button class="ep-ch-btn" data-ch="OLIVE YOUNG" onclick="epSelectChannel(this,'OLIVE YOUNG')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧴 OLIVE YOUNG</button>
-        <button class="ep-ch-btn" data-ch="樂天超市" onclick="epSelectChannel(this,'樂天超市')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛒 樂天超市</button>
-        <button class="ep-ch-btn" data-ch="No Brand" onclick="epSelectChannel(this,'No Brand')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 No Brand</button>
-        <button class="ep-ch-btn" data-ch="GS25" onclick="epSelectChannel(this,'GS25')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 GS25</button>
-        <button class="ep-ch-btn" data-ch="CU" onclick="epSelectChannel(this,'CU')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 CU</button>
-        <button class="ep-ch-btn" data-ch="大創 DAISO" onclick="epSelectChannel(this,'大創 DAISO')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 大創 DAISO</button>
-        <button class="ep-ch-btn" data-ch="MIMILINE" onclick="epSelectChannel(this,'MIMILINE')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎀 MIMILINE</button>
-        <button class="ep-ch-btn" data-ch="ARTBOX" onclick="epSelectChannel(this,'ARTBOX')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 ARTBOX</button>
-        <button class="ep-ch-btn" data-ch="29CM" onclick="epSelectChannel(this,'29CM')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🖤 29CM</button>
-        <button class="ep-ch-btn" data-ch="Object" onclick="epSelectChannel(this,'Object')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Object</button>
-        <button class="ep-ch-btn" data-ch="Point of View" onclick="epSelectChannel(this,'Point of View')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">👁 Point of View</button>
-        <button class="ep-ch-btn" data-ch="BUTTER" onclick="epSelectChannel(this,'BUTTER')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧈 BUTTER</button>
-        <button class="ep-ch-btn" data-ch="新世界免稅店" onclick="epSelectChannel(this,'新世界免稅店')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛬 新世界免稅店（機場提貨）</button>
-        <button class="ep-ch-btn" data-ch="新羅免稅店" onclick="epSelectChannel(this,'新羅免稅店')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛬 新羅免稅店（機場提貨）</button>
-        <button class="ep-ch-btn" data-ch="樂天免稅店" onclick="epSelectChannel(this,'樂天免稅店')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛬 樂天免稅店（機場提貨）</button>
-        <button class="ep-ch-btn" data-ch="新世界/樂天百貨" onclick="epSelectChannel(this,'新世界/樂天百貨')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 百貨專櫃（含稅可退稅）</button>
-        <button class="ep-ch-btn" data-ch="廣藏市場" onclick="epSelectChannel(this,'廣藏市場')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧡 廣藏市場</button>
-        <button class="ep-ch-btn" data-ch="藥局" onclick="epSelectChannel(this,'藥局')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">💊 藥局</button>
-        <button class="ep-ch-btn" data-ch="品牌官網/直營門市" onclick="epSelectChannel(this,'品牌官網/直營門市')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 品牌官網/直營門市</button>
-        <button class="ep-ch-btn" data-ch="其他" onclick="epSelectChannel(this,'其他')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">📦 其他</button>
+        <button class="ep-ch-btn active ch-btn-neutral" data-ch="" onclick="epSelectChannel(this,'')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #5C3A1E;background:#5C3A1E;color:white;cursor:pointer">未指定</button>
+        <button class="ep-ch-btn ch-btn-super" data-ch="OLIVE YOUNG" onclick="epSelectChannel(this,'OLIVE YOUNG')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧴 OLIVE YOUNG</button>
+        <button class="ep-ch-btn ch-btn-super" data-ch="樂天超市" onclick="epSelectChannel(this,'樂天超市')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛒 樂天超市</button>
+        <button class="ep-ch-btn ch-btn-super" data-ch="No Brand" onclick="epSelectChannel(this,'No Brand')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 No Brand</button>
+        <button class="ep-ch-btn ch-btn-super" data-ch="GS25" onclick="epSelectChannel(this,'GS25')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 GS25</button>
+        <button class="ep-ch-btn ch-btn-super" data-ch="CU" onclick="epSelectChannel(this,'CU')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 CU</button>
+        <button class="ep-ch-btn ch-btn-super" data-ch="大創 DAISO" onclick="epSelectChannel(this,'大創 DAISO')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 大創 DAISO</button>
+        <button class="ep-ch-btn ch-btn-super" data-ch="7-11" onclick="epSelectChannel(this,'7-11')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 7-11</button>
+        <button class="ep-ch-btn ch-btn-trend" data-ch="MIMILINE" onclick="epSelectChannel(this,'MIMILINE')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎀 MIMILINE</button>
+        <button class="ep-ch-btn ch-btn-trend" data-ch="ARTBOX" onclick="epSelectChannel(this,'ARTBOX')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 ARTBOX</button>
+        <button class="ep-ch-btn ch-btn-trend" data-ch="29CM" onclick="epSelectChannel(this,'29CM')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🖤 29CM</button>
+        <button class="ep-ch-btn ch-btn-trend" data-ch="Object" onclick="epSelectChannel(this,'Object')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Object</button>
+        <button class="ep-ch-btn ch-btn-trend" data-ch="Point of View" onclick="epSelectChannel(this,'Point of View')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">👁 Point of View</button>
+        <button class="ep-ch-btn ch-btn-trend" data-ch="BUTTER" onclick="epSelectChannel(this,'BUTTER')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧈 BUTTER</button>
+        <button class="ep-ch-btn ch-btn-duty" data-ch="新世界免稅店" onclick="epSelectChannel(this,'新世界免稅店')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛬 新世界免稅店（機場提貨）</button>
+        <button class="ep-ch-btn ch-btn-duty" data-ch="新羅免稅店" onclick="epSelectChannel(this,'新羅免稅店')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛬 新羅免稅店（機場提貨）</button>
+        <button class="ep-ch-btn ch-btn-duty" data-ch="樂天免稅店" onclick="epSelectChannel(this,'樂天免稅店')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛬 樂天免稅店（機場提貨）</button>
+        <button class="ep-ch-btn ch-btn-other" data-ch="新世界/樂天百貨" onclick="epSelectChannel(this,'新世界/樂天百貨')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 百貨專櫃（含稅可退稅）</button>
+        <button class="ep-ch-btn ch-btn-other" data-ch="廣藏市場" onclick="epSelectChannel(this,'廣藏市場')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧡 廣藏市場</button>
+        <button class="ep-ch-btn ch-btn-other" data-ch="藥局" onclick="epSelectChannel(this,'藥局')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">💊 藥局</button>
+        <button class="ep-ch-btn ch-btn-other" data-ch="品牌官網/直營門市" onclick="epSelectChannel(this,'品牌官網/直營門市')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 品牌官網/直營門市</button>
+        <button class="ep-ch-btn ch-btn-other" data-ch="其他" onclick="epSelectChannel(this,'其他')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">📦 其他</button>
       </div>
     </div>
     <!-- 9. 加價選項 -->
@@ -1060,18 +1067,16 @@ body.live-mode .hide-live { display: none !important; }
       </div>
     </div>
     <!-- 10. 台灣/同行售價 -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-      <div>
-        <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">🏷️ 台灣官方售價 (NT$)</label>
-        <input type="text" inputmode="decimal" id="ep-twprice" placeholder="例如：4900" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none"/>
-      </div>
-      <div>
-        <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">👥 同行參考價 (NT$，可新增多筆)</label>
-        <div id="ep-rival-chips" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:5px"></div>
-        <div style="display:flex;gap:5px">
-          <input type="text" id="ep-rival-new" placeholder="例如：小美代購 149" onkeydown="if((event.key==='Enter')&&!event.isComposing&&event.keyCode!==229){event.preventDefault();epAddRival(this.value);this.value='';}" style="flex:1;min-width:0;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 10px;font-size:13px;outline:none;box-sizing:border-box"/>
-          <button type="button" onclick="epAddRival(document.getElementById('ep-rival-new').value);document.getElementById('ep-rival-new').value='';" style="flex-shrink:0;background:#C5A880;color:white;border:none;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer">新增</button>
-        </div>
+    <div style="margin-bottom:10px">
+      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">🏷️ 台灣官方售價 (NT$)</label>
+      <input type="text" inputmode="decimal" id="ep-twprice" placeholder="例如：4900" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none"/>
+    </div>
+    <div style="margin-bottom:10px">
+      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">👥 同行參考價 (NT$，可新增多筆)</label>
+      <div id="ep-rival-chips" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:5px"></div>
+      <div style="display:flex;gap:5px">
+        <input type="text" id="ep-rival-new" placeholder="例如：小美代購 149" onkeydown="if((event.key==='Enter')&&!event.isComposing&&event.keyCode!==229){event.preventDefault();epAddRival(this.value);this.value='';}" style="flex:1;min-width:0;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 10px;font-size:13px;outline:none;box-sizing:border-box"/>
+        <button type="button" onclick="epAddRival(document.getElementById('ep-rival-new').value);document.getElementById('ep-rival-new').value='';" style="flex-shrink:0;background:#C5A880;color:white;border:none;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer">新增</button>
       </div>
     </div>
     <div id="ep-rival-msg" style="display:none;border-radius:10px;padding:8px 14px;margin-bottom:10px;font-size:12px;font-weight:700"></div>
@@ -1245,6 +1250,66 @@ body.live-mode .hide-live { display: none !important; }
   </div>
 </div>
 
+<!-- 📷 收據管理 -->
+<div id="modal-receipts" class="modal-overlay" style="display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,0.35);align-items:center;justify-content:center;padding:16px">
+  <div style="background:white;border-radius:20px;width:100%;max-width:720px;max-height:88vh;overflow-y:auto;padding:20px;padding-bottom:36px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <h3 style="margin:0;font-size:15px;font-weight:900;color:#3D2010">📷 收據管理 <span id="receipt-trip-name" style="font-weight:700;color:#9C7A5A;font-size:12px"></span></h3>
+      <button onclick="closeModal('modal-receipts')" style="font-size:24px;font-weight:900;color:#9C7A5A;background:none;border:none;cursor:pointer">×</button>
+    </div>
+    <div style="font-size:11px;color:#9C7A5A;margin-bottom:14px">拍照上傳收據，AI 幫你抓出店名、日期、品項跟價格，辨識完都可以自己編輯再存檔。</div>
+
+    <!-- 上傳區 -->
+    <div style="border:2px dashed #E8D5B0;border-radius:14px;padding:18px;text-align:center;margin-bottom:16px;background:#FAF8F5">
+      <input type="file" id="receipt-file-input" accept="image/*" capture="environment" style="display:none" onchange="receiptUploadFile(this)"/>
+      <button onclick="document.getElementById('receipt-file-input').click()" style="background:#C5A880;color:white;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer">📷 拍照或選擇收據上傳</button>
+      <div id="receipt-upload-status" style="font-size:11px;color:#9C7A5A;margin-top:8px"></div>
+    </div>
+
+    <!-- AI辨識草稿（辨識完才會顯示） -->
+    <div id="receipt-draft-box" style="display:none;border:1.5px solid #F5B769;background:#FFF9EE;border-radius:14px;padding:16px;margin-bottom:16px">
+      <div style="font-size:12px;font-weight:700;color:#B45309;margin-bottom:10px">✨ AI 辨識草稿（可直接編輯，確認沒問題再存檔）</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div>
+          <label style="display:block;font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:4px">店名</label>
+          <input type="text" id="receipt-draft-store" style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;font-size:13px;outline:none;box-sizing:border-box"/>
+        </div>
+        <div>
+          <label style="display:block;font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:4px">日期</label>
+          <input type="date" id="receipt-draft-date" style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;font-size:13px;outline:none;box-sizing:border-box"/>
+        </div>
+      </div>
+      <label style="display:block;font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:4px">品項明細</label>
+      <div id="receipt-draft-items"></div>
+      <button onclick="receiptAddItemRow()" style="width:100%;background:white;border:1px dashed #E8D5B0;border-radius:8px;padding:8px;font-size:12px;font-weight:700;color:#9C7A5A;cursor:pointer;margin-bottom:10px">＋ 手動新增一項</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <span style="font-size:11px;font-weight:700;color:#9C7A5A">總金額</span>
+        <input type="text" inputmode="decimal" id="receipt-draft-total" style="width:120px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:700;outline:none;text-align:right"/>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="receiptCancelDraft()" style="flex:1;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:10px;font-size:13px;font-weight:700;color:#9C7A5A;cursor:pointer">取消</button>
+        <button onclick="receiptSaveDraft()" style="flex:2;background:#C5A880;color:white;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">💾 存檔</button>
+      </div>
+    </div>
+
+    <!-- 已存的收據清單 -->
+    <div style="font-size:12px;font-weight:700;color:#9C7A5A;margin-bottom:8px">這趟已上傳的收據</div>
+    <div id="receipt-saved-list"><div style="text-align:center;padding:16px;color:#B0906A;font-size:12px">尚未上傳任何收據</div></div>
+  </div>
+</div>
+
+<!-- 收據明細檢視（點已存收據時彈出） -->
+<div id="modal-receipt-view" class="modal-overlay" style="display:none;position:fixed;inset:0;z-index:51;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;padding:16px">
+  <div style="background:white;border-radius:20px;width:100%;max-width:600px;max-height:88vh;overflow-y:auto;padding:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h3 style="margin:0;font-size:15px;font-weight:900;color:#3D2010">📄 收據明細</h3>
+      <button onclick="closeModal('modal-receipt-view')" style="font-size:24px;font-weight:900;color:#9C7A5A;background:none;border:none;cursor:pointer">×</button>
+    </div>
+    <div id="receipt-view-body"></div>
+    <button id="receipt-view-delete-btn" onclick="receiptDeleteCurrent()" style="width:100%;margin-top:14px;background:#FDEDEC;color:#C0392B;border:1px solid #F1948A;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">🗑️ 刪除這張收據</button>
+  </div>
+</div>
+
 <!-- ✨ 快速上架 Modal -->
 <div id="modal-quick" class="modal-overlay" style="display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,0.35);align-items:center;justify-content:center;padding:16px">
   <div style="background:white;border-radius:20px 20px 0 0;width:100%;max-width:720px;max-height:92vh;overflow-y:auto;padding:20px;padding-bottom:36px">
@@ -1278,6 +1343,18 @@ body.live-mode .hide-live { display: none !important; }
           <input type="text" id="qa-live-name" placeholder="品名（例如：農心 쫄병 안성탕면）" oninput="qaLiveCalc()" style="width:100%;background:white;border:1.5px solid #F59E0B;border-radius:10px;padding:12px 40px 12px 14px;font-size:15px;font-weight:700;outline:none;box-sizing:border-box"/>
           <button onclick="document.getElementById('qa-live-name').value='';qaLiveCalc();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#F59E0B;font-size:18px;line-height:1;padding:0">✕</button>
         </div>
+        <!-- 幣別切換 -->
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <button type="button" onclick="qaLiveSelectCurrency('KRW')" data-curr="KRW" class="qa-live-curr-btn" style="flex:1;background:#F59E0B;color:white;border:1.5px solid #F59E0B;border-radius:8px;padding:7px 4px;font-size:12px;font-weight:700;cursor:pointer">🇰🇷 韓幣</button>
+          <button type="button" onclick="qaLiveSelectCurrency('JPY')" data-curr="JPY" class="qa-live-curr-btn" style="flex:1;background:white;color:#B45309;border:1.5px solid #F59E0B;border-radius:8px;padding:7px 4px;font-size:12px;font-weight:700;cursor:pointer">🇯🇵 日幣</button>
+          <button type="button" onclick="qaLiveSelectCurrency('THB')" data-curr="THB" class="qa-live-curr-btn" style="flex:1;background:white;color:#B45309;border:1.5px solid #F59E0B;border-radius:8px;padding:7px 4px;font-size:12px;font-weight:700;cursor:pointer">🇹🇭 泰銖</button>
+          <button type="button" onclick="qaLiveSelectCurrency('USD')" data-curr="USD" class="qa-live-curr-btn" style="flex:1;background:white;color:#B45309;border:1.5px solid #F59E0B;border-radius:8px;padding:7px 4px;font-size:12px;font-weight:700;cursor:pointer">🇺🇸 美金</button>
+        </div>
+        <!-- 促銷狀態徽章 -->
+        <div id="qa-live-promo-badge-row" style="display:none;align-items:center;gap:6px;margin-bottom:6px">
+          <span id="qa-live-promo-badge" style="font-size:10px;font-weight:700;color:#166534;background:#DCFCE7;border-radius:6px;padding:2px 6px"></span>
+          <button type="button" onclick="window.qaLiveCancelPromo()" style="font-size:10px;font-weight:700;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;border-radius:6px;padding:2px 8px;cursor:pointer">✕ 取消折扣，還原原價</button>
+        </div>
         <!-- 韓幣 -->
         <div style="position:relative;margin-bottom:10px">
           <input type="text" inputmode="decimal" id="qa-live-amt" placeholder="韓幣金額 ₩" oninput="qaLiveCalc()" style="width:100%;background:white;border:1.5px solid #F59E0B;border-radius:10px;padding:12px 150px 12px 14px;font-size:20px;font-weight:900;outline:none;box-sizing:border-box"/>
@@ -1287,6 +1364,12 @@ body.live-mode .hide-live { display: none !important; }
             <button onclick="qaLiveApplyPromo(4)" style="background:#EDE9FE;border:1px solid #C4B5FD;border-radius:6px;padding:3px 6px;font-size:10px;font-weight:700;color:#5B21B6;cursor:pointer">3+1</button>
             <button onclick="document.getElementById('qa-live-amt').value='';qaLiveCalc();" style="background:none;border:none;cursor:pointer;color:#F59E0B;font-size:18px;line-height:1;padding:0 2px">✕</button>
           </div>
+        </div>
+        <!-- 或輸入折數 -->
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+          <span style="font-size:11px;font-weight:700;color:#B45309;flex-shrink:0">或輸入折數</span>
+          <input type="text" inputmode="decimal" id="qa-live-discount-pct" placeholder="例如7＝7折" style="width:70px;background:white;border:1.5px solid #F59E0B;border-radius:8px;padding:4px 8px;font-size:12px;outline:none"/>
+          <button onclick="window.qaLiveApplyDiscount()" style="background:#FFE0B2;border:1px solid #FFB74D;border-radius:8px;padding:3px 10px;font-size:11px;font-weight:700;color:#E65100;cursor:pointer;white-space:nowrap;flex-shrink:0">套用折扣</button>
         </div>
         <!-- 成本/售價顯示 -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
@@ -1346,7 +1429,7 @@ body.live-mode .hide-live { display: none !important; }
     <div style="margin-bottom:12px">
       <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">商品名稱</label>
       <div style="position:relative">
-        <input type="text" id="qa-name" placeholder="例如：크레용 신짱 인형 키링 / 蠟筆小新娃娃鑰匙圈" oninput="qaAutoDetectCat(this.value);(function(v){setTimeout(function(){showBrandSuggestions(v,true);},0);})(this.value);(function(v){setTimeout(function(){showDupWarning(v,'qa-dup-warning');},0);})(this.value)" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:11px 40px 11px 14px;font-size:14px;outline:none"/>
+        <input type="text" id="qa-name" placeholder="例如：크레용 신짱 인형 키링 / 蠟筆小新娃娃鑰匙圈" oninput="qaAutoDetectCat(this.value);(function(v){setTimeout(function(){showBrandSuggestions(v,true);},0);})(this.value);(function(v){setTimeout(function(){showDupWarning(v,'qa-dup-warning');},0);})(this.value)" style="width:100%;background:#FFF3E0;border:1.5px solid #F5B769;border-radius:10px;padding:11px 40px 11px 14px;font-size:14px;outline:none"/>
         <button onclick="document.getElementById('qa-name').value='';document.getElementById('qa-dup-warning').style.display='none';" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
         <div id="qa-brand-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;z-index:99999;background:white;border:1.5px solid #C5A880;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.2);max-height:280px;overflow-y:auto"></div>
       </div>
@@ -1383,7 +1466,7 @@ body.live-mode .hide-live { display: none !important; }
 
     <!-- 幣別/付款方式（獨立一行）+ 活動按鈕（獨立一行），手機版才不會擠成一團 -->
     <div style="margin-bottom:8px">
-      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:4px">原幣售價</label>
+      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:4px">原幣售價 <span id="qa-promo-active-badge" style="display:none;font-size:10px;font-weight:700;color:#166534;background:#DCFCE7;border-radius:6px;padding:2px 6px;margin-left:4px"></span> <button type="button" id="qa-promo-cancel-btn" onclick="window.qaCancelPromo()" style="display:none;font-size:10px;font-weight:700;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;border-radius:6px;padding:2px 8px;margin-left:4px;cursor:pointer">✕ 取消折扣，還原原價</button></label>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         <select id="qa-cur-select" onchange="window.qaSelectCurrency(this.value)" style="flex:1;min-width:110px;font-size:12px;font-weight:700;color:#3D2010;background:#FDF6EC;border:1px solid #E8D5B0;border-radius:8px;padding:6px 8px;outline:none;cursor:pointer">
           <option value="KRW" selected>🇰🇷 韓幣（₩）</option>
@@ -1416,8 +1499,8 @@ body.live-mode .hide-live { display: none !important; }
         <div id="qa-price-hint-profit" style="font-size:9px;font-weight:700;margin-top:2px"></div>
       </div>
       <div style="position:relative;display:flex;align-items:stretch">
-        <input type="text" inputmode="decimal" id="qa-amt" placeholder="例如：12000" oninput="window.G.qaPromoOriginal=null;window.G.qaPromoDivisor=null;window.G.qaPromoPct=null;qaDaisoAutoSelectBest();qaCalcPrice()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:11px 40px 11px 14px;font-size:18px;font-weight:700;outline:none"/>
-        <button onclick="document.getElementById('qa-amt').value='';window.G.qaSelectedPrice=null;window.G.qaPromoOriginal=null;window.G.qaPromoDivisor=null;window.G.qaPromoPct=null;qaCalcPrice();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
+        <input type="text" inputmode="decimal" id="qa-amt" placeholder="例如：12000" oninput="window.G.qaPromoOriginal=null;window.G.qaPromoDivisor=null;window.G.qaPromoPct=null;qaUpdatePromoBadge();qaDaisoAutoSelectBest();qaCalcPrice()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:11px 40px 11px 14px;font-size:18px;font-weight:700;outline:none"/>
+        <button onclick="document.getElementById('qa-amt').value='';window.G.qaSelectedPrice=null;window.G.qaPromoOriginal=null;window.G.qaPromoDivisor=null;window.G.qaPromoPct=null;qaUpdatePromoBadge();qaCalcPrice();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
       </div>
     </div>
     <!-- 快速選價 -->
@@ -1448,27 +1531,28 @@ body.live-mode .hide-live { display: none !important; }
     <div style="margin-bottom:10px">
       <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:6px">🏪 購買通路（選填）</label>
       <div id="qa-channel-btns" style="display:flex;flex-wrap:wrap;gap:6px">
-        <button class="qa-ch-btn active" data-ch="" onclick="qaSelectChannel(this,'')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #5C3A1E;background:#5C3A1E;color:white;cursor:pointer">未指定</button>
-        <button class="qa-ch-btn" data-ch="OLIVE YOUNG" onclick="qaSelectChannel(this,'OLIVE YOUNG')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧴 OLIVE YOUNG</button>
-        <button class="qa-ch-btn" data-ch="樂天超市" onclick="qaSelectChannel(this,'樂天超市')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛒 樂天超市</button>
-        <button class="qa-ch-btn" data-ch="No Brand" onclick="qaSelectChannel(this,'No Brand')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 No Brand</button>
-        <button class="qa-ch-btn" data-ch="GS25" onclick="qaSelectChannel(this,'GS25')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 GS25</button>
-        <button class="qa-ch-btn" data-ch="CU" onclick="qaSelectChannel(this,'CU')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 CU</button>
-        <button class="qa-ch-btn" data-ch="大創 DAISO" onclick="qaSelectChannel(this,'大創 DAISO')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 大創 DAISO</button>
-        <button class="qa-ch-btn" data-ch="MIMILINE" onclick="qaSelectChannel(this,'MIMILINE')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎀 MIMILINE</button>
-        <button class="qa-ch-btn" data-ch="ARTBOX" onclick="qaSelectChannel(this,'ARTBOX')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 ARTBOX</button>
-        <button class="qa-ch-btn" data-ch="29CM" onclick="qaSelectChannel(this,'29CM')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">💻 29CM</button>
-        <button class="qa-ch-btn" data-ch="Object" onclick="qaSelectChannel(this,'Object')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Object</button>
-        <button class="qa-ch-btn" data-ch="Point of View" onclick="qaSelectChannel(this,'Point of View')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Point of View</button>
-        <button class="qa-ch-btn" data-ch="BUTTER" onclick="qaSelectChannel(this,'BUTTER')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧈 BUTTER</button>
-        <button class="qa-ch-btn" data-ch="新世界免稅店" onclick="qaSelectChannel(this,'新世界免稅店')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛬 新世界免稅店（機場提貨）</button>
-        <button class="qa-ch-btn" data-ch="新羅免稅店" onclick="qaSelectChannel(this,'新羅免稅店')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛬 新羅免稅店（機場提貨）</button>
-        <button class="qa-ch-btn" data-ch="樂天免稅店" onclick="qaSelectChannel(this,'樂天免稅店')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛬 樂天免稅店（機場提貨）</button>
-        <button class="qa-ch-btn" data-ch="新世界/樂天百貨" onclick="qaSelectChannel(this,'新世界/樂天百貨')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏢 百貨專櫃（含稅可退稅）</button>
-        <button class="qa-ch-btn" data-ch="廣藏市場" onclick="qaSelectChannel(this,'廣藏市場')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏮 廣藏市場</button>
-        <button class="qa-ch-btn" data-ch="藥局" onclick="qaSelectChannel(this,'藥局')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">💊 藥局</button>
-        <button class="qa-ch-btn" data-ch="品牌官網/直營門市" onclick="qaSelectChannel(this,'品牌官網/直營門市')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 品牌官網/直營門市</button>
-        <button class="qa-ch-btn" data-ch="其他" onclick="qaSelectChannel(this,'其他')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">📦 其他</button>
+        <button class="qa-ch-btn active ch-btn-neutral" data-ch="" onclick="qaSelectChannel(this,'')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #5C3A1E;background:#5C3A1E;color:white;cursor:pointer">未指定</button>
+        <button class="qa-ch-btn ch-btn-super" data-ch="OLIVE YOUNG" onclick="qaSelectChannel(this,'OLIVE YOUNG')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧴 OLIVE YOUNG</button>
+        <button class="qa-ch-btn ch-btn-super" data-ch="樂天超市" onclick="qaSelectChannel(this,'樂天超市')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛒 樂天超市</button>
+        <button class="qa-ch-btn ch-btn-super" data-ch="No Brand" onclick="qaSelectChannel(this,'No Brand')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 No Brand</button>
+        <button class="qa-ch-btn ch-btn-super" data-ch="GS25" onclick="qaSelectChannel(this,'GS25')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 GS25</button>
+        <button class="qa-ch-btn ch-btn-super" data-ch="CU" onclick="qaSelectChannel(this,'CU')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 CU</button>
+        <button class="qa-ch-btn ch-btn-super" data-ch="大創 DAISO" onclick="qaSelectChannel(this,'大創 DAISO')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 大創 DAISO</button>
+        <button class="qa-ch-btn ch-btn-super" data-ch="7-11" onclick="qaSelectChannel(this,'7-11')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 7-11</button>
+        <button class="qa-ch-btn ch-btn-trend" data-ch="MIMILINE" onclick="qaSelectChannel(this,'MIMILINE')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎀 MIMILINE</button>
+        <button class="qa-ch-btn ch-btn-trend" data-ch="ARTBOX" onclick="qaSelectChannel(this,'ARTBOX')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 ARTBOX</button>
+        <button class="qa-ch-btn ch-btn-trend" data-ch="29CM" onclick="qaSelectChannel(this,'29CM')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">💻 29CM</button>
+        <button class="qa-ch-btn ch-btn-trend" data-ch="Object" onclick="qaSelectChannel(this,'Object')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Object</button>
+        <button class="qa-ch-btn ch-btn-trend" data-ch="Point of View" onclick="qaSelectChannel(this,'Point of View')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Point of View</button>
+        <button class="qa-ch-btn ch-btn-trend" data-ch="BUTTER" onclick="qaSelectChannel(this,'BUTTER')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧈 BUTTER</button>
+        <button class="qa-ch-btn ch-btn-duty" data-ch="新世界免稅店" onclick="qaSelectChannel(this,'新世界免稅店')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛬 新世界免稅店（機場提貨）</button>
+        <button class="qa-ch-btn ch-btn-duty" data-ch="新羅免稅店" onclick="qaSelectChannel(this,'新羅免稅店')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛬 新羅免稅店（機場提貨）</button>
+        <button class="qa-ch-btn ch-btn-duty" data-ch="樂天免稅店" onclick="qaSelectChannel(this,'樂天免稅店')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛬 樂天免稅店（機場提貨）</button>
+        <button class="qa-ch-btn ch-btn-other" data-ch="新世界/樂天百貨" onclick="qaSelectChannel(this,'新世界/樂天百貨')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏢 百貨專櫃（含稅可退稅）</button>
+        <button class="qa-ch-btn ch-btn-other" data-ch="廣藏市場" onclick="qaSelectChannel(this,'廣藏市場')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏮 廣藏市場</button>
+        <button class="qa-ch-btn ch-btn-other" data-ch="藥局" onclick="qaSelectChannel(this,'藥局')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">💊 藥局</button>
+        <button class="qa-ch-btn ch-btn-other" data-ch="品牌官網/直營門市" onclick="qaSelectChannel(this,'品牌官網/直營門市')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 品牌官網/直營門市</button>
+        <button class="qa-ch-btn ch-btn-other" data-ch="其他" onclick="qaSelectChannel(this,'其他')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">📦 其他</button>
       </div>
     </div>
 
@@ -1540,7 +1624,7 @@ body.live-mode .hide-live { display: none !important; }
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, updateDoc, addDoc, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, updateDoc, addDoc, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const app=initializeApp({apiKey:"AIzaSyAt6Te8T9DggqFmhBzZz5iEKIXlPH11DpE",authDomain:"thebutter-2eb30.firebaseapp.com",projectId:"thebutter-2eb30",storageBucket:"thebutter-2eb30.firebasestorage.app",messagingSenderId:"149175450461",appId:"1:149175450461:web:c7c09a1d510994d6a0c6b4"});
@@ -1558,6 +1642,14 @@ const fbSet=(c,i,d)=>setDoc(doc(db,c,i),d);
 const fbDel=(c,i)=>deleteDoc(doc(db,c,i));
 const fbUpd=(c,i,d)=>updateDoc(doc(db,c,i),d);
 window.fbSet=fbSet;window.fbDel=fbDel;window.fbUpd=fbUpd;
+// 依欄位查詢（例如：只查某趟次的收據），只有明確呼叫時才會去打資料庫，不會跟著App啟動整包載入
+window.fbQueryByField=async function(coll,field,value){
+  const q=query(collection(db,coll),where(field,"==",value));
+  const snap=await getDocs(q);
+  const out=[];
+  snap.forEach(d=>out.push({id:d.id,...d.data()}));
+  return out;
+};
 
 const CATS=[
   {key:"food",       label:"超商/超市食品",    emoji:"🍿", desc:"依韓幣原價分梯；人氣往上一格", examples:"零食・泡麵・咖啡糖・餅乾・海苔・飲料粉・調味料"},
@@ -2258,6 +2350,44 @@ document.addEventListener("drop",function(e){
 });
 
 // ── 活動除價按鈕 ─────────────────────────────────────────────────────────
+window.qaUpdatePromoBadge=function(){
+  const badge=document.getElementById("qa-promo-active-badge");
+  const cancelBtn=document.getElementById("qa-promo-cancel-btn");
+  if(!badge)return;
+  const labels={2:"1+1",3:"2+1",4:"3+1"};
+  if(window.G.qaPromoDivisor&&labels[window.G.qaPromoDivisor]){
+    badge.textContent="✓ 目前套用 "+labels[window.G.qaPromoDivisor];
+    badge.style.display="inline";
+    if(cancelBtn)cancelBtn.style.display="inline";
+  } else if(window.G.qaPromoPct){
+    badge.textContent="✓ 目前套用 "+window.G.qaPromoPct+"折";
+    badge.style.display="inline";
+    if(cancelBtn)cancelBtn.style.display="inline";
+  } else {
+    badge.style.display="none";
+    if(cancelBtn)cancelBtn.style.display="none";
+  }
+};
+// 不管折扣輸入框現在打了什麼，一律直接取消目前的活動並還原原價
+window.qaCancelPromo=function(){
+  if(!window.G.qaPromoOriginal){showToast("目前沒有套用中的活動","error");return;}
+  const amtEl=document.getElementById("qa-amt");
+  const nameEl=document.getElementById("qa-name");
+  if(amtEl)amtEl.value=window.G.qaPromoOriginal;
+  window.G.qaPromoOriginal=null;window.G.qaPromoDivisor=null;window.G.qaPromoPct=null;
+  window.G.qaSelectedPrice=null;
+  const ce=document.getElementById("qa-custom");if(ce)ce.value="";
+  if(nameEl){
+    let n=nameEl.value.trim();
+    n=n.replace(/（[1-4][+＋][1-4]）/g,"").trim();
+    n=n.replace(/（\d+(\.\d+)?折）/g,"").trim();
+    nameEl.value=n;
+  }
+  const discEl=document.getElementById("qa-discount-pct");if(discEl)discEl.value="";
+  qaCalcPrice();
+  qaUpdatePromoBadge();
+  showToast("已取消活動，還原原價","success");
+};
 window.qaApplyPromo=function(divisor){
   // 自我修復：狀態不同步一律視為沒有活動在跑，避免越除越小
   if(!window.G.qaPromoOriginal||(!window.G.qaPromoDivisor&&!window.G.qaPromoPct)){
@@ -2279,6 +2409,7 @@ window.qaApplyPromo=function(divisor){
     name=name.replace(/（[1-4][+＋][1-4]）/g,"").trim();
     nameEl.value=name;
     qaCalcPrice();
+    qaUpdatePromoBadge();
     showToast("已取消活動，還原原價","success");return;
   }
   const original=window.G.qaPromoOriginal||raw;
@@ -2294,6 +2425,7 @@ window.qaApplyPromo=function(divisor){
   name=name.replace(/（\d+(\.\d+)?折）/g,"").trim();
   nameEl.value=name+(name?" ":"")+tag;
   qaCalcPrice();
+  qaUpdatePromoBadge();
   showToast(`已套用 ${tag.replace("（","").replace("）","")} 活動，每件 ${perItem.toLocaleString()}`,"success");
 };
 
@@ -2318,6 +2450,7 @@ window.qaApplyDiscount=function(){
     const ce=document.getElementById("qa-custom");if(ce)ce.value="";
     if(nameEl){let n=nameEl.value.trim();nameEl.value=n.replace(/（\d+(\.\d+)?折）/g,"").trim();}
     qaCalcPrice();
+    qaUpdatePromoBadge();
     showToast("已取消折扣，還原原價","success");return;
   }
   const original=window.G.qaPromoOriginal||raw;
@@ -2336,6 +2469,7 @@ window.qaApplyDiscount=function(){
     nameEl.value=name+(name?" ":"")+`（${pctLabel}折）`;
   }
   qaCalcPrice();
+  qaUpdatePromoBadge();
   showToast(`已套用 ${pct}折，金額 ${discounted.toLocaleString()}`,"success");
 };
 
@@ -2357,6 +2491,39 @@ window.cApplyPromo=function(divisor){
   showToast(`已套用 ${tag.replace("（","").replace("）","")} 活動，每件 ₩${perItem.toLocaleString()}`,"success");
 };
 
+window.qaLiveUpdatePromoBadge=function(){
+  const row=document.getElementById("qa-live-promo-badge-row");
+  const badge=document.getElementById("qa-live-promo-badge");
+  if(!row||!badge)return;
+  const labels={2:"1+1",3:"2+1",4:"3+1"};
+  if(window.G.qaLivePromoDivisor&&labels[window.G.qaLivePromoDivisor]){
+    badge.textContent="✓ 目前套用 "+labels[window.G.qaLivePromoDivisor];
+    row.style.display="flex";
+  } else if(window.G.qaLivePromoPct){
+    badge.textContent="✓ 目前套用 "+window.G.qaLivePromoPct+"折";
+    row.style.display="flex";
+  } else {
+    row.style.display="none";
+  }
+};
+// 不管現在按了哪個按鈕、或折扣輸入框打了什麼，一律直接取消目前的活動並還原原價
+window.qaLiveCancelPromo=function(){
+  if(!window.G.qaLivePromoOriginal){showToast("目前沒有套用中的活動","error");return;}
+  const amtEl=document.getElementById("qa-live-amt");
+  const nameEl=document.getElementById("qa-live-name");
+  if(amtEl)amtEl.value=window.G.qaLivePromoOriginal;
+  window.G.qaLivePromoOriginal=null;window.G.qaLivePromoDivisor=null;window.G.qaLivePromoPct=null;
+  if(nameEl){
+    let n=nameEl.value.trim();
+    n=n.replace(/（[1-4][+＋][1-4]）/g,"").trim();
+    n=n.replace(/（\d+(\.\d+)?折）/g,"").trim();
+    nameEl.value=n;
+  }
+  const discEl=document.getElementById("qa-live-discount-pct");if(discEl)discEl.value="";
+  qaLiveCalc();
+  qaLiveUpdatePromoBadge();
+  showToast("已取消活動，還原原價","success");
+};
 window.qaLiveApplyPromo=function(divisor){
   const amtEl=document.getElementById("qa-live-amt");
   const nameEl=document.getElementById("qa-live-name");
@@ -2366,23 +2533,62 @@ window.qaLiveApplyPromo=function(divisor){
   const tag=labels[divisor];
   if(window.G.qaLivePromoDivisor===divisor&&window.G.qaLivePromoOriginal){
     amtEl.value=window.G.qaLivePromoOriginal;
-    window.G.qaLivePromoOriginal=null;window.G.qaLivePromoDivisor=null;
+    window.G.qaLivePromoOriginal=null;window.G.qaLivePromoDivisor=null;window.G.qaLivePromoPct=null;
     if(nameEl){let n=nameEl.value.trim();nameEl.value=n.replace(/（[1-4][+＋][1-4]）/g,"").trim();}
     qaLiveCalc();
+    qaLiveUpdatePromoBadge();
     showToast("已取消活動，還原原價","success");return;
   }
   const original=window.G.qaLivePromoOriginal||raw;
   window.G.qaLivePromoOriginal=original;
   window.G.qaLivePromoDivisor=divisor;
+  window.G.qaLivePromoPct=null; // 切換成倍數活動時，清掉折數狀態，避免疊加
   const perItem=Math.round(original*(divisor-1)/divisor);
   amtEl.value=perItem;
   if(nameEl){
     let name=nameEl.value.trim();
     name=name.replace(/（[1-4][+＋][1-4]）/g,"").trim();
+    name=name.replace(/（\d+(\.\d+)?折）/g,"").trim();
     nameEl.value=name+(name?" ":"")+tag;
   }
+  const discEl=document.getElementById("qa-live-discount-pct");if(discEl)discEl.value="";
   qaLiveCalc();
+  qaLiveUpdatePromoBadge();
   showToast(`已套用 ${tag.replace("（","").replace("）","")} 活動，每件 ₩${perItem.toLocaleString()}`,"success");
+};
+// 幾折折扣：跟1+1/2+1/3+1一樣，同一折數再按一次＝取消還原原價，換折數則一律從原價重新算
+window.qaLiveApplyDiscount=function(){
+  const amtEl=document.getElementById("qa-live-amt");
+  const nameEl=document.getElementById("qa-live-name");
+  const discEl=document.getElementById("qa-live-discount-pct");
+  const pct=parseFloat(discEl?.value)||0;
+  const raw=parseFloat(amtEl.value.replace(/,/g,""))||0;
+  if(!pct||pct<=0||pct>=10){showToast("請輸入0~10之間的折數，例如7代表7折","error");return;}
+  if(!raw&&!window.G.qaLivePromoOriginal){showToast("請先填入韓幣金額","error");return;}
+  if(window.G.qaLivePromoPct===pct&&window.G.qaLivePromoOriginal){
+    amtEl.value=window.G.qaLivePromoOriginal;
+    window.G.qaLivePromoOriginal=null;window.G.qaLivePromoDivisor=null;window.G.qaLivePromoPct=null;
+    if(nameEl){let n=nameEl.value.trim();nameEl.value=n.replace(/（\d+(\.\d+)?折）/g,"").trim();}
+    qaLiveCalc();
+    qaLiveUpdatePromoBadge();
+    showToast("已取消折扣，還原原價","success");return;
+  }
+  const original=window.G.qaLivePromoOriginal||raw;
+  window.G.qaLivePromoOriginal=original;
+  window.G.qaLivePromoPct=pct;
+  window.G.qaLivePromoDivisor=null; // 切換成折數時，清掉倍數活動狀態，避免疊加
+  const discounted=Math.round(original*pct/10);
+  amtEl.value=discounted;
+  if(nameEl){
+    let name=nameEl.value.trim();
+    name=name.replace(/（[1-4][+＋][1-4]）/g,"").trim();
+    name=name.replace(/（\d+(\.\d+)?折）/g,"").trim();
+    const pctLabel=Number.isInteger(pct)?pct:pct.toFixed(1);
+    nameEl.value=name+(name?" ":"")+`（${pctLabel}折）`;
+  }
+  qaLiveCalc();
+  qaLiveUpdatePromoBadge();
+  showToast(`已套用 ${pct}折，金額 ${discounted.toLocaleString()}`,"success");
 };
 
 // ── 複製商品 ──────────────────────────────────────────────────────────────
@@ -2401,17 +2607,39 @@ window.duplicateProduct=async function(id){
 
 window.epUpdatePromoBadge=function(){
   const badge=document.getElementById("ep-promo-active-badge");
+  const cancelBtn=document.getElementById("ep-promo-cancel-btn");
   if(!badge)return;
   const labels={2:"1+1",3:"2+1",4:"3+1"};
   if(window.G.epPromoDivisor&&labels[window.G.epPromoDivisor]){
     badge.textContent="✓ 目前套用 "+labels[window.G.epPromoDivisor];
     badge.style.display="inline";
+    if(cancelBtn)cancelBtn.style.display="inline";
   } else if(window.G.epPromoPct){
     badge.textContent="✓ 目前套用 "+window.G.epPromoPct+"折";
     badge.style.display="inline";
+    if(cancelBtn)cancelBtn.style.display="inline";
   } else {
     badge.style.display="none";
+    if(cancelBtn)cancelBtn.style.display="none";
   }
+};
+// 不管折扣輸入框現在打了什麼、有沒有跟原本套用的折數一致，一律直接取消目前的活動並還原原價
+window.epCancelPromo=function(){
+  if(!window.G.epPromoOriginal){showToast("目前沒有套用中的活動","error");return;}
+  const amtEl=document.getElementById("ep-foreign");
+  const nameEl=document.getElementById("ep-name");
+  if(amtEl)amtEl.value=window.G.epPromoOriginal;
+  window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;window.G.epPromoPct=null;
+  if(nameEl){
+    let n=nameEl.value.trim();
+    n=n.replace(/（[1-4][+＋][1-4]）/g,"").trim();
+    n=n.replace(/（\d+(\.\d+)?折）/g,"").trim();
+    nameEl.value=n;
+  }
+  const discEl=document.getElementById("ep-discount-pct");if(discEl)discEl.value="";
+  epForeignChange();
+  epUpdatePromoBadge();
+  showToast("已取消活動，還原原價","success");
 };
 window.epApplyPromo=function(divisor){
   // 自我修復：狀態不同步（有倍數卻沒有原價，或反過來）一律視為沒有活動在跑，避免越除越小
@@ -2979,11 +3207,9 @@ window.openModal=function(id,data){
       // 通路選擇還原
       window.G.editChannel=data.channel||"";
       setTimeout(()=>{
+        const editChList=(data.channel||"").split("、").filter(Boolean);
         document.querySelectorAll(".ep-ch-btn").forEach(b=>{
-          const active=b.dataset.ch===(data.channel||"");
-          b.style.background=active?"#5C3A1E":"white";
-          b.style.borderColor=active?"#5C3A1E":"#E8D5B0";
-          b.style.color=active?"white":"#9C7A5A";
+          const active=editChList.includes(b.dataset.ch);
           active?b.classList.add("active"):b.classList.remove("active");
         });
       },30);
@@ -4397,9 +4623,9 @@ window.saveProduct=async function(){
     btn.style.color=a?"#F5E6C8":"#9C7A5A";
     btn.style.borderColor=a?"#5C3A1E":"#E8D5B0";
   });
-  document.querySelectorAll(".calc-ch-btn").forEach(b=>{b.style.background="white";b.style.borderColor="#E8D5B0";b.style.color="#9C7A5A";b.classList.remove("active");});
+  document.querySelectorAll(".calc-ch-btn").forEach(b=>{b.classList.remove("active");});
   const firstCalcCh=document.querySelector(".calc-ch-btn");
-  if(firstCalcCh){firstCalcCh.style.background="#5C3A1E";firstCalcCh.style.borderColor="#5C3A1E";firstCalcCh.style.color="white";firstCalcCh.classList.add("active");}
+  if(firstCalcCh){firstCalcCh.classList.add("active");}
   cImgClear();
   window.G.calcAmt=0;window.G.calcName="";window.G.calcCustom=0;window.G.calcFlags={};window.G.calcTwPrice=0;window.G.calcPhoto="";
   document.getElementById("c-results").style.display="none";
@@ -7395,6 +7621,228 @@ function renderTripBars(){
     else{const t=trips.find(x=>x.id===tripFilter);label.textContent=t?"— "+t.name:"";}  }
 }
 
+// ── 📷 收據管理 ──────────────────────────────────────────────────────
+window.G.receiptCurrentTripId=null;
+window.G.receiptDraftItems=[]; // {name,price,koOriginal,zhOriginal,matchName}
+window.G.receiptDraftImgB64=null;
+window.G.receiptSavedList=[];
+window.G.receiptViewingId=null;
+
+// 簡單模糊比對：把AI辨識出的品名拿去跟你商品庫裡的名字/別名比對相似度，抓最相似的一筆
+function normalizeForMatch(s){
+  return (s||"").toLowerCase().replace(/[\s,，、()（）\-_/]/g,"");
+}
+function bigramSet(s){
+  const set=new Set();
+  for(let i=0;i<s.length-1;i++)set.add(s.substr(i,2));
+  if(set.size===0&&s.length)set.add(s);
+  return set;
+}
+function bigramSimilarity(a,b){
+  const A=bigramSet(a),B=bigramSet(b);
+  if(!A.size||!B.size)return 0;
+  let inter=0;
+  A.forEach(x=>{if(B.has(x))inter++;});
+  return inter/(A.size+B.size-inter);
+}
+window.fuzzyMatchProduct=function(name){
+  const target=normalizeForMatch(name);
+  if(!target)return null;
+  let best=null,bestScore=0;
+  (window.G.products||[]).forEach(p=>{
+    if(p.archived)return;
+    const candidates=[p.name,...(Array.isArray(p.aliases)?p.aliases:[])].filter(Boolean);
+    candidates.forEach(c=>{
+      const score=bigramSimilarity(target,normalizeForMatch(c));
+      if(score>bestScore){bestScore=score;best=p;}
+    });
+  });
+  if(best&&bestScore>=0.32)return best;
+  return null;
+};
+
+window.openTripReceipts=async function(tripId){
+  const trip=window.G.trips.find(t=>t.id===tripId);
+  if(!trip)return;
+  window.G.receiptCurrentTripId=tripId;
+  document.getElementById("receipt-trip-name").textContent="－ "+trip.name;
+  document.getElementById("receipt-draft-box").style.display="none";
+  document.getElementById("receipt-upload-status").textContent="";
+  const listEl=document.getElementById("receipt-saved-list");
+  listEl.innerHTML='<div style="text-align:center;padding:16px;color:#B0906A;font-size:12px">載入中…</div>';
+  openModal("modal-receipts");
+  try{
+    const list=await window.fbQueryByField("receipts","tripId",tripId);
+    list.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    window.G.receiptSavedList=list;
+    renderSavedReceiptList(list);
+  }catch(e){
+    listEl.innerHTML='<div style="text-align:center;padding:16px;color:#C0392B;font-size:12px">載入失敗，請重新開啟試試</div>';
+    console.error(e);
+  }
+};
+
+function renderSavedReceiptList(list){
+  const el=document.getElementById("receipt-saved-list");
+  if(!list.length){
+    el.innerHTML='<div style="text-align:center;padding:16px;color:#B0906A;font-size:12px">尚未上傳任何收據</div>';
+    return;
+  }
+  el.innerHTML=list.map(r=>{
+    const itemCount=(r.items||[]).length;
+    return `<div onclick="receiptViewSaved('${r.id}')" style="display:flex;gap:10px;align-items:center;border:1px solid #E8D5B0;border-radius:10px;padding:8px 10px;margin-bottom:8px;cursor:pointer;background:white">
+      <img src="${r.imgB64||''}" style="width:44px;height:44px;object-fit:cover;border-radius:6px;flex-shrink:0;background:#FAF8F5"/>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700;color:#3D2010">${(r.store||"未命名店家").replace(/</g,"&lt;")}</div>
+        <div style="font-size:10px;color:#9C7A5A">${r.date||"未填日期"}・${itemCount}項</div>
+      </div>
+      <div style="font-size:13px;font-weight:900;color:#C0392B;flex-shrink:0">${r.total?"₩"+Number(r.total).toLocaleString():"-"}</div>
+    </div>`;
+  }).join("");
+}
+
+window.receiptUploadFile=async function(input){
+  const file=input.files?.[0];
+  if(!file)return;
+  const statusEl=document.getElementById("receipt-upload-status");
+  statusEl.textContent="🔍 AI 辨識中，請稍候…";
+  try{
+    // 收據字比商品照片小很多，壓縮解析度拉高一點才看得清楚
+    const b64=await compressImg(file,1280,0.82);
+    window.G.receiptDraftImgB64=b64;
+    const resp=await fetch("https://butter-ai.kueigin.workers.dev",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","X-Service":"receipt-ocr"},
+      body:JSON.stringify({b64:b64.split(",")[1]})
+    });
+    const data=await resp.json();
+    if(data.error)throw new Error(typeof data.error==="string"?data.error:JSON.stringify(data.error));
+    statusEl.textContent="✅ 辨識完成，請檢查下方內容再存檔";
+    const items=(data.items||[]).map(it=>{
+      const zh=it.name_zh||it.name_ko||"";
+      const matched=window.fuzzyMatchProduct(zh)||window.fuzzyMatchProduct(it.name_ko||"");
+      return{
+        name:matched?matched.name:zh,
+        price:it.price||0,
+        koOriginal:it.name_ko||"",
+        zhOriginal:it.name_zh||"",
+        matchName:matched?matched.name:null,
+      };
+    });
+    window.G.receiptDraftItems=items.length?items:[{name:"",price:0,koOriginal:"",zhOriginal:"",matchName:null}];
+    document.getElementById("receipt-draft-store").value=data.store||"";
+    document.getElementById("receipt-draft-date").value=data.date||"";
+    document.getElementById("receipt-draft-total").value=data.total||"";
+    receiptRenderItems();
+    document.getElementById("receipt-draft-box").style.display="block";
+  }catch(e){
+    statusEl.textContent="⚠️ 辨識失敗："+e.message+"（可以手動輸入，不用重拍）";
+    // 辨識失敗也讓你能手動填寫，不會卡住整個流程
+    window.G.receiptDraftItems=[{name:"",price:0,koOriginal:"",zhOriginal:"",matchName:null}];
+    document.getElementById("receipt-draft-store").value="";
+    document.getElementById("receipt-draft-date").value="";
+    document.getElementById("receipt-draft-total").value="";
+    receiptRenderItems();
+    document.getElementById("receipt-draft-box").style.display="block";
+    console.error(e);
+  }
+  input.value="";
+};
+
+function receiptRenderItems(){
+  const el=document.getElementById("receipt-draft-items");
+  const items=window.G.receiptDraftItems;
+  el.innerHTML=items.map((it,i)=>{
+    const hint=it.zhOriginal||it.koOriginal
+      ? `<div style="font-size:9px;color:#B0906A;margin-top:2px">AI辨識原文：${(it.koOriginal||"").replace(/</g,"&lt;")}${it.zhOriginal?" → "+it.zhOriginal.replace(/</g,"&lt;"):""}${it.matchName?`　<span style="color:#2E6B4B">（已比對到商品庫：${it.matchName.replace(/</g,"&lt;")}）</span>`:""}</div>`
+      : "";
+    return `<div style="border:1px solid #F0E0C0;border-radius:8px;padding:8px 10px;margin-bottom:6px;background:white">
+      <div style="display:flex;gap:6px;align-items:center">
+        <input type="text" value="${(it.name||"").replace(/"/g,"&quot;")}" oninput="window.G.receiptDraftItems[${i}].name=this.value" placeholder="品名" style="flex:1;min-width:0;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:6px;padding:6px 8px;font-size:12px;outline:none"/>
+        <input type="text" inputmode="decimal" value="${it.price||""}" oninput="window.G.receiptDraftItems[${i}].price=parseFloat(this.value)||0" placeholder="價格" style="width:80px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:6px;padding:6px 8px;font-size:12px;outline:none;text-align:right"/>
+        <button onclick="receiptRemoveItemRow(${i})" style="background:#FDEDEC;border:none;border-radius:6px;width:24px;height:24px;color:#C0392B;cursor:pointer;flex-shrink:0">×</button>
+      </div>
+      ${hint}
+    </div>`;
+  }).join("");
+}
+window.receiptAddItemRow=function(){
+  window.G.receiptDraftItems.push({name:"",price:0,koOriginal:"",zhOriginal:"",matchName:null});
+  receiptRenderItems();
+};
+window.receiptRemoveItemRow=function(idx){
+  window.G.receiptDraftItems.splice(idx,1);
+  receiptRenderItems();
+};
+window.receiptCancelDraft=function(){
+  document.getElementById("receipt-draft-box").style.display="none";
+  document.getElementById("receipt-upload-status").textContent="";
+  window.G.receiptDraftItems=[];
+  window.G.receiptDraftImgB64=null;
+};
+window.receiptSaveDraft=async function(){
+  const tripId=window.G.receiptCurrentTripId;
+  if(!tripId)return;
+  const store=document.getElementById("receipt-draft-store").value.trim();
+  const date=document.getElementById("receipt-draft-date").value;
+  const total=parseFloat(document.getElementById("receipt-draft-total").value)||0;
+  const items=window.G.receiptDraftItems.filter(it=>it.name||it.price);
+  const id="R"+Date.now();
+  try{
+    await fbSet("receipts",id,{
+      tripId,store,date,total,items,
+      imgB64:window.G.receiptDraftImgB64||null,
+      createdAt:Date.now(),
+    });
+    showToast("✅ 收據已存檔");
+    receiptCancelDraft();
+    const list=await window.fbQueryByField("receipts","tripId",tripId);
+    list.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    window.G.receiptSavedList=list;
+    renderSavedReceiptList(list);
+  }catch(e){
+    showToast("存檔失敗，請再試一次","error");
+    console.error(e);
+  }
+};
+
+window.receiptViewSaved=function(id){
+  const r=window.G.receiptSavedList.find(x=>x.id===id);
+  if(!r)return;
+  window.G.receiptViewingId=id;
+  const body=document.getElementById("receipt-view-body");
+  const itemsHtml=(r.items||[]).map(it=>
+    `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #F5EDE0;font-size:13px">
+      <span>${(it.name||"").replace(/</g,"&lt;")}</span>
+      <span style="font-weight:700">₩${Number(it.price||0).toLocaleString()}</span>
+    </div>`
+  ).join("");
+  body.innerHTML=`
+    ${r.imgB64?`<img src="${r.imgB64}" style="width:100%;border-radius:10px;margin-bottom:12px;max-height:280px;object-fit:contain;background:#FAF8F5"/>`:""}
+    <div style="font-size:15px;font-weight:900;color:#3D2010">${(r.store||"未命名店家").replace(/</g,"&lt;")}</div>
+    <div style="font-size:11px;color:#9C7A5A;margin-bottom:10px">${r.date||"未填日期"}</div>
+    ${itemsHtml}
+    <div style="display:flex;justify-content:space-between;padding:10px 0 0;margin-top:6px;border-top:2px solid #E8D5B0;font-size:14px;font-weight:900">
+      <span>總金額</span><span style="color:#C0392B">₩${Number(r.total||0).toLocaleString()}</span>
+    </div>`;
+  openModal("modal-receipt-view");
+};
+window.receiptDeleteCurrent=async function(){
+  const id=window.G.receiptViewingId;
+  if(!id)return;
+  if(!confirm("確定要刪除這張收據嗎？刪除後無法復原。"))return;
+  try{
+    await fbDel("receipts",id);
+    closeModal("modal-receipt-view");
+    window.G.receiptSavedList=window.G.receiptSavedList.filter(x=>x.id!==id);
+    renderSavedReceiptList(window.G.receiptSavedList);
+    showToast("已刪除");
+  }catch(e){
+    showToast("刪除失敗","error");
+    console.error(e);
+  }
+};
+
 // 設定頁趟次列表
 window.renderTripList=function(){
   const el=document.getElementById("trip-list");if(!el)return;
@@ -7422,6 +7870,7 @@ window.renderTripList=function(){
           badge+
         "</div>"+
         "<div style='display:flex;gap:6px'>"+
+          "<button data-tid='"+t.id+"' onclick='openTripReceipts(this.dataset.tid)' style='font-size:10px;color:#1E5F8C;background:#EAF4FB;border:1px solid #BEE0F5;padding:3px 8px;border-radius:6px;cursor:pointer;font-weight:600'>📷 收據</button>"+
           "<button data-tid='"+t.id+"' onclick='openEditTrip(this.dataset.tid)' style='font-size:10px;color:#C5A880;background:#FDF6EC;border:1px solid #E8D5B0;padding:3px 8px;border-radius:6px;cursor:pointer;font-weight:600'>✏️</button>"+
           "<button data-tid='"+t.id+"' onclick='deleteTrip(this.dataset.tid)' style='font-size:10px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:3px 8px;border-radius:6px;cursor:pointer;font-weight:600'>🗑️</button>"+
         "</div>"+
@@ -9344,9 +9793,9 @@ window.openQuickAdd=function(){
   const qaCurSelReset=document.getElementById("qa-cur-select");if(qaCurSelReset)qaCurSelReset.value="KRW";
   window.G.qaPaymentMethod="card";
   const qaPmSelReset=document.getElementById("qa-pm-select");if(qaPmSelReset)qaPmSelReset.value="card";
-  document.querySelectorAll(".qa-ch-btn").forEach(b=>{b.style.background="white";b.style.borderColor="#E8D5B0";b.style.color="#9C7A5A";b.classList.remove("active");});
+  document.querySelectorAll(".qa-ch-btn").forEach(b=>{b.classList.remove("active");});
   const firstCh=document.querySelector(".qa-ch-btn");
-  if(firstCh){firstCh.style.background="#5C3A1E";firstCh.style.borderColor="#5C3A1E";firstCh.style.color="white";firstCh.classList.add("active");}
+  if(firstCh){firstCh.classList.add("active");}
   document.getElementById("qa-img-preview")?.style&&(document.getElementById("qa-img-preview").style.display="none");
   document.getElementById("qa-img-label")?.style&&(document.getElementById("qa-img-label").style.display="flex");
   document.getElementById("qa-ai-result")?.style&&(document.getElementById("qa-ai-result").style.display="none");
@@ -9391,6 +9840,7 @@ window.openQuickAdd=function(){
   window.G.qaSpecsList=[];window.G.qaSpecImages=[];
   if(typeof qaRenderSpecs==="function")qaRenderSpecs();
   window.G.qaPromoOriginal=null;window.G.qaPromoDivisor=null;window.G.qaPromoPct=null;
+  if(typeof qaUpdatePromoBadge==="function")qaUpdatePromoBadge();
   const qaDiscPctReset=document.getElementById("qa-discount-pct");if(qaDiscPctReset)qaDiscPctReset.value="";
   // 清除網址
   const qaUrl=document.getElementById("qa-url");if(qaUrl)qaUrl.value="";
@@ -9623,22 +10073,22 @@ window.qaProdImgClear=function(){
 window.epSelectChannel=function(btn,ch){
   if(ch===""){
     document.querySelectorAll(".ep-ch-btn").forEach(b=>{
-      b.style.background="white";b.style.borderColor="#E8D5B0";b.style.color="#9C7A5A";b.classList.remove("active");
+      b.classList.remove("active");
     });
-    btn.style.background="#5C3A1E";btn.style.borderColor="#5C3A1E";btn.style.color="white";btn.classList.add("active");
+    btn.classList.add("active");
     window.G.editChannels=[];
   } else {
     const noneBtn=document.querySelector(".ep-ch-btn[data-ch='']");
-    if(noneBtn){noneBtn.style.background="white";noneBtn.style.borderColor="#E8D5B0";noneBtn.style.color="#9C7A5A";noneBtn.classList.remove("active");}
+    if(noneBtn){noneBtn.classList.remove("active");}
     if(btn.classList.contains("active")){
-      btn.style.background="white";btn.style.borderColor="#E8D5B0";btn.style.color="#9C7A5A";btn.classList.remove("active");
+      btn.classList.remove("active");
     } else {
-      btn.style.background="#5C3A1E";btn.style.borderColor="#5C3A1E";btn.style.color="white";btn.classList.add("active");
+      btn.classList.add("active");
     }
     window.G.editChannels=[...document.querySelectorAll(".ep-ch-btn.active")].map(b=>b.dataset.ch).filter(Boolean);
     if(window.G.editChannels.length===0){
       const nb=document.querySelector(".ep-ch-btn[data-ch='']");
-      if(nb){nb.style.background="#5C3A1E";nb.style.borderColor="#5C3A1E";nb.style.color="white";nb.classList.add("active");}
+      if(nb){nb.classList.add("active");}
     }
   }
   window.G.editChannel=window.G.editChannels?.join("、")||"";
@@ -10087,7 +10537,7 @@ window.qaToggleLiveMode=function(){
     toggle.style.background="#F59E0B";toggle.style.color="white";toggle.style.borderColor="#F59E0B";
     toggle.textContent="⚡ 連線中";
     title.textContent="⚡ 連線極速模式";
-    subtitle.textContent="只填品名和韓幣，一鍵上架";
+    subtitle.textContent="只填品名和金額，一鍵上架（可切換幣別）";
     // 隱藏正常模式的複雜區塊
     ["qa-img-area","qa-prod-img-area","qa-cat-grid","qa-channel-btns","qa-quick-btns","qa-beauty-panel","qa-daiso-panel"].forEach(id=>{
       const el=document.getElementById(id);
@@ -10106,6 +10556,18 @@ window.qaToggleLiveMode=function(){
   }
 };
 
+window.qaLiveSelectCurrency=function(cur){
+  window.G.qaLiveCurrency=cur;
+  document.querySelectorAll(".qa-live-curr-btn").forEach(b=>{
+    const active=b.dataset.curr===cur;
+    b.style.background=active?"#F59E0B":"white";
+    b.style.color=active?"white":"#B45309";
+  });
+  const info=CURR[cur];
+  const amtEl=document.getElementById("qa-live-amt");
+  if(amtEl&&info)amtEl.placeholder=`${info.name}金額 ${info.symbol}`;
+  qaLiveCalc();
+};
 window.qaLiveCalc=function(){
   const amt=parseFloat(document.getElementById("qa-live-amt")?.value)||0;
   if(!amt){
@@ -10116,7 +10578,8 @@ window.qaLiveCalc=function(){
     return;
   }
   // 使用與定價頁、快速上架完全相同的計算函數
-  const{afterTax}=calcCost(amt,"KRW");
+  const currency=window.G.qaLiveCurrency||"KRW";
+  const{afterTax}=calcCost(amt,currency);
   const cat=window.G.qaCatKey||"food";
   const sugg=suggestPrice(afterTax,cat,{},0,amt);
   const finalPrice=window.G.qaLiveCustomPrice||sugg;
@@ -10200,14 +10663,11 @@ window.qaLiveImgClear=function(){
 window.qaLiveSave=async function(){
   const name=document.getElementById("qa-live-name")?.value.trim();
   const amt=parseFloat(document.getElementById("qa-live-amt")?.value)||0;
+  const currency=window.G.qaLiveCurrency||"KRW";
   if(!name){showToast("請填入品名","error");return;}
-  if(!amt){showToast("請填入韓幣金額","error");return;}
-  const s=window.G.settings||{};
-  const rate=s.rate||0.024;
-  const tax=s.taxRefund||0.07;
-  const card=s.cardFee||0.015;
-  const rebate=s.cardRebate||0.033;
-  const cost=amt*rate*(1-tax)*(1+card)*(1-rebate);
+  if(!amt){showToast(`請填入${CURR[currency]?.name||"外幣"}金額`,"error");return;}
+  const{beforeTax,afterTax}=calcCost(amt,currency);
+  const cost=afterTax;
   const costRounded=Math.round(cost);
   let sugg=costRounded;
   if(cost<=45)sugg=99;
@@ -10227,8 +10687,8 @@ window.qaLiveSave=async function(){
   const finalPrice=window.G.qaLiveCustomPrice||sugg;
   const tripId=window.G.moSelectedTripId||getLatestTrip()?.id||"";
   const id="P"+Date.now();
-  const prod={id,name,foreignAmount:amt,currency:"KRW",
-    beforeTax:Math.round(amt*rate),afterTax:costRounded,
+  const prod={id,name,foreignAmount:amt,currency,currencySymbol:CURR[currency]?.symbol||"₩",
+    beforeTax,afterTax:costRounded,
     finalPrice,profit:finalPrice-costRounded,
     margin:Math.round((finalPrice-costRounded)/finalPrice*100),
     catKey:"food",category:"超商/超市食品",emoji:"🍿",
@@ -10241,7 +10701,11 @@ window.qaLiveSave=async function(){
   document.getElementById("qa-live-amt").value="";
   document.getElementById("qa-live-custom").value="";
   window.G.qaLiveCustomPrice=null;
+  window.G.qaLivePromoOriginal=null;window.G.qaLivePromoDivisor=null;window.G.qaLivePromoPct=null;
+  const qaLiveDiscReset=document.getElementById("qa-live-discount-pct");if(qaLiveDiscReset)qaLiveDiscReset.value="";
+  if(typeof qaLiveUpdatePromoBadge==="function")qaLiveUpdatePromoBadge();
   qaLiveImgClear();
+  qaLiveSelectCurrency("KRW");
   qaLiveCalc();
   showToast("⚡ 已上架："+name);
 };
@@ -10260,22 +10724,22 @@ window.qaSelectPaymentMethod=function(pm){
 window.qaSelectChannel=function(btn,ch){
   if(ch===""){
     document.querySelectorAll(".qa-ch-btn").forEach(b=>{
-      b.style.background="white";b.style.borderColor="#E8D5B0";b.style.color="#9C7A5A";b.classList.remove("active");
+      b.classList.remove("active");
     });
-    btn.style.background="#5C3A1E";btn.style.borderColor="#5C3A1E";btn.style.color="white";btn.classList.add("active");
+    btn.classList.add("active");
     window.G.qaChannels=[];
   } else {
     const noneBtn=document.querySelector(".qa-ch-btn[data-ch='']");
-    if(noneBtn){noneBtn.style.background="white";noneBtn.style.borderColor="#E8D5B0";noneBtn.style.color="#9C7A5A";noneBtn.classList.remove("active");}
+    if(noneBtn){noneBtn.classList.remove("active");}
     if(btn.classList.contains("active")){
-      btn.style.background="white";btn.style.borderColor="#E8D5B0";btn.style.color="#9C7A5A";btn.classList.remove("active");
+      btn.classList.remove("active");
     } else {
-      btn.style.background="#5C3A1E";btn.style.borderColor="#5C3A1E";btn.style.color="white";btn.classList.add("active");
+      btn.classList.add("active");
     }
     window.G.qaChannels=[...document.querySelectorAll(".qa-ch-btn.active")].map(b=>b.dataset.ch).filter(Boolean);
     if(window.G.qaChannels.length===0){
       const nb=document.querySelector(".qa-ch-btn[data-ch='']");
-      if(nb){nb.style.background="#5C3A1E";nb.style.borderColor="#5C3A1E";nb.style.color="white";nb.classList.add("active");}
+      if(nb){nb.classList.add("active");}
     }
   }
   window.G.qaChannel=window.G.qaChannels?.join("、")||"";
@@ -10285,24 +10749,24 @@ window.calcSelectChannel=function(btn,ch){
   if(ch===""){
     // 未指定：清除全部選擇
     document.querySelectorAll(".calc-ch-btn").forEach(b=>{
-      b.style.background="white";b.style.borderColor="#E8D5B0";b.style.color="#9C7A5A";b.classList.remove("active");
+      b.classList.remove("active");
     });
-    btn.style.background="#5C3A1E";btn.style.borderColor="#5C3A1E";btn.style.color="white";btn.classList.add("active");
+    btn.classList.add("active");
     window.G.calcChannels=[];
   } else {
     // 取消「未指定」
     const noneBtn=document.querySelector(".calc-ch-btn[data-ch='']");
-    if(noneBtn){noneBtn.style.background="white";noneBtn.style.borderColor="#E8D5B0";noneBtn.style.color="#9C7A5A";noneBtn.classList.remove("active");}
+    if(noneBtn){noneBtn.classList.remove("active");}
     // toggle 選取
     if(btn.classList.contains("active")){
-      btn.style.background="white";btn.style.borderColor="#E8D5B0";btn.style.color="#9C7A5A";btn.classList.remove("active");
+      btn.classList.remove("active");
     } else {
-      btn.style.background="#5C3A1E";btn.style.borderColor="#5C3A1E";btn.style.color="white";btn.classList.add("active");
+      btn.classList.add("active");
     }
     window.G.calcChannels=[...document.querySelectorAll(".calc-ch-btn.active")].map(b=>b.dataset.ch).filter(Boolean);
     if(window.G.calcChannels.length===0){
       const nb=document.querySelector(".calc-ch-btn[data-ch='']");
-      if(nb){nb.style.background="#5C3A1E";nb.style.borderColor="#5C3A1E";nb.style.color="white";nb.classList.add("active");}
+      if(nb){nb.classList.add("active");}
     }
   }
   window.G.calcChannel=window.G.calcChannels?.join("、")||"";
