@@ -1253,9 +1253,13 @@ body.live-mode .hide-live { display: none !important; }
 <!-- 📷 收據管理 -->
 <div id="modal-receipts" class="modal-overlay" style="display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,0.35);align-items:center;justify-content:center;padding:16px">
   <div style="background:white;border-radius:20px;width:100%;max-width:720px;max-height:88vh;overflow-y:auto;padding:20px;padding-bottom:36px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-      <h3 style="margin:0;font-size:15px;font-weight:900;color:#3D2010">📷 收據管理 <span id="receipt-trip-name" style="font-weight:700;color:#9C7A5A;font-size:12px"></span></h3>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <h3 style="margin:0;font-size:15px;font-weight:900;color:#3D2010">📷 收據管理</h3>
       <button onclick="closeModal('modal-receipts')" style="font-size:24px;font-weight:900;color:#9C7A5A;background:none;border:none;cursor:pointer">×</button>
+    </div>
+    <div style="margin-bottom:10px">
+      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:4px">趟次</label>
+      <select id="receipt-trip-select" onchange="openTripReceipts(this.value)" style="width:100%;background:#FDF6EC;border:1px solid #E8D5B0;border-radius:10px;padding:9px 12px;font-size:13px;font-weight:700;color:#3D2010;outline:none;cursor:pointer"></select>
     </div>
     <div style="font-size:11px;color:#9C7A5A;margin-bottom:14px">拍照上傳收據，AI 幫你抓出店名、日期、品項跟價格，辨識完都可以自己編輯再存檔。</div>
 
@@ -1275,11 +1279,11 @@ body.live-mode .hide-live { display: none !important; }
         <button type="button" onclick="receiptAddMorePages()" style="background:white;border:1px dashed #F5B769;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;color:#B45309;cursor:pointer">➕ 這份收據漏拍了？加拍一頁</button>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-        <div>
+        <div style="min-width:0">
           <label style="display:block;font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:4px">店名</label>
           <input type="text" id="receipt-draft-store" style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;font-size:13px;outline:none;box-sizing:border-box"/>
         </div>
-        <div>
+        <div style="min-width:0">
           <label style="display:block;font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:4px">日期</label>
           <input type="date" id="receipt-draft-date" style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;font-size:13px;outline:none;box-sizing:border-box"/>
         </div>
@@ -7704,7 +7708,14 @@ window.openTripReceipts=async function(tripId){
   window.G.receiptCurrentTripId=tripId;
   window.G.receiptEditingId=null;
   window.G.receiptDraftImages=[];
-  document.getElementById("receipt-trip-name").textContent="－ "+trip.name;
+  // 填入趟次下拉選單，讓你可以直接在這個視窗裡切換不同趟次，不用關掉重開
+  const tripSelect=document.getElementById("receipt-trip-select");
+  if(tripSelect){
+    const sortedTrips=[...window.G.trips].sort((a,b)=>(b.startDate||"").localeCompare(a.startDate||""));
+    tripSelect.innerHTML=sortedTrips.map(t=>
+      `<option value="${t.id}"${t.id===tripId?" selected":""}>✈️ ${t.name.replace(/</g,"&lt;")}</option>`
+    ).join("");
+  }
   document.getElementById("receipt-draft-box").style.display="none";
   document.getElementById("receipt-upload-status").textContent="";
   const listEl=document.getElementById("receipt-saved-list");
@@ -7759,7 +7770,7 @@ window.receiptRunOcr=async function(files){
   statusEl.textContent=`🔍 AI 辨識中${pageNote}，請稍候…`;
   try{
     // 收據字比商品照片小很多，壓縮解析度拉高一點才看得清楚
-    const compressed=await Promise.all(files.map(f=>compressImg(f,1280,0.82)));
+    const compressed=await Promise.all(files.map(f=>compressImg(f,1000,0.65)));
     window.G.receiptDraftImages=compressed;
     const resp=await fetch("https://butter-ai.kueigin.workers.dev",{
       method:"POST",
@@ -7817,7 +7828,7 @@ window.receiptAddMorePages=function(){
     const oldImages=window.G.receiptDraftImages||[];
     // 把舊照片（已經是壓縮過的 data URL）轉回 File 物件不划算，改成直接把舊圖base64跟新檔案一起送給AI：
     // 這裡簡化做法＝直接請AI只看新照片＋沿用舊圖，所以改成：新照片走完整壓縮流程，跟舊base64合併送出
-    const newCompressed=await Promise.all(newFiles.map(f=>compressImg(f,1280,0.82)));
+    const newCompressed=await Promise.all(newFiles.map(f=>compressImg(f,1000,0.65)));
     const allImages=[...oldImages,...newCompressed];
     window.G.receiptDraftImages=allImages;
     const statusEl=document.getElementById("receipt-upload-status");
@@ -7915,12 +7926,20 @@ window.receiptSaveDraft=async function(){
   const images=(window.G.receiptDraftImages&&window.G.receiptDraftImages.length)
     ?window.G.receiptDraftImages
     :(existing?.images||(existing?.imgB64?[existing.imgB64]:[]));
+  const payload={
+    tripId,store,date,total,taxAmount,immediateRefund,dutyFree,items,
+    images,
+    createdAt:existing?.createdAt||Date.now(),
+  };
+  // Firestore每筆資料有 1MB 硬性上限，照片是用文字編碼直接存進去的，
+  // 頁數一多容易爆掉，先在送出前概算大小，太接近上限就先提醒，不要讓你等到失敗才知道
+  const approxBytes=JSON.stringify(payload).length;
+  if(approxBytes>950000){
+    showToast(`⚠️ 這份收據頁數太多、資料太大（約${(approxBytes/1024).toFixed(0)}KB，上限約1000KB），存檔一定會失敗，請刪掉幾張照片再試`,"error");
+    return;
+  }
   try{
-    await fbSet("receipts",id,{
-      tripId,store,date,total,taxAmount,immediateRefund,dutyFree,items,
-      images,
-      createdAt:existing?.createdAt||Date.now(),
-    });
+    await fbSet("receipts",id,payload);
     showToast(editingId?"✅ 收據已更新":"✅ 收據已存檔");
     receiptCancelDraft();
     const list=await window.fbQueryByField("receipts","tripId",tripId);
@@ -7928,7 +7947,8 @@ window.receiptSaveDraft=async function(){
     window.G.receiptSavedList=list;
     renderSavedReceiptList(list);
   }catch(e){
-    showToast("存檔失敗，請再試一次","error");
+    // 把真正的錯誤原因顯示出來，方便判斷是資料太大、還是網路或其他問題
+    showToast("存檔失敗："+(e.message||"請再試一次"),"error");
     console.error(e);
   }
 };
