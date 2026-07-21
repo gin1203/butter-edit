@@ -1261,14 +1261,19 @@ body.live-mode .hide-live { display: none !important; }
 
     <!-- 上傳區 -->
     <div style="border:2px dashed #E8D5B0;border-radius:14px;padding:18px;text-align:center;margin-bottom:16px;background:#FAF8F5">
-      <input type="file" id="receipt-file-input" accept="image/*" capture="environment" style="display:none" onchange="receiptUploadFile(this)"/>
+      <input type="file" id="receipt-file-input" accept="image/*" capture="environment" multiple style="display:none" onchange="receiptHandleFiles(this)"/>
       <button onclick="document.getElementById('receipt-file-input').click()" style="background:#C5A880;color:white;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer">📷 拍照或選擇收據上傳</button>
+      <div style="font-size:10px;color:#B0906A;margin-top:6px">收據太長需要前後拍好幾張的話，從相簿選擇時可以一次選多張，AI 會自動合併成同一份收據</div>
       <div id="receipt-upload-status" style="font-size:11px;color:#9C7A5A;margin-top:8px"></div>
     </div>
 
     <!-- AI辨識草稿（辨識完才會顯示） -->
     <div id="receipt-draft-box" style="display:none;border:1.5px solid #F5B769;background:#FFF9EE;border-radius:14px;padding:16px;margin-bottom:16px">
       <div style="font-size:12px;font-weight:700;color:#B45309;margin-bottom:10px">✨ AI 辨識草稿（可直接編輯，確認沒問題再存檔）</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+        <div id="receipt-draft-images" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+        <button type="button" onclick="receiptAddMorePages()" style="background:white;border:1px dashed #F5B769;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;color:#B45309;cursor:pointer">➕ 這份收據漏拍了？加拍一頁</button>
+      </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
         <div>
           <label style="display:block;font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:4px">店名</label>
@@ -1278,6 +1283,22 @@ body.live-mode .hide-live { display: none !important; }
           <label style="display:block;font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:4px">日期</label>
           <input type="date" id="receipt-draft-date" style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;font-size:13px;outline:none;box-sizing:border-box"/>
         </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:10px">
+        <div>
+          <label style="display:block;font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:4px">稅額（부가세，收據上有印才會有數字，沒有可留空）</label>
+          <input type="text" inputmode="decimal" id="receipt-draft-tax" placeholder="例如：28536" style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;font-size:13px;outline:none;box-sizing:border-box"/>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;background:#FFFDF7;border:1px solid #F0E0C0;border-radius:8px;padding:10px 12px">
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#3D2010;cursor:pointer">
+          <input type="checkbox" id="receipt-draft-immediate-refund" style="width:16px;height:16px;cursor:pointer"/>
+          這間店有提供「即時退稅」（收據上如有偵測到 Tax Refund/즉시환급 字樣，AI 會先幫你勾好）
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#3D2010;cursor:pointer">
+          <input type="checkbox" id="receipt-draft-duty-free" style="width:16px;height:16px;cursor:pointer"/>
+          這是在「免稅店」買的（機場提貨那種，不是市內即時退稅）
+        </label>
       </div>
       <label style="display:block;font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:4px">品項明細</label>
       <div id="receipt-draft-items"></div>
@@ -1306,7 +1327,10 @@ body.live-mode .hide-live { display: none !important; }
       <button onclick="closeModal('modal-receipt-view')" style="font-size:24px;font-weight:900;color:#9C7A5A;background:none;border:none;cursor:pointer">×</button>
     </div>
     <div id="receipt-view-body"></div>
-    <button id="receipt-view-delete-btn" onclick="receiptDeleteCurrent()" style="width:100%;margin-top:14px;background:#FDEDEC;color:#C0392B;border:1px solid #F1948A;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">🗑️ 刪除這張收據</button>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button onclick="receiptEditCurrent()" style="flex:1;background:#FDF6EC;color:#9C7A5A;border:1px solid #E8D5B0;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">✏️ 編輯</button>
+      <button id="receipt-view-delete-btn" onclick="receiptDeleteCurrent()" style="flex:1;background:#FDEDEC;color:#C0392B;border:1px solid #F1948A;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">🗑️ 刪除</button>
+    </div>
   </div>
 </div>
 
@@ -1621,6 +1645,9 @@ body.live-mode .hide-live { display: none !important; }
 
 <!-- Toast -->
 <div id="toast" style="display:none;position:fixed;bottom:100px;left:50%;transform:translateX(-50%);z-index:100;padding:12px 20px;border-radius:99px;background:#5C3A1E;border:1px solid #C5A880;color:white;font-size:12px;font-weight:700;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.25)"></div>
+
+<!-- 浮動收據按鈕：固定在右下角，不管在哪個分頁都點得到，直接開啟「本趟」的收據上傳 -->
+<button id="receipt-fab" onclick="openCurrentTripReceipts()" style="position:fixed;right:16px;bottom:90px;z-index:40;width:52px;height:52px;border-radius:50%;background:#C5A880;color:white;border:none;box-shadow:0 4px 16px rgba(92,58,30,0.35);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center">📷</button>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -7624,7 +7651,7 @@ function renderTripBars(){
 // ── 📷 收據管理 ──────────────────────────────────────────────────────
 window.G.receiptCurrentTripId=null;
 window.G.receiptDraftItems=[]; // {name,price,koOriginal,zhOriginal,matchName}
-window.G.receiptDraftImgB64=null;
+window.G.receiptDraftImages=[]; // 這份收據草稿目前附加的所有照片
 window.G.receiptSavedList=[];
 window.G.receiptViewingId=null;
 
@@ -7661,10 +7688,22 @@ window.fuzzyMatchProduct=function(name){
   return null;
 };
 
+// 浮動按鈕：自動抓「目前這一趟」，沒有進行中的就抓最近的一趟，直接開啟收據上傳
+window.openCurrentTripReceipts=function(){
+  const trip=getLatestTrip();
+  if(!trip){
+    showToast("還沒有建立任何趟次，請先到「設定→趟次管理」新增一趟","error");
+    return;
+  }
+  openTripReceipts(trip.id);
+};
+
 window.openTripReceipts=async function(tripId){
   const trip=window.G.trips.find(t=>t.id===tripId);
   if(!trip)return;
   window.G.receiptCurrentTripId=tripId;
+  window.G.receiptEditingId=null;
+  window.G.receiptDraftImages=[];
   document.getElementById("receipt-trip-name").textContent="－ "+trip.name;
   document.getElementById("receipt-draft-box").style.display="none";
   document.getElementById("receipt-upload-status").textContent="";
@@ -7690,30 +7729,42 @@ function renderSavedReceiptList(list){
   }
   el.innerHTML=list.map(r=>{
     const itemCount=(r.items||[]).length;
+    const thumb=(r.images&&r.images[0])||r.imgB64||"";
+    const pageCount=(r.images&&r.images.length)||(r.imgB64?1:0);
+    const badges=[
+      r.dutyFree?'<span style="font-size:9px;font-weight:700;color:#2E6B4B;background:#EAF8F0;border:1px solid #BFE6D0;border-radius:6px;padding:1px 5px">免稅店</span>':"",
+      r.immediateRefund?'<span style="font-size:9px;font-weight:700;color:#1E5F8C;background:#EAF4FB;border:1px solid #BEE0F5;border-radius:6px;padding:1px 5px">即時退稅</span>':"",
+    ].filter(Boolean).join(" ");
     return `<div onclick="receiptViewSaved('${r.id}')" style="display:flex;gap:10px;align-items:center;border:1px solid #E8D5B0;border-radius:10px;padding:8px 10px;margin-bottom:8px;cursor:pointer;background:white">
-      <img src="${r.imgB64||''}" style="width:44px;height:44px;object-fit:cover;border-radius:6px;flex-shrink:0;background:#FAF8F5"/>
+      <img src="${thumb}" style="width:44px;height:44px;object-fit:cover;border-radius:6px;flex-shrink:0;background:#FAF8F5"/>
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:700;color:#3D2010">${(r.store||"未命名店家").replace(/</g,"&lt;")}</div>
-        <div style="font-size:10px;color:#9C7A5A">${r.date||"未填日期"}・${itemCount}項</div>
+        <div style="font-size:10px;color:#9C7A5A">${r.date||"未填日期"}・${itemCount}項${pageCount>1?`・${pageCount}頁`:""}${badges?"　"+badges:""}</div>
       </div>
       <div style="font-size:13px;font-weight:900;color:#C0392B;flex-shrink:0">${r.total?"₩"+Number(r.total).toLocaleString():"-"}</div>
     </div>`;
   }).join("");
 }
 
-window.receiptUploadFile=async function(input){
-  const file=input.files?.[0];
-  if(!file)return;
+window.receiptHandleFiles=function(input){
+  const files=Array.from(input.files||[]);
+  if(!files.length)return;
+  receiptRunOcr(files);
+  input.value="";
+};
+// 把選到的照片（可能不只一張，例如同一張收據太長分前後頁拍）壓縮後，一次全部送給AI合併判讀成同一份收據
+window.receiptRunOcr=async function(files){
   const statusEl=document.getElementById("receipt-upload-status");
-  statusEl.textContent="🔍 AI 辨識中，請稍候…";
+  const pageNote=files.length>1?`（共 ${files.length} 頁，合併辨識中）`:"";
+  statusEl.textContent=`🔍 AI 辨識中${pageNote}，請稍候…`;
   try{
     // 收據字比商品照片小很多，壓縮解析度拉高一點才看得清楚
-    const b64=await compressImg(file,1280,0.82);
-    window.G.receiptDraftImgB64=b64;
+    const compressed=await Promise.all(files.map(f=>compressImg(f,1280,0.82)));
+    window.G.receiptDraftImages=compressed;
     const resp=await fetch("https://butter-ai.kueigin.workers.dev",{
       method:"POST",
       headers:{"Content-Type":"application/json","X-Service":"receipt-ocr"},
-      body:JSON.stringify({b64:b64.split(",")[1]})
+      body:JSON.stringify({b64s:compressed.map(b64=>b64.split(",")[1])})
     });
     const data=await resp.json();
     if(data.error)throw new Error(typeof data.error==="string"?data.error:JSON.stringify(data.error));
@@ -7733,7 +7784,11 @@ window.receiptUploadFile=async function(input){
     document.getElementById("receipt-draft-store").value=data.store||"";
     document.getElementById("receipt-draft-date").value=data.date||"";
     document.getElementById("receipt-draft-total").value=data.total||"";
+    document.getElementById("receipt-draft-tax").value=data.taxAmount||"";
+    document.getElementById("receipt-draft-immediate-refund").checked=!!data.immediateRefundDetected;
+    document.getElementById("receipt-draft-duty-free").checked=false;
     receiptRenderItems();
+    receiptRenderDraftImages();
     document.getElementById("receipt-draft-box").style.display="block";
   }catch(e){
     statusEl.textContent="⚠️ 辨識失敗："+e.message+"（可以手動輸入，不用重拍）";
@@ -7742,12 +7797,69 @@ window.receiptUploadFile=async function(input){
     document.getElementById("receipt-draft-store").value="";
     document.getElementById("receipt-draft-date").value="";
     document.getElementById("receipt-draft-total").value="";
+    document.getElementById("receipt-draft-tax").value="";
+    document.getElementById("receipt-draft-immediate-refund").checked=false;
+    document.getElementById("receipt-draft-duty-free").checked=false;
     receiptRenderItems();
+    receiptRenderDraftImages();
     document.getElementById("receipt-draft-box").style.display="block";
     console.error(e);
   }
-  input.value="";
 };
+// 草稿編輯中，如果發現漏拍了後半段，可以直接「加拍一頁」，會把新照片加進去、重新合併辨識一次
+window.receiptAddMorePages=function(){
+  const input=document.createElement("input");
+  input.type="file";input.accept="image/*";input.capture="environment";input.multiple=true;
+  input.onchange=async function(){
+    const newFiles=Array.from(input.files||[]);
+    if(!newFiles.length)return;
+    showToast("正在合併新加的照片重新辨識…");
+    const oldImages=window.G.receiptDraftImages||[];
+    // 把舊照片（已經是壓縮過的 data URL）轉回 File 物件不划算，改成直接把舊圖base64跟新檔案一起送給AI：
+    // 這裡簡化做法＝直接請AI只看新照片＋沿用舊圖，所以改成：新照片走完整壓縮流程，跟舊base64合併送出
+    const newCompressed=await Promise.all(newFiles.map(f=>compressImg(f,1280,0.82)));
+    const allImages=[...oldImages,...newCompressed];
+    window.G.receiptDraftImages=allImages;
+    const statusEl=document.getElementById("receipt-upload-status");
+    statusEl.textContent=`🔍 AI 重新辨識中（共 ${allImages.length} 頁），請稍候…`;
+    try{
+      const resp=await fetch("https://butter-ai.kueigin.workers.dev",{
+        method:"POST",
+        headers:{"Content-Type":"application/json","X-Service":"receipt-ocr"},
+        body:JSON.stringify({b64s:allImages.map(b64=>b64.split(",")[1])})
+      });
+      const data=await resp.json();
+      if(data.error)throw new Error(typeof data.error==="string"?data.error:JSON.stringify(data.error));
+      statusEl.textContent="✅ 已合併重新辨識，請檢查下方內容再存檔";
+      const items=(data.items||[]).map(it=>{
+        const zh=it.name_zh||it.name_ko||"";
+        const matched=window.fuzzyMatchProduct(zh)||window.fuzzyMatchProduct(it.name_ko||"");
+        return{name:matched?matched.name:zh,price:it.price||0,koOriginal:it.name_ko||"",zhOriginal:it.name_zh||"",matchName:matched?matched.name:null};
+      });
+      window.G.receiptDraftItems=items.length?items:[{name:"",price:0,koOriginal:"",zhOriginal:"",matchName:null}];
+      document.getElementById("receipt-draft-store").value=data.store||"";
+      document.getElementById("receipt-draft-date").value=data.date||"";
+      document.getElementById("receipt-draft-total").value=data.total||"";
+      document.getElementById("receipt-draft-tax").value=data.taxAmount||"";
+      document.getElementById("receipt-draft-immediate-refund").checked=!!data.immediateRefundDetected;
+      receiptRenderItems();
+      receiptRenderDraftImages();
+    }catch(e){
+      statusEl.textContent="⚠️ 重新辨識失敗："+e.message+"（新照片已加入，可以手動輸入內容）";
+      receiptRenderDraftImages();
+      console.error(e);
+    }
+  };
+  input.click();
+};
+function receiptRenderDraftImages(){
+  const el=document.getElementById("receipt-draft-images");
+  if(!el)return;
+  const images=window.G.receiptDraftImages||[];
+  el.innerHTML=images.map((img,i)=>
+    `<img src="${img}" style="width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid #E8D5B0;flex-shrink:0" title="第${i+1}頁"/>`
+  ).join("");
+}
 
 function receiptRenderItems(){
   const el=document.getElementById("receipt-draft-items");
@@ -7774,11 +7886,16 @@ window.receiptRemoveItemRow=function(idx){
   window.G.receiptDraftItems.splice(idx,1);
   receiptRenderItems();
 };
+window.G.receiptEditingId=null; // 目前草稿是在編輯哪一筆既有收據（null＝新增）
 window.receiptCancelDraft=function(){
   document.getElementById("receipt-draft-box").style.display="none";
   document.getElementById("receipt-upload-status").textContent="";
+  const taxEl=document.getElementById("receipt-draft-tax");if(taxEl)taxEl.value="";
+  const irEl=document.getElementById("receipt-draft-immediate-refund");if(irEl)irEl.checked=false;
+  const dfEl=document.getElementById("receipt-draft-duty-free");if(dfEl)dfEl.checked=false;
   window.G.receiptDraftItems=[];
-  window.G.receiptDraftImgB64=null;
+  window.G.receiptDraftImages=[];
+  window.G.receiptEditingId=null;
 };
 window.receiptSaveDraft=async function(){
   const tripId=window.G.receiptCurrentTripId;
@@ -7786,15 +7903,25 @@ window.receiptSaveDraft=async function(){
   const store=document.getElementById("receipt-draft-store").value.trim();
   const date=document.getElementById("receipt-draft-date").value;
   const total=parseFloat(document.getElementById("receipt-draft-total").value)||0;
+  const taxAmount=parseFloat(document.getElementById("receipt-draft-tax").value)||null;
+  const immediateRefund=document.getElementById("receipt-draft-immediate-refund").checked;
+  const dutyFree=document.getElementById("receipt-draft-duty-free").checked;
   const items=window.G.receiptDraftItems.filter(it=>it.name||it.price);
-  const id="R"+Date.now();
+  const editingId=window.G.receiptEditingId;
+  const id=editingId||("R"+Date.now());
+  // 編輯既有收據時，保留原本的建立時間，不會因為重新存檔就變成一筆新的
+  const existing=editingId?window.G.receiptSavedList.find(x=>x.id===editingId):null;
+  // 相容舊資料：如果這筆是舊版只有單張imgB64、這次沒有重新拍照，就沿用那一張
+  const images=(window.G.receiptDraftImages&&window.G.receiptDraftImages.length)
+    ?window.G.receiptDraftImages
+    :(existing?.images||(existing?.imgB64?[existing.imgB64]:[]));
   try{
     await fbSet("receipts",id,{
-      tripId,store,date,total,items,
-      imgB64:window.G.receiptDraftImgB64||null,
-      createdAt:Date.now(),
+      tripId,store,date,total,taxAmount,immediateRefund,dutyFree,items,
+      images,
+      createdAt:existing?.createdAt||Date.now(),
     });
-    showToast("✅ 收據已存檔");
+    showToast(editingId?"✅ 收據已更新":"✅ 收據已存檔");
     receiptCancelDraft();
     const list=await window.fbQueryByField("receipts","tripId",tripId);
     list.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
@@ -7804,6 +7931,30 @@ window.receiptSaveDraft=async function(){
     showToast("存檔失敗，請再試一次","error");
     console.error(e);
   }
+};
+// 把已存收據的資料帶回草稿表單，讓你可以修改後重新存檔（會更新同一筆，不會變成兩筆）
+window.receiptEditCurrent=function(){
+  const id=window.G.receiptViewingId;
+  const r=window.G.receiptSavedList.find(x=>x.id===id);
+  if(!r)return;
+  window.G.receiptEditingId=id;
+  window.G.receiptDraftImages=(r.images&&r.images.length)?[...r.images]:(r.imgB64?[r.imgB64]:[]);
+  window.G.receiptDraftItems=(r.items&&r.items.length)
+    ?r.items.map(it=>({name:it.name||"",price:it.price||0,koOriginal:it.koOriginal||"",zhOriginal:it.zhOriginal||"",matchName:it.matchName||null}))
+    :[{name:"",price:0,koOriginal:"",zhOriginal:"",matchName:null}];
+  document.getElementById("receipt-draft-store").value=r.store||"";
+  document.getElementById("receipt-draft-date").value=r.date||"";
+  document.getElementById("receipt-draft-total").value=r.total||"";
+  document.getElementById("receipt-draft-tax").value=r.taxAmount||"";
+  document.getElementById("receipt-draft-immediate-refund").checked=!!r.immediateRefund;
+  document.getElementById("receipt-draft-duty-free").checked=!!r.dutyFree;
+  receiptRenderItems();
+  receiptRenderDraftImages();
+  document.getElementById("receipt-upload-status").textContent="";
+  document.getElementById("receipt-draft-box").style.display="block";
+  closeModal("modal-receipt-view");
+  // 捲動到草稿編輯區塊，方便你直接看到欄位
+  setTimeout(()=>{document.getElementById("receipt-draft-box")?.scrollIntoView({behavior:"smooth",block:"start"});},150);
 };
 
 window.receiptViewSaved=function(id){
@@ -7817,14 +7968,29 @@ window.receiptViewSaved=function(id){
       <span style="font-weight:700">₩${Number(it.price||0).toLocaleString()}</span>
     </div>`
   ).join("");
+  const badges=[
+    r.dutyFree?'<span style="font-size:10px;font-weight:700;color:#2E6B4B;background:#EAF8F0;border:1px solid #BFE6D0;border-radius:6px;padding:2px 8px">免稅店</span>':"",
+    r.immediateRefund?'<span style="font-size:10px;font-weight:700;color:#1E5F8C;background:#EAF4FB;border:1px solid #BEE0F5;border-radius:6px;padding:2px 8px">即時退稅</span>':"",
+  ].filter(Boolean).join(" ");
+  const images=(r.images&&r.images.length)?r.images:(r.imgB64?[r.imgB64]:[]);
+  const imagesHtml=images.length
+    ?(images.length===1
+        ?`<img src="${images[0]}" style="width:100%;border-radius:10px;margin-bottom:12px;max-height:280px;object-fit:contain;background:#FAF8F5"/>`
+        :`<div style="display:flex;gap:8px;overflow-x:auto;margin-bottom:12px;padding-bottom:4px">${images.map((img,i)=>`<img src="${img}" style="height:140px;border-radius:10px;object-fit:contain;background:#FAF8F5;flex-shrink:0" title="第${i+1}頁"/>`).join("")}</div>`
+      )
+    :"";
   body.innerHTML=`
-    ${r.imgB64?`<img src="${r.imgB64}" style="width:100%;border-radius:10px;margin-bottom:12px;max-height:280px;object-fit:contain;background:#FAF8F5"/>`:""}
+    ${imagesHtml}
     <div style="font-size:15px;font-weight:900;color:#3D2010">${(r.store||"未命名店家").replace(/</g,"&lt;")}</div>
-    <div style="font-size:11px;color:#9C7A5A;margin-bottom:10px">${r.date||"未填日期"}</div>
+    <div style="font-size:11px;color:#9C7A5A;margin-bottom:6px">${r.date||"未填日期"}${images.length>1?`・共${images.length}頁`:""}</div>
+    ${badges?`<div style="margin-bottom:10px;display:flex;gap:6px">${badges}</div>`:""}
     ${itemsHtml}
     <div style="display:flex;justify-content:space-between;padding:10px 0 0;margin-top:6px;border-top:2px solid #E8D5B0;font-size:14px;font-weight:900">
       <span>總金額</span><span style="color:#C0392B">₩${Number(r.total||0).toLocaleString()}</span>
-    </div>`;
+    </div>
+    ${r.taxAmount?`<div style="display:flex;justify-content:space-between;padding-top:6px;font-size:12px;color:#9C7A5A">
+      <span>其中稅額（부가세，可退稅參考）</span><span style="font-weight:700">₩${Number(r.taxAmount).toLocaleString()}</span>
+    </div>`:""}`;
   openModal("modal-receipt-view");
 };
 window.receiptDeleteCurrent=async function(){
