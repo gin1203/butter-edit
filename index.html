@@ -1285,19 +1285,24 @@ body.live-mode .hide-live { display: none !important; }
         </div>
         <div style="min-width:0">
           <label style="display:block;font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:4px">日期</label>
-          <input type="date" id="receipt-draft-date" style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;font-size:13px;outline:none;box-sizing:border-box"/>
+          <input type="text" inputmode="numeric" id="receipt-draft-date" placeholder="YYYY-MM-DD" style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;font-size:13px;outline:none;box-sizing:border-box"/>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:10px">
         <div>
           <label style="display:block;font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:4px">稅額（부가세，收據上有印才會有數字，沒有可留空）</label>
-          <input type="text" inputmode="decimal" id="receipt-draft-tax" placeholder="例如：28536" style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;font-size:13px;outline:none;box-sizing:border-box"/>
+          <input type="text" inputmode="decimal" id="receipt-draft-tax" oninput="receiptUpdateNetTotal()" placeholder="例如：28536" style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;font-size:13px;outline:none;box-sizing:border-box"/>
+        </div>
+        <div>
+          <label style="display:block;font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:4px">退稅單金額（환급액，如果有附一張「Global Tax Free／Global Blue」事後退稅單才會有）</label>
+          <input type="text" inputmode="decimal" id="receipt-draft-refund" oninput="receiptUpdateNetTotal()" placeholder="例如：19000" style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;font-size:13px;outline:none;box-sizing:border-box"/>
+          <div id="receipt-draft-taxfree-hint" style="display:none;font-size:10px;color:#9C7A5A;margin-top:4px">📎 AI 偵測到這是附「事後退稅單」的收據，退稅金額已幫你帶入，記得出境前要拿這張單子＋護照去機場退稅櫃檯辦理才拿得到這筆錢</div>
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;background:#FFFDF7;border:1px solid #F0E0C0;border-radius:8px;padding:10px 12px">
         <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#3D2010;cursor:pointer">
           <input type="checkbox" id="receipt-draft-immediate-refund" style="width:16px;height:16px;cursor:pointer"/>
-          這間店有提供「即時退稅」（收據上如有偵測到 Tax Refund/즉시환급 字樣，AI 會先幫你勾好）
+          結帳時已經直接扣抵「即時退稅」（不是那種要另外拿單子去機場辦的事後退稅單）
         </label>
         <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#3D2010;cursor:pointer">
           <input type="checkbox" id="receipt-draft-duty-free" style="width:16px;height:16px;cursor:pointer"/>
@@ -1307,9 +1312,13 @@ body.live-mode .hide-live { display: none !important; }
       <label style="display:block;font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:4px">品項明細</label>
       <div id="receipt-draft-items"></div>
       <button onclick="receiptAddItemRow()" style="width:100%;background:white;border:1px dashed #E8D5B0;border-radius:8px;padding:8px;font-size:12px;font-weight:700;color:#9C7A5A;cursor:pointer;margin-bottom:10px">＋ 手動新增一項</button>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
         <span style="font-size:11px;font-weight:700;color:#9C7A5A">總金額</span>
-        <input type="text" inputmode="decimal" id="receipt-draft-total" style="width:120px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:700;outline:none;text-align:right"/>
+        <input type="text" inputmode="decimal" id="receipt-draft-total" oninput="receiptUpdateNetTotal()" style="width:120px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:700;outline:none;text-align:right"/>
+      </div>
+      <div id="receipt-draft-net-row" style="display:none;justify-content:space-between;align-items:center;margin-bottom:12px;padding-top:6px;border-top:1px dashed #E8D5B0">
+        <span style="font-size:11px;font-weight:700;color:#2E6B4B">退稅後金額（實際到手成本）</span>
+        <span id="receipt-draft-net-total" style="font-size:13px;font-weight:900;color:#2E6B4B"></span>
       </div>
       <div style="display:flex;gap:8px">
         <button onclick="receiptCancelDraft()" style="flex:1;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:10px;font-size:13px;font-weight:700;color:#9C7A5A;cursor:pointer">取消</button>
@@ -7745,6 +7754,7 @@ function renderSavedReceiptList(list){
     const badges=[
       r.dutyFree?'<span style="font-size:9px;font-weight:700;color:#2E6B4B;background:#EAF8F0;border:1px solid #BFE6D0;border-radius:6px;padding:1px 5px">免稅店</span>':"",
       r.immediateRefund?'<span style="font-size:9px;font-weight:700;color:#1E5F8C;background:#EAF4FB;border:1px solid #BEE0F5;border-radius:6px;padding:1px 5px">即時退稅</span>':"",
+      (r.refundAmount&&!r.immediateRefund)?'<span style="font-size:9px;font-weight:700;color:#9C6B2E;background:#FDF3E0;border:1px solid #F0D9A8;border-radius:6px;padding:1px 5px">事後退稅單</span>':"",
     ].filter(Boolean).join(" ");
     return `<div onclick="receiptViewSaved('${r.id}')" style="display:flex;gap:10px;align-items:center;border:1px solid #E8D5B0;border-radius:10px;padding:8px 10px;margin-bottom:8px;cursor:pointer;background:white">
       <img src="${thumb}" style="width:44px;height:44px;object-fit:cover;border-radius:6px;flex-shrink:0;background:#FAF8F5"/>
@@ -7796,10 +7806,13 @@ window.receiptRunOcr=async function(files){
     document.getElementById("receipt-draft-date").value=data.date||"";
     document.getElementById("receipt-draft-total").value=data.total||"";
     document.getElementById("receipt-draft-tax").value=data.taxAmount||"";
+    document.getElementById("receipt-draft-refund").value=data.refundAmount||"";
     document.getElementById("receipt-draft-immediate-refund").checked=!!data.immediateRefundDetected;
     document.getElementById("receipt-draft-duty-free").checked=false;
+    document.getElementById("receipt-draft-taxfree-hint").style.display=data.hasTaxFreeForm?"block":"none";
     receiptRenderItems();
     receiptRenderDraftImages();
+    receiptUpdateNetTotal();
     document.getElementById("receipt-draft-box").style.display="block";
   }catch(e){
     statusEl.textContent="⚠️ 辨識失敗："+e.message+"（可以手動輸入，不用重拍）";
@@ -7809,12 +7822,32 @@ window.receiptRunOcr=async function(files){
     document.getElementById("receipt-draft-date").value="";
     document.getElementById("receipt-draft-total").value="";
     document.getElementById("receipt-draft-tax").value="";
+    document.getElementById("receipt-draft-refund").value="";
     document.getElementById("receipt-draft-immediate-refund").checked=false;
     document.getElementById("receipt-draft-duty-free").checked=false;
+    document.getElementById("receipt-draft-taxfree-hint").style.display="none";
     receiptRenderItems();
     receiptRenderDraftImages();
+    receiptUpdateNetTotal();
     document.getElementById("receipt-draft-box").style.display="block";
     console.error(e);
+  }
+};
+// 依「退稅單金額(환급액)」優先，沒有的話用「稅額(부가세)」概算，即時算出總金額扣掉退稅後的實際成本
+window.receiptUpdateNetTotal=function(){
+  const row=document.getElementById("receipt-draft-net-row");
+  const totalEl=document.getElementById("receipt-draft-net-total");
+  if(!row||!totalEl)return;
+  const total=parseFloat(document.getElementById("receipt-draft-total")?.value)||0;
+  const refund=parseFloat(document.getElementById("receipt-draft-refund")?.value)||0;
+  const tax=parseFloat(document.getElementById("receipt-draft-tax")?.value)||0;
+  const deduct=refund>0?refund:tax;
+  if(total>0&&deduct>0){
+    const net=total-deduct;
+    totalEl.textContent=`₩${net.toLocaleString()}`+(refund>0?"":"（用稅額概算，非精確退稅金額）");
+    row.style.display="flex";
+  } else {
+    row.style.display="none";
   }
 };
 // 草稿編輯中，如果發現漏拍了後半段，可以直接「加拍一頁」，會把新照片加進去、重新合併辨識一次
@@ -7852,9 +7885,12 @@ window.receiptAddMorePages=function(){
       document.getElementById("receipt-draft-date").value=data.date||"";
       document.getElementById("receipt-draft-total").value=data.total||"";
       document.getElementById("receipt-draft-tax").value=data.taxAmount||"";
+      document.getElementById("receipt-draft-refund").value=data.refundAmount||"";
       document.getElementById("receipt-draft-immediate-refund").checked=!!data.immediateRefundDetected;
+      document.getElementById("receipt-draft-taxfree-hint").style.display=data.hasTaxFreeForm?"block":"none";
       receiptRenderItems();
       receiptRenderDraftImages();
+      receiptUpdateNetTotal();
     }catch(e){
       statusEl.textContent="⚠️ 重新辨識失敗："+e.message+"（新照片已加入，可以手動輸入內容）";
       receiptRenderDraftImages();
@@ -7902,11 +7938,14 @@ window.receiptCancelDraft=function(){
   document.getElementById("receipt-draft-box").style.display="none";
   document.getElementById("receipt-upload-status").textContent="";
   const taxEl=document.getElementById("receipt-draft-tax");if(taxEl)taxEl.value="";
+  const refundEl=document.getElementById("receipt-draft-refund");if(refundEl)refundEl.value="";
+  const hintEl=document.getElementById("receipt-draft-taxfree-hint");if(hintEl)hintEl.style.display="none";
   const irEl=document.getElementById("receipt-draft-immediate-refund");if(irEl)irEl.checked=false;
   const dfEl=document.getElementById("receipt-draft-duty-free");if(dfEl)dfEl.checked=false;
   window.G.receiptDraftItems=[];
   window.G.receiptDraftImages=[];
   window.G.receiptEditingId=null;
+  if(typeof receiptUpdateNetTotal==="function")receiptUpdateNetTotal();
 };
 window.receiptSaveDraft=async function(){
   const tripId=window.G.receiptCurrentTripId;
@@ -7915,6 +7954,7 @@ window.receiptSaveDraft=async function(){
   const date=document.getElementById("receipt-draft-date").value;
   const total=parseFloat(document.getElementById("receipt-draft-total").value)||0;
   const taxAmount=parseFloat(document.getElementById("receipt-draft-tax").value)||null;
+  const refundAmount=parseFloat(document.getElementById("receipt-draft-refund").value)||null;
   const immediateRefund=document.getElementById("receipt-draft-immediate-refund").checked;
   const dutyFree=document.getElementById("receipt-draft-duty-free").checked;
   const items=window.G.receiptDraftItems.filter(it=>it.name||it.price);
@@ -7927,7 +7967,7 @@ window.receiptSaveDraft=async function(){
     ?window.G.receiptDraftImages
     :(existing?.images||(existing?.imgB64?[existing.imgB64]:[]));
   const payload={
-    tripId,store,date,total,taxAmount,immediateRefund,dutyFree,items,
+    tripId,store,date,total,taxAmount,refundAmount,immediateRefund,dutyFree,items,
     images,
     createdAt:existing?.createdAt||Date.now(),
   };
@@ -7966,10 +8006,13 @@ window.receiptEditCurrent=function(){
   document.getElementById("receipt-draft-date").value=r.date||"";
   document.getElementById("receipt-draft-total").value=r.total||"";
   document.getElementById("receipt-draft-tax").value=r.taxAmount||"";
+  document.getElementById("receipt-draft-refund").value=r.refundAmount||"";
   document.getElementById("receipt-draft-immediate-refund").checked=!!r.immediateRefund;
   document.getElementById("receipt-draft-duty-free").checked=!!r.dutyFree;
+  document.getElementById("receipt-draft-taxfree-hint").style.display="none";
   receiptRenderItems();
   receiptRenderDraftImages();
+  receiptUpdateNetTotal();
   document.getElementById("receipt-upload-status").textContent="";
   document.getElementById("receipt-draft-box").style.display="block";
   closeModal("modal-receipt-view");
@@ -7991,6 +8034,7 @@ window.receiptViewSaved=function(id){
   const badges=[
     r.dutyFree?'<span style="font-size:10px;font-weight:700;color:#2E6B4B;background:#EAF8F0;border:1px solid #BFE6D0;border-radius:6px;padding:2px 8px">免稅店</span>':"",
     r.immediateRefund?'<span style="font-size:10px;font-weight:700;color:#1E5F8C;background:#EAF4FB;border:1px solid #BEE0F5;border-radius:6px;padding:2px 8px">即時退稅</span>':"",
+    (r.refundAmount&&!r.immediateRefund)?'<span style="font-size:10px;font-weight:700;color:#9C6B2E;background:#FDF3E0;border:1px solid #F0D9A8;border-radius:6px;padding:2px 8px">事後退稅單</span>':"",
   ].filter(Boolean).join(" ");
   const images=(r.images&&r.images.length)?r.images:(r.imgB64?[r.imgB64]:[]);
   const imagesHtml=images.length
@@ -8010,7 +8054,13 @@ window.receiptViewSaved=function(id){
     </div>
     ${r.taxAmount?`<div style="display:flex;justify-content:space-between;padding-top:6px;font-size:12px;color:#9C7A5A">
       <span>其中稅額（부가세，可退稅參考）</span><span style="font-weight:700">₩${Number(r.taxAmount).toLocaleString()}</span>
-    </div>`:""}`;
+    </div>`:""}
+    ${r.refundAmount?`<div style="display:flex;justify-content:space-between;padding-top:4px;font-size:12px;color:#9C7A5A">
+      <span>退稅單金額（환급액，事後退稅可拿回）</span><span style="font-weight:700">₩${Number(r.refundAmount).toLocaleString()}</span>
+    </div>`:""}
+    ${(()=>{const deduct=r.refundAmount||r.taxAmount||0;if(!deduct||!r.total)return"";const net=r.total-deduct;return `<div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:4px;border-top:1px dashed #E8D5B0;font-size:13px;font-weight:900;color:#2E6B4B">
+      <span>退稅後金額（實際到手成本）</span><span>₩${net.toLocaleString()}${r.refundAmount?"":"（用稅額概算）"}</span>
+    </div>`;})()}`;
   openModal("modal-receipt-view");
 };
 window.receiptDeleteCurrent=async function(){
