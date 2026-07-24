@@ -1312,6 +1312,17 @@ body.live-mode .hide-live { display: none !important; }
       <label style="display:block;font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:4px">品項明細</label>
       <div id="receipt-draft-items"></div>
       <button onclick="receiptAddItemRow()" style="width:100%;background:white;border:1px dashed #E8D5B0;border-radius:8px;padding:8px;font-size:12px;font-weight:700;color:#9C7A5A;cursor:pointer;margin-bottom:10px">＋ 手動新增一項</button>
+      <!-- 連結商品庫搜尋彈窗 -->
+      <div id="receipt-link-picker-box" style="display:none;position:fixed;inset:0;z-index:70;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;padding:16px">
+        <div style="background:white;border-radius:16px;width:100%;max-width:480px;max-height:70vh;display:flex;flex-direction:column;padding:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <h4 style="margin:0;font-size:13px;font-weight:900;color:#3D2010">🔍 連結商品庫</h4>
+            <button onclick="receiptCloseLinkPicker()" style="font-size:22px;font-weight:900;color:#9C7A5A;background:none;border:none;cursor:pointer">×</button>
+          </div>
+          <input type="text" id="receipt-link-picker-search" oninput="receiptFilterLinkPicker()" placeholder="搜尋商品名稱" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;font-size:13px;outline:none;box-sizing:border-box;margin-bottom:10px"/>
+          <div id="receipt-link-picker-list" style="overflow-y:auto;flex:1"></div>
+        </div>
+      </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
         <span style="font-size:11px;font-weight:700;color:#9C7A5A">總金額</span>
         <input type="text" inputmode="decimal" id="receipt-draft-total" oninput="receiptUpdateNetTotal()" style="width:120px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:700;outline:none;text-align:right"/>
@@ -2927,8 +2938,8 @@ const SUBCAT_MAP = {
     {key:"面膜",    label:"🎭 面膜",          kw:["面膜","mask","sheet mask","棉片","化妝棉","toner pad","cotton pad"]},
     {key:"清潔",    label:"🫧 清潔/卸妝",    kw:["洗面","清潔","卸妝","泡沫","foam","cleanser","toner","化妝水"]},
     {key:"彩妝",    label:"💄 彩妝",          kw:["唇膏","口紅","粉底","氣墊","眼影","睫毛","腮紅","修容","highlight","妝前","妝前乳","妝前膏","primer","定妝","定妝噴霧","setting spray","隱形毛孔","遮瑕"]},
-    {key:"香水",    label:"🌸 香氛/香水",    kw:["香水","perfume","香氛","body mist","身體噴霧"]},
     {key:"身體",    label:"🧴 身體保養",     kw:["身體乳","body lotion","hand cream","護手","沐浴","浴鹽"]},
+    {key:"香水",    label:"🌸 香氛/香水",    kw:["香水","perfume","香氛","body mist","身體噴霧"]},
     {key:"保健",    label:"💊 保健食品",     kw:["益生菌","乳酸菌","락토핏","유산균","lactofit","probiotic","維他命","綜合維他命","B群","膠原蛋白","魚油","葉黃素","鈣片","酵素","enzyme","紅蔘","人蔘","蜂膠","牛樟芝","保健食品","健康食品","營養品","營養補給"]},
     {key:"美容儀器",label:"🔌 美容儀器",     kw:["美容儀","導入儀","導出儀","booster","microcurrent","微電流","音波儀","筋膜儀","按摩儀","脫毛儀","洗臉機","潔顏儀","洗顏機","led光療","光療儀","age-r","medicube"]},
   ],
@@ -6750,6 +6761,18 @@ window.showStockPlan=function(){
   if(!tripOrders.length){showToast("目前沒有待購買的喊單","warning");return;}
   window.setStockPlanViewMode(window.G.stockPlanViewMode||"buy");
   setStockPlanMode(window.G.stockPlanMode||"time");
+  const capInput=document.getElementById("sp-capacity-input");
+  if(capInput)capInput.value=window.G.stockPlanCapacity||"";
+  const coldBtn=document.getElementById("sp-filter-cold");
+  if(coldBtn){
+    if(window.G.stockPlanColdOnly){
+      coldBtn.style.background="#1E5F8C";coldBtn.style.color="white";coldBtn.style.borderColor="#1E5F8C";
+      coldBtn.textContent="🧊 只看冷藏商品（篩選中）";
+    } else {
+      coldBtn.style.background="#EAF4FB";coldBtn.style.color="#1E5F8C";coldBtn.style.borderColor="#BEE0F5";
+      coldBtn.textContent="🧊 只看冷藏商品";
+    }
+  }
   const m=document.getElementById("modal-stock-plan");
   m.style.display="flex";
 };
@@ -6767,6 +6790,13 @@ window.setStockPlanViewMode=function(mode){
     Object.assign(quoteBtn.style,mode==="quote"?on:off);
   }
   if(subFilterRow)subFilterRow.style.display=mode==="buy"?"block":"none";
+  const capacityRow=document.getElementById("sp-capacity-row");
+  if(capacityRow)capacityRow.style.display=mode==="buy"?"flex":"none";
+  window.renderStockPlanContent();
+};
+window.setStockPlanCapacity=function(val){
+  const n=parseInt(val)||0;
+  window.G.stockPlanCapacity=n>0?n:null;
   window.renderStockPlanContent();
 };
 
@@ -6796,6 +6826,20 @@ window.setStockPlanUnpurchasedOnly=function(on){
     } else {
       btn.style.background="#FEF3C7";btn.style.color="#92400E";btn.style.borderColor="#FCD34D";
       btn.textContent="🛒 只看待購買";
+    }
+  }
+  window.renderStockPlanContent();
+};
+window.setStockPlanColdOnly=function(on){
+  window.G.stockPlanColdOnly=on;
+  const btn=document.getElementById("sp-filter-cold");
+  if(btn){
+    if(on){
+      btn.style.background="#1E5F8C";btn.style.color="white";btn.style.borderColor="#1E5F8C";
+      btn.textContent="🧊 只看冷藏商品（篩選中）";
+    } else {
+      btn.style.background="#EAF4FB";btn.style.color="#1E5F8C";btn.style.borderColor="#BEE0F5";
+      btn.textContent="🧊 只看冷藏商品";
     }
   }
   window.renderStockPlanContent();
@@ -6830,12 +6874,20 @@ function renderStockProductBlock(pid,orders){
     if(spec){
       html+=`<div style="font-size:13px;font-weight:900;color:#E07B39;margin-bottom:8px;margin-top:8px;padding:6px 12px;background:#FFF3E0;border-left:3px solid #E07B39;border-radius:0 8px 8px 0">🏷️ ${spec} <span style="font-size:11px;font-weight:700;color:#C5A880">— ${sTotal}個</span></div>`;
     }
+    const isColdItem=!!(p?.flags?.isCold||p?.flags?.coldHigh);
     sOrders.forEach((o,i)=>{
       const buyer=o.communityName||o.buyerName||"?";
       const bought=o.purchased===true;
-      html+=`<div id="sp-row-${o.id}" style="display:flex;align-items:center;gap:6px;margin-bottom:6px;padding:8px 10px;background:${bought?"#F0FDF4":"white"};border-radius:10px;border:1px solid ${bought?"#BBF7D0":"#E8D5B0"}">`;
+      const capacity=window.G.stockPlanCapacity;
+      const g=(window.G.stockPlanGlobalMap||{})[o.id];
+      const overCapacity=capacity&&g&&g.cumulative>capacity&&!bought;
+      const globalBadge=(isColdItem&&g)
+        ? `<span style="flex-shrink:0;font-size:9px;font-weight:700;color:${overCapacity?"#C0392B":"#5C8CA8"};background:${overCapacity?"#FDEDEC":"#EAF4FB"};border:1px solid ${overCapacity?"#F1948A":"#BEE0F5"};border-radius:6px;padding:2px 6px;white-space:nowrap">🧊${g.cumulative}${capacity?"/"+capacity:""}${overCapacity?" ⚠️":""}</span>`
+        : "";
+      html+=`<div id="sp-row-${o.id}" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px;padding:8px 10px;background:${bought?"#F0FDF4":(overCapacity?"#FFF5F5":"white")};border-radius:10px;border:1px solid ${bought?"#BBF7D0":(overCapacity?"#F5B7B1":"#E8D5B0")}">`;
       html+=`<span style="font-size:10px;font-weight:900;color:#C5A880;min-width:20px">#${i+1}</span>`;
-      html+=`<span style="flex:1;font-size:13px;font-weight:700;color:#3D2010">${buyer}</span>`;
+      html+=`<span style="flex:1;font-size:13px;font-weight:700;color:#3D2010;min-width:60px">${buyer}</span>`;
+      html+=globalBadge;
       html+=`<button data-oid="${o.id}" onclick="spTogglePurchased(this.dataset.oid,this)" style="flex-shrink:0;font-size:11px;font-weight:700;padding:5px 8px;border-radius:8px;cursor:pointer;border:1.5px solid ${bought?"#6EE7B7":"#FCD34D"};background:${bought?"#D1FAE5":"#FEF3C7"};color:${bought?"#065F46":"#92400E"}">${bought?"✓ 已購買":"待購買"}</button>`;
       html+=`<div style="display:flex;align-items:center;gap:0;border:1px solid #E8D5B0;border-radius:8px;overflow:hidden;background:#FAF8F5">
         <button onclick="spQtyAdj('${o.id}',-1)" style="-webkit-appearance:none;appearance:none;width:28px;height:28px;font-size:15px;font-weight:700;border:none;background:transparent;color:#9C7A5A;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;margin:0">－</button>
@@ -6981,6 +7033,12 @@ window.renderStockPlanContent=function(){
   }
   let tripOrders=getTripOrders().filter(o=>o.status==="pending"&&o.orderType!=="quote");
   if(window.G.stockPlanUnpurchasedOnly)tripOrders=tripOrders.filter(o=>!o.purchased);
+  if(window.G.stockPlanColdOnly){
+    tripOrders=tripOrders.filter(o=>{
+      const p=window.G.products.find(x=>x.id===o.productId);
+      return p?.flags?.isCold||p?.flags?.coldHigh;
+    });
+  }
   const products=window.G.products;
   const mode=window.G.stockPlanMode||"time";
   const prodMap={};
@@ -6993,6 +7051,20 @@ window.renderStockPlanContent=function(){
     document.getElementById("stock-plan-content").innerHTML=`<div style="text-align:center;padding:32px;color:#9C7A5A;font-size:13px">${emptyMsg}</div>`;
     return;
   }
+  // 跨商品全域累計：只算「冷藏／高風險冷藏」商品，因為這類商品一定要自己帶回、不能走貨運，
+  // 其他商品（餅乾、彩妝等可以走貨運的）不佔行李箱名額，不列入這個累計
+  const coldOrders=tripOrders.filter(o=>{
+    const p=products.find(x=>x.id===o.productId);
+    return p?.flags?.isCold||p?.flags?.coldHigh;
+  });
+  const globalSorted=[...coldOrders].sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+  const globalMap={};
+  let runningTotal=0;
+  globalSorted.forEach((o,i)=>{
+    runningTotal+=o.qty;
+    globalMap[o.id]={rank:i+1,cumulative:runningTotal};
+  });
+  window.G.stockPlanGlobalMap=globalMap;
   let html=renderPromoGroupSummary(prodMap);
   if(mode==="channel"){
     // 依購買通路分組：先算出每個商品最早的喊單時間，通路內部再依時間排序
@@ -7663,7 +7735,7 @@ function renderTripBars(){
 
 // ── 📷 收據管理 ──────────────────────────────────────────────────────
 window.G.receiptCurrentTripId=null;
-window.G.receiptDraftItems=[]; // {name,price,koOriginal,zhOriginal,matchName}
+window.G.receiptDraftItems=[]; // {name,price,koOriginal,zhOriginal,linkedProductName}
 window.G.receiptDraftImages=[]; // 這份收據草稿目前附加的所有照片
 window.G.receiptSavedList=[];
 window.G.receiptViewingId=null;
@@ -7774,13 +7846,30 @@ window.receiptHandleFiles=function(input){
   input.value="";
 };
 // 把選到的照片（可能不只一張，例如同一張收據太長分前後頁拍）壓縮後，一次全部送給AI合併判讀成同一份收據
+// 確保商品庫已經從資料庫載入完成才進行比對，避免App剛開、商品庫還是空的時候比對永遠找不到東西
+function waitForProductsLoaded(timeoutMs){
+  return new Promise(resolve=>{
+    if(window.G.productsLoaded){resolve(true);return;}
+    const start=Date.now();
+    const check=()=>{
+      if(window.G.productsLoaded){resolve(true);return;}
+      if(Date.now()-start>timeoutMs){resolve(false);return;}
+      setTimeout(check,200);
+    };
+    check();
+  });
+}
 window.receiptRunOcr=async function(files){
   const statusEl=document.getElementById("receipt-upload-status");
   const pageNote=files.length>1?`（共 ${files.length} 頁，合併辨識中）`:"";
   statusEl.textContent=`🔍 AI 辨識中${pageNote}，請稍候…`;
   try{
     // 收據字比商品照片小很多，壓縮解析度拉高一點才看得清楚
-    const compressed=await Promise.all(files.map(f=>compressImg(f,1000,0.65)));
+    // 商品庫比對跟AI辨識同時進行，不會多花你等待時間
+    const [compressed,productsReady]=await Promise.all([
+      Promise.all(files.map(f=>compressImg(f,1000,0.65))),
+      waitForProductsLoaded(4000),
+    ]);
     window.G.receiptDraftImages=compressed;
     const resp=await fetch("https://butter-ai.kueigin.workers.dev",{
       method:"POST",
@@ -7789,19 +7878,20 @@ window.receiptRunOcr=async function(files){
     });
     const data=await resp.json();
     if(data.error)throw new Error(typeof data.error==="string"?data.error:JSON.stringify(data.error));
-    statusEl.textContent="✅ 辨識完成，請檢查下方內容再存檔";
+    statusEl.textContent=productsReady?"✅ 辨識完成，請檢查下方內容再存檔":"✅ 辨識完成（⚠️ 商品庫尚未載入完成，比對結果可能不準確，建議稍後重新編輯這筆再確認一次）";
     const items=(data.items||[]).map(it=>{
       const zh=it.name_zh||it.name_ko||"";
       const matched=window.fuzzyMatchProduct(zh)||window.fuzzyMatchProduct(it.name_ko||"");
       return{
-        name:matched?matched.name:zh,
+        name:zh,
         price:it.price||0,
         koOriginal:it.name_ko||"",
         zhOriginal:it.name_zh||"",
-        matchName:matched?matched.name:null,
+        linkedProductId:matched?matched.id:null,
+        linkedProductName:matched?matched.name:null,
       };
     });
-    window.G.receiptDraftItems=items.length?items:[{name:"",price:0,koOriginal:"",zhOriginal:"",matchName:null}];
+    window.G.receiptDraftItems=items.length?items:[{name:"",price:0,koOriginal:"",zhOriginal:"",linkedProductId:null,linkedProductName:null}];
     document.getElementById("receipt-draft-store").value=data.store||"";
     document.getElementById("receipt-draft-date").value=data.date||"";
     document.getElementById("receipt-draft-total").value=data.total||"";
@@ -7817,7 +7907,7 @@ window.receiptRunOcr=async function(files){
   }catch(e){
     statusEl.textContent="⚠️ 辨識失敗："+e.message+"（可以手動輸入，不用重拍）";
     // 辨識失敗也讓你能手動填寫，不會卡住整個流程
-    window.G.receiptDraftItems=[{name:"",price:0,koOriginal:"",zhOriginal:"",matchName:null}];
+    window.G.receiptDraftItems=[{name:"",price:0,koOriginal:"",zhOriginal:"",linkedProductId:null,linkedProductName:null}];
     document.getElementById("receipt-draft-store").value="";
     document.getElementById("receipt-draft-date").value="";
     document.getElementById("receipt-draft-total").value="";
@@ -7866,6 +7956,7 @@ window.receiptAddMorePages=function(){
     window.G.receiptDraftImages=allImages;
     const statusEl=document.getElementById("receipt-upload-status");
     statusEl.textContent=`🔍 AI 重新辨識中（共 ${allImages.length} 頁），請稍候…`;
+    const productsReady=await waitForProductsLoaded(4000);
     try{
       const resp=await fetch("https://butter-ai.kueigin.workers.dev",{
         method:"POST",
@@ -7874,13 +7965,13 @@ window.receiptAddMorePages=function(){
       });
       const data=await resp.json();
       if(data.error)throw new Error(typeof data.error==="string"?data.error:JSON.stringify(data.error));
-      statusEl.textContent="✅ 已合併重新辨識，請檢查下方內容再存檔";
+      statusEl.textContent=productsReady?"✅ 已合併重新辨識，請檢查下方內容再存檔":"✅ 已合併重新辨識（⚠️ 商品庫尚未載入完成，比對結果可能不準確）";
       const items=(data.items||[]).map(it=>{
         const zh=it.name_zh||it.name_ko||"";
         const matched=window.fuzzyMatchProduct(zh)||window.fuzzyMatchProduct(it.name_ko||"");
-        return{name:matched?matched.name:zh,price:it.price||0,koOriginal:it.name_ko||"",zhOriginal:it.name_zh||"",matchName:matched?matched.name:null};
+        return{name:zh,price:it.price||0,koOriginal:it.name_ko||"",zhOriginal:it.name_zh||"",linkedProductId:matched?matched.id:null,linkedProductName:matched?matched.name:null};
       });
-      window.G.receiptDraftItems=items.length?items:[{name:"",price:0,koOriginal:"",zhOriginal:"",matchName:null}];
+      window.G.receiptDraftItems=items.length?items:[{name:"",price:0,koOriginal:"",zhOriginal:"",linkedProductId:null,linkedProductName:null}];
       document.getElementById("receipt-draft-store").value=data.store||"";
       document.getElementById("receipt-draft-date").value=data.date||"";
       document.getElementById("receipt-draft-total").value=data.total||"";
@@ -7912,21 +8003,90 @@ function receiptRenderItems(){
   const el=document.getElementById("receipt-draft-items");
   const items=window.G.receiptDraftItems;
   el.innerHTML=items.map((it,i)=>{
-    const hint=it.zhOriginal||it.koOriginal
-      ? `<div style="font-size:9px;color:#B0906A;margin-top:2px">AI辨識原文：${(it.koOriginal||"").replace(/</g,"&lt;")}${it.zhOriginal?" → "+it.zhOriginal.replace(/</g,"&lt;"):""}${it.matchName?`　<span style="color:#2E6B4B">（已比對到商品庫：${it.matchName.replace(/</g,"&lt;")}）</span>`:""}</div>`
+    const aiHint=(it.zhOriginal||it.koOriginal)
+      ? `<div style="font-size:9px;color:#B0906A;margin-top:2px">AI辨識原文：${(it.koOriginal||"").replace(/</g,"&lt;")}${it.zhOriginal?" → "+it.zhOriginal.replace(/</g,"&lt;"):""}</div>`
       : "";
+    const linkRow=it.linkedProductId
+      ? `<div style="display:flex;align-items:center;gap:5px;margin-top:4px;flex-wrap:wrap">
+          <span style="font-size:10px;font-weight:700;color:#2E6B4B;background:#EAF8F0;border:1px solid #BFE6D0;border-radius:6px;padding:2px 8px">🔗 已連結：${(it.linkedProductName||"").replace(/</g,"&lt;")}${it.linkedSpec?`（${it.linkedSpec.replace(/</g,"&lt;")}）`:""}</span>
+          <button type="button" onclick="receiptUnlinkItem(${i})" style="font-size:10px;color:#9C7A5A;background:none;border:none;cursor:pointer;text-decoration:underline">取消連結</button>
+        </div>`
+      : `<button type="button" onclick="receiptOpenLinkPicker(${i})" style="margin-top:4px;font-size:10px;font-weight:700;color:#1E5F8C;background:#EAF4FB;border:1px solid #BEE0F5;border-radius:6px;padding:2px 8px;cursor:pointer">🔍 連結商品庫</button>`;
     return `<div style="border:1px solid #F0E0C0;border-radius:8px;padding:8px 10px;margin-bottom:6px;background:white">
       <div style="display:flex;gap:6px;align-items:center">
         <input type="text" value="${(it.name||"").replace(/"/g,"&quot;")}" oninput="window.G.receiptDraftItems[${i}].name=this.value" placeholder="品名" style="flex:1;min-width:0;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:6px;padding:6px 8px;font-size:12px;outline:none"/>
         <input type="text" inputmode="decimal" value="${it.price||""}" oninput="window.G.receiptDraftItems[${i}].price=parseFloat(this.value)||0" placeholder="價格" style="width:80px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:6px;padding:6px 8px;font-size:12px;outline:none;text-align:right"/>
         <button onclick="receiptRemoveItemRow(${i})" style="background:#FDEDEC;border:none;border-radius:6px;width:24px;height:24px;color:#C0392B;cursor:pointer;flex-shrink:0">×</button>
       </div>
-      ${hint}
+      ${aiHint}
+      ${linkRow}
     </div>`;
   }).join("");
 }
+// 手動搜尋商品庫，把這一項收據品項連結到指定的既有商品（不會動到品名欄位本身）
+window.receiptOpenLinkPicker=function(idx){
+  window.G.receiptLinkPickerIdx=idx;
+  const box=document.getElementById("receipt-link-picker-box");
+  const input=document.getElementById("receipt-link-picker-search");
+  const it=window.G.receiptDraftItems[idx];
+  input.value=it?.zhOriginal||it?.name||"";
+  box.style.display="flex";
+  receiptFilterLinkPicker();
+  setTimeout(()=>input.focus(),50);
+};
+window.receiptCloseLinkPicker=function(){
+  document.getElementById("receipt-link-picker-box").style.display="none";
+  window.G.receiptLinkPickerIdx=null;
+};
+window.receiptLinkPickerResults=[]; // 暫存目前搜尋結果，picker點擊時用index對應，避免規格文字裡有特殊符號造成escape問題
+window.receiptFilterLinkPicker=function(){
+  const kw=normalizeForMatch(document.getElementById("receipt-link-picker-search").value);
+  const listEl=document.getElementById("receipt-link-picker-list");
+  const products=(window.G.products||[]).filter(p=>!p.archived);
+  const filtered=kw
+    ? products.filter(p=>normalizeForMatch(p.name).includes(kw)||(Array.isArray(p.aliases)&&p.aliases.some(a=>normalizeForMatch(a).includes(kw))))
+    : products.slice(0,30);
+  if(!filtered.length){
+    listEl.innerHTML='<div style="text-align:center;padding:12px;color:#B0906A;font-size:12px">找不到符合的商品</div>';
+    window.receiptLinkPickerResults=[];
+    return;
+  }
+  const results=[]; // {productId,productName,spec}
+  listEl.innerHTML=filtered.slice(0,30).map(p=>{
+    const specs=Array.isArray(p.specs)?p.specs.filter(Boolean):[];
+    const mainIdx=results.length;
+    results.push({productId:p.id,productName:p.name,spec:null});
+    const specRows=specs.map(s=>{
+      const specIdx=results.length;
+      results.push({productId:p.id,productName:p.name,spec:s});
+      return `<div onclick="receiptPickLinkByIndex(${specIdx})" style="padding:6px 10px 6px 28px;cursor:pointer;font-size:12px;color:#5C4A38;border-top:1px dashed #F0E0C0">📐 ${s.replace(/</g,"&lt;")}</div>`;
+    }).join("");
+    return `<div style="border-bottom:1px solid #F5EDE0">
+      <div onclick="receiptPickLinkByIndex(${mainIdx})" style="padding:8px 10px;cursor:pointer;font-size:13px;color:#3D2010;font-weight:${specs.length?700:400}">${p.emoji||"📦"} ${p.name.replace(/</g,"&lt;")}${specs.length?'<span style="font-size:10px;color:#9C7A5A;font-weight:400">（點下方選規格，或點這裡連結整個商品）</span>':""}</div>
+      ${specRows}
+    </div>`;
+  }).join("");
+  window.receiptLinkPickerResults=results;
+};
+window.receiptPickLinkByIndex=function(idx){
+  const r=window.receiptLinkPickerResults[idx];
+  if(!r)return;
+  const draftIdx=window.G.receiptLinkPickerIdx;
+  if(draftIdx==null)return;
+  window.G.receiptDraftItems[draftIdx].linkedProductId=r.productId;
+  window.G.receiptDraftItems[draftIdx].linkedProductName=r.productName;
+  window.G.receiptDraftItems[draftIdx].linkedSpec=r.spec||null;
+  receiptRenderItems();
+  receiptCloseLinkPicker();
+};
+window.receiptUnlinkItem=function(idx){
+  window.G.receiptDraftItems[idx].linkedProductId=null;
+  window.G.receiptDraftItems[idx].linkedProductName=null;
+  window.G.receiptDraftItems[idx].linkedSpec=null;
+  receiptRenderItems();
+};
 window.receiptAddItemRow=function(){
-  window.G.receiptDraftItems.push({name:"",price:0,koOriginal:"",zhOriginal:"",matchName:null});
+  window.G.receiptDraftItems.push({name:"",price:0,koOriginal:"",zhOriginal:"",linkedProductId:null,linkedProductName:null});
   receiptRenderItems();
 };
 window.receiptRemoveItemRow=function(idx){
@@ -8000,8 +8160,8 @@ window.receiptEditCurrent=function(){
   window.G.receiptEditingId=id;
   window.G.receiptDraftImages=(r.images&&r.images.length)?[...r.images]:(r.imgB64?[r.imgB64]:[]);
   window.G.receiptDraftItems=(r.items&&r.items.length)
-    ?r.items.map(it=>({name:it.name||"",price:it.price||0,koOriginal:it.koOriginal||"",zhOriginal:it.zhOriginal||"",matchName:it.matchName||null}))
-    :[{name:"",price:0,koOriginal:"",zhOriginal:"",matchName:null}];
+    ?r.items.map(it=>({name:it.name||"",price:it.price||0,koOriginal:it.koOriginal||"",zhOriginal:it.zhOriginal||"",linkedProductId:it.linkedProductId||null,linkedProductName:it.linkedProductName||null,linkedSpec:it.linkedSpec||null}))
+    :[{name:"",price:0,koOriginal:"",zhOriginal:"",linkedProductId:null,linkedProductName:null}];
   document.getElementById("receipt-draft-store").value=r.store||"";
   document.getElementById("receipt-draft-date").value=r.date||"";
   document.getElementById("receipt-draft-total").value=r.total||"";
@@ -8026,9 +8186,12 @@ window.receiptViewSaved=function(id){
   window.G.receiptViewingId=id;
   const body=document.getElementById("receipt-view-body");
   const itemsHtml=(r.items||[]).map(it=>
-    `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #F5EDE0;font-size:13px">
-      <span>${(it.name||"").replace(/</g,"&lt;")}</span>
-      <span style="font-weight:700">₩${Number(it.price||0).toLocaleString()}</span>
+    `<div style="padding:6px 0;border-bottom:1px solid #F5EDE0">
+      <div style="display:flex;justify-content:space-between;font-size:13px">
+        <span>${(it.name||"").replace(/</g,"&lt;")}</span>
+        <span style="font-weight:700">₩${Number(it.price||0).toLocaleString()}</span>
+      </div>
+      ${it.linkedProductName?`<div onclick="receiptOpenLinkedProduct('${it.linkedProductId}')" style="font-size:10px;color:#2E6B4B;margin-top:2px;cursor:pointer;text-decoration:underline">🔗 已連結：${it.linkedProductName.replace(/</g,"&lt;")}${it.linkedSpec?`（${it.linkedSpec.replace(/</g,"&lt;")}）`:""}</div>`:""}
     </div>`
   ).join("");
   const badges=[
@@ -8062,6 +8225,15 @@ window.receiptViewSaved=function(id){
       <span>退稅後金額（實際到手成本）</span><span>₩${net.toLocaleString()}${r.refundAmount?"":"（用稅額概算）"}</span>
     </div>`;})()}`;
   openModal("modal-receipt-view");
+};
+// 點擊收據明細裡的「已連結」標籤，關掉收據視窗、直接開啟該商品的編輯畫面
+window.receiptOpenLinkedProduct=function(productId){
+  if(!productId||productId==="null")return;
+  const p=(window.G.products||[]).find(x=>x.id===productId);
+  if(!p){showToast("找不到這個商品，可能已經被刪除了","error");return;}
+  closeModal("modal-receipt-view");
+  closeModal("modal-receipts");
+  openEditProd(productId);
 };
 window.receiptDeleteCurrent=async function(){
   const id=window.G.receiptViewingId;
@@ -11198,8 +11370,14 @@ window.swUpdate = function(){
         <button id="sp-mode-channel" onclick="setStockPlanMode('channel')" style="font-size:12px;font-weight:700;padding:6px 12px;border-radius:99px;border:none;background:white;color:#9C7A5A;cursor:pointer;transition:background 0.15s,color 0.15s">🏪 通路</button>
       </div>
     </div>
-    <div id="sp-buy-subfilter-row" style="margin-bottom:14px">
-      <button id="sp-filter-unpurchased" onclick="setStockPlanUnpurchasedOnly(!window.G.stockPlanUnpurchasedOnly)" style="width:100%;font-size:12px;font-weight:700;padding:8px 12px;border-radius:10px;border:1.5px solid #FCD34D;background:#FEF3C7;color:#92400E;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">🛒 只看待購買</button>
+    <div id="sp-buy-subfilter-row" style="display:flex;gap:8px;margin-bottom:10px">
+      <button id="sp-filter-unpurchased" onclick="setStockPlanUnpurchasedOnly(!window.G.stockPlanUnpurchasedOnly)" style="flex:1;font-size:12px;font-weight:700;padding:8px 12px;border-radius:10px;border:1.5px solid #FCD34D;background:#FEF3C7;color:#92400E;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">🛒 只看待購買</button>
+      <button id="sp-filter-cold" onclick="setStockPlanColdOnly(!window.G.stockPlanColdOnly)" style="flex:1;font-size:12px;font-weight:700;padding:8px 12px;border-radius:10px;border:1.5px solid #BEE0F5;background:#EAF4FB;color:#1E5F8C;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">🧊 只看冷藏商品</button>
+    </div>
+    <div id="sp-capacity-row" style="display:flex;align-items:center;gap:8px;margin-bottom:14px;background:#EAF4FB;border:1px solid #BEE0F5;border-radius:10px;padding:9px 12px">
+      <span style="font-size:11px;font-weight:700;color:#1E5F8C;flex-shrink:0">🧊 冷藏商品這趟大概能帶多少件</span>
+      <input type="text" inputmode="numeric" id="sp-capacity-input" placeholder="例如：100" oninput="setStockPlanCapacity(this.value)" style="width:80px;background:white;border:1px solid #BEE0F5;border-radius:8px;padding:5px 8px;font-size:12px;font-weight:700;outline:none;text-align:center"/>
+      <span style="font-size:10px;color:#5C8CA8;flex:1">只算冷藏／高風險冷藏商品，其他能走貨運的商品不算</span>
     </div>
     <div id="stock-plan-content"></div>
   </div>
