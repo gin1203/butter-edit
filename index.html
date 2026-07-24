@@ -6884,18 +6884,21 @@ function renderStockProductBlock(pid,orders){
       const globalBadge=(isColdItem&&g)
         ? `<span style="flex-shrink:0;font-size:9px;font-weight:700;color:${overCapacity?"#C0392B":"#5C8CA8"};background:${overCapacity?"#FDEDEC":"#EAF4FB"};border:1px solid ${overCapacity?"#F1948A":"#BEE0F5"};border-radius:6px;padding:2px 6px;white-space:nowrap">🧊${g.cumulative}${capacity?"/"+capacity:""}${overCapacity?" ⚠️":""}</span>`
         : "";
-      html+=`<div id="sp-row-${o.id}" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px;padding:8px 10px;background:${bought?"#F0FDF4":(overCapacity?"#FFF5F5":"white")};border-radius:10px;border:1px solid ${bought?"#BBF7D0":(overCapacity?"#F5B7B1":"#E8D5B0")}">`;
-      html+=`<span style="font-size:10px;font-weight:900;color:#C5A880;min-width:20px">#${i+1}</span>`;
-      html+=`<span style="flex:1;font-size:13px;font-weight:700;color:#3D2010;min-width:60px">${buyer}</span>`;
+      html+=`<div id="sp-row-${o.id}" style="margin-bottom:6px;padding:8px 10px;background:${bought?"#F0FDF4":(overCapacity?"#FFF5F5":"white")};border-radius:10px;border:1px solid ${bought?"#BBF7D0":(overCapacity?"#F5B7B1":"#E8D5B0")}">`;
+      html+=`<div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px">
+        <span style="flex-shrink:0;font-size:10px;font-weight:900;color:#C5A880">#${i+1}</span>
+        <span style="font-size:13px;font-weight:700;color:#3D2010;word-break:break-word;overflow-wrap:anywhere">${buyer}</span>
+      </div>`;
+      html+=`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">`;
       html+=globalBadge;
       html+=`<button data-oid="${o.id}" onclick="spTogglePurchased(this.dataset.oid,this)" style="flex-shrink:0;font-size:11px;font-weight:700;padding:5px 8px;border-radius:8px;cursor:pointer;border:1.5px solid ${bought?"#6EE7B7":"#FCD34D"};background:${bought?"#D1FAE5":"#FEF3C7"};color:${bought?"#065F46":"#92400E"}">${bought?"✓ 已購買":"待購買"}</button>`;
-      html+=`<div style="display:flex;align-items:center;gap:0;border:1px solid #E8D5B0;border-radius:8px;overflow:hidden;background:#FAF8F5">
+      html+=`<div style="display:flex;align-items:center;gap:0;border:1px solid #E8D5B0;border-radius:8px;overflow:hidden;background:#FAF8F5;flex-shrink:0">
         <button onclick="spQtyAdj('${o.id}',-1)" style="-webkit-appearance:none;appearance:none;width:28px;height:28px;font-size:15px;font-weight:700;border:none;background:transparent;color:#9C7A5A;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;margin:0">－</button>
         <input id="sp-qty-${o.id}" type="text" inputmode="numeric" value="${o.qty}" style="width:28px;text-align:center;border:none;background:transparent;font-size:13px;font-weight:900;color:#3D2010;outline:none;padding:0"/>
         <button onclick="spQtyAdj('${o.id}',1,${o.qty})" style="-webkit-appearance:none;appearance:none;width:28px;height:28px;font-size:15px;font-weight:700;border:none;background:transparent;color:#9C7A5A;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;margin:0">＋</button>
       </div>`;
       html+=`<button class="sp-give-btn" onclick="stockPlanGive('${o.id}',this,${o.qty})" style="flex-shrink:0;background:#A5D6A7;color:#1B5E20;border:1.5px solid #A5D6A7;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer">✓ 給貨</button>`;
-      html+=`</div>`;
+      html+=`</div></div>`;
     });
   });
   html+=`</div>`;
