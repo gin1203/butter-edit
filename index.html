@@ -423,7 +423,7 @@ body.live-mode .hide-live { display: none !important; }
       <button onclick="batchDeleteCustomers()" style="font-size:11px;background:#FDEDEC;color:#C0392B;border:1px solid #F1948A;padding:5px 10px;border-radius:8px;font-weight:700;cursor:pointer">🗑️ 批次刪除</button>
     </div>
   </div>
-  <div style="display:flex;gap:4px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:99px;padding:3px;margin-bottom:8px">
+  <div style="display:none;gap:4px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:99px;padding:3px;margin-bottom:8px">
     <button id="cust-sort-pending" onclick="setCustSortMode('pending')" style="flex:1;font-size:12px;font-weight:700;padding:8px 4px;border-radius:99px;border:none;background:#C5A880;color:white;cursor:pointer;transition:background 0.15s,color 0.15s">待處理優先</button>
     <button id="cust-sort-stroke" onclick="setCustSortMode('stroke')" style="flex:1;font-size:12px;font-weight:700;padding:8px 4px;border-radius:99px;border:none;background:white;color:#9C7A5A;cursor:pointer;transition:background 0.15s,color 0.15s">筆畫排序</button>
   </div>
@@ -6043,42 +6043,53 @@ window.saveAllEditOrders=async function(){
   const shippingCost=freeShipping?(parseFloat(document.getElementById("eo-shipping-cost")?.value)||0):0;
   let count=0;
   const rowArr=[...rows];
-  for(let i=0;i<rowArr.length;i++){
-    const row=rowArr[i];
-    const oid=row.dataset.oid;
-    const qty=parseInt(row.querySelector(".eo-qty")?.value)||1;
-    const price=parseFloat(row.querySelector(".eo-price")?.value)||0;
-    const discountNote=row.querySelector(".eo-discount-note")?.value.trim()||"";
-    // 折扣、免運都只記在第一筆，避免同一件事在同一批訂單裡被記錄了好幾次
-    const upd={qty,discountPrice:price,total:price*qty,depositAmt:sharedDeposit,tracking:sharedTracking,discountNote};
-    if(i===0){upd.sharedDiscount=sharedDiscount>0?sharedDiscount:0;upd.freeShipping=freeShipping;upd.shippingCost=shippingCost;}
-    if(sharedDeposit>0){
-      const o=window.G.orders.find(x=>x.id===oid);
-      if(o&&o.status==="pending")upd.status="deposit";
+  const saveBtn=document.querySelector('button[onclick="saveAllEditOrders()"]');
+  const originalBtnText=saveBtn?.textContent;
+  if(saveBtn){saveBtn.disabled=true;saveBtn.textContent="💾 儲存中…";saveBtn.style.opacity="0.7";}
+  try{
+    for(let i=0;i<rowArr.length;i++){
+      const row=rowArr[i];
+      const oid=row.dataset.oid;
+      const qty=parseInt(row.querySelector(".eo-qty")?.value)||1;
+      const price=parseFloat(row.querySelector(".eo-price")?.value)||0;
+      const discountNote=row.querySelector(".eo-discount-note")?.value.trim()||"";
+      // 折扣、免運都只記在第一筆，避免同一件事在同一批訂單裡被記錄了好幾次
+      const upd={qty,discountPrice:price,total:price*qty,depositAmt:sharedDeposit,tracking:sharedTracking,discountNote};
+      if(i===0){upd.sharedDiscount=sharedDiscount>0?sharedDiscount:0;upd.freeShipping=freeShipping;upd.shippingCost=shippingCost;}
+      if(sharedDeposit>0){
+        const o=window.G.orders.find(x=>x.id===oid);
+        if(o&&o.status==="pending")upd.status="deposit";
+      }
+      await fbUpd("orders",oid,upd);
+      count++;
     }
-    await fbUpd("orders",oid,upd);
-    count++;
+    // 新增暫存商品
+    const cid=window.G.activeEordCustId;
+    const c=window.G.customers.find(x=>x.id===cid);
+    // 同樣優先用畫面上目前選取的趟次篩選，避免誤判成已結束的舊趟次
+    const tripId=window.G.moSelectedTripId||(window.G.tripFilter&&window.G.tripFilter!=="all"?window.G.tripFilter:null)||getLatestTrip()?.id||"";
+    const pending=window.G.eoPendingAdd||[];
+    for(const item of pending){
+      const saveOrder={...item,customerId:cid,
+        communityName:c?.communityName||"",lineName:c?.lineName||"",
+        buyerName:c?.communityName||c?.lineName||"",tripId};
+      await fbSet("orders",item.id,saveOrder);
+      // 注意：不要在這裡手動 push 進 window.G.orders！
+      // onSnapshot(collection(db,"orders"),...) 監聽器一寫入就會自動把 window.G.orders
+      // 整包重新同步一次，這裡如果又手動 push 一次，會跟監聽器同步進來的那筆重複，
+      // 畫面上就會看到同一筆訂單顯示兩次（之前的bug）。
+      count++;
+    }
+    window.G.eoPendingAdd=[];
+    closeModal("modal-eord");
+    showToast(`已更新 ${count} 筆訂單`);
+  }catch(e){
+    // 存檔失敗時，一定要讓你看到明確的錯誤原因，不能悄悄失敗、看起來像按了沒反應
+    showToast("儲存失敗："+(e.message||"請檢查網路連線後再試一次")+"（內容都還在，不用重打，再按一次儲存就好）","error");
+    console.error(e);
+  }finally{
+    if(saveBtn){saveBtn.disabled=false;saveBtn.textContent=originalBtnText||"💾 儲存全部修改";saveBtn.style.opacity="1";}
   }
-  // 新增暫存商品
-  const cid=window.G.activeEordCustId;
-  const c=window.G.customers.find(x=>x.id===cid);
-  // 同樣優先用畫面上目前選取的趟次篩選，避免誤判成已結束的舊趟次
-  const tripId=window.G.moSelectedTripId||(window.G.tripFilter&&window.G.tripFilter!=="all"?window.G.tripFilter:null)||getLatestTrip()?.id||"";
-  const pending=window.G.eoPendingAdd||[];
-  for(const item of pending){
-    const saveOrder={...item,customerId:cid,
-      communityName:c?.communityName||"",lineName:c?.lineName||"",
-      buyerName:c?.communityName||c?.lineName||"",tripId};
-    await fbSet("orders",item.id,saveOrder);
-    // 注意：不要在這裡手動 push 進 window.G.orders！
-    // onSnapshot(collection(db,"orders"),...) 監聽器一寫入就會自動把 window.G.orders
-    // 整包重新同步一次，這裡如果又手動 push 一次，會跟監聽器同步進來的那筆重複，
-    // 畫面上就會看到同一筆訂單顯示兩次（之前的bug）。
-    count++;
-  }
-  window.G.eoPendingAdd=[];
-  closeModal("modal-eord");
-  showToast(`已更新 ${count} 筆訂單`);
 };
 
 // ── 設定 ──────────────────────────────────────────────────────────────
@@ -6789,9 +6800,9 @@ window.setStockPlanViewMode=function(mode){
     Object.assign(buyBtn.style,mode==="buy"?on:off);
     Object.assign(quoteBtn.style,mode==="quote"?on:off);
   }
-  if(subFilterRow)subFilterRow.style.display=mode==="buy"?"block":"none";
+  if(subFilterRow)subFilterRow.style.display=mode==="buy"?"flex":"none";
   const capacityRow=document.getElementById("sp-capacity-row");
-  if(capacityRow)capacityRow.style.display=mode==="buy"?"flex":"none";
+  if(capacityRow)capacityRow.style.display=mode==="buy"?"block":"none";
   window.renderStockPlanContent();
 };
 window.setStockPlanCapacity=function(val){
@@ -6889,7 +6900,7 @@ function renderStockProductBlock(pid,orders){
         <span style="flex-shrink:0;font-size:10px;font-weight:900;color:#C5A880">#${i+1}</span>
         <span style="font-size:13px;font-weight:700;color:#3D2010;word-break:break-word;overflow-wrap:anywhere">${buyer}</span>
       </div>`;
-      html+=`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">`;
+      html+=`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px">`;
       html+=globalBadge;
       html+=`<button data-oid="${o.id}" onclick="spTogglePurchased(this.dataset.oid,this)" style="flex-shrink:0;font-size:11px;font-weight:700;padding:5px 8px;border-radius:8px;cursor:pointer;border:1.5px solid ${bought?"#6EE7B7":"#FCD34D"};background:${bought?"#D1FAE5":"#FEF3C7"};color:${bought?"#065F46":"#92400E"}">${bought?"✓ 已購買":"待購買"}</button>`;
       html+=`<div style="display:flex;align-items:center;gap:0;border:1px solid #E8D5B0;border-radius:8px;overflow:hidden;background:#FAF8F5;flex-shrink:0">
@@ -6897,8 +6908,9 @@ function renderStockProductBlock(pid,orders){
         <input id="sp-qty-${o.id}" type="text" inputmode="numeric" value="${o.qty}" style="width:28px;text-align:center;border:none;background:transparent;font-size:13px;font-weight:900;color:#3D2010;outline:none;padding:0"/>
         <button onclick="spQtyAdj('${o.id}',1,${o.qty})" style="-webkit-appearance:none;appearance:none;width:28px;height:28px;font-size:15px;font-weight:700;border:none;background:transparent;color:#9C7A5A;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;margin:0">＋</button>
       </div>`;
-      html+=`<button class="sp-give-btn" onclick="stockPlanGive('${o.id}',this,${o.qty})" style="flex-shrink:0;background:#A5D6A7;color:#1B5E20;border:1.5px solid #A5D6A7;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer">✓ 給貨</button>`;
-      html+=`</div></div>`;
+      html+=`</div>`;
+      html+=`<button class="sp-give-btn" onclick="stockPlanGive('${o.id}',this,${o.qty})" style="width:100%;background:#A5D6A7;color:#1B5E20;border:1.5px solid #A5D6A7;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer">✓ 給貨</button>`;
+      html+=`</div>`;
     });
   });
   html+=`</div>`;
@@ -11377,10 +11389,12 @@ window.swUpdate = function(){
       <button id="sp-filter-unpurchased" onclick="setStockPlanUnpurchasedOnly(!window.G.stockPlanUnpurchasedOnly)" style="flex:1;font-size:12px;font-weight:700;padding:8px 12px;border-radius:10px;border:1.5px solid #FCD34D;background:#FEF3C7;color:#92400E;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">🛒 只看待購買</button>
       <button id="sp-filter-cold" onclick="setStockPlanColdOnly(!window.G.stockPlanColdOnly)" style="flex:1;font-size:12px;font-weight:700;padding:8px 12px;border-radius:10px;border:1.5px solid #BEE0F5;background:#EAF4FB;color:#1E5F8C;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">🧊 只看冷藏商品</button>
     </div>
-    <div id="sp-capacity-row" style="display:flex;align-items:center;gap:8px;margin-bottom:14px;background:#EAF4FB;border:1px solid #BEE0F5;border-radius:10px;padding:9px 12px">
-      <span style="font-size:11px;font-weight:700;color:#1E5F8C;flex-shrink:0">🧊 冷藏商品這趟大概能帶多少件</span>
-      <input type="text" inputmode="numeric" id="sp-capacity-input" placeholder="例如：100" oninput="setStockPlanCapacity(this.value)" style="width:80px;background:white;border:1px solid #BEE0F5;border-radius:8px;padding:5px 8px;font-size:12px;font-weight:700;outline:none;text-align:center"/>
-      <span style="font-size:10px;color:#5C8CA8;flex:1">只算冷藏／高風險冷藏商品，其他能走貨運的商品不算</span>
+    <div id="sp-capacity-row" style="margin-bottom:14px;background:#EAF4FB;border:1px solid #BEE0F5;border-radius:10px;padding:9px 12px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+        <span style="font-size:11px;font-weight:700;color:#1E5F8C">🧊 冷藏商品這趟大概能帶多少件</span>
+        <input type="text" inputmode="numeric" id="sp-capacity-input" placeholder="例如：100" oninput="setStockPlanCapacity(this.value)" style="width:80px;flex-shrink:0;background:white;border:1px solid #BEE0F5;border-radius:8px;padding:5px 8px;font-size:12px;font-weight:700;outline:none;text-align:center"/>
+      </div>
+      <div style="font-size:10px;color:#5C8CA8">只算冷藏／高風險冷藏商品，其他能走貨運的商品不算</div>
     </div>
     <div id="stock-plan-content"></div>
   </div>
