@@ -5190,7 +5190,7 @@ window.copyLineFormat=function(id){
   const specLine=(p.specs&&p.specs.length)?`\n規格：${p.specs.join("、")}`:"";
   const promoInfo=window.getPromoTagInfo(p.name);
   const priceLine=promoInfo
-    ?`售價：NT$ ${Math.round(p.finalPrice*promoInfo.defaultQty/promoInfo.n).toLocaleString()}（買${promoInfo.n}送${promoInfo.k}活動）`
+    ?`售價：NT$ ${Math.round(p.finalPrice*promoInfo.defaultQty/promoInfo.n).toLocaleString()}（買${promoInfo.n}送${promoInfo.k}）`
     :`售價：NT$ ${p.finalPrice.toLocaleString()}`;
   const text=`【${cleanProductName(p.name)}】${specLine}\n${priceLine}`;
   navigator.clipboard?.writeText(text).then(()=>showToast("報價已複製！")).catch(()=>{
@@ -9754,7 +9754,8 @@ window.renderCustomers=function(){
   };
   const custPendingCount=c=>{
     const cOrds=orders.filter(o=>o.customerId?o.customerId===c.id:(o.communityName||o.buyerName||"").trim().toLowerCase()===(c.communityName||"").trim().toLowerCase());
-    return cOrds.filter(o=>o.status==="pending").length;
+    // 「待訂金」跟「已付訂金但還沒出貨/對帳」都算優先處理，只有已付尾款、已寄出這種真正完成的訂單才不算
+    return cOrds.filter(o=>o.status==="pending"||o.status==="deposit").length;
   };
   const sortMode=window.G.custSortMode||"pending";
   let withPending=[],withoutPending=[];
@@ -9809,9 +9810,11 @@ window.renderCustomers=function(){
     const renderOrderRow=(o)=>{
       const sl2={pending:"#E07B39",settled:"#2E7D32",shipped:"#2980B9"};
       const stl={pending:"待訂金",deposit:"已付訂金",settled:"已付尾款",shipped:"已寄出"};
-      const dp=o.discountPrice||o.unitPrice||0;
-      const isPreorder=o.orderType==="preorder";
       const isQuote=o.orderType==="quote";
+      // 「待報價」代表還沒真的跟客人確認過價格，這裡改成即時抓「商品目前的售價」，
+      // 不要用下單當下存的舊價格快照，避免商品改價之後，這裡還顯示舊價格、報錯給客人
+      const dp=isQuote?(window.G.products.find(x=>x.id===o.productId)?.finalPrice??(o.discountPrice||o.unitPrice||0)):(o.discountPrice||o.unitPrice||0);
+      const isPreorder=o.orderType==="preorder";
       const isPurchased=o.purchased===true;
       const rowBg=isQuote?"#E3F2FD":isPreorder?(isPurchased?"#FAF8F5":"#F3F0FF"):"#FAF8F5";
       const leftBar=isQuote?"border-left:4px solid #0277BD":isPreorder?`border-left:4px solid ${isPurchased?"#A7F3D0":"#9333EA"}`:"border-left:4px solid transparent";
@@ -9837,7 +9840,11 @@ window.renderCustomers=function(){
       // 同商品同規格有多筆 → 合併成一個可展開的群組列
       const gExpanded=window.G.custOrderGroupExpandedSet.has(c.id+"::"+gk);
       const totalQty=items.reduce((s,o)=>s+o.qty,0);
-      const totalAmt=items.reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0);
+      const totalAmt=items.reduce((s,o)=>{
+        const isQ=o.orderType==="quote";
+        const p=isQ?(window.G.products.find(x=>x.id===o.productId)?.finalPrice??(o.discountPrice||o.unitPrice||0)):(o.discountPrice||o.unitPrice||0);
+        return s+p*o.qty;
+      },0);
       const allPurchased=items.every(o=>o.orderType!=="preorder"||o.purchased===true);
       const anyPreorder=items.some(o=>o.orderType==="preorder");
       const rep=items[0];
@@ -11147,7 +11154,9 @@ window.openSendQuote=async function(oid){
   if(!modal||!nameEl||!statusEl||!pickerEl||!msgEl||!sendBtn)return;
   const custName=c?(c.communityName||c.lineName||"客人"):(o.communityName||o.buyerName||"客人");
   nameEl.textContent=`👤 ${custName}`;
-  const price=o.discountPrice||o.unitPrice||0;
+  // 待報價還沒真的跟客人確認過價格，這裡改成即時抓「商品目前的售價」，
+  // 不要用下單當下存的舊價格快照，避免商品後來改價、卻把舊價格傳給客人
+  const price=prod?.finalPrice??(o.discountPrice||o.unitPrice||0);
   const productName=cleanProductName(prod?.name||o.productName||"商品");
   const priceLines=o.qty>1
     ?`數量：${o.qty}\n💰 單價：NT$${price.toLocaleString()}\n總金額：NT$${(price*o.qty).toLocaleString()}`
