@@ -432,6 +432,7 @@ body.live-mode .hide-live { display: none !important; }
     <button id="cust-view-unpurchased" onclick="setCustViewFilter('unpurchased')" style="flex:1;font-size:12px;font-weight:700;padding:8px 4px;border-radius:99px;border:none;background:white;color:#9C7A5A;cursor:pointer;transition:background 0.15s,color 0.15s">待購代買</button>
     <button id="cust-view-quote" onclick="setCustViewFilter('quote')" style="flex:1;font-size:12px;font-weight:700;padding:8px 4px;border-radius:99px;border:none;background:white;color:#9C7A5A;cursor:pointer;transition:background 0.15s,color 0.15s">待報價</button>
   </div>
+  <button id="cust-view-nocommunity" onclick="setCustViewFilter(window.G.custViewFilter==='noCommunity'?'all':'noCommunity')" style="width:100%;margin-bottom:8px;padding:8px 4px;border-radius:10px;font-size:12px;font-weight:700;border:1px solid #F5B942;background:#FFF9E6;color:#9C6B2E;cursor:pointer">🔗 只看（無社群名）待綁定</button>
   <button onclick="openBatchOrder()" style="width:100%;margin-bottom:8px;padding:9px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #FFCC80;background:#FFF3E0;color:#E07B39;cursor:pointer">📋 批次貼上喊單文字</button>
   <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#9C7A5A;margin-bottom:8px;cursor:pointer">
     <input type="checkbox" id="cust-select-all" onchange="toggleSelectAll('customer')" style="width:16px;height:16px;accent-color:#C5A880"/> 全選
@@ -2997,9 +2998,9 @@ const SUBCAT_MAP = {
     {key:"痘痘",    label:"🩹 痘痘貼/藥局",  kw:["痘痘貼","痘貼","痘痘","粉刺","黑頭","導出液","藥局","眼藥水","隱形眼鏡","滴眼液","人工淚液","水楊酸","去疤","疤痕","修復膏","修復軟膏","萬用修復","軟膏","蚊蟲叮咬","皮膚炎","祛斑","淡斑","褪黑"]},
     {key:"防曬",    label:"☀️ 防曬",          kw:["防曬","sunscreen","sun cream","spf","pa+"]},
     {key:"護髮",    label:"💆 護髮/頭皮",     kw:["護髮","養髮","頭皮","頭髮","洗髮","潤髮","髮膜","haircare","hair care","shampoo"]},
+    {key:"面膜",    label:"🎭 面膜",          kw:["面膜","mask","sheet mask","棉片","化妝棉","toner pad","cotton pad"]},
     {key:"保濕",    label:"💧 保濕/乳液",     kw:["保濕","乳液","面霜","face cream","水乳","精華","essence","serum","安瓶"]},
     {key:"眼霜",    label:"👁️ 眼部",          kw:["眼霜","眼膜","眼部","eye cream","eye"]},
-    {key:"面膜",    label:"🎭 面膜",          kw:["面膜","mask","sheet mask","棉片","化妝棉","toner pad","cotton pad"]},
     {key:"清潔",    label:"🫧 清潔/卸妝",    kw:["洗面","清潔","卸妝","泡沫","foam","cleanser","toner","化妝水"]},
     {key:"彩妝",    label:"💄 彩妝",          kw:["唇膏","口紅","粉底","氣墊","眼影","睫毛","腮紅","修容","highlight","妝前","妝前乳","妝前膏","primer","定妝","定妝噴霧","setting spray","隱形毛孔","遮瑕"]},
     {key:"身體",    label:"🧴 身體保養",     kw:["身體乳","body lotion","hand cream","護手","沐浴","浴鹽"]},
@@ -6973,7 +6974,7 @@ window.renamePromoGroup=async function(oldName,newNameRaw){
 };
 
 window.showStockPlan=function(){
-  const tripOrders=getTripOrders().filter(o=>o.status==="pending"||o.givenFromStock===true);
+  const tripOrders=getTripOrders().filter(o=>o.orderType!=="quote");
   const products=window.G.products;
   if(!tripOrders.length){showToast("目前沒有待購買的喊單","warning");return;}
   window.setStockPlanViewMode(window.G.stockPlanViewMode||"buy");
@@ -7256,7 +7257,7 @@ window.renderStockPlanContent=function(){
     renderStockPlanQuoteContent();
     return;
   }
-  let tripOrders=getTripOrders().filter(o=>(o.status==="pending"||o.givenFromStock===true)&&o.orderType!=="quote");
+  let tripOrders=getTripOrders().filter(o=>o.orderType!=="quote");
   if(window.G.stockPlanUnpurchasedOnly)tripOrders=tripOrders.filter(o=>!o.purchased);
   if(window.G.stockPlanColdOnly){
     tripOrders=tripOrders.filter(o=>{
@@ -9744,6 +9745,10 @@ window.renderCustomers=function(){
       });
     });
   }
+  // 只看還沒有社群名稱（無社群名）的客戶，方便快速找出還沒綁定的人
+  if(custViewFilter==="noCommunity"){
+    filtered=filtered.filter(c=>!(c.communityName||"").trim());
+  }
   if(!filtered.length){
     if(!window.G.customersLoaded){container.innerHTML=`<div style="background:white;border-radius:14px;padding:48px 20px;text-align:center;border:1px solid #E8D5B0"><div style="font-size:32px;margin-bottom:8px">⏳</div><div style="font-weight:700;color:#3D2010">客戶資料載入中…</div><div style="font-size:12px;color:#9C7A5A;margin-top:6px">網路較慢時可能需要幾秒鐘，請稍候</div></div>`;return;}
     container.innerHTML=`<div style="background:white;border-radius:14px;padding:48px 20px;text-align:center;border:1px solid #E8D5B0"><div style="font-size:32px;margin-bottom:8px">👥</div><div style="font-weight:700;color:#3D2010">${customers.length===0?"還沒有客戶資料":"找不到符合的客戶"}</div></div>`;return;}
@@ -9946,6 +9951,16 @@ window.setCustViewFilter=function(mode){
     const map={all:allBtn,unpurchased:upBtn,quote:quoteBtn};
     const active=map[mode];
     if(active)Object.assign(active.style,{background:mode==="all"?"#C5A880":mode==="quote"?"#0277BD":"#7C3AED",color:"white"});
+  }
+  const noCommBtn=document.getElementById("cust-view-nocommunity");
+  if(noCommBtn){
+    if(mode==="noCommunity"){
+      Object.assign(noCommBtn.style,{background:"#F5B942",color:"white",borderColor:"#F5B942"});
+      noCommBtn.textContent="🔗 只看（無社群名）待綁定（篩選中）";
+    } else {
+      Object.assign(noCommBtn.style,{background:"#FFF9E6",color:"#9C6B2E",borderColor:"#F5B942"});
+      noCommBtn.textContent="🔗 只看（無社群名）待綁定";
+    }
   }
   renderCustomers();
 };
@@ -11161,7 +11176,7 @@ window.openSendQuote=async function(oid){
   const priceLines=o.qty>1
     ?`數量：${o.qty}\n💰 單價：NT$${price.toLocaleString()}\n總金額：NT$${(price*o.qty).toLocaleString()}`
     :`💰 價格：NT$${price.toLocaleString()}`;
-  msgEl.value=`📦 ${productName}${o.spec?`（${o.spec}）`:""}\n${priceLines}\n\n請問要幫您登記訂購嗎？（直接告知數量即可）😊`;
+  msgEl.value=`📦 ${productName}${o.spec?`（${o.spec}）`:""}\n${priceLines}`;
   pickerEl.style.display="none";pickerEl.innerHTML="";
   statusEl.textContent="🔍 查詢中...";statusEl.style.color="#9C7A5A";
   sendBtn.disabled=true;sendBtn.style.opacity="0.5";
