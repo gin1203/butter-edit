@@ -285,6 +285,7 @@ body.live-mode .hide-live { display: none !important; }
         <button class="calc-ch-btn active ch-btn-neutral" data-ch="" onclick="calcSelectChannel(this,'')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #5C3A1E;background:#5C3A1E;color:white;cursor:pointer">未指定</button>
         <button class="calc-ch-btn ch-btn-super" data-ch="OLIVE YOUNG" onclick="calcSelectChannel(this,'OLIVE YOUNG')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧴 OLIVE YOUNG</button>
         <button class="calc-ch-btn ch-btn-super" data-ch="樂天超市" onclick="calcSelectChannel(this,'樂天超市')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛒 樂天超市</button>
+        <button class="calc-ch-btn ch-btn-super" data-ch="EMART" onclick="calcSelectChannel(this,'EMART')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛒 EMART</button>
         <button class="calc-ch-btn ch-btn-super" data-ch="No Brand" onclick="calcSelectChannel(this,'No Brand')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 No Brand</button>
         <button class="calc-ch-btn ch-btn-super" data-ch="GS25" onclick="calcSelectChannel(this,'GS25')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 GS25</button>
         <button class="calc-ch-btn ch-btn-super" data-ch="CU" onclick="calcSelectChannel(this,'CU')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 CU</button>
@@ -1041,6 +1042,7 @@ body.live-mode .hide-live { display: none !important; }
         <button class="ep-ch-btn active ch-btn-neutral" data-ch="" onclick="epSelectChannel(this,'')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #5C3A1E;background:#5C3A1E;color:white;cursor:pointer">未指定</button>
         <button class="ep-ch-btn ch-btn-super" data-ch="OLIVE YOUNG" onclick="epSelectChannel(this,'OLIVE YOUNG')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧴 OLIVE YOUNG</button>
         <button class="ep-ch-btn ch-btn-super" data-ch="樂天超市" onclick="epSelectChannel(this,'樂天超市')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛒 樂天超市</button>
+        <button class="ep-ch-btn ch-btn-super" data-ch="EMART" onclick="epSelectChannel(this,'EMART')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛒 EMART</button>
         <button class="ep-ch-btn ch-btn-super" data-ch="No Brand" onclick="epSelectChannel(this,'No Brand')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 No Brand</button>
         <button class="ep-ch-btn ch-btn-super" data-ch="GS25" onclick="epSelectChannel(this,'GS25')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 GS25</button>
         <button class="ep-ch-btn ch-btn-super" data-ch="CU" onclick="epSelectChannel(this,'CU')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 CU</button>
@@ -1718,18 +1720,6 @@ body.live-mode .hide-live { display: none !important; }
       <button onclick="document.getElementById('qa-custom').value='';window.G.qaSelectedPrice=null;qaCalcPrice();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#FFAAAA;font-size:16px;line-height:1;padding:0">✕</button>
     </div>
 
-    <!-- 活動群組（選填，不同品名但同一波活動時填一樣的群組名） -->
-    <div style="margin-bottom:12px">
-      <label style="font-size:11px;font-weight:700;color:#9C7A5A;display:block;margin-bottom:4px">🏷️ 活動群組（選填，不同品名但同一波活動時填一樣的群組名）</label>
-      <input type="text" id="qa-promo-group" placeholder="例如：洋芋片系列2+1" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:13px;outline:none;box-sizing:border-box"/>
-    </div>
-
-    <!-- 備註（例如多合一包裝內含口味，這類較長的說明） -->
-    <div style="margin-bottom:12px">
-      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">📝 備註（例如內含口味、注意事項，卡片上預設收合不佔版面）</label>
-      <textarea id="qa-note" rows="2" placeholder="例如：內含曲奇奶油、蜂蜜黃油、玉米三種口味各2包" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:13px;outline:none;box-sizing:border-box;resize:vertical"></textarea>
-    </div>
-
     <!-- 台灣售價 & 同行售價 -->
     <div style="margin-bottom:10px">
       <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">🏷️ 台灣官方售價（NT$）</label>
@@ -1744,6 +1734,18 @@ body.live-mode .hide-live { display: none !important; }
       </div>
     </div>
 
+    <!-- 活動群組（選填，不同品名但同一波活動時填一樣的群組名） -->
+    <div style="margin-bottom:12px">
+      <label style="font-size:11px;font-weight:700;color:#9C7A5A;display:block;margin-bottom:4px">🏷️ 活動群組（選填，不同品名但同一波活動時填一樣的群組名）</label>
+      <input type="text" id="qa-promo-group" placeholder="例如：洋芋片系列2+1" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:13px;outline:none;box-sizing:border-box"/>
+    </div>
+
+    <!-- 備註（例如多合一包裝內含口味，這類較長的說明） -->
+    <div style="margin-bottom:12px">
+      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">📝 備註（例如內含口味、注意事項，卡片上預設收合不佔版面）</label>
+      <textarea id="qa-note" rows="2" placeholder="例如：內含曲奇奶油、蜂蜜黃油、玉米三種口味各2包" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:13px;outline:none;box-sizing:border-box;resize:vertical"></textarea>
+    </div>
+
     <!-- 類別 -->
     <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:6px">商品類別</label>
     <div id="qa-cat-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px"></div>
@@ -1755,6 +1757,7 @@ body.live-mode .hide-live { display: none !important; }
         <button class="qa-ch-btn active ch-btn-neutral" data-ch="" onclick="qaSelectChannel(this,'')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #5C3A1E;background:#5C3A1E;color:white;cursor:pointer">未指定</button>
         <button class="qa-ch-btn ch-btn-super" data-ch="OLIVE YOUNG" onclick="qaSelectChannel(this,'OLIVE YOUNG')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧴 OLIVE YOUNG</button>
         <button class="qa-ch-btn ch-btn-super" data-ch="樂天超市" onclick="qaSelectChannel(this,'樂天超市')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛒 樂天超市</button>
+        <button class="qa-ch-btn ch-btn-super" data-ch="EMART" onclick="qaSelectChannel(this,'EMART')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛒 EMART</button>
         <button class="qa-ch-btn ch-btn-super" data-ch="No Brand" onclick="qaSelectChannel(this,'No Brand')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏬 No Brand</button>
         <button class="qa-ch-btn ch-btn-super" data-ch="GS25" onclick="qaSelectChannel(this,'GS25')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 GS25</button>
         <button class="qa-ch-btn ch-btn-super" data-ch="CU" onclick="qaSelectChannel(this,'CU')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🏪 CU</button>
@@ -1841,6 +1844,58 @@ body.live-mode .hide-live { display: none !important; }
     </div>
 
     <button onclick="saveQuickAdd()" style="width:100%;background:#A5D6A7;color:#2E7D32;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:900;cursor:pointer">✨ 快速上架</button>
+
+    <!-- 同時登記喊單（選填）：上架的同時，直接幫這位客人登記這筆訂單，不用上架完再跑一次登記喊單流程 -->
+    <div style="margin-top:14px;padding-top:14px;border-top:1px dashed #E8D5B0">
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#9C7A5A;cursor:pointer;margin-bottom:10px">
+        <input type="checkbox" id="qa-order-toggle" onchange="qaToggleOrderSection(this.checked)" style="width:16px;height:16px;cursor:pointer"/>
+        🛒 同時幫客人登記喊單
+      </label>
+      <div id="qa-order-section" style="display:none">
+        <button type="button" id="qa-buyer-toggle-btn" onclick="qaToggleBuyerInput()" style="display:flex;align-items:center;gap:4px;width:100%;background:none;border:none;padding:0;margin-bottom:10px;font-size:11px;font-weight:700;color:#B08968;cursor:pointer;text-align:left">
+          <span id="qa-buyer-toggle-arrow" style="font-size:9px;transition:transform 0.15s">▶</span>✏️ 手動輸入新客人名字（自動建立到客戶頁）
+        </button>
+        <div id="qa-buyer-input-wrap" style="display:none;margin-bottom:10px">
+          <input type="text" id="qa-buyer" placeholder="輸入社群名字或LINE名..." style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
+        </div>
+        <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">或從客戶名單選擇</label>
+        <div style="position:relative;margin-bottom:10px" id="qa-cust-wrapper">
+          <input type="text" id="qa-cust-search" placeholder="🔍 搜尋客戶名稱..." autocomplete="off"
+            oninput="qaFilterCusts(this.value)"
+            onfocus="qaShowCustList()"
+            onclick="this.select();qaFilterCusts('')"
+            style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:10px 40px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
+          <span id="qa-cust-clear" onclick="qaClearCust()" style="display:none;position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;color:#C5A880;font-size:18px;font-weight:700;line-height:1">×</span>
+          <input type="hidden" id="qa-cust"/>
+          <div id="qa-cust-list" style="display:none;position:absolute;z-index:200;left:0;right:0;top:calc(100% + 3px);background:white;border:1px solid #E8D5B0;border-radius:12px;max-height:200px;overflow-y:auto;box-shadow:0 4px 16px rgba(0,0,0,0.10)"></div>
+        </div>
+        <div id="qa-order-spec-area" style="display:none;margin-bottom:12px">
+          <label style="display:block;font-size:11px;font-weight:700;color:#C0392B;margin-bottom:5px">📐 這筆喊單是哪個規格？（這個商品有多規格，一定要選）</label>
+          <div id="qa-order-spec-btns" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+        </div>
+        <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">數量</label>
+        <div style="display:flex;align-items:center;gap:0;margin-bottom:12px;border:1px solid #E8D5B0;border-radius:10px;overflow:hidden;background:white;width:180px;max-width:100%">
+          <button onclick="qaOrderQtyAdj(-1)" style="-webkit-appearance:none;appearance:none;width:44px;height:42px;font-size:20px;font-weight:700;border:none;background:transparent;color:#9C7A5A;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;margin:0">－</button>
+          <input type="text" inputmode="numeric" id="qa-order-qty" value="1" style="width:76px;flex-shrink:0;border:none;background:transparent;text-align:center;font-size:18px;font-weight:900;color:#3D2010;outline:none;padding:0"/>
+          <button onclick="qaOrderQtyAdj(1)" style="-webkit-appearance:none;appearance:none;width:44px;height:42px;font-size:20px;font-weight:700;border:none;background:transparent;color:#9C7A5A;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;margin:0">＋</button>
+        </div>
+        <div style="font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:7px">📌 喊單類型</div>
+        <div style="display:flex;gap:6px">
+          <button id="qa-type-onsite" onclick="qaSetOrderType('onsite')"
+            style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border-radius:12px;border:2px solid #5C3A1E;background:#5C3A1E;color:#F5E6C8;font-size:11px;font-weight:700;cursor:pointer">
+            <span style="font-size:15px">🛍️</span>現場購買
+          </button>
+          <button id="qa-type-preorder" onclick="qaSetOrderType('preorder')"
+            style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border-radius:12px;border:2px solid #E8D5B0;background:white;color:#9C7A5A;font-size:11px;font-weight:700;cursor:pointer">
+            <span style="font-size:15px">📱</span>記事本 +1
+          </button>
+          <button id="qa-type-quote" onclick="qaSetOrderType('quote')"
+            style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border-radius:12px;border:2px solid #E8D5B0;background:white;color:#9C7A5A;font-size:11px;font-weight:700;cursor:pointer">
+            <span style="font-size:15px">📋</span>待報價
+          </button>
+        </div>
+      </div>
+    </div>
 </div>
   </div>
 </div>
@@ -3866,6 +3921,7 @@ window.BRAND_DB=[
   {n:"Innisfree",cat:"beauty"},{n:"Etude",cat:"beauty"},{n:"Missha",cat:"beauty"},
   {n:"rom&nd",cat:"beauty"},{n:"3CE",cat:"beauty"},{n:"Peripera",cat:"beauty"},
   {n:"Clio",cat:"beauty"},{n:"Dr.Jart",cat:"beauty"},{n:"Medicube",cat:"beauty"},
+  {n:"Too Cool For School",cat:"beauty",url:"https://toocoolforschool.us/"},
   {n:"TIRTIR",cat:"beauty"},{n:"Beauty of Joseon",cat:"beauty"},{n:"朝鮮美女",cat:"beauty"},
   {n:"Anua",cat:"beauty"},{n:"Torriden",cat:"beauty"},{n:"SOME BY MI",cat:"beauty"},
   {n:"Skin1004",cat:"beauty"},{n:"isntree",cat:"beauty"},{n:"Round Lab",cat:"beauty"},
@@ -3946,6 +4002,7 @@ window.BRAND_DB=[
   {n:"廣藏市場",cat:"food"},{n:"광장시장",cat:"food"},
   {n:"CU",cat:"food",url:"https://cu.bgfretail.com/"},{n:"GS25",cat:"food",url:"https://www.gsshop.com/"},
   {n:"樂天超市",cat:"food",url:"https://www.lotteshopping.com/"},
+  {n:"EMART",cat:"food",url:"https://www.emart.com/"},{n:"이마트",cat:"food",url:"https://www.emart.com/"},
   {n:"藥局",cat:"beauty"},
 
   // 韓國潮牌補充
@@ -4245,6 +4302,7 @@ window.qaRenderSpecs=function(){
       <button onclick="event.stopPropagation();qaRemoveSpec(${i})" style="background:#F5EDE0;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;color:#9C7A5A;cursor:pointer;line-height:1;padding:0">×</button>
     </span>`;
   }).join("");
+  if(typeof qaRenderOrderSpecPicker==="function")qaRenderOrderSpecPicker();
 };
 // 顏色×尺寸自動展開：例如顏色填「米色,淺藍」、尺寸填「L,XL」，會自動產生
 // 「米色 / L」「米色 / XL」「淺藍 / L」「淺藍 / XL」四筆規格，不用一個個手打；
@@ -10014,7 +10072,7 @@ window.renderCustomers=function(){
           ${o.givenFromStock?`<span onclick="event.stopPropagation();cancelGivenFromStock('${o.id}')" title="點一下取消已給狀態，改回待購買" style="font-size:9px;background:#C8E6C9;color:#1B5E20;border-radius:4px;padding:1px 5px;font-weight:700;white-space:nowrap;flex-shrink:0;cursor:pointer">✅ 已給</span>`:""}
           ${isQuote?`<span style="font-size:9px;background:#BBDEFB;color:#0277BD;border-radius:4px;padding:1px 5px;font-weight:700;white-space:nowrap;flex-shrink:0">待報價，不算進統計</span>`:""}
         </div>
-        <div style="display:flex;align-items:center;gap:5px;flex:0 0 auto">
+        <div style="display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;gap:5px;flex:1 1 auto;min-width:0">
           <span style="font-size:11px;font-weight:700;color:#3D2010">${isQuote?"約 ":""}NT$${(dp*o.qty).toLocaleString()}</span>
           ${isQuote?`<button data-oid="${o.id}" onclick="event.stopPropagation();openSendQuote(this.dataset.oid)" style="font-size:10px;color:#065F46;background:#D1FAE5;border:1px solid #6EE7B7;padding:2px 6px;border-radius:5px;cursor:pointer;font-weight:700">傳送報價</button>`:""}
           ${isQuote?`<button data-oid="${o.id}" onclick="event.stopPropagation();quoteConvert(this.dataset.oid)" style="font-size:10px;color:#5B21B6;background:#EDE9FE;border:1px solid #C4B5FD;padding:2px 6px;border-radius:5px;cursor:pointer;font-weight:700">轉正式訂單</button>`:""}
@@ -10232,7 +10290,13 @@ window.renderInvoice=function(){
   set("inv-deposit",countBuyers("deposit")+"人");
   set("inv-settled",countBuyers("settled")+"人");
   set("inv-shipped",countBuyers("shipped")+"人");
-  if(!filtered.length){
+  // 待報價還沒確定要買，不算進對帳金額/統計，但還是要讓你在對帳單上看得到，
+  // 不然會誤以為這筆喊單登記失敗、資料不見了
+  const quoteOrders=getTripOrders().filter(o=>o.orderType==="quote");
+  const qFiltered=invSearch
+    ? quoteOrders.filter(o=>{const s=invSearch.toLowerCase();return (o.communityName||"").toLowerCase().includes(s)||(o.lineName||"").toLowerCase().includes(s)||(o.buyerName||"").toLowerCase().includes(s)||(o.productName||"").toLowerCase().includes(s)||(o.productId||"").toLowerCase().includes(s);})
+    : quoteOrders;
+  if(!filtered.length&&!(orderFilter==="all"&&qFiltered.length)){
     if(!window.G.ordersLoaded){container.innerHTML=`<div style="background:white;border-radius:14px;padding:48px 20px;text-align:center;border:1px solid #E8D5B0"><div style="font-size:32px;margin-bottom:8px">⏳</div><div style="font-weight:700;color:#3D2010">訂單資料載入中…</div><div style="font-size:12px;color:#9C7A5A;margin-top:6px">網路較慢時可能需要幾秒鐘，請稍候</div></div>`;return;}
     container.innerHTML=`<div style="background:white;border-radius:14px;padding:48px 20px;text-align:center;border:1px solid #E8D5B0"><div style="font-size:32px;margin-bottom:8px">🧾</div><div style="font-weight:700;color:#3D2010">沒有符合的訂單</div></div>`;return;}
   // 同一買家的訂單合併成一張對帳單
@@ -10249,12 +10313,29 @@ window.renderInvoice=function(){
     buyerMap[key].allIds.push(o.id);
     if(selectedOrders.has(o.id))buyerMap[key].hasChecked=true;
   });
+  const quotesMap={};
+  qFiltered.forEach(o=>{
+    const key=o.customerId||o.communityName||o.buyerName||"未知";
+    if(!quotesMap[key])quotesMap[key]=[];
+    quotesMap[key].push(o);
+  });
   const buyers=Object.values(buyerMap);
+  // 幫每位買家附上他的待報價清單
+  buyers.forEach(b=>{b.quotes=quotesMap[b.key]||[];delete quotesMap[b.key];});
+  // 只在「全部」分頁時，額外顯示「只有待報價、還沒有正式訂單」的買家，不然在特定狀態分頁出現會很奇怪
+  if(orderFilter==="all"){
+    Object.keys(quotesMap).forEach(key=>{
+      const qs=quotesMap[key];
+      const rep=qs[0];
+      buyers.push({key,name:rep.communityName||rep.buyerName||"未知",lineName:rep.lineName||"",customerId:rep.customerId||"",orders:[],total:0,hasChecked:false,allIds:[],quotes:qs});
+    });
+  }
   container.innerHTML=buyers.map(b=>{
-    const allChecked=b.allIds.every(id=>selectedOrders.has(id));
-    const allStatus=b.orders.every(o=>o.status===b.orders[0].status)?b.orders[0].status:"mixed";
-    const statusColor={pending:"#F59E0B",deposit:"#9333EA",settled:"#10B981",shipped:"#3B82F6",mixed:"#9C7A5A"};
-    const statusLabel={pending:"待訂金",deposit:"已付訂金",settled:"已付尾款",shipped:"已寄出",mixed:"狀態不一"};
+    const isQuoteOnly=b.orders.length===0;
+    const allChecked=!isQuoteOnly&&b.allIds.every(id=>selectedOrders.has(id));
+    const allStatus=isQuoteOnly?"none":(b.orders.every(o=>o.status===b.orders[0].status)?b.orders[0].status:"mixed");
+    const statusColor={pending:"#F59E0B",deposit:"#9333EA",settled:"#10B981",shipped:"#3B82F6",mixed:"#9C7A5A",none:"#0277BD"};
+    const statusLabel={pending:"待訂金",deposit:"已付訂金",settled:"已付尾款",shipped:"已寄出",mixed:"狀態不一",none:"僅待報價"};
     const totalDeposit=b.orders.reduce((s,o)=>s+(o.depositAmt||0),0);
     const bDisc=b.orders.find(o=>o.sharedDiscount>0)?.sharedDiscount||0;
     const bShipping=b.orders.find(o=>o.freeShipping)?.shippingCost||0;
@@ -10263,14 +10344,15 @@ window.renderInvoice=function(){
     return `<div style="background:white;border-radius:14px;border:1px solid ${allChecked?"#C5A880":"#E8D5B0"};margin-bottom:10px;overflow:hidden">
       <!-- 客戶標題列 -->
       <div style="padding:12px 14px;border-bottom:1px solid #F5EDE0">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-          <input type="checkbox" ${allChecked?"checked":""} data-bkey="${encodeURIComponent(b.key)}" onchange="toggleBuyerOrders(decodeURIComponent(this.dataset.bkey),this.checked)" style="width:16px;height:16px;accent-color:#C5A880;flex-shrink:0"/>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:${isQuoteOnly?"0":"10px"}">
+          ${isQuoteOnly?"":`<input type="checkbox" ${allChecked?"checked":""} data-bkey="${encodeURIComponent(b.key)}" onchange="toggleBuyerOrders(decodeURIComponent(this.dataset.bkey),this.checked)" style="width:16px;height:16px;accent-color:#C5A880;flex-shrink:0"/>`}
           <div style="min-width:0;flex:1">
             <span style="font-weight:900;font-size:14px;color:#3D2010">👤 ${b.name}</span>
             ${b.lineName?`<span style="font-size:11px;color:#9C7A5A;margin-left:6px">LINE：${b.lineName}</span>`:""}
           </div>
           <span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:${statusColor[allStatus]}22;color:${statusColor[allStatus]};border:1px solid ${statusColor[allStatus]}44;flex-shrink:0">${statusLabel[allStatus]||""}</span>
         </div>
+        ${isQuoteOnly?"":`
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:8px">
           ${["pending","deposit","settled","shipped"].map(k=>{
             const active=b.orders.every(o=>o.status===k);
@@ -10285,8 +10367,8 @@ window.renderInvoice=function(){
         <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end">
           <button data-bkey="${encodeURIComponent(b.key)}" onclick="copyDepositOrder(null,decodeURIComponent(this.dataset.bkey))" style="font-size:10px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:700">💰 收訂金</button>
           <button data-bkey="${encodeURIComponent(b.key)}" onclick="copyBuyerOrder(decodeURIComponent(this.dataset.bkey))" style="font-size:10px;background:#EAF4FD;color:#0277BD;border:1px solid #90D7FF;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700">複製結清</button>
-          <button data-oid="${b.orders[0].id}" onclick="openEditOrd(this.dataset.oid)" style="font-size:10px;padding:4px 10px;border-radius:6px;font-weight:700;border:1px solid #E8D5B0;background:#FDF6EC;color:#C5A880;cursor:pointer">✏️ 修改</button>
-        </div>
+          <button data-oid="${b.orders[0]?.id}" onclick="openEditOrd(this.dataset.oid)" style="font-size:10px;padding:4px 10px;border-radius:6px;font-weight:700;border:1px solid #E8D5B0;background:#FDF6EC;color:#C5A880;cursor:pointer">✏️ 修改</button>
+        </div>`}
       </div>
       <!-- 商品明細 -->
       <div style="padding:8px 14px">
@@ -10303,7 +10385,7 @@ window.renderInvoice=function(){
               <span style="font-size:12px;color:#3D2010;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${cleanProductName((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品")}${o.spec?" ("+o.spec+")":""} ×${o.qty}</span>
               ${o.discountNote?`<span style="font-size:9px;background:#FDF6EC;color:#A08060;padding:1px 5px;border-radius:4px;flex-shrink:0">${o.discountNote}</span>`:""}
             </div>
-            <div style="display:flex;align-items:center;gap:5px;flex:0 0 auto">
+            <div style="display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;gap:5px;flex:1 1 auto;min-width:0">
               ${purchasedBtn}
               <span style="font-size:12px;font-weight:700;color:#3D2010">NT$${(dp*o.qty).toLocaleString()}</span>
               ${(()=>{const prod=window.G.products.find(x=>x.id===o.productId)||window.G.products.find(x=>cleanProductName(x.name)===cleanProductName(o.productName||""));if(!prod)return"";const lineProfit=(dp-getOrderUnitCost(o,prod))*o.qty;const lineRevenue=dp*o.qty;const margin=lineRevenue>0?Math.round((lineProfit/lineRevenue)*100):0;return `<span class="hide-staff" style="font-size:10px;font-weight:700;color:${lineProfit>=0?"#2E7D32":"#C0392B"}">利潤 NT$${Math.round(lineProfit).toLocaleString()}（毛利${margin}%）</span>`;})()}
@@ -10312,7 +10394,27 @@ window.renderInvoice=function(){
               <button data-oid="${o.id}" onclick="event.stopPropagation();deleteOrder(this.dataset.oid)" style="font-size:10px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:2px 5px;border-radius:5px;cursor:pointer">🗑️</button>
             </div>
           </div>`;}).join("")}
+        ${(b.quotes&&b.quotes.length)?`
+        <div style="margin-top:${b.orders.length?"6px":"0"};padding-top:${b.orders.length?"6px":"0"};${b.orders.length?"border-top:1px dashed #BBDEFB":""}">
+          ${b.orders.length?`<div style="font-size:10px;font-weight:700;color:#0277BD;margin-bottom:4px">📋 待報價（尚未確定，不列入對帳金額）</div>`:""}
+          ${b.quotes.map(o=>{
+            const qp=(window.G.products.find(x=>x.id===o.productId)?.finalPrice??(o.discountPrice||o.unitPrice||0));
+            return `<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:4px 8px;padding:6px 4px;background:#E3F2FD;border-radius:6px;margin:2px 0">
+              <div style="display:flex;align-items:center;gap:6px;min-width:140px;flex:1 1 auto">
+                <span style="font-size:12px;color:#3D2010;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">📋 ${cleanProductName((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品")}${o.spec?" ("+o.spec+")":""} ×${o.qty}</span>
+                <span style="font-size:9px;background:#BBDEFB;color:#0277BD;border-radius:4px;padding:1px 5px;font-weight:700;white-space:nowrap;flex-shrink:0">不算進統計</span>
+              </div>
+              <div style="display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;gap:5px;flex:1 1 auto;min-width:0">
+                <span style="font-size:12px;font-weight:700;color:#3D2010">約 NT$${(qp*o.qty).toLocaleString()}</span>
+                <button data-oid="${o.id}" onclick="event.stopPropagation();openSendQuote(this.dataset.oid)" style="font-size:10px;color:#065F46;background:#D1FAE5;border:1px solid #6EE7B7;padding:2px 6px;border-radius:5px;cursor:pointer;font-weight:700">傳送報價</button>
+                <button data-oid="${o.id}" onclick="event.stopPropagation();quoteConvert(this.dataset.oid)" style="font-size:10px;color:#5B21B6;background:#EDE9FE;border:1px solid #C4B5FD;padding:2px 6px;border-radius:5px;cursor:pointer;font-weight:700">轉正式訂單</button>
+                <button data-oid="${o.id}" onclick="event.stopPropagation();deleteOrder(this.dataset.oid)" style="font-size:10px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:2px 5px;border-radius:5px;cursor:pointer">🗑️</button>
+              </div>
+            </div>`;
+          }).join("")}
+        </div>`:""}
       </div>
+      ${b.orders.length?`
       <!-- 金額小計 + 訂金資訊 -->
       <div style="padding:8px 14px;background:#FAF8F5;border-top:1px solid #F0E6D0;border-bottom:1px solid #F0E6D0">
         <div style="display:flex;justify-content:space-between;align-items:center">
@@ -10327,7 +10429,7 @@ window.renderInvoice=function(){
           const margin=totalAmt>0?Math.round((netProfit/totalAmt)*100):0;
           return `<div class="hide-staff" style="text-align:right;margin-top:2px"><span style="font-size:11px;font-weight:700;color:${netProfit>=0?"#2E7D32":"#C0392B"}">利潤 NT$${Math.round(netProfit).toLocaleString()}（毛利${margin}%）</span></div>`;
         })()}
-      </div>
+      </div>`:""}
     </div>`;
   }).join("");
   updateBatchBar("order");
@@ -10752,6 +10854,17 @@ window.openQuickAdd=function(){
   ["qa-flag-cold","qa-flag-coldHigh","qa-flag-heavy","qa-flag-large","qa-flag-transparent","qa-flag-popular","qa-flag-limited","qa-flag-giftpack","qa-flag-market"].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=false;});
   const qaFlagsWrapReset=document.getElementById("qa-flags-panel-wrap");if(qaFlagsWrapReset)qaFlagsWrapReset.style.display="none";
   const qaFlagsArrowReset=document.getElementById("qa-flags-toggle-arrow");if(qaFlagsArrowReset)qaFlagsArrowReset.style.transform="rotate(0deg)";
+  // 重置「同時登記喊單」區塊
+  const qaOrderToggleReset=document.getElementById("qa-order-toggle");if(qaOrderToggleReset)qaOrderToggleReset.checked=false;
+  const qaOrderSecReset=document.getElementById("qa-order-section");if(qaOrderSecReset)qaOrderSecReset.style.display="none";
+  const qaBuyerReset=document.getElementById("qa-buyer");if(qaBuyerReset)qaBuyerReset.value="";
+  const qaBuyerWrapReset=document.getElementById("qa-buyer-input-wrap");if(qaBuyerWrapReset)qaBuyerWrapReset.style.display="none";
+  const qaBuyerArrowReset=document.getElementById("qa-buyer-toggle-arrow");if(qaBuyerArrowReset)qaBuyerArrowReset.style.transform="rotate(0deg)";
+  if(typeof qaClearCust==="function")qaClearCust();
+  const qaOrderQtyReset=document.getElementById("qa-order-qty");if(qaOrderQtyReset)qaOrderQtyReset.value="1";
+  if(typeof qaSetOrderType==="function")qaSetOrderType("onsite");
+  window.G.qaOrderSpec="";
+  const qaOrderSpecAreaReset=document.getElementById("qa-order-spec-area");if(qaOrderSpecAreaReset)qaOrderSpecAreaReset.style.display="none";
   const qdp=document.getElementById("qa-daiso-panel");
   if(qdp)qdp.style.display="none";
   setTimeout(()=>{if(typeof qaDaisoTypeChange==="function")qaDaisoTypeChange();},150);
@@ -11703,6 +11816,123 @@ document.addEventListener("click",function(e){
   }
 });
 
+// ── 快速上架（一般模式）：同時幫客人登記喊單 ──────────────────────────
+window.G.qaOrderType="onsite";
+window.qaToggleOrderSection=function(checked){
+  const sec=document.getElementById("qa-order-section");
+  if(sec)sec.style.display=checked?"block":"none";
+  if(checked&&typeof qaRenderOrderSpecPicker==="function")qaRenderOrderSpecPicker();
+};
+// 手動輸入客人名字：預設收合，避免誤點，點一下手風琴式展開/收合
+window.qaToggleBuyerInput=function(){
+  const wrap=document.getElementById("qa-buyer-input-wrap");
+  const arrow=document.getElementById("qa-buyer-toggle-arrow");
+  if(!wrap)return;
+  const show=wrap.style.display==="none";
+  wrap.style.display=show?"block":"none";
+  if(arrow)arrow.style.transform=show?"rotate(90deg)":"rotate(0deg)";
+  if(show){const inp=document.getElementById("qa-buyer");if(inp)inp.focus();}
+};
+window.qaSetOrderType=function(type){
+  window.G.qaOrderType=type;
+  const onsite=document.getElementById("qa-type-onsite");
+  const preorder=document.getElementById("qa-type-preorder");
+  const quote=document.getElementById("qa-type-quote");
+  if(!onsite||!preorder||!quote)return;
+  [onsite,preorder,quote].forEach(btn=>{
+    btn.style.background="white";btn.style.color="#9C7A5A";btn.style.borderColor="#E8D5B0";
+  });
+  const map={onsite,preorder,quote};
+  const active=map[type];
+  if(active){active.style.background="#5C3A1E";active.style.color="#F5E6C8";active.style.borderColor="#5C3A1E";}
+};
+window.qaOrderQtyAdj=function(delta){
+  const el=document.getElementById("qa-order-qty");
+  if(!el)return;
+  const v=Math.max(1,(parseInt(el.value)||1)+delta);
+  el.value=v;
+};
+// 這個商品有多個規格時，登記喊單一定要選是哪一個規格，不然訂單會不知道要出哪一款
+window.qaRenderOrderSpecPicker=function(){
+  const area=document.getElementById("qa-order-spec-area");
+  const btns=document.getElementById("qa-order-spec-btns");
+  if(!area||!btns)return;
+  const specs=(window.G.qaSpecsList||[]).map(s=>String(s).trim()).filter(Boolean);
+  if(specs.length<2){
+    area.style.display="none";
+    window.G.qaOrderSpec=specs[0]||"";
+    return;
+  }
+  area.style.display="block";
+  if(!specs.includes(window.G.qaOrderSpec))window.G.qaOrderSpec="";
+  btns.innerHTML=specs.map(s=>{
+    const esc=s.replace(/'/g,"\\'");
+    const active=window.G.qaOrderSpec===s;
+    return `<button type="button" onclick="qaSelectOrderSpec('${esc}')" style="padding:6px 12px;border-radius:99px;font-size:12px;font-weight:700;border:1.5px solid ${active?"#5C3A1E":"#E8D5B0"};background:${active?"#5C3A1E":"white"};color:${active?"#F5E6C8":"#9C7A5A"};cursor:pointer">${s}</button>`;
+  }).join("");
+};
+window.qaSelectOrderSpec=function(s){
+  window.G.qaOrderSpec=s;
+  if(typeof qaRenderOrderSpecPicker==="function")qaRenderOrderSpecPicker();
+};
+window.qaClearCust=function(){
+  const h=document.getElementById("qa-cust");if(h)h.value="";
+  const s=document.getElementById("qa-cust-search");if(s){s.value="";s.blur();}
+  const c=document.getElementById("qa-cust-clear");if(c)c.style.display="none";
+  const l=document.getElementById("qa-cust-list");if(l)l.style.display="none";
+};
+window.qaShowCustList=function(){
+  const s=document.getElementById("qa-cust-search");
+  if(s&&s.value==="")return;
+  qaFilterCusts(s?.value||"");
+};
+window.qaFilterCusts=function(q){
+  const lst=document.getElementById("qa-cust-list");
+  const clr=document.getElementById("qa-cust-clear");
+  if(!lst)return;
+  if(clr)clr.style.display=q?"block":"none";
+  const custs=window.G.customers||[];
+  const filtered=q
+    ? custs.filter(c=>{
+        const n=(c.communityName||"").toLowerCase();
+        const l=(c.lineName||"").toLowerCase();
+        return n.includes(q.toLowerCase())||l.includes(q.toLowerCase());
+      })
+    : custs;
+  if(!filtered.length){
+    lst.innerHTML='<div style="padding:12px 16px;font-size:12px;color:#C5A880;text-align:center">找不到客戶，可直接在上方欄位輸入名字</div>';
+    lst.style.display="block";return;
+  }
+  lst.innerHTML=filtered.map(c=>{
+    const nm=c.communityName||"";
+    const ln=c.lineName?` / ${c.lineName}`:"";
+    const escaped=nm.replace(/'/g,"\\'");
+    const escapedln=(c.lineName||"").replace(/'/g,"\\'");
+    return `<div onmousedown="event.preventDefault();qaSelectCust('${c.id}','${escaped}','${escapedln}')"
+      style="padding:11px 16px;cursor:pointer;font-size:13px;color:#3D2010;border-bottom:1px solid #F5EDE0;background:white">
+      <b>${nm}</b><span style="color:#9C7A5A;font-size:11px">${ln}</span>
+    </div>`;
+  }).join("");
+  lst.style.display="block";
+};
+window.qaSelectCust=function(id,community,line){
+  const h=document.getElementById("qa-cust");if(h)h.value=id;
+  const s=document.getElementById("qa-cust-search");
+  if(s){s.value=community+(line?` / ${line}`:"");s.blur();}
+  const clr=document.getElementById("qa-cust-clear");if(clr)clr.style.display="block";
+  const lst=document.getElementById("qa-cust-list");if(lst)lst.style.display="none";
+  const buyer=document.getElementById("qa-buyer");if(buyer)buyer.value="";
+  const bwrap=document.getElementById("qa-buyer-input-wrap");if(bwrap)bwrap.style.display="none";
+  const barrow=document.getElementById("qa-buyer-toggle-arrow");if(barrow)barrow.style.transform="rotate(0deg)";
+};
+document.addEventListener("click",function(e){
+  const wrapper=document.getElementById("qa-cust-wrapper");
+  if(wrapper&&!wrapper.contains(e.target)){
+    const lst=document.getElementById("qa-cust-list");
+    if(lst)lst.style.display="none";
+  }
+});
+
 // 連線極速模式：商品上架完之後，繼續幫其他客人快速+1（同一個商品，不用重新上架）
 window.G.qaLiveLastProduct=null;
 window.G.qaLiveMoreOrderType="onsite";
@@ -12027,6 +12257,15 @@ window.saveQuickAdd=async function(){
   const qaCur=window.G.qaCurrency||"KRW";
   if(!name){showToast("請填入商品名稱","error");return;}
   if(!amt){showToast("請填入金額","error");return;}
+  const rawQaSpecs=window.G.qaSpecsList||[];
+  const rawQaSpecImages=window.G.qaSpecImages||[];
+  const qaSpecs=[];const qaSpecImages=[];
+  rawQaSpecs.forEach((s,i)=>{const t=String(s).trim();if(t){qaSpecs.push(t);qaSpecImages.push(rawQaSpecImages[i]||"");}});
+  // 如果同時要登記喊單，且這個商品有多規格，一定要先選這筆訂單是哪個規格，不然訂單會不知道要出哪一款
+  const orderToggleCheck=document.getElementById("qa-order-toggle");
+  if(orderToggleCheck?.checked&&qaSpecs.length>1&&!window.G.qaOrderSpec){
+    showToast("這個商品有多規格，請先選這筆喊單是哪個規格","error");return;
+  }
   const{afterTax,beforeTax}=calcCost(amt,qaCur,window.isDutyFreeChannel(window.G.qaChannel),window.G.qaPaymentMethod||"card");
   const sugg=suggestPrice(afterTax,cat,{},0,amt);
   const id=genId(cat,qaCur);
@@ -12056,10 +12295,6 @@ window.saveQuickAdd=async function(){
   const margin=finalPrice>0?Math.round((profit/finalPrice)*100):0;
   const photo=window.G.qaProdPhoto||"";
   const photoPos=window.G.qaProdPhotoPos?`${window.G.qaProdPhotoPos.x}% ${window.G.qaProdPhotoPos.y}%`:"50% 50%";
-  const rawQaSpecs=window.G.qaSpecsList||[];
-  const rawQaSpecImages=window.G.qaSpecImages||[];
-  const qaSpecs=[];const qaSpecImages=[];
-  rawQaSpecs.forEach((s,i)=>{const t=String(s).trim();if(t){qaSpecs.push(t);qaSpecImages.push(rawQaSpecImages[i]||"");}});
   const qaOriginalAmt=window.G.qaPromoOriginal||amt;
   const qaPromoDivisor=window.G.qaPromoDivisor||null;
   const qaPromoPct=window.G.qaPromoPct||null;
@@ -12079,8 +12314,60 @@ window.saveQuickAdd=async function(){
     photo,photoPos,
     createdAt:Date.now()
   });
+
+  // 如果勾了「同時登記喊單」，用剛剛建立的這個商品，順便幫客人登記一筆訂單，不用上架完再跑一次登記喊單流程
+  const orderToggle=document.getElementById("qa-order-toggle");
+  if(orderToggle?.checked){
+    const buyerInput=document.getElementById("qa-buyer")?.value.trim();
+    const custSelect=document.getElementById("qa-cust")?.value;
+    const qty=parseInt(document.getElementById("qa-order-qty")?.value)||1;
+    const orderType=window.G.qaOrderType||"onsite";
+    const orderSpec=qaSpecs.length>1?(window.G.qaOrderSpec||""):(qaSpecs[0]||"");
+    const tripId=window.G.moSelectedTripId||getLatestTrip()?.id||"";
+    let communityName="",lineName="",customerId="";
+    if(custSelect){
+      const cust=window.G.customers.find(c=>c.id===custSelect);
+      if(cust){communityName=cust.communityName||"";lineName=cust.lineName||"";customerId=cust.id;}
+    } else if(buyerInput){
+      communityName=buyerInput;
+      // 先查是否已有同名客戶——同名不代表同一人，一定要先跟你確認，不能自動靜默合併
+      const inputLower=buyerInput.trim().toLowerCase();
+      const existing=window.G.customers.find(c=>
+        (c.communityName||"").trim().toLowerCase()===inputLower||
+        (c.lineName||"").trim().toLowerCase()===inputLower
+      );
+      if(existing){
+        const sameLabel=existing.communityName||existing.lineName||buyerInput;
+        const useExisting=await window.askSameNameModal(sameLabel);
+        if(useExisting){
+          customerId=existing.id;communityName=existing.communityName||buyerInput;lineName=existing.lineName||"";
+        } else {
+          const newId="C"+Date.now();
+          await fbSet("customers",newId,{communityName:buyerInput,lineName:"",phone:"",address:"",note:"",createdAt:Date.now()});
+          customerId=newId;
+        }
+      } else {
+        const newId="C"+Date.now();
+        await fbSet("customers",newId,{communityName:buyerInput,lineName:"",phone:"",address:"",note:"",createdAt:Date.now()});
+        customerId=newId;
+      }
+    }
+    if(!customerId){
+      showToast("商品已上架，但沒填客人名字，訂單沒有登記","warning");
+    } else {
+      const pmForThis=orderType==="onsite"?await askPaymentMethodModal():null;
+      const onsiteCost=orderType==="onsite"?calcCost(amt,qaCur,window.isDutyFreeChannel(window.G.qaChannel),pmForThis).afterTax:null;
+      const oid="O"+Date.now();
+      await fbSet("orders",oid,{productId:id,productName:cleanProductName(name),productEmoji:catObj?.emoji||"📦",customerId,communityName,lineName,buyerName:communityName||lineName,qty,unitPrice:finalPrice,total:finalPrice*qty,status:"pending",tripId,orderType,spec:orderSpec,purchased:orderType==="onsite",costSnapshot:onsiteCost,paymentMethodSnapshot:pmForThis,createdAt:Date.now()});
+      const orderTypeLabel=orderType==="onsite"?"🛍️現場":orderType==="quote"?"📋待報價":"📱記事本+1";
+      showToast(`✨ ${name}${orderSpec?"（"+orderSpec+"）":""} 已建立！並幫 ${communityName||lineName} 登記 ${orderTypeLabel}`);
+      setTimeout(()=>{renderCustomers();renderInvoice();},600);
+    }
+  } else {
+    showToast(`✨ ${name} 已建立！售價 NT$${finalPrice}`);
+  }
+
   closeModal("modal-quick");
-  showToast(`✨ ${name} 已建立！售價 NT$${finalPrice}`);
   window.G.qaPhoto=null;
   window.G.qaPhotoFull=null;
   window.G.qaSelectedPrice=null;
@@ -12098,6 +12385,17 @@ window.saveQuickAdd=async function(){
   const qaNoteEl=document.getElementById("qa-note");if(qaNoteEl)qaNoteEl.value="";
   window.G.qaSpecsList=[];window.G.qaSpecImages=[];
   if(typeof qaRenderSpecs==="function")qaRenderSpecs();
+  // 重置「同時登記喊單」區塊，準備下一次快速上架
+  const qaOrderTogglePost=document.getElementById("qa-order-toggle");if(qaOrderTogglePost)qaOrderTogglePost.checked=false;
+  const qaOrderSecPost=document.getElementById("qa-order-section");if(qaOrderSecPost)qaOrderSecPost.style.display="none";
+  const qaBuyerPost=document.getElementById("qa-buyer");if(qaBuyerPost)qaBuyerPost.value="";
+  const qaBuyerWrapPost=document.getElementById("qa-buyer-input-wrap");if(qaBuyerWrapPost)qaBuyerWrapPost.style.display="none";
+  const qaBuyerArrowPost=document.getElementById("qa-buyer-toggle-arrow");if(qaBuyerArrowPost)qaBuyerArrowPost.style.transform="rotate(0deg)";
+  if(typeof qaClearCust==="function")qaClearCust();
+  const qaOrderQtyPost=document.getElementById("qa-order-qty");if(qaOrderQtyPost)qaOrderQtyPost.value="1";
+  if(typeof qaSetOrderType==="function")qaSetOrderType("onsite");
+  window.G.qaOrderSpec="";
+  const qaOrderSpecAreaPost=document.getElementById("qa-order-spec-area");if(qaOrderSpecAreaPost)qaOrderSpecAreaPost.style.display="none";
 };
 
 
