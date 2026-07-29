@@ -8083,12 +8083,12 @@ function getLatestTrip(){
   // 1. 今天正在進行中
   const active=window.G.trips.find(t=>t.startDate<=today&&t.endDate>=today);
   if(active)return active;
-  // 2. 最近結束的過去趟次（離今天最近）
-  const past=window.G.trips.filter(t=>t.endDate<today).sort((a,b)=>b.endDate.localeCompare(a.endDate));
-  if(past.length)return past[0];
-  // 3. 最近的未來趟次（還沒出發）
+  // 2. 最近的未來趟次（還沒出發，通常是現在在收單準備出發的那一趟，優先於已結束的過去趟次）
   const future=window.G.trips.filter(t=>t.startDate>today).sort((a,b)=>a.startDate.localeCompare(b.startDate));
-  return future[0]||null;
+  if(future.length)return future[0];
+  // 3. 都沒有未來趟次時，退回最近結束的過去趟次
+  const past=window.G.trips.filter(t=>t.endDate<today).sort((a,b)=>b.endDate.localeCompare(a.endDate));
+  return past[0]||null;
 }
 
 function getTripOrders(){
