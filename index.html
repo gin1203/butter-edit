@@ -94,8 +94,7 @@ body.live-mode .hide-live { display: none !important; }
   <div style="max-width:720px;margin:0 auto;padding:0 12px">
     <button onclick="openQuickAdd()" style="width:100%;background:#A5D6A7;color:#2E7D32;border:none;border-radius:12px;padding:10px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:6px">✨ 快速上架</button>
     <div id="nav-bar" style="display:flex;gap:3px;background:#E8D5B0;padding:4px;border-radius:14px">
-      <button id="nav-calc"    onclick="showTab('calc')"        style="flex:1;display:flex;flex-direction:column;align-items:center;padding:6px 2px;border-radius:10px;font-size:9px;font-weight:700;border:none;cursor:pointer;background:#5C3A1E;color:#F5E6C8"><span style="font-size:15px">💰</span>定價</button>
-      <button id="nav-list"    onclick="showTab('list')"        style="flex:1;display:flex;flex-direction:column;align-items:center;padding:6px 2px;border-radius:10px;font-size:9px;font-weight:700;border:none;cursor:pointer;background:transparent;color:#9C7A5A"><span style="font-size:15px">📋</span>商品</button>
+      <button id="nav-list"    onclick="showTab('list')"        style="flex:1;display:flex;flex-direction:column;align-items:center;padding:6px 2px;border-radius:10px;font-size:9px;font-weight:700;border:none;cursor:pointer;background:#5C3A1E;color:#F5E6C8"><span style="font-size:15px">📋</span>商品</button>
       <button id="nav-cust"    onclick="showTab('customers')"   style="flex:1;display:flex;flex-direction:column;align-items:center;padding:6px 2px;border-radius:10px;font-size:9px;font-weight:700;border:none;cursor:pointer;background:transparent;color:#9C7A5A"><span style="font-size:15px">👥</span>客戶</button>
       <button id="nav-invoice" onclick="showTab('invoice')"     style="flex:1;display:flex;flex-direction:column;align-items:center;padding:6px 2px;border-radius:10px;font-size:9px;font-weight:700;border:none;cursor:pointer;background:transparent;color:#9C7A5A"><span style="font-size:15px">🧾</span>對帳單</button>
       <button id="nav-stats"   onclick="showTab('stats')"       style="flex:1;display:flex;flex-direction:column;align-items:center;padding:6px 2px;border-radius:10px;font-size:9px;font-weight:700;border:none;cursor:pointer;background:transparent;color:#9C7A5A"><span style="font-size:15px">📊</span>統計</button>
@@ -107,7 +106,7 @@ body.live-mode .hide-live { display: none !important; }
 <main>
 
 <!-- ═══ 定價換算 ═══ -->
-<div id="tab-calc" class="tab-page active">
+<div id="tab-calc" class="tab-page">
   <!-- 幣別 -->
   <div style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:14px;margin-bottom:12px">
     <div style="font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:8px">選擇幣別</div>
@@ -361,7 +360,7 @@ body.live-mode .hide-live { display: none !important; }
 </div>
 
 <!-- ═══ 商品清單 ═══ -->
-<div id="tab-list" class="tab-page" style="padding:16px 16px 80px">
+<div id="tab-list" class="tab-page active" style="padding:16px 16px 80px">
   <!-- 趟次切換 -->
   <select id="trip-filter-bar" onchange="setTripFilter(this.value)" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;color:#3D2010;outline:none;margin-bottom:8px;cursor:pointer"></select>
   <!-- 搜尋 + 按鈕列 -->
@@ -370,7 +369,7 @@ body.live-mode .hide-live { display: none !important; }
       <input type="text" id="list-search" oninput="window.G.listSearch=this.value;renderList();document.getElementById('list-search-clear').style.display=this.value?'flex':'none'" placeholder="🔍 搜尋商品名稱、編號、通路、規格..." style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:10px 34px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
       <button id="list-search-clear" onclick="const el=document.getElementById('list-search');el.value='';window.G.listSearch='';renderList();this.style.display='none';" style="display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);width:20px;height:20px;border-radius:50%;background:#E8D5B0;color:#5C3A1E;border:none;font-size:13px;font-weight:900;cursor:pointer;align-items:center;justify-content:center;padding:0;line-height:1">×</button>
     </div>
-    <button onclick="showTab('calc')" style="background:#C5A880;color:white;border:none;border-radius:10px;padding:10px 14px;font-size:18px;font-weight:700;cursor:pointer">＋</button>
+    <button onclick="openQuickAdd()" style="background:#C5A880;color:white;border:none;border-radius:10px;padding:10px 14px;font-size:18px;font-weight:700;cursor:pointer">＋</button>
   </div>
   <!-- 匯出按鈕 + 連線模式 (非連線模式才顯示匯出) -->
   <div id="product-toolbar" style="display:flex;gap:6px;margin-bottom:8px;align-items:center">
@@ -607,7 +606,7 @@ body.live-mode .hide-live { display: none !important; }
   <!-- 手動填入售價 -->
   <div style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:16px;margin-bottom:12px">
     <div style="font-size:12px;font-weight:700;color:#3D2010;margin-bottom:4px">✍️ 查到售價後，直接填入這裡</div>
-    <div style="font-size:11px;color:#9C7A5A;margin-bottom:10px">填完按「帶入定價」，自動跳到定價換算頁</div>
+    <div style="font-size:11px;color:#9C7A5A;margin-bottom:10px">填完按「帶入快速上架」，自動跳到快速上架</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
       <div>
         <label style="display:block;font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:4px">原幣售價（韓圜/日圓/泰銖）</label>
@@ -618,7 +617,7 @@ body.live-mode .hide-live { display: none !important; }
         <input type="text" inputmode="decimal" id="ps-twprice" placeholder="例如：9080" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;font-size:13px;outline:none"/>
       </div>
     </div>
-    <button onclick="applyPriceToCalc()" style="width:100%;background:#5C3A1E;color:#F5E6C8;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">💰 帶入定價換算頁</button>
+    <button onclick="applyPriceToCalc()" style="width:100%;background:#5C3A1E;color:#F5E6C8;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">✨ 帶入快速上架</button>
   </div>
   <!-- 歷史搜尋 -->
   <div id="ps-history" style="display:none;background:white;border:1px solid #E8D5B0;border-radius:14px;padding:16px">
@@ -1780,7 +1779,11 @@ body.live-mode .hide-live { display: none !important; }
 
     <!-- 加價選項 -->
     <div style="background:#FDF6EC;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;margin-bottom:10px">
-      <div style="font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:8px">📦 加價／特殊選項</div>
+      <button type="button" id="qa-flags-toggle-btn" onclick="qaToggleFlagsPanel()" style="display:flex;align-items:center;gap:5px;width:100%;background:none;border:none;padding:0;cursor:pointer;text-align:left">
+        <span id="qa-flags-toggle-arrow" style="font-size:10px;transition:transform 0.15s;color:#9C7A5A">▶</span>
+        <span style="font-size:12px;font-weight:900;color:#7A5C3A">📦 加價／特殊選項</span>
+      </button>
+      <div id="qa-flags-panel-wrap" style="display:none;margin-top:8px">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#3D2010;cursor:pointer"><input type="checkbox" id="qa-flag-cold" onchange="qaCalcPrice()" style="accent-color:#C5A880"/> ❄️ 冷藏 (+100)</label>
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#3D2010;cursor:pointer"><input type="checkbox" id="qa-flag-coldHigh" onchange="qaCalcPrice()" style="accent-color:#C5A880"/> 🧊 高風險冷藏 (+200)</label>
@@ -1791,6 +1794,7 @@ body.live-mode .hide-live { display: none !important; }
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#E07B39;cursor:pointer"><input type="checkbox" id="qa-flag-popular" onchange="qaCalcPrice()" style="accent-color:#E07B39"/> 🛒 引流商品（成本≤45）</label>
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#7B5EA7;cursor:pointer"><input type="checkbox" id="qa-flag-giftpack" onchange="qaCalcPrice()" style="accent-color:#7B5EA7"/> 🎁 禮盒／限定包裝（+20）</label>
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#5C3A1E;cursor:pointer"><input type="checkbox" id="qa-flag-market" onchange="qaCalcPrice()" style="accent-color:#5C3A1E"/> 📦 大型／占空間（+80）</label>
+      </div>
       </div>
     </div>
     <!-- 美妝子類型（快速上架版） -->
@@ -1901,7 +1905,7 @@ const CURR={
 
 window.G={
   role:"",
-  tab:"calc",
+  tab:"list",
   products:[],customers:[],orders:[],trips:[],productsLoaded:false,customersLoaded:false,ordersLoaded:false,stockPlanMode:"time",
   settings:{rate:0.024,taxRefund:0.07,cardFee:0.015,cardRebate:0.033,rateJPY:0.22,rateTHB:0.90,rateUSD:31.5},
   rates:{KRW:0.024,JPY:0.22,THB:0.90,USD:31.5},
@@ -3828,6 +3832,7 @@ window.BRAND_DB=[
   {n:"Matin Kim",cat:"bag",url:"https://matinkim.shop/"},{n:"Stand Oil",cat:"clothes",url:"https://en.standoil.kr/"},
   // 墨鏡
   {n:"Gentle Monster",cat:"sunglasses"},{n:"Blue Elephant",cat:"sunglasses"},
+  {n:"Reclow",cat:"sunglasses",url:"https://reclow.com/"},{n:"리끌로우",cat:"sunglasses",url:"https://reclow.com/"},
   
   // 鞋子
   {n:"Nike",cat:"shoes"},{n:"Adidas",cat:"shoes"},{n:"PUMA",cat:"shoes"},
@@ -3922,7 +3927,7 @@ window.BRAND_DB=[
   {n:"KINFOLK",cat:"beauty",url:"https://kinfolk.co.kr/"},
   {n:"hetras",cat:"beauty",url:"https://hetras.com/"},
   
-  {n:"Olive Young",cat:"beauty",url:"https://www.oliveyoung.co.kr/"},{n:"올리브영",cat:"beauty",url:"https://www.oliveyoung.co.kr/"},
+  {n:"Olive Young",cat:"beauty",url:"https://www.oliveyoung.co.kr/"},{n:"올리브영",cat:"beauty",url:"https://www.oliveyoung.co.kr/"},{n:"OY",cat:"beauty",url:"https://www.oliveyoung.co.kr/"},
   // 文創療癒
   {n:"DINOTAENG",cat:"other",url:"https://dinotaeng.com/"},{n:"다이노탱",cat:"other",url:"https://dinotaeng.com/"},
   {n:"Miffy",cat:"other"},
@@ -3967,7 +3972,10 @@ window.BRAND_DB=[
   // 香氛生活
   {n:"Aesop",cat:"beauty",url:"https://www.aesop.com/kr/"},
   {n:"TAMBURINS",cat:"beauty",url:"https://tamburins.com/"},{n:"탬버린즈",cat:"beauty",url:"https://tamburins.com/"},
-  
+  // 新增品牌
+  {n:"Brandy Melville",cat:"clothes",url:"https://brandymelville.com/"},
+  {n:"Urban Sophistication",cat:"accessory",url:"https://urbansophistication.com/"},
+
 ];
 
 // ── 品牌 Autocomplete ───────────────────────────────────────────────────
@@ -7891,7 +7899,7 @@ window.searchPrice=function(){
     '<div style="display:flex;flex-direction:column;gap:6px">'+
     links.map(function(l){return '<a href="'+l.url+'" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:8px;background:'+(l.primary?"#FDF6EC":"#FAF8F5")+';border:1px solid '+(l.primary?"#C5A880":"#E8D5B0")+';border-radius:10px;padding:10px 14px;text-decoration:none;color:#3D2010;font-size:12px;font-weight:'+(l.primary?"700":"600")+'">'+l.label+'<span style="margin-left:auto;color:#9C7A5A;font-size:10px">↗</span></a>';}).join("")+
     '</div>'+
-    '<div style="margin-top:12px;background:#FDF6EC;border-radius:8px;padding:10px;font-size:11px;color:#9C7A5A">💡 查到台灣售價後，填入定價換算頁「台灣官方售價」欄，系統自動計算比台灣便宜多少</div>'+
+    '<div style="margin-top:12px;background:#FDF6EC;border-radius:8px;padding:10px;font-size:11px;color:#9C7A5A">💡 查到台灣售價後，填入下方「台灣官方售價」欄，按「帶入快速上架」自動算出比台灣便宜多少</div>'+
     '</div>';
 };
 
@@ -7902,11 +7910,13 @@ window.applyPriceToCalc=function(krw,cost,twdOfficial){
   const fv=parseFloat(foreignEl?.value)||krw||0;
   const tv=parseFloat(twEl?.value)||twdOfficial||0;
   if(!fv&&!tv){showToast("請填入至少一個售價","warning");return;}
-  if(fv){document.getElementById("c-amt").value=fv;}
-  if(tv){document.getElementById("c-twprice").value=tv;}
-  showTab("calc");
-  setTimeout(()=>calcUpdate(),50);
-  showToast("已帶入定價換算頁！");
+  openQuickAdd();
+  setTimeout(()=>{
+    if(fv){const el=document.getElementById("qa-amt");if(el)el.value=fv;}
+    if(tv){const el=document.getElementById("qa-twprice");if(el)el.value=tv;}
+    if(typeof qaCalcPrice==="function")qaCalcPrice();
+  },50);
+  showToast("已帶入快速上架！");
 };
 
 
@@ -9223,7 +9233,7 @@ window.renderList=function(){
       container.innerHTML=`<div style="background:white;border-radius:14px;padding:48px 20px;text-align:center;border:1px solid #E8D5B0"><div style="font-size:32px;margin-bottom:8px">⏳</div><div style="font-weight:700;color:#3D2010">商品資料載入中…</div><div style="font-size:12px;color:#9C7A5A;margin-top:6px">網路較慢時可能需要幾秒鐘，請稍候</div></div>`;
       return;
     }
-    container.innerHTML=`<div style="background:white;border-radius:14px;padding:48px 20px;text-align:center;border:1px solid #E8D5B0"><div style="font-size:32px;margin-bottom:8px">📋</div><div style="font-weight:700;color:#3D2010">${products.length===0?"還沒有商品":"找不到符合的商品"}</div>${products.length===0?`<button onclick="showTab('calc')" style="margin-top:12px;background:#C5A880;color:white;border:none;border-radius:10px;padding:8px 20px;font-size:12px;font-weight:700;cursor:pointer">去新增商品</button>`:""}</div>`;
+    container.innerHTML=`<div style="background:white;border-radius:14px;padding:48px 20px;text-align:center;border:1px solid #E8D5B0"><div style="font-size:32px;margin-bottom:8px">📋</div><div style="font-weight:700;color:#3D2010">${products.length===0?"還沒有商品":"找不到符合的商品"}</div>${products.length===0?`<button onclick="openQuickAdd()" style="margin-top:12px;background:#C5A880;color:white;border:none;border-radius:10px;padding:8px 20px;font-size:12px;font-weight:700;cursor:pointer">去新增商品</button>`:""}</div>`;
     return;
   }
   const ss={pending:"#FEF3C7",settled:"#D1FAE5",shipped:"#DBEAFE"};
@@ -10697,6 +10707,16 @@ window.toggleBuyerOrders=function(buyerKey,checked){
 window.G.qaPhoto=null;
 window.G.qaCatKey="food";
 
+// 加價／特殊選項：預設收合，點一下手風琴式展開/收合
+window.qaToggleFlagsPanel=function(){
+  const wrap=document.getElementById("qa-flags-panel-wrap");
+  const arrow=document.getElementById("qa-flags-toggle-arrow");
+  if(!wrap)return;
+  const show=wrap.style.display==="none";
+  wrap.style.display=show?"block":"none";
+  if(arrow)arrow.style.transform=show?"rotate(90deg)":"rotate(0deg)";
+};
+
 window.openQuickAdd=function(){
   // Reset
   window.G.qaPhoto=null;
@@ -10730,6 +10750,8 @@ window.openQuickAdd=function(){
   const qaTwPriceReset=document.getElementById("qa-twprice");if(qaTwPriceReset)qaTwPriceReset.value="";
   window.G.qaRivalList=[];if(typeof qaRenderRivals==="function")qaRenderRivals();
   ["qa-flag-cold","qa-flag-coldHigh","qa-flag-heavy","qa-flag-large","qa-flag-transparent","qa-flag-popular","qa-flag-limited","qa-flag-giftpack","qa-flag-market"].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=false;});
+  const qaFlagsWrapReset=document.getElementById("qa-flags-panel-wrap");if(qaFlagsWrapReset)qaFlagsWrapReset.style.display="none";
+  const qaFlagsArrowReset=document.getElementById("qa-flags-toggle-arrow");if(qaFlagsArrowReset)qaFlagsArrowReset.style.transform="rotate(0deg)";
   const qdp=document.getElementById("qa-daiso-panel");
   if(qdp)qdp.style.display="none";
   setTimeout(()=>{if(typeof qaDaisoTypeChange==="function")qaDaisoTypeChange();},150);
