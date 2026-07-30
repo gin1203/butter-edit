@@ -34,6 +34,11 @@ body.live-mode .hide-live { display: none !important; }
 </script>
 </head>
 <body>
+<!-- ── 資料同步狀態小提示：兩人同時使用時，能一眼看出網路/同步是否正常 ── -->
+<div id="sync-status" style="position:fixed;top:8px;right:8px;z-index:99999;background:rgba(255,255,255,0.97);border:1.5px solid #A7E8C0;border-radius:99px;padding:5px 12px;font-size:11px;font-weight:700;color:#16A34A;box-shadow:0 2px 8px rgba(0,0,0,0.15);display:flex;align-items:center;gap:5px">
+  <span id="sync-status-dot" style="width:8px;height:8px;border-radius:50%;background:#16A34A;flex-shrink:0"></span>
+  <span id="sync-status-text">已同步</span>
+</div>
 <!-- ── 登入畫面 ── -->
 <div id="login-screen" style="display:flex;position:fixed;inset:0;z-index:999;background:#FAF8F5;align-items:center;justify-content:center;padding:24px">
   <div style="width:100%;max-width:380px">
@@ -1398,7 +1403,13 @@ body.live-mode .hide-live { display: none !important; }
     <div style="font-size:14px;font-weight:900;color:#3D2010;margin-bottom:4px;text-align:center">💰 收訂金</div>
     <div id="ask-deposit-subtitle" style="font-size:12px;color:#9C7A5A;margin-bottom:14px;text-align:center"></div>
     <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">要跟這位客人收多少訂金？</label>
-    <input type="text" inputmode="numeric" id="ask-deposit-input" placeholder="例如：500" style="width:100%;background:#FAF8F5;border:1.5px solid #E8D5B0;border-radius:10px;padding:12px;font-size:18px;font-weight:700;text-align:center;outline:none;margin-bottom:14px;box-sizing:border-box"/>
+    <input type="text" inputmode="numeric" id="ask-deposit-input" placeholder="例如：500" style="width:100%;background:#FAF8F5;border:1.5px solid #E8D5B0;border-radius:10px;padding:12px;font-size:18px;font-weight:700;text-align:center;outline:none;margin-bottom:10px;box-sizing:border-box"/>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
+      <button type="button" onclick="document.getElementById('ask-deposit-input').value='300'" style="flex:1;min-width:60px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:7px 4px;font-size:13px;font-weight:700;color:#9C7A5A;cursor:pointer">300</button>
+      <button type="button" onclick="document.getElementById('ask-deposit-input').value='500'" style="flex:1;min-width:60px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:7px 4px;font-size:13px;font-weight:700;color:#9C7A5A;cursor:pointer">500</button>
+      <button type="button" onclick="document.getElementById('ask-deposit-input').value='1000'" style="flex:1;min-width:60px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:7px 4px;font-size:13px;font-weight:700;color:#9C7A5A;cursor:pointer">1000</button>
+      <button type="button" onclick="document.getElementById('ask-deposit-input').value='2000'" style="flex:1;min-width:60px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:7px 4px;font-size:13px;font-weight:700;color:#9C7A5A;cursor:pointer">2000</button>
+    </div>
     <button onclick="openSendDepositLine()" style="width:100%;padding:12px;border-radius:10px;border:none;background:#06C755;color:white;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">📤 直接傳送到LINE給客人</button>
     <button onclick="copyDepositMsgOnly()" style="width:100%;padding:12px;border-radius:10px;border:1.5px solid #FCD34D;background:#FEF3C7;color:#92400E;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">📋 改成複製請款訊息（貼到別的地方）</button>
     <button onclick="markDepositReceived()" style="width:100%;padding:12px;border-radius:10px;border:none;background:#C5A880;color:white;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">✅ 客人已付款，標記已收訂金</button>
@@ -3274,8 +3285,15 @@ window.getSubcat=function(name,catKey){
   const n=(name||"").toLowerCase();
   const map=getMergedSubcatMap();
   const rules=map[catKey]||[];
+  // 「糖」這個字太籠統，商品名稱是「低糖/無糖/代糖/零糖/減糖」這種健康訴求時，
+  // 不能因為含有「糖」字就被誤判成糖果零食類（這個例外規則之前在自訂子分類合併後遺漏了，這裡補回來）
+  const sugarNegations=["低糖","無糖","代糖","零糖","減糖","减糖"];
+  const hasSugarNegation=sugarNegations.some(w=>n.includes(w));
   for(const r of rules){
-    if(r.kw.some(k=>n.includes(k.toLowerCase())))return r;
+    if(r.kw.some(k=>{
+      if(k==="糖"&&hasSugarNegation)return false;
+      return n.includes(k.toLowerCase());
+    }))return r;
   }
   return null;
 };
@@ -5065,8 +5083,32 @@ window.resetSettings=function(){
   Object.entries(def).forEach(([k,v])=>{const el=document.getElementById("set-"+k);if(el)el.value=v;});
 };
 
+// ── 資料同步狀態 ──────────────────────────────────────────────────────
+// 兩人同時使用時，能一眼看出目前是「已同步／同步中／離線」，不用猜是不是網路的問題
+window.G._syncFlags={};
+window.updateSyncStatusUI=function(){
+  const dot=document.getElementById("sync-status-dot");
+  const text=document.getElementById("sync-status-text");
+  const box=document.getElementById("sync-status");
+  if(!dot||!text||!box)return;
+  const flags=Object.values(window.G._syncFlags||{});
+  const offline=!navigator.onLine||flags.some(f=>f.fromCache);
+  const pending=flags.some(f=>f.pending);
+  if(offline){
+    dot.style.background="#DC2626";text.textContent="離線中（顯示暫存資料）";text.style.color="#DC2626";box.style.borderColor="#F5B0B0";
+  } else if(pending){
+    dot.style.background="#F59E0B";text.textContent="同步中...";text.style.color="#B45309";box.style.borderColor="#FCD34D";
+  } else {
+    dot.style.background="#16A34A";text.textContent="已同步";text.style.color="#16A34A";box.style.borderColor="#A7E8C0";
+  }
+};
+window.addEventListener("online",()=>updateSyncStatusUI());
+window.addEventListener("offline",()=>updateSyncStatusUI());
+
 // ── Firebase 監聽 ──────────────────────────────────────────────────────
 onSnapshot(collection(db,"products"),s=>{
+  window.G._syncFlags.products={fromCache:s.metadata.fromCache,pending:s.metadata.hasPendingWrites};
+  updateSyncStatusUI();
   window.G.products=s.docs.map(d=>({id:d.id,...d.data()}));
   window.G.productsLoaded=true;
   clearTimeout(window.G._prodRenderTimer);
@@ -5074,7 +5116,7 @@ onSnapshot(collection(db,"products"),s=>{
     updateStats();
     renderIfActiveElseMarkDirty("list",renderList);
     renderIfActiveElseMarkDirty("invoice",renderInvoice);
-  },150);
+  },500);
 });
 onSnapshot(collection(db,"promoGroupMeta"),s=>{
   window.G.promoGroupMeta={};
@@ -5082,10 +5124,12 @@ onSnapshot(collection(db,"promoGroupMeta"),s=>{
   if(document.getElementById("modal-promo-groups")?.style.display==="flex")renderPromoGroups();
 });
 onSnapshot(collection(db,"customers"),s=>{
+  window.G._syncFlags.customers={fromCache:s.metadata.fromCache,pending:s.metadata.hasPendingWrites};
+  updateSyncStatusUI();
   window.G.customers=s.docs.map(d=>({id:d.id,...d.data()}));
   window.G.customersLoaded=true;
   clearTimeout(window.G._custRenderTimer);
-  window.G._custRenderTimer=setTimeout(()=>renderIfActiveElseMarkDirty("customers",renderCustomers),150);
+  window.G._custRenderTimer=setTimeout(()=>renderIfActiveElseMarkDirty("customers",renderCustomers),500);
 });
 // 載入 LINE 綁定資料（同一個顯示名稱可能對應到不只一個真實的人，所以用陣列保留全部，不能只留一筆）
 (async()=>{
@@ -5109,6 +5153,8 @@ onSnapshot(collection(db,"trips"),s=>{
   renderTripList();renderTripBars();renderTripHistory();
 });
 onSnapshot(collection(db,"orders"),s=>{
+  window.G._syncFlags.orders={fromCache:s.metadata.fromCache,pending:s.metadata.hasPendingWrites};
+  updateSyncStatusUI();
   window.G.orders=s.docs.map(d=>{const o={id:d.id,...d.data()};o.productName=cleanProductName(o.productName);return o;});
   window.G.ordersLoaded=true;
   clearTimeout(window.G._orderRenderTimer);
@@ -5123,7 +5169,7 @@ onSnapshot(collection(db,"orders"),s=>{
     if(stockModal&&stockModal.style.display!=="none")window.renderStockPlanContent();
     const catHealthModal=document.getElementById("modal-category-health");
     if(catHealthModal&&catHealthModal.style.display!=="none")window.renderCategoryHealth();
-  },150);
+  },500);
 });
 onSnapshot(doc(db,"settings","main"),s=>{
   if(s.exists()){
@@ -11013,6 +11059,15 @@ window.cancelAskDeposit=function(){
 };
 // 只複製請款訊息，不改變訂單狀態——因為傳了請款訊息不代表客人已經付款，
 // 狀態要等「標記已收訂金」才會真的改成「已付訂金」
+// 網路不好時，Firestore 的寫入可能會卡住不回應，導致後面的動作（例如複製文字）永遠等不到。
+// 這個包裝函式最多等 4 秒，超過就自動放棄那筆網路寫入、讓後面的流程繼續走，不會整個卡死。
+window.fbUpdWithTimeout=function(collection,id,data,timeoutMs=4000){
+  return Promise.race([
+    Promise.resolve(fbUpd(collection,id,data)).catch(()=>null),
+    new Promise(resolve=>setTimeout(resolve,timeoutMs))
+  ]);
+};
+
 window.copyDepositMsgOnly=async function(){
   const ctx=window.G._depositContext;
   if(!ctx)return;
@@ -11022,7 +11077,7 @@ window.copyDepositMsgOnly=async function(){
   const{orders}=ctx;
   // 訂金金額先記在這批的第一筆訂單，方便之後「標記已收訂金」時自動帶入，但狀態維持原樣不變
   const first=orders[0];
-  if(first)await fbUpd("orders",first.id,{depositAmt:dep});
+  if(first)await fbUpdWithTimeout("orders",first.id,{depositAmt:dep});
   const s=window.G.settings||{};
   const bankLines=[];
   if(s.bank1Name||s.bank1Account)bankLines.push(`${s.bank1Name||""}\n${s.bank1Account||""}`);
@@ -11050,13 +11105,13 @@ window.markDepositReceived=async function(){
   // 但「已付訂金」這個狀態要整批訂單一起改，不然其他筆會卡在「待訂金」，導致客戶卡片顯示「狀態不一」
   const first=orders[0];
   if(first){
-    await fbUpd("orders",first.id,{depositAmt:dep,status:first.status==="pending"?"deposit":first.status});
+    await fbUpdWithTimeout("orders",first.id,{depositAmt:dep,status:first.status==="pending"?"deposit":first.status});
     for(let i=1;i<orders.length;i++){
       const o=orders[i];
       const upd={};
       if(o.depositAmt)upd.depositAmt=0;
       if(o.status==="pending")upd.status="deposit";
-      if(Object.keys(upd).length)await fbUpd("orders",o.id,upd);
+      if(Object.keys(upd).length)await fbUpdWithTimeout("orders",o.id,upd);
     }
   }
   showToast(`已標記收到訂金 NT$${dep.toLocaleString()}`);
@@ -11226,18 +11281,22 @@ window.sendDepositLineMessage=async function(){
   if(!userId){showToast("找不到客人 LINE ID","error");return;}
   sendBtn.disabled=true;sendBtn.textContent="傳送中...";
   try{
+    const controller=new AbortController();
+    const timeoutId=setTimeout(()=>controller.abort(),10000); // 網路太差時，最多等10秒就放棄，不要一直卡著
     const resp=await fetch("https://butter-ai.kueigin.workers.dev",{
       method:"POST",
       headers:{"Content-Type":"application/json","X-Service":"line-quote"},
       body:JSON.stringify({userId,message}),
+      signal:controller.signal,
     });
+    clearTimeout(timeoutId);
     const result=await resp.json();
     if(result.success){
       // 訊息傳送成功，訂金金額先記錄下來（方便之後「標記已收訂金」自動帶入），但狀態維持原樣，等真的收到錢再標記
       const dep=window.G._sdDepositAmt||0;
       const orders=window.G._sdOrders||[];
       const first=orders[0];
-      if(first&&dep>0)await fbUpd("orders",first.id,{depositAmt:dep});
+      if(first&&dep>0)await fbUpdWithTimeout("orders",first.id,{depositAmt:dep});
       showToast("✅ 訂金請款已傳送給客人！");
       document.getElementById("modal-send-deposit").style.display="none";
       setTimeout(()=>{renderCustomers();renderInvoice();},600);
@@ -11246,7 +11305,7 @@ window.sendDepositLineMessage=async function(){
       showToast("傳送失敗："+JSON.stringify(result.error),"error");
     }
   } catch(e){
-    showToast("傳送失敗："+e.message,"error");
+    showToast(e.name==="AbortError"?"網路太慢，傳送逾時，請確認網路後再試一次":"傳送失敗："+e.message,"error");
   }
   sendBtn.disabled=false;
   sendBtn.style.opacity="1";
