@@ -409,7 +409,7 @@ body.live-mode .hide-live { display: none !important; }
 <div id="tab-customers" class="tab-page" style="padding:16px 16px 80px">
   <div style="display:flex;gap:8px;margin-bottom:8px">
     <div style="position:relative;flex:1">
-      <input type="text" id="cust-search" oninput="window.G.custSearch=this.value;renderCustomers()" placeholder="🔍 搜尋社群名、LINE名或電話..." style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:10px 34px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
+      <input type="text" id="cust-search" oninput="window.G.custSearch=this.value;renderCustomers()" placeholder="🔍 搜尋社群名、LINE名、電話、商品或規格..." style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:10px 34px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
       <button onclick="const i=document.getElementById('cust-search');i.value='';window.G.custSearch='';renderCustomers();" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
     </div>
     <button onclick="openModal('modal-cust',{});" style="background:#C5A880;color:white;border:none;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer">＋</button>
@@ -2557,15 +2557,19 @@ async function handlePastedImage(file){
     const target=window.G.specPasteTarget;
     window.G.specPasteTarget=null;
     showToast("壓縮圖片中…","success");
-    const b64=await compressImg(file,640,0.8);
+    const pasteSpecCount=target.type==="ep"?(window.G.epSpecsList||[]).length:(window.G.qaSpecsList||[]).length;
+    const pasteParams=getSpecImgCompressParams(pasteSpecCount);
+    const b64=await compressImg(file,pasteParams.maxPx,pasteParams.quality);
     if(target.type==="ep"){
       window.G.epSpecImages=window.G.epSpecImages||[];
       window.G.epSpecImages[target.idx]=b64;
       if(typeof epRenderSpecs==="function")epRenderSpecs();
+      if(!checkSpecImagesSizeWarn(window.G.epSpecImages))return;
     } else if(target.type==="qa"){
       window.G.qaSpecImages=window.G.qaSpecImages||[];
       window.G.qaSpecImages[target.idx]=b64;
       if(typeof qaRenderSpecs==="function")qaRenderSpecs();
+      if(!checkSpecImagesSizeWarn(window.G.qaSpecImages))return;
     }
     showToast("規格照片已更新！","success");
     return;
@@ -3677,11 +3681,15 @@ window.openModal=function(id,data){
         } else if(specs.length>0){
           specBtns.innerHTML=specs.map((s,i)=>{
             const img=(p?.specImages||[])[i]||"";
-            const zoomBtn=img?`<span onclick="event.stopPropagation();lbOpen('${img}')" style="position:absolute;inset:0;cursor:zoom-in"><img src="${img}" draggable="false" style="width:100%;height:100%;object-fit:cover;display:block;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent"/><span style="position:absolute;bottom:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,0.55);color:white;font-size:10px;display:flex;align-items:center;justify-content:center;pointer-events:none">🔍</span></span>`
-              :`<span style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:20px;color:#C5A880">📐</span>`;
-            return `<div class="mo-spec-card" data-spec="${s.replace(/"/g,"&quot;")}" style="display:flex;flex-direction:column;align-items:stretch;border-radius:12px;font-size:12px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;width:84px;overflow:hidden">
+            const esc=s.replace(/"/g,"&quot;");
+            if(!img){
+              // 沒有照片的規格，不要生一個空空的縮圖格子出來，直接做成精簡的圓角標籤就好，不佔版面
+              return `<button type="button" class="mo-spec-card" data-spec="${esc}" onclick="moSelectSpec(this.dataset.spec,this)" style="border-radius:99px;font-size:13px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;padding:9px 18px;cursor:pointer;-webkit-tap-highlight-color:transparent">${s}</button>`;
+            }
+            const zoomBtn=`<span onclick="event.stopPropagation();lbOpen('${img}')" style="position:absolute;inset:0;cursor:zoom-in"><img src="${img}" draggable="false" style="width:100%;height:100%;object-fit:cover;display:block;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent"/><span style="position:absolute;bottom:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,0.55);color:white;font-size:10px;display:flex;align-items:center;justify-content:center;pointer-events:none">🔍</span></span>`;
+            return `<div class="mo-spec-card" data-spec="${esc}" style="display:flex;flex-direction:column;align-items:stretch;border-radius:12px;font-size:12px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;width:84px;overflow:hidden">
               <span style="width:100%;height:68px;background:#FAF8F5;flex-shrink:0;position:relative;display:block">${zoomBtn}</span>
-              <button type="button" data-spec="${s.replace(/"/g,"&quot;")}" onclick="moSelectSpec(this.dataset.spec,this.closest('.mo-spec-card'))" style="width:100%;border:none;border-top:1px solid rgba(0,0,0,0.08);background:transparent;color:inherit;font:inherit;font-weight:700;padding:8px 4px;cursor:pointer;min-height:36px;-webkit-tap-highlight-color:transparent">${s}</button>
+              <button type="button" data-spec="${esc}" onclick="moSelectSpec(this.dataset.spec,this.closest('.mo-spec-card'))" style="width:100%;border:none;border-top:1px solid rgba(0,0,0,0.08);background:transparent;color:inherit;font:inherit;font-weight:700;padding:8px 4px;cursor:pointer;min-height:36px;-webkit-tap-highlight-color:transparent">${s}</button>
             </div>`;
           }).join("");
           // 只有一個規格選項時自動選取
@@ -3918,7 +3926,7 @@ window.BRAND_DB=[
   {n:"EPT",cat:"shoes",url:"https://eastpacifictrade.com/"},{n:"이피티",cat:"shoes",url:"https://eastpacifictrade.com/"},
   // 衣服
   {n:"SPAO",cat:"clothes"},{n:"GU",cat:"clothes"},{n:"Uniqlo",cat:"clothes"},
-  {n:"MLB",cat:"clothes"},{n:"Ader Error",cat:"clothes"},
+  {n:"MLB",cat:"clothes"},{n:"Ader Error",cat:"clothes"},{n:"HUMAN MADE",cat:"clothes",url:"https://humanmade.jp/"},
   {n:"Instantfunk",cat:"clothes"},{n:"Covernat",cat:"clothes"},{n:"Discovery",cat:"clothes"},
   {n:"Marmot",cat:"clothes",url:"https://www.marmotkorea.com/"},{n:"마모트",cat:"clothes",url:"https://www.marmotkorea.com/"},
   {n:"Marmot Capital",cat:"clothes",url:"https://www.marmotkorea.com/"},
@@ -4296,13 +4304,15 @@ window.epSpecImgBrowse=function(idx){
   input.onchange=async function(){
     const file=input.files[0];if(!file)return;
     showToast("壓縮圖片中…","success");
-    const b64=await compressImg(file,640,0.8);
+    const specCount=(window.G.epSpecsList||[]).length;
+    const{maxPx,quality}=getSpecImgCompressParams(specCount);
+    const b64=await compressImg(file,maxPx,quality);
     window.G.epSpecImages=window.G.epSpecImages||[];
     window.G.epSpecImages[idx]=b64;
     window.G.specPasteTarget=null;
     epRenderSpecs();
     input.value="";
-    showToast("規格照片已更新","success");
+    if(checkSpecImagesSizeWarn(window.G.epSpecImages))showToast("規格照片已更新","success");
   };
   input.click();
 };
@@ -4467,6 +4477,22 @@ window.qaSpecImgArm=function(idx){
   qaRenderSpecs();
   showToast("📋 已選取這個規格，直接 Ctrl+V 貼上圖片即可","success");
 };
+// Firebase 每份文件上限 1MB，規格照片是直接存進商品資料本身的，
+// 抓 900KB 當警戒線（留一點餘裕給商品名稱/規格文字等其他欄位），超過就提醒，不要讓照片默默存不進去
+window.checkSpecImagesSizeWarn=function(specImagesArr){
+  const totalBytes=(specImagesArr||[]).reduce((s,b64)=>s+(b64?b64.length:0),0);
+  if(totalBytes>900000){
+    showToast("⚠️ 這個商品的規格照片加起來已經很多了，可能會存不進去，建議把不重要的規格圖片刪掉幾張","error");
+    return false;
+  }
+  return true;
+};
+// 規格數量不多的商品，維持原本的高畫質；規格一多（超過6個），改用比較小的壓縮設定，
+// 不然疊加起來很容易超過 Firebase 單份資料 1MB 的上限
+window.getSpecImgCompressParams=function(specCount){
+  return specCount>6?{maxPx:360,quality:0.65}:{maxPx:640,quality:0.8};
+};
+
 window.qaSpecImgBrowse=function(idx){
   window.G.specPasteTarget={type:"qa",idx};
   let input=document.getElementById("qa-spec-img-input");
@@ -4478,13 +4504,15 @@ window.qaSpecImgBrowse=function(idx){
   input.onchange=async function(){
     const file=input.files[0];if(!file)return;
     showToast("壓縮圖片中…","success");
-    const b64=await compressImg(file,640,0.8);
+    const specCount=(window.G.qaSpecsList||[]).length;
+    const{maxPx,quality}=getSpecImgCompressParams(specCount);
+    const b64=await compressImg(file,maxPx,quality);
     window.G.qaSpecImages=window.G.qaSpecImages||[];
     window.G.qaSpecImages[idx]=b64;
     window.G.specPasteTarget=null;
     qaRenderSpecs();
     input.value="";
-    showToast("規格照片已更新","success");
+    if(checkSpecImagesSizeWarn(window.G.qaSpecImages))showToast("規格照片已更新","success");
   };
   input.click();
 };
@@ -10112,7 +10140,19 @@ window.renderCustomers=function(){
   const container=document.getElementById("customer-cards");if(!container)return;
   const{customers,custSearch,custViewFilter,selectedCustomers}=window.G;
   const orders=getTripOrders();
-  let filtered=custSearch?customers.filter(c=>{const s=custSearch.toLowerCase();return(c.communityName||"").toLowerCase().includes(s)||(c.lineName||"").toLowerCase().includes(s)||(c.phone||"").includes(s);}):customers;
+  let filtered=custSearch?customers.filter(c=>{
+    const s=custSearch.toLowerCase();
+    const nameMatch=(c.communityName||"").toLowerCase().includes(s)||(c.lineName||"").toLowerCase().includes(s)||(c.phone||"").includes(s);
+    if(nameMatch)return true;
+    // 名字/電話都沒對到的話，也試著比對這個客戶訂單裡的商品名稱——方便直接搜商品找出「誰買過這個」
+    return orders.some(o=>{
+      const match=o.customerId
+        ?o.customerId===c.id
+        :(((c.communityName||"").trim().toLowerCase()===(o.communityName||o.buyerName||"").trim().toLowerCase())||
+          ((c.lineName||"").trim().toLowerCase()===(o.lineName||"").trim().toLowerCase()&&(c.lineName||"")!==""));
+      return match&&((o.productName||"").toLowerCase().includes(s)||(o.spec||"").toLowerCase().includes(s));
+    });
+  }):customers;
   // 篩選有未購入代買單／待報價的客戶
   if(custViewFilter==="unpurchased"||custViewFilter==="quote"){
     const allOrders=window.G.orders;
