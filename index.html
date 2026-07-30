@@ -148,7 +148,7 @@ body.live-mode .hide-live { display: none !important; }
         </div>
       </div>
       <div style="position:relative">
-        <input type="text" inputmode="decimal" id="c-amt" oninput="daisoAutoSelectBest();calcUpdate()" placeholder="請輸入金額" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:12px 40px 12px 14px;font-size:20px;font-weight:700;outline:none"/>
+        <input type="text" inputmode="decimal" id="c-amt" oninput="daisoAutoSelectBest();if(!this.value){const cc0=document.getElementById('c-custom');if(cc0)cc0.value='';}calcUpdate()" placeholder="請輸入金額" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:12px 40px 12px 14px;font-size:20px;font-weight:700;outline:none"/>
         <button onclick="document.getElementById('c-amt').value='';const cc=document.getElementById('c-custom');if(cc)cc.value='';calcUpdate();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
       </div>
     </div>
@@ -975,7 +975,7 @@ body.live-mode .hide-live { display: none !important; }
     <div style="margin-bottom:8px">
       <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:4px">原幣金額 <span id="ep-promo-active-badge" style="display:none;font-size:10px;font-weight:700;color:#166534;background:#DCFCE7;border-radius:6px;padding:2px 6px;margin-left:4px"></span> <button type="button" id="ep-promo-cancel-btn" onclick="window.epCancelPromo()" style="display:none;font-size:10px;font-weight:700;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;border-radius:6px;padding:2px 8px;margin-left:4px;cursor:pointer">✕ 取消折扣，還原原價</button></label>
       <div style="position:relative;margin-bottom:6px">
-        <input type="text" inputmode="decimal" id="ep-foreign" oninput="window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;window.G.epPromoPct=null;epForeignChange();epUpdatePromoBadge();" style="width:100%;background:#FFF9E6;border:2px solid #F5B942;border-radius:10px;padding:10px 40px 10px 14px;font-size:16px;font-weight:700;outline:none;box-sizing:border-box"/>
+        <input type="text" inputmode="decimal" id="ep-foreign" oninput="window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;window.G.epPromoPct=null;if(!this.value){const pr0=document.getElementById('ep-price');if(pr0){pr0.value='';delete pr0.dataset.manual;}}epForeignChange();epUpdatePromoBadge();" style="width:100%;background:#FFF9E6;border:2px solid #F5B942;border-radius:10px;padding:10px 40px 10px 14px;font-size:16px;font-weight:700;outline:none;box-sizing:border-box"/>
         <button type="button" onmousedown="event.preventDefault()" onclick="event.stopPropagation();document.getElementById('ep-foreign').value='';window.G.epPromoOriginal=null;window.G.epPromoDivisor=null;window.G.epPromoPct=null;const pr=document.getElementById('ep-price');if(pr){pr.value='';delete pr.dataset.manual;}epForeignChange();epUpdatePromoBadge();document.getElementById('ep-foreign').blur();" style="position:absolute;right:0;top:0;bottom:0;width:40px;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer;color:#C5A880;font-size:18px;padding:0;line-height:1">✕</button>
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -1385,11 +1385,26 @@ body.live-mode .hide-live { display: none !important; }
     <div style="font-size:14px;font-weight:900;color:#3D2010;margin-bottom:4px;text-align:center">💰 收訂金</div>
     <div id="ask-deposit-subtitle" style="font-size:12px;color:#9C7A5A;margin-bottom:14px;text-align:center"></div>
     <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">要跟這位客人收多少訂金？</label>
-    <input type="text" inputmode="numeric" id="ask-deposit-input" placeholder="例如：500" style="width:100%;background:#FAF8F5;border:1.5px solid #E8D5B0;border-radius:10px;padding:12px;font-size:18px;font-weight:700;text-align:center;outline:none;margin-bottom:16px;box-sizing:border-box"/>
-    <div style="display:flex;gap:10px">
-      <button onclick="cancelAskDeposit()" style="flex:1;padding:12px;border-radius:10px;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;font-size:14px;font-weight:700;cursor:pointer">取消</button>
-      <button onclick="confirmAskDeposit()" style="flex:1;padding:12px;border-radius:10px;border:none;background:#C5A880;color:white;font-size:14px;font-weight:700;cursor:pointer">確定並複製</button>
+    <input type="text" inputmode="numeric" id="ask-deposit-input" placeholder="例如：500" style="width:100%;background:#FAF8F5;border:1.5px solid #E8D5B0;border-radius:10px;padding:12px;font-size:18px;font-weight:700;text-align:center;outline:none;margin-bottom:14px;box-sizing:border-box"/>
+    <button onclick="openSendDepositLine()" style="width:100%;padding:12px;border-radius:10px;border:none;background:#06C755;color:white;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">📤 直接傳送到LINE給客人</button>
+    <button onclick="copyDepositMsgOnly()" style="width:100%;padding:12px;border-radius:10px;border:1.5px solid #FCD34D;background:#FEF3C7;color:#92400E;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">📋 改成複製請款訊息（貼到別的地方）</button>
+    <button onclick="markDepositReceived()" style="width:100%;padding:12px;border-radius:10px;border:none;background:#C5A880;color:white;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">✅ 客人已付款，標記已收訂金</button>
+    <button onclick="cancelAskDeposit()" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;font-size:13px;font-weight:700;cursor:pointer">取消</button>
+  </div>
+</div>
+
+<div id="modal-send-deposit" class="modal-overlay" style="display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;padding:16px">
+  <div onclick="event.stopPropagation()" style="background:white;border-radius:16px;width:100%;max-width:420px;padding:20px;max-height:90vh;overflow-y:auto;box-sizing:border-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <h3 style="margin:0;font-size:15px;font-weight:900;color:#3D2010">📤 傳送訂金請款給客人</h3>
+      <button onclick="closeModal('modal-send-deposit')" style="font-size:22px;color:#9C7A5A;background:none;border:none;cursor:pointer;line-height:1">×</button>
     </div>
+    <div id="sd-cust-name" style="font-size:13px;font-weight:700;color:#3D2010;margin-bottom:10px;background:#FDF6EC;border-radius:8px;padding:8px 10px"></div>
+    <div id="sd-line-id-status" style="font-size:11px;margin-bottom:12px"></div>
+    <div id="sd-line-id-picker" style="display:none;margin-bottom:12px;border:1.5px solid #FCD34D;background:#FFFBEB;border-radius:10px;padding:10px"></div>
+    <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:4px">訊息內容（可以自己修改）</label>
+    <textarea id="sd-message" rows="7" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;font-size:13px;outline:none;box-sizing:border-box;margin-bottom:14px;resize:vertical;font-family:inherit"></textarea>
+    <button id="sd-send-btn" onclick="sendDepositLineMessage()" disabled style="width:100%;background:#06C755;color:white;border:none;border-radius:10px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;opacity:0.5">傳送給客人</button>
   </div>
 </div>
 
@@ -1482,12 +1497,12 @@ body.live-mode .hide-live { display: none !important; }
         </div>
         <!-- 韓幣 -->
         <div style="position:relative;margin-bottom:10px">
-          <input type="text" inputmode="decimal" id="qa-live-amt" placeholder="韓幣金額 ₩" oninput="qaLiveCalc()" style="width:100%;background:white;border:1.5px solid #F59E0B;border-radius:10px;padding:12px 150px 12px 14px;font-size:20px;font-weight:900;outline:none;box-sizing:border-box"/>
+          <input type="text" inputmode="decimal" id="qa-live-amt" placeholder="韓幣金額 ₩" oninput="if(!this.value){window.G.qaLiveCustomPrice=null;const qlc0=document.getElementById('qa-live-custom');if(qlc0)qlc0.value='';}qaLiveCalc()" style="width:100%;background:white;border:1.5px solid #F59E0B;border-radius:10px;padding:12px 150px 12px 14px;font-size:20px;font-weight:900;outline:none;box-sizing:border-box"/>
           <div style="position:absolute;right:8px;top:50%;transform:translateY(-50%);display:flex;gap:3px;align-items:center">
             <button onclick="qaLiveApplyPromo(2)" style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:6px;padding:3px 6px;font-size:10px;font-weight:700;color:#92400E;cursor:pointer">1+1</button>
             <button onclick="qaLiveApplyPromo(3)" style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:6px;padding:3px 6px;font-size:10px;font-weight:700;color:#166534;cursor:pointer">2+1</button>
             <button onclick="qaLiveApplyPromo(4)" style="background:#EDE9FE;border:1px solid #C4B5FD;border-radius:6px;padding:3px 6px;font-size:10px;font-weight:700;color:#5B21B6;cursor:pointer">3+1</button>
-            <button onclick="document.getElementById('qa-live-amt').value='';qaLiveCalc();" style="background:none;border:none;cursor:pointer;color:#F59E0B;font-size:18px;line-height:1;padding:0 2px">✕</button>
+            <button onclick="document.getElementById('qa-live-amt').value='';window.G.qaLiveCustomPrice=null;const qlc=document.getElementById('qa-live-custom');if(qlc)qlc.value='';qaLiveCalc();" style="background:none;border:none;cursor:pointer;color:#F59E0B;font-size:18px;line-height:1;padding:0 2px">✕</button>
           </div>
         </div>
         <!-- 或輸入折數 -->
@@ -1708,8 +1723,8 @@ body.live-mode .hide-live { display: none !important; }
         <div id="qa-price-hint-profit" style="font-size:9px;font-weight:700;margin-top:2px"></div>
       </div>
       <div style="position:relative;display:flex;align-items:stretch">
-        <input type="text" inputmode="decimal" id="qa-amt" placeholder="例如：12000" oninput="window.G.qaPromoOriginal=null;window.G.qaPromoDivisor=null;window.G.qaPromoPct=null;qaUpdatePromoBadge();qaDaisoAutoSelectBest();qaCalcPrice()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:11px 40px 11px 14px;font-size:18px;font-weight:700;outline:none"/>
-        <button onclick="document.getElementById('qa-amt').value='';window.G.qaSelectedPrice=null;window.G.qaPromoOriginal=null;window.G.qaPromoDivisor=null;window.G.qaPromoPct=null;qaUpdatePromoBadge();qaCalcPrice();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
+        <input type="text" inputmode="decimal" id="qa-amt" placeholder="例如：12000" oninput="window.G.qaPromoOriginal=null;window.G.qaPromoDivisor=null;window.G.qaPromoPct=null;if(!this.value){window.G.qaSelectedPrice=null;const qc0=document.getElementById('qa-custom');if(qc0)qc0.value='';}qaUpdatePromoBadge();qaDaisoAutoSelectBest();qaCalcPrice()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:11px 40px 11px 14px;font-size:18px;font-weight:700;outline:none"/>
+        <button onclick="document.getElementById('qa-amt').value='';window.G.qaSelectedPrice=null;window.G.qaPromoOriginal=null;window.G.qaPromoDivisor=null;window.G.qaPromoPct=null;const qc0=document.getElementById('qa-custom');if(qc0)qc0.value='';qaUpdatePromoBadge();qaCalcPrice();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
       </div>
     </div>
     <!-- 快速選價 -->
@@ -3974,6 +3989,7 @@ window.BRAND_DB=[
   // 包包配件補充
   {n:"BUCKS & LEATHER",cat:"bag"},
   {n:"LOE",cat:"bag"},
+  {n:"BRANDEN",cat:"bag",url:"https://branden.shop/"},{n:"브랜든",cat:"bag",url:"https://branden.shop/"},
   {n:"KODAK",cat:"accessory"},
   {n:"NYUNYU",cat:"accessory",url:"https://nyunyu.com/"},{n:"뉴뉴",cat:"accessory",url:"https://nyunyu.com/"},
   {n:"MUCENT",cat:"accessory",url:"https://mucent.kr/"},
@@ -6331,14 +6347,16 @@ window.pickChangeSpec=function(spec){
 window.confirmChangeSpec=async function(){
   const oid=window.G.changeSpecOrderId;
   if(!oid)return;
+  const o=window.G.orders.find(x=>x.id===oid);
   const newSpec=document.getElementById("change-spec-custom").value.trim();
   const newNote=document.getElementById("change-spec-note").value.trim();
-  if(!newSpec&&!newNote){showToast("規格或備註至少要填一個","error");return;}
+  const hadNote=!!(o?.discountNote); // 原本就有備註的話，允許把它清空，不算「什麼都沒填」
+  if(!newSpec&&!newNote&&!hadNote){showToast("規格或備註至少要填一個","error");return;}
   const upd={};
   if(newSpec)upd.spec=newSpec;
   upd.discountNote=newNote; // 備註不論有沒有填都更新，才能支援「清空備註」
   await fbUpd("orders",oid,upd);
-  showToast(newSpec?`已換成「${newSpec}」`:"備註已儲存","success");
+  showToast(newSpec?`已換成「${newSpec}」`:(newNote?"備註已儲存":"備註已清空"),"success");
   closeChangeSpec();
 };
 
@@ -7215,10 +7233,20 @@ window.showStockPlan=function(){
   if(coldBtn){
     if(window.G.stockPlanColdOnly){
       coldBtn.style.background="#1E5F8C";coldBtn.style.color="white";coldBtn.style.borderColor="#1E5F8C";
-      coldBtn.textContent="🧊 只看冷藏商品（篩選中）";
+      coldBtn.textContent="☑ 只看冷藏商品";
     } else {
       coldBtn.style.background="#EAF4FB";coldBtn.style.color="#1E5F8C";coldBtn.style.borderColor="#BEE0F5";
-      coldBtn.textContent="🧊 只看冷藏商品";
+      coldBtn.textContent="☐ 只看冷藏商品";
+    }
+  }
+  const upBtn=document.getElementById("sp-filter-unpurchased");
+  if(upBtn){
+    if(window.G.stockPlanUnpurchasedOnly){
+      upBtn.style.background="#7C3AED";upBtn.style.color="white";upBtn.style.borderColor="#7C3AED";
+      upBtn.textContent="☑ 隱藏已買到的";
+    } else {
+      upBtn.style.background="#FEF3C7";upBtn.style.color="#92400E";upBtn.style.borderColor="#FCD34D";
+      upBtn.textContent="☐ 隱藏已買到的";
     }
   }
   const m=document.getElementById("modal-stock-plan");
@@ -7270,10 +7298,10 @@ window.setStockPlanUnpurchasedOnly=function(on){
   if(btn){
     if(on){
       btn.style.background="#7C3AED";btn.style.color="white";btn.style.borderColor="#7C3AED";
-      btn.textContent="🙈 隱藏已買到的（篩選中）";
+      btn.textContent="☑ 隱藏已買到的";
     } else {
       btn.style.background="#FEF3C7";btn.style.color="#92400E";btn.style.borderColor="#FCD34D";
-      btn.textContent="🙈 隱藏已買到的";
+      btn.textContent="☐ 隱藏已買到的";
     }
   }
   window.renderStockPlanContent();
@@ -7284,10 +7312,10 @@ window.setStockPlanColdOnly=function(on){
   if(btn){
     if(on){
       btn.style.background="#1E5F8C";btn.style.color="white";btn.style.borderColor="#1E5F8C";
-      btn.textContent="🧊 只看冷藏商品（篩選中）";
+      btn.textContent="☑ 只看冷藏商品";
     } else {
       btn.style.background="#EAF4FB";btn.style.color="#1E5F8C";btn.style.borderColor="#BEE0F5";
-      btn.textContent="🧊 只看冷藏商品";
+      btn.textContent="☐ 只看冷藏商品";
     }
   }
   window.renderStockPlanContent();
@@ -10127,7 +10155,8 @@ window.renderCustomers=function(){
                 :matchesArr.length===1
                   ?'<span style="background:#06C755;color:white;font-size:9px;font-weight:700;padding:1px 6px;border-radius:99px;margin-left:4px">已綁定</span>'
                   :'<span style="background:#E8D5B0;color:#9C7A5A;font-size:9px;font-weight:700;padding:1px 6px;border-radius:99px;margin-left:4px">未綁定</span>';
-              return "<div style=\"font-size:12px;color:#9C7A5A;display:flex;align-items:center\">LINE："+c.lineName+badge+"</div>";
+              const avatarUrl=c.lineUserAvatar||(matchesArr.length===1?matchesArr[0].pictureUrl:"");
+              return "<div style=\"font-size:12px;color:#9C7A5A;display:flex;align-items:center\">"+lineAvatarSmallHtml(avatarUrl)+"LINE："+c.lineName+badge+"</div>";
             })()}
           </div>
         </div>
@@ -10421,7 +10450,10 @@ window.renderInvoice=function(){
           <span style="font-size:11px;color:#9C7A5A">${b.orders.reduce((s,o)=>s+o.qty,0)} 件</span>
           <div style="text-align:right">
             <span style="font-size:13px;font-weight:900;color:#3D2010">NT$${totalAmt.toLocaleString()}</span>
-            ${totalDeposit>0?`<span style="font-size:10px;color:#9333EA;margin-left:8px">訂金 NT$${totalDeposit.toLocaleString()} · 待收 NT$${remaining.toLocaleString()}</span>`:""}
+            ${totalDeposit>0?(allStatus==="pending"
+              ?`<span style="font-size:10px;color:#B08968;margin-left:8px">已請款 NT$${totalDeposit.toLocaleString()}（尚未收到）</span>`
+              :`<span style="font-size:10px;color:#9333EA;margin-left:8px">訂金 NT$${totalDeposit.toLocaleString()} · 待收 NT$${remaining.toLocaleString()}</span>`
+            ):""}
           </div>
         </div>
         ${(()=>{
@@ -10678,7 +10710,8 @@ window.copyDepositOrder=function(cid,buyerKey){
   window.G._depositContext={orders,name,total};
   document.getElementById("ask-deposit-subtitle").textContent=`${name}　訂單總額 NT$${total.toLocaleString()}`;
   const input=document.getElementById("ask-deposit-input");
-  input.value="";
+  const existingDep=orders.find(o=>o.depositAmt>0)?.depositAmt;
+  input.value=existingDep?String(existingDep):"";
   document.getElementById("modal-ask-deposit").style.display="flex";
   setTimeout(()=>input.focus(),50);
 };
@@ -10686,7 +10719,35 @@ window.cancelAskDeposit=function(){
   document.getElementById("modal-ask-deposit").style.display="none";
   window.G._depositContext=null;
 };
-window.confirmAskDeposit=async function(){
+// 只複製請款訊息，不改變訂單狀態——因為傳了請款訊息不代表客人已經付款，
+// 狀態要等「標記已收訂金」才會真的改成「已付訂金」
+window.copyDepositMsgOnly=async function(){
+  const ctx=window.G._depositContext;
+  if(!ctx)return;
+  const dep=parseFloat(document.getElementById("ask-deposit-input").value)||0;
+  if(dep<=0){showToast("請輸入正確的訂金金額","error");return;}
+  document.getElementById("modal-ask-deposit").style.display="none";
+  const{orders}=ctx;
+  // 訂金金額先記在這批的第一筆訂單，方便之後「標記已收訂金」時自動帶入，但狀態維持原樣不變
+  const first=orders[0];
+  if(first)await fbUpd("orders",first.id,{depositAmt:dep});
+  const s=window.G.settings||{};
+  const bankLines=[];
+  if(s.bank1Name||s.bank1Account)bankLines.push(`${s.bank1Name||""}\n${s.bank1Account||""}`);
+  if(s.bank2Name||s.bank2Account)bankLines.push(`${s.bank2Name||""}\n${s.bank2Account||""}`);
+  const bankText=bankLines.length?bankLines.join("\n\n"):"（尚未設定收款帳戶，請到「設定」補上）";
+  const text=`訂金 NT$${dep.toLocaleString()}\n\n${bankText}\n\n匯款後記得提供末五碼\n確認後會為您安排後續訂單流程`;
+  navigator.clipboard?.writeText(text).then(()=>showToast("請款訊息已複製，訂單狀態尚未改變")).catch(()=>{
+    const ta=document.createElement("textarea");ta.value=text;ta.style.position="fixed";
+    document.body.appendChild(ta);ta.focus();ta.select();
+    try{document.execCommand("copy");showToast("請款訊息已複製，訂單狀態尚未改變");}catch(e){showToast("複製失敗，請手動複製","error");}
+    document.body.removeChild(ta);
+  });
+  setTimeout(()=>{renderCustomers();renderInvoice();},600);
+  window.G._depositContext=null;
+};
+// 客人確認已經付款了，這時候才真的把狀態改成「已付訂金」
+window.markDepositReceived=async function(){
   const ctx=window.G._depositContext;
   if(!ctx)return;
   const dep=parseFloat(document.getElementById("ask-deposit-input").value)||0;
@@ -10706,19 +10767,173 @@ window.confirmAskDeposit=async function(){
       if(Object.keys(upd).length)await fbUpd("orders",o.id,upd);
     }
   }
+  showToast(`已標記收到訂金 NT$${dep.toLocaleString()}`);
+  setTimeout(()=>{renderCustomers();renderInvoice();},600);
+  window.G._depositContext=null;
+};
+
+// 直接傳送訂金請款訊息到客人的 LINE，不用複製再自己去官方帳號貼給客人
+// 客人一旦手動確認過是哪個LINE帳號（或系統自動比對到唯一一筆），就把這個綁定存到客戶資料上，
+// 下次同名的情況就不用再選一次，也不怕日後同名的人變多、又要重新猜一次
+window.bindCustomerLineUser=function(custId,userId,pictureUrl){
+  if(!custId||!userId)return;
+  const c=window.G.customers.find(x=>x.id===custId);
+  const upd={};
+  if(!c||c.lineUserId!==userId)upd.lineUserId=userId;
+  if(pictureUrl&&c?.lineUserAvatar!==pictureUrl)upd.lineUserAvatar=pictureUrl;
+  if(Object.keys(upd).length)fbUpd("customers",custId,upd).catch(()=>{});
+};
+// 小頭像縮圖，讓「已綁定／已比對到」的狀態文字旁邊也能顯示大頭貼，多一層視覺確認
+window.lineAvatarSmallHtml=function(pictureUrl){
+  return pictureUrl
+    ?`<img src="${pictureUrl}" onclick="event.stopPropagation();lbOpen('${pictureUrl}')" style="width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:5px;cursor:zoom-in"/>`
+    :"";
+};
+// 萬一之前綁錯人，可以取消綁定，下次傳送時會重新讓你選一次
+window.unbindCustomerLineUser=async function(custId,modalIdToClose){
+  if(!custId)return;
+  await fbUpd("customers",custId,{lineUserId:null});
+  if(modalIdToClose){const m=document.getElementById(modalIdToClose);if(m)m.style.display="none";}
+  showToast("已取消綁定，請重新點一次傳送，再選一次正確的LINE帳號");
+};
+
+window.openSendDepositLine=async function(){
+  const ctx=window.G._depositContext;
+  if(!ctx)return;
+  const dep=parseFloat(document.getElementById("ask-deposit-input").value)||0;
+  if(dep<=0){showToast("請輸入正確的訂金金額","error");return;}
+  document.getElementById("modal-ask-deposit").style.display="none";
+  const{orders,name}=ctx;
+  const first=orders[0];
+  const c=first?.customerId?window.G.customers.find(x=>x.id===first.customerId):null;
+  const modal=document.getElementById("modal-send-deposit");
+  const nameEl=document.getElementById("sd-cust-name");
+  const statusEl=document.getElementById("sd-line-id-status");
+  const pickerEl=document.getElementById("sd-line-id-picker");
+  const msgEl=document.getElementById("sd-message");
+  const sendBtn=document.getElementById("sd-send-btn");
+  if(!modal||!nameEl||!statusEl||!pickerEl||!msgEl||!sendBtn)return;
+  nameEl.textContent=`👤 ${name}`;
   const s=window.G.settings||{};
   const bankLines=[];
   if(s.bank1Name||s.bank1Account)bankLines.push(`${s.bank1Name||""}\n${s.bank1Account||""}`);
   if(s.bank2Name||s.bank2Account)bankLines.push(`${s.bank2Name||""}\n${s.bank2Account||""}`);
   const bankText=bankLines.length?bankLines.join("\n\n"):"（尚未設定收款帳戶，請到「設定」補上）";
-  const text=`訂金 NT$${dep.toLocaleString()}\n\n${bankText}\n\n匯款後記得提供末五碼\n確認後會為您安排後續訂單流程`;
-  navigator.clipboard?.writeText(text).then(()=>showToast("訂金請款已複製，訂金已記錄！")).catch(()=>{
-    const ta=document.createElement("textarea");ta.value=text;ta.style.position="fixed";
-    document.body.appendChild(ta);ta.focus();ta.select();
-    try{document.execCommand("copy");showToast("訂金請款已複製！");}catch(e){showToast("複製失敗","error");}
-    document.body.removeChild(ta);
-  });
-  window.G._depositContext=null;
+  msgEl.value=`訂金 NT$${dep.toLocaleString()}\n\n${bankText}\n\n匯款後記得提供末五碼\n確認後會為您安排後續訂單流程`;
+  pickerEl.style.display="none";pickerEl.innerHTML="";
+  statusEl.textContent="🔍 查詢中...";statusEl.style.color="#9C7A5A";
+  sendBtn.disabled=true;sendBtn.style.opacity="0.5";
+  window.G._sdLineUserId=null;
+  window.G._sdDepositAmt=dep;
+  window.G._sdOrders=orders;
+  window.G._sdCustId=c?.id||null;
+  // 這個客戶之前已經確認過綁定哪個LINE帳號了，直接用，不用每次都重新猜
+  if(c?.lineUserId){
+    window.G._sdLineUserId=c.lineUserId;
+    statusEl.innerHTML=`${lineAvatarSmallHtml(c.lineUserAvatar)}✅ 已綁定的LINE帳號（上次確認過）　<span onclick="unbindCustomerLineUser('${c.id}','modal-send-deposit')" style="color:#C0392B;text-decoration:underline;cursor:pointer;font-size:10px">不是本人？重新選擇</span>`;statusEl.style.color="#16A34A";
+    sendBtn.disabled=false;sendBtn.style.opacity="1";
+    modal.style.display="flex";
+    return;
+  }
+  try{
+    const {getDocs,collection:col}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    const snap=await getDocs(col(db,"line_users"));
+    const lineUsers=snap.docs.map(d=>d.data());
+    const lineName=(c?.lineName||c?.communityName||first?.lineName||first?.communityName||first?.buyerName||name||"").trim().toLowerCase();
+    const matches=lineUsers.filter(u=>(u.displayName||"").trim().toLowerCase()===lineName);
+    if(matches.length===1){
+      window.G._sdLineUserId=matches[0].userId;
+      statusEl.innerHTML=`${lineAvatarSmallHtml(matches[0].pictureUrl)}✅ LINE 帳號：${matches[0].displayName}`;statusEl.style.color="#16A34A";
+      sendBtn.disabled=false;sendBtn.style.opacity="1";
+      bindCustomerLineUser(c?.id,matches[0].userId,matches[0].pictureUrl);
+    } else if(matches.length>1){
+      statusEl.innerHTML=`⚠️ 有 ${matches.length} 位LINE用戶顯示名稱都是「${name}」，請確認是哪一位再送出<br><span style="font-size:10px;color:#9C7A5A">選對之後會記住這個客人對應哪個LINE帳號，之後不用再選；如果真的無法分辨，建議改用下方「複製請款訊息」自己傳給客人</span>`;
+      statusEl.style.color="#D97706";sendBtn.disabled=true;sendBtn.style.opacity="0.5";
+      pickerEl.style.display="block";
+      pickerEl.innerHTML=`<div style="font-size:11px;font-weight:700;color:#92400E;margin-bottom:8px">👇 請選擇正確的LINE帳號</div>`+
+        matches.map(u=>{
+          const uidShort=(u.userId||"").slice(0,6)+"..."+(u.userId||"").slice(-4);
+          const avatar=u.pictureUrl?`<img src="${u.pictureUrl}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0"/>`:`<div style="width:32px;height:32px;border-radius:50%;background:#E8D5B0;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px">👤</div>`;
+          const status=u.statusMessage?`<div style="font-size:10px;color:#9C7A5A">${u.statusMessage}</div>`:"";
+          const extra=[];
+          if(u.followedAt||u.createdAt||u.firstFollowedAt){
+            const ts=u.followedAt||u.createdAt||u.firstFollowedAt;
+            const d2=new Date(typeof ts==="number"?ts:ts?.seconds?ts.seconds*1000:ts);
+            if(!isNaN(d2))extra.push(`加入好友：${d2.toLocaleDateString("zh-TW")}`);
+          }
+          if(u.lastMessageAt||u.updatedAt){
+            const ts=u.lastMessageAt||u.updatedAt;
+            const d2=new Date(typeof ts==="number"?ts:ts?.seconds?ts.seconds*1000:ts);
+            if(!isNaN(d2))extra.push(`最近互動：${d2.toLocaleDateString("zh-TW")}`);
+          }
+          const extraHtml=extra.length?`<div style="font-size:9px;color:#B08968">${extra.join("　")}</div>`:"";
+          return `<div data-uid="${u.userId}" data-uname="${(u.displayName||"").replace(/"/g,"&quot;")}" data-upic="${(u.pictureUrl||"").replace(/"/g,"&quot;")}" onclick="window.sdSelectLineUser(this.dataset.uid,this.dataset.uname,this.dataset.upic)" style="display:flex;align-items:center;gap:8px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer">
+            ${avatar}
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12px;font-weight:700;color:#3D2010">${u.displayName||"（無名稱）"}</div>
+              ${status}
+              ${extraHtml}
+              <div style="font-size:9px;color:#B0906A;font-family:monospace">${uidShort}</div>
+            </div>
+          </div>`;
+        }).join("");
+    } else {
+      statusEl.innerHTML=`⚠️ 找不到此客人的 LINE ID<br><span style="font-size:10px;color:#9C7A5A">請確認客人曾傳訊息給官方帳號，或改用下方「複製請款訊息」</span>`;
+      statusEl.style.color="#D97706";sendBtn.disabled=true;sendBtn.style.opacity="0.5";
+    }
+  } catch(e){
+    statusEl.textContent="❌ 查詢失敗："+e.message;statusEl.style.color="#C0392B";sendBtn.disabled=true;sendBtn.style.opacity="0.5";
+  }
+  modal.style.display="flex";
+};
+window.sdSelectLineUser=function(userId,displayName,pictureUrl){
+  window.G._sdLineUserId=userId;
+  bindCustomerLineUser(window.G._sdCustId,userId,pictureUrl);
+  const statusEl=document.getElementById("sd-line-id-status");
+  const sendBtn=document.getElementById("sd-send-btn");
+  const pickerEl=document.getElementById("sd-line-id-picker");
+  if(statusEl){statusEl.innerHTML=`${lineAvatarSmallHtml(pictureUrl)}✅ 已選定 LINE 帳號：${displayName}`;statusEl.style.color="#16A34A";}
+  if(pickerEl){
+    pickerEl.querySelectorAll("[data-uid]").forEach(el=>{
+      el.style.border=el.dataset.uid===userId?"2px solid #06C755":"1px solid #E8D5B0";
+      el.style.background=el.dataset.uid===userId?"#F0FFF4":"white";
+    });
+  }
+  if(sendBtn){sendBtn.disabled=false;sendBtn.style.opacity="1";}
+};
+window.sendDepositLineMessage=async function(){
+  const message=document.getElementById("sd-message")?.value.trim();
+  const userId=window.G._sdLineUserId;
+  const sendBtn=document.getElementById("sd-send-btn");
+  if(!message){showToast("請填入訊息內容","error");return;}
+  if(!userId){showToast("找不到客人 LINE ID","error");return;}
+  sendBtn.disabled=true;sendBtn.textContent="傳送中...";
+  try{
+    const resp=await fetch("https://butter-ai.kueigin.workers.dev",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","X-Service":"line-quote"},
+      body:JSON.stringify({userId,message}),
+    });
+    const result=await resp.json();
+    if(result.success){
+      // 訊息傳送成功，訂金金額先記錄下來（方便之後「標記已收訂金」自動帶入），但狀態維持原樣，等真的收到錢再標記
+      const dep=window.G._sdDepositAmt||0;
+      const orders=window.G._sdOrders||[];
+      const first=orders[0];
+      if(first&&dep>0)await fbUpd("orders",first.id,{depositAmt:dep});
+      showToast("✅ 訂金請款已傳送給客人！");
+      document.getElementById("modal-send-deposit").style.display="none";
+      setTimeout(()=>{renderCustomers();renderInvoice();},600);
+      window.G._depositContext=null;
+    } else {
+      showToast("傳送失敗："+JSON.stringify(result.error),"error");
+    }
+  } catch(e){
+    showToast("傳送失敗："+e.message,"error");
+  }
+  sendBtn.disabled=false;
+  sendBtn.style.opacity="1";
+  sendBtn.textContent="傳送給客人";
 };
 
 window.copyCustOrder=function(cid){
@@ -11382,6 +11597,15 @@ window.openLineNotify=async function(custId){
   sendBtn.disabled=true;
   window.G._lineNotifyCustId=custId;
   window.G._lineUserId=null;
+  // 這個客戶之前已經確認過綁定哪個LINE帳號了，直接用，不用每次都重新猜
+  if(c.lineUserId){
+    window.G._lineUserId=c.lineUserId;
+    statusEl.innerHTML=`${lineAvatarSmallHtml(c.lineUserAvatar)}✅ 已綁定的LINE帳號（上次確認過）　<span onclick="unbindCustomerLineUser('${custId}','modal-line-notify')" style="color:#C0392B;text-decoration:underline;cursor:pointer;font-size:10px">不是本人？重新選擇</span>`;
+    statusEl.style.color="#16A34A";
+    sendBtn.disabled=false;
+    modal.style.display="flex";
+    return;
+  }
   try {
     // 用客人的 lineName 或 communityName 比對 line_users——同一個顯示名稱可能對應到不只一個真實帳號，
     // 全部找出來，超過1筆絕對不能自動選第一筆，要讓你自己確認是哪一位，避免出貨通知傳錯人
@@ -11392,11 +11616,12 @@ window.openLineNotify=async function(custId){
     const matches=lineUsers.filter(u=>(u.displayName||"").trim().toLowerCase()===lineName);
     if(matches.length===1){
       window.G._lineUserId=matches[0].userId;
-      statusEl.textContent=`✅ LINE 帳號：${matches[0].displayName}`;
+      statusEl.innerHTML=`${lineAvatarSmallHtml(matches[0].pictureUrl)}✅ LINE 帳號：${matches[0].displayName}`;
       statusEl.style.color="#16A34A";
       sendBtn.disabled=false;
+      bindCustomerLineUser(custId,matches[0].userId,matches[0].pictureUrl);
     } else if(matches.length>1){
-      statusEl.innerHTML=`⚠️ 有 ${matches.length} 位LINE用戶顯示名稱都是「${c.lineName||c.communityName}」，請確認是哪一位再送出`;
+      statusEl.innerHTML=`⚠️ 有 ${matches.length} 位LINE用戶顯示名稱都是「${c.lineName||c.communityName}」，請確認是哪一位再送出<br><span style="font-size:10px;color:#9C7A5A">選對之後會記住這個客人對應哪個LINE帳號，之後不用再選</span>`;
       statusEl.style.color="#D97706";
       sendBtn.disabled=true;
       if(pickerEl){
@@ -11406,7 +11631,7 @@ window.openLineNotify=async function(custId){
             const uidShort=(u.userId||"").slice(0,6)+"..."+(u.userId||"").slice(-4);
             const avatar=u.pictureUrl?`<img src="${u.pictureUrl}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0"/>`:`<div style="width:32px;height:32px;border-radius:50%;background:#E8D5B0;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px">👤</div>`;
             const status=u.statusMessage?`<div style="font-size:10px;color:#9C7A5A">${u.statusMessage}</div>`:"";
-            return `<div data-uid="${u.userId}" data-uname="${(u.displayName||"").replace(/"/g,"&quot;")}" onclick="window.lnSelectLineUser(this.dataset.uid,this.dataset.uname)" style="display:flex;align-items:center;gap:8px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer">
+            return `<div data-uid="${u.userId}" data-uname="${(u.displayName||"").replace(/"/g,"&quot;")}" data-upic="${(u.pictureUrl||"").replace(/"/g,"&quot;")}" onclick="window.lnSelectLineUser(this.dataset.uid,this.dataset.uname,this.dataset.upic)" style="display:flex;align-items:center;gap:8px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer">
               ${avatar}
               <div style="flex:1;min-width:0">
                 <div style="font-size:12px;font-weight:700;color:#3D2010">${u.displayName||"（無名稱）"}</div>
@@ -11430,13 +11655,14 @@ window.openLineNotify=async function(custId){
 };
 
 // 從同名多筆的LINE帳號清單中，手動選定正確的那一位
-window.lnSelectLineUser=function(userId,displayName){
+window.lnSelectLineUser=function(userId,displayName,pictureUrl){
   window.G._lineUserId=userId;
+  bindCustomerLineUser(window.G._lineNotifyCustId,userId,pictureUrl);
   const statusEl=document.getElementById("ln-line-id-status");
   const sendBtn=document.getElementById("ln-send-btn");
   const pickerEl=document.getElementById("ln-line-id-picker");
   if(statusEl){
-    statusEl.textContent=`✅ 已選定 LINE 帳號：${displayName}`;
+    statusEl.innerHTML=`${lineAvatarSmallHtml(pictureUrl)}✅ 已選定 LINE 帳號：${displayName}`;
     statusEl.style.color="#16A34A";
   }
   if(pickerEl){
@@ -11503,6 +11729,15 @@ window.openSendQuote=async function(oid){
   statusEl.textContent="🔍 查詢中...";statusEl.style.color="#9C7A5A";
   sendBtn.disabled=true;sendBtn.style.opacity="0.5";
   window.G._sqLineUserId=null;
+  window.G._sqCustId=c?.id||null;
+  // 這個客戶之前已經確認過綁定哪個LINE帳號了，直接用，不用每次都重新猜
+  if(c?.lineUserId){
+    window.G._sqLineUserId=c.lineUserId;
+    statusEl.innerHTML=`${lineAvatarSmallHtml(c.lineUserAvatar)}✅ 已綁定的LINE帳號（上次確認過）　<span onclick="unbindCustomerLineUser('${c.id}','modal-send-quote')" style="color:#C0392B;text-decoration:underline;cursor:pointer;font-size:10px">不是本人？重新選擇</span>`;statusEl.style.color="#16A34A";
+    sendBtn.disabled=false;sendBtn.style.opacity="1";
+    modal.style.display="flex";
+    return;
+  }
   try{
     const {getDocs,collection:col}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
     const snap=await getDocs(col(db,"line_users"));
@@ -11511,10 +11746,11 @@ window.openSendQuote=async function(oid){
     const matches=lineUsers.filter(u=>(u.displayName||"").trim().toLowerCase()===lineName);
     if(matches.length===1){
       window.G._sqLineUserId=matches[0].userId;
-      statusEl.textContent=`✅ LINE 帳號：${matches[0].displayName}`;statusEl.style.color="#16A34A";
+      statusEl.innerHTML=`${lineAvatarSmallHtml(matches[0].pictureUrl)}✅ LINE 帳號：${matches[0].displayName}`;statusEl.style.color="#16A34A";
       sendBtn.disabled=false;sendBtn.style.opacity="1";
+      bindCustomerLineUser(c?.id,matches[0].userId,matches[0].pictureUrl);
     } else if(matches.length>1){
-      statusEl.innerHTML=`⚠️ 有 ${matches.length} 位LINE用戶顯示名稱都是「${custName}」，請確認是哪一位再送出`;
+      statusEl.innerHTML=`⚠️ 有 ${matches.length} 位LINE用戶顯示名稱都是「${custName}」，請確認是哪一位再送出<br><span style="font-size:10px;color:#9C7A5A">選對之後會記住這個客人對應哪個LINE帳號，之後不用再選</span>`;
       statusEl.style.color="#D97706";sendBtn.disabled=true;sendBtn.style.opacity="0.5";
       pickerEl.style.display="block";
       pickerEl.innerHTML=`<div style="font-size:11px;font-weight:700;color:#92400E;margin-bottom:8px">👇 請選擇正確的LINE帳號</div>`+
@@ -11522,7 +11758,7 @@ window.openSendQuote=async function(oid){
           const uidShort=(u.userId||"").slice(0,6)+"..."+(u.userId||"").slice(-4);
           const avatar=u.pictureUrl?`<img src="${u.pictureUrl}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0"/>`:`<div style="width:32px;height:32px;border-radius:50%;background:#E8D5B0;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px">👤</div>`;
           const status=u.statusMessage?`<div style="font-size:10px;color:#9C7A5A">${u.statusMessage}</div>`:"";
-          return `<div data-uid="${u.userId}" data-uname="${(u.displayName||"").replace(/"/g,"&quot;")}" onclick="window.sqSelectLineUser(this.dataset.uid,this.dataset.uname)" style="display:flex;align-items:center;gap:8px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer">
+          return `<div data-uid="${u.userId}" data-uname="${(u.displayName||"").replace(/"/g,"&quot;")}" data-upic="${(u.pictureUrl||"").replace(/"/g,"&quot;")}" onclick="window.sqSelectLineUser(this.dataset.uid,this.dataset.uname,this.dataset.upic)" style="display:flex;align-items:center;gap:8px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer">
             ${avatar}
             <div style="flex:1;min-width:0">
               <div style="font-size:12px;font-weight:700;color:#3D2010">${u.displayName||"（無名稱）"}</div>
@@ -11540,12 +11776,13 @@ window.openSendQuote=async function(oid){
   }
   modal.style.display="flex";
 };
-window.sqSelectLineUser=function(userId,displayName){
+window.sqSelectLineUser=function(userId,displayName,pictureUrl){
   window.G._sqLineUserId=userId;
+  bindCustomerLineUser(window.G._sqCustId,userId,pictureUrl);
   const statusEl=document.getElementById("sq-line-id-status");
   const sendBtn=document.getElementById("sq-send-btn");
   const pickerEl=document.getElementById("sq-line-id-picker");
-  if(statusEl){statusEl.textContent=`✅ 已選定 LINE 帳號：${displayName}`;statusEl.style.color="#16A34A";}
+  if(statusEl){statusEl.innerHTML=`${lineAvatarSmallHtml(pictureUrl)}✅ 已選定 LINE 帳號：${displayName}`;statusEl.style.color="#16A34A";}
   if(pickerEl){
     pickerEl.querySelectorAll("[data-uid]").forEach(el=>{
       el.style.border=el.dataset.uid===userId?"2px solid #06C755":"1px solid #E8D5B0";
@@ -12514,8 +12751,8 @@ window.swUpdate = function(){
       </div>
     </div>
     <div id="sp-buy-subfilter-row" style="display:flex;gap:8px;margin-bottom:10px">
-      <button id="sp-filter-unpurchased" onclick="setStockPlanUnpurchasedOnly(!window.G.stockPlanUnpurchasedOnly)" style="flex:1;font-size:12px;font-weight:700;padding:8px 12px;border-radius:10px;border:1.5px solid #FCD34D;background:#FEF3C7;color:#92400E;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">🙈 隱藏已買到的</button>
-      <button id="sp-filter-cold" onclick="setStockPlanColdOnly(!window.G.stockPlanColdOnly)" style="flex:1;font-size:12px;font-weight:700;padding:8px 12px;border-radius:10px;border:1.5px solid #BEE0F5;background:#EAF4FB;color:#1E5F8C;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">🧊 只看冷藏商品</button>
+      <button id="sp-filter-unpurchased" onclick="setStockPlanUnpurchasedOnly(!window.G.stockPlanUnpurchasedOnly)" style="flex:1;font-size:12px;font-weight:700;padding:8px 12px;border-radius:10px;border:1.5px solid #FCD34D;background:#FEF3C7;color:#92400E;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">☐ 隱藏已買到的</button>
+      <button id="sp-filter-cold" onclick="setStockPlanColdOnly(!window.G.stockPlanColdOnly)" style="flex:1;font-size:12px;font-weight:700;padding:8px 12px;border-radius:10px;border:1.5px solid #BEE0F5;background:#EAF4FB;color:#1E5F8C;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">☐ 只看冷藏商品</button>
     </div>
     <div id="sp-capacity-row" style="margin-bottom:14px;background:#EAF4FB;border:1px solid #BEE0F5;border-radius:10px;padding:9px 12px">
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
