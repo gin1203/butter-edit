@@ -294,7 +294,8 @@ body.live-mode .hide-live { display: none !important; }
         <button class="calc-ch-btn ch-btn-trend" data-ch="MIMILINE" onclick="calcSelectChannel(this,'MIMILINE')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎀 MIMILINE</button>
         <button class="calc-ch-btn ch-btn-trend" data-ch="ARTBOX" onclick="calcSelectChannel(this,'ARTBOX')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 ARTBOX</button>
         <button class="calc-ch-btn ch-btn-trend" data-ch="29CM" onclick="calcSelectChannel(this,'29CM')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">💻 29CM</button>
-        <button class="calc-ch-btn ch-btn-trend" data-ch="Object" onclick="calcSelectChannel(this,'Object')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Object</button>
+<button class="calc-ch-btn ch-btn-trend" data-ch="MUSINSA" onclick="calcSelectChannel(this,'MUSINSA')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🖤 MUSINSA</button>
+                <button class="calc-ch-btn ch-btn-trend" data-ch="Object" onclick="calcSelectChannel(this,'Object')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Object</button>
         <button class="calc-ch-btn ch-btn-trend" data-ch="Point of View" onclick="calcSelectChannel(this,'Point of View')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Point of View</button>
         <button class="calc-ch-btn ch-btn-trend" data-ch="BUTTER" onclick="calcSelectChannel(this,'BUTTER')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧈 BUTTER</button>
         <button class="calc-ch-btn ch-btn-duty" data-ch="新世界免稅店" onclick="calcSelectChannel(this,'新世界免稅店')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛬 新世界免稅店（機場提貨）</button>
@@ -779,7 +780,17 @@ body.live-mode .hide-live { display: none !important; }
     <div id="mo-spec-area" style="margin-bottom:12px;display:none">
       <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">📐 規格／尺寸 <span style="font-weight:400;color:#C5A880">（可複選多個規格一起登記）</span></label>
       <div id="mo-spec-btns" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px"></div>
-      <input type="text" id="mo-spec" placeholder="或自行輸入..." style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 14px;font-size:13px;outline:none"/>
+      <div style="display:flex;gap:6px;align-items:stretch">
+        <input type="text" id="mo-spec" placeholder="或自行輸入..." style="flex:1;min-width:0;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 14px;font-size:13px;outline:none"/>
+        <button type="button" onclick="moCustomSpecPhotoBrowse()" title="幫這個新規格順便加一張照片" style="flex-shrink:0;width:38px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;font-size:16px;cursor:pointer;color:#B0906A">📷</button>
+      </div>
+      <div id="mo-custom-spec-photo-preview" style="display:none;margin-top:6px;align-items:center;gap:8px">
+        <span style="position:relative;display:inline-block;width:40px;height:40px">
+          <img id="mo-custom-spec-photo-img" style="width:100%;height:100%;object-fit:cover;border-radius:8px"/>
+          <button type="button" onclick="moClearCustomSpecPhoto()" style="position:absolute;top:-6px;right:-6px;width:16px;height:16px;border-radius:50%;background:#C0392B;color:white;border:none;font-size:9px;cursor:pointer;padding:0;line-height:1">×</button>
+        </span>
+        <span style="font-size:10px;color:#9C7A5A">這張照片會跟著新規格一起存起來</span>
+      </div>
       <div id="mo-multi-spec-list" style="display:none;margin-top:8px;flex-direction:column;gap:6px"></div>
     </div>
     <!-- 喊單類型 -->
@@ -944,10 +955,11 @@ body.live-mode .hide-live { display: none !important; }
       <div style="margin-top:8px;background:#FDF6EC;border:1px dashed #E8D5B0;border-radius:10px;padding:8px">
         <div style="font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:5px">🎨 顏色 × 尺寸自動產生（像衣服、鞋子這種每個顏色都有同一套尺寸時用這個，不用一個個手打）</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">
-          <input type="text" id="ep-tier-colors" placeholder="顏色，逗號分隔：米色,淺藍,酒紅" style="flex:1;min-width:120px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;font-size:12px;outline:none"/>
+          <input type="text" id="ep-tier-colors" oninput="epRenderTierColorPhotoSlots()" placeholder="顏色，逗號分隔：米色,淺藍,酒紅" style="flex:1;min-width:120px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;font-size:12px;outline:none"/>
           <input type="text" id="ep-tier-sizes" placeholder="尺寸，逗號分隔：L,XL" style="flex:1;min-width:100px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;font-size:12px;outline:none"/>
           <button onclick="window.epGenerateColorSizeSpecs()" style="background:#C5A880;color:white;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">產生組合</button>
         </div>
+        <div id="ep-tier-color-photos"></div>
       </div>
     </div>
     <!-- 別名 -->
@@ -1051,7 +1063,8 @@ body.live-mode .hide-live { display: none !important; }
         <button class="ep-ch-btn ch-btn-trend" data-ch="MIMILINE" onclick="epSelectChannel(this,'MIMILINE')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎀 MIMILINE</button>
         <button class="ep-ch-btn ch-btn-trend" data-ch="ARTBOX" onclick="epSelectChannel(this,'ARTBOX')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 ARTBOX</button>
         <button class="ep-ch-btn ch-btn-trend" data-ch="29CM" onclick="epSelectChannel(this,'29CM')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🖤 29CM</button>
-        <button class="ep-ch-btn ch-btn-trend" data-ch="Object" onclick="epSelectChannel(this,'Object')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Object</button>
+<button class="ep-ch-btn ch-btn-trend" data-ch="MUSINSA" onclick="epSelectChannel(this,'MUSINSA')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🖤 MUSINSA</button>
+                <button class="ep-ch-btn ch-btn-trend" data-ch="Object" onclick="epSelectChannel(this,'Object')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Object</button>
         <button class="ep-ch-btn ch-btn-trend" data-ch="Point of View" onclick="epSelectChannel(this,'Point of View')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">👁 Point of View</button>
         <button class="ep-ch-btn ch-btn-trend" data-ch="BUTTER" onclick="epSelectChannel(this,'BUTTER')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧈 BUTTER</button>
         <button class="ep-ch-btn ch-btn-duty" data-ch="新世界免稅店" onclick="epSelectChannel(this,'新世界免稅店')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛬 新世界免稅店（機場提貨）</button>
@@ -1670,10 +1683,11 @@ body.live-mode .hide-live { display: none !important; }
       <div style="margin-top:8px;background:#FDF6EC;border:1px dashed #E8D5B0;border-radius:10px;padding:8px">
         <div style="font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:5px">🎨 顏色 × 尺寸自動產生（像衣服、鞋子這種每個顏色都有同一套尺寸時用這個，不用一個個手打）</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">
-          <input type="text" id="qa-tier-colors" placeholder="顏色，逗號分隔：米色,淺藍,酒紅" style="flex:1;min-width:120px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;font-size:12px;outline:none"/>
+          <input type="text" id="qa-tier-colors" oninput="qaRenderTierColorPhotoSlots()" placeholder="顏色，逗號分隔：米色,淺藍,酒紅" style="flex:1;min-width:120px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;font-size:12px;outline:none"/>
           <input type="text" id="qa-tier-sizes" placeholder="尺寸，逗號分隔：L,XL" style="flex:1;min-width:100px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;font-size:12px;outline:none"/>
           <button onclick="window.qaGenerateColorSizeSpecs()" style="background:#C5A880;color:white;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">產生組合</button>
         </div>
+        <div id="qa-tier-color-photos"></div>
       </div>
     </div>
 
@@ -1781,7 +1795,8 @@ body.live-mode .hide-live { display: none !important; }
         <button class="qa-ch-btn ch-btn-trend" data-ch="MIMILINE" onclick="qaSelectChannel(this,'MIMILINE')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎀 MIMILINE</button>
         <button class="qa-ch-btn ch-btn-trend" data-ch="ARTBOX" onclick="qaSelectChannel(this,'ARTBOX')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 ARTBOX</button>
         <button class="qa-ch-btn ch-btn-trend" data-ch="29CM" onclick="qaSelectChannel(this,'29CM')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">💻 29CM</button>
-        <button class="qa-ch-btn ch-btn-trend" data-ch="Object" onclick="qaSelectChannel(this,'Object')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Object</button>
+<button class="qa-ch-btn ch-btn-trend" data-ch="MUSINSA" onclick="qaSelectChannel(this,'MUSINSA')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🖤 MUSINSA</button>
+                <button class="qa-ch-btn ch-btn-trend" data-ch="Object" onclick="qaSelectChannel(this,'Object')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Object</button>
         <button class="qa-ch-btn ch-btn-trend" data-ch="Point of View" onclick="qaSelectChannel(this,'Point of View')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🎨 Point of View</button>
         <button class="qa-ch-btn ch-btn-trend" data-ch="BUTTER" onclick="qaSelectChannel(this,'BUTTER')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🧈 BUTTER</button>
         <button class="qa-ch-btn ch-btn-duty" data-ch="新世界免稅店" onclick="qaSelectChannel(this,'新世界免稅店')" style="padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🛬 新世界免稅店（機場提貨）</button>
@@ -3495,6 +3510,10 @@ window.openModal=function(id,data){
       window.G.epSpecsList=[...(data.specs||[])];
       window.G.epSpecImages=(window.G.epSpecsList||[]).map((s,i)=>(data.specImages||[])[i]||"");
       epRenderSpecs();
+      window.G.epTierColorImages={};
+      const epTierColorsReset=document.getElementById("ep-tier-colors");if(epTierColorsReset)epTierColorsReset.value="";
+      const epTierSizesReset=document.getElementById("ep-tier-sizes");if(epTierSizesReset)epTierSizesReset.value="";
+      const epTierPhotosReset=document.getElementById("ep-tier-color-photos");if(epTierPhotosReset)epTierPhotosReset.innerHTML="";
       document.getElementById("ep-aliases").value=(data.aliases||[]).join(",");
       document.getElementById("ep-note").value=data.note||"";
       setTimeout(()=>{epUrlPreview();epRivalCheck();},50);
@@ -3576,7 +3595,9 @@ window.openModal=function(id,data){
   }
   if(id==="modal-order"&&data){
     const p=window.G.products.find(x=>x.id===data.productId);
+    window.G.moCustomSpecPhoto=null;
     setTimeout(()=>{
+      const moCustomSpecPreviewReset=document.getElementById("mo-custom-spec-photo-preview");if(moCustomSpecPreviewReset)moCustomSpecPreviewReset.style.display="none";
       document.getElementById("mo-pid").textContent=data.productId;
       document.getElementById("mo-pname").textContent=p?`${p.emoji} ${p.name}`:"";
       // 活動提醒：商品名稱裡如果有（1+1）／（2+1）／（3+1）這類標籤，登記喊單時明顯提醒一下，
@@ -4165,6 +4186,46 @@ window.handleSpecUrlPaste=function(e,mode){
   showToast("偵測到網址，已經自動幫你搬到「官網網址」欄位了","success");
 };
 // 顏色×尺寸自動展開：跟快速上架那個是同一套邏輯，編輯商品這邊也能用
+window.epRenderTierColorPhotoSlots=function(){
+  const colorsRaw=document.getElementById("ep-tier-colors")?.value||"";
+  const colors=colorsRaw.split(",").map(s=>s.trim()).filter(Boolean);
+  const box=document.getElementById("ep-tier-color-photos");
+  if(!box)return;
+  if(!colors.length){box.innerHTML="";return;}
+  window.G.epTierColorImages=window.G.epTierColorImages||{};
+  box.innerHTML=`<div style="font-size:10px;color:#9C7A5A;margin:8px 0 6px">💡 幫每個顏色各設一張照片，等一下按「產生組合」時，同顏色的所有尺寸會自動套用同一張，不用一個個補</div>`+
+    `<div style="display:flex;flex-wrap:wrap;gap:10px">`+
+    colors.map(c=>{
+      const img=window.G.epTierColorImages[c]||"";
+      const esc=c.replace(/'/g,"\\'").replace(/"/g,"&quot;");
+      const thumb=img
+        ?`<span style="width:44px;height:44px;border-radius:8px;position:relative;display:inline-block">
+            <img onclick="event.stopPropagation();lbOpen('${img}')" src="${img}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;cursor:zoom-in"/>
+            <button onclick="event.stopPropagation();delete window.G.epTierColorImages['${esc}'];epRenderTierColorPhotoSlots()" style="position:absolute;top:-6px;right:-6px;width:16px;height:16px;border-radius:50%;background:#C0392B;color:white;border:none;font-size:9px;cursor:pointer;padding:0;line-height:1">×</button>
+          </span>`
+        :`<span onclick="epTierColorPhotoBrowse('${esc}')" style="width:44px;height:44px;border-radius:8px;background:#F5EDE0;display:flex;align-items:center;justify-content:center;font-size:16px;color:#B0906A;cursor:pointer">📷</span>`;
+      return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:44px">${thumb}<span style="font-size:10px;color:#9C7A5A;text-align:center;line-height:1.2">${c}</span></div>`;
+    }).join("")+`</div>`;
+};
+window.epTierColorPhotoBrowse=function(color){
+  let input=document.getElementById("ep-tier-color-img-input");
+  if(!input){
+    input=document.createElement("input");
+    input.type="file";input.accept="image/*";input.id="ep-tier-color-img-input";input.style.display="none";
+    document.body.appendChild(input);
+  }
+  input.onchange=async function(){
+    const file=input.files[0];if(!file)return;
+    showToast("壓縮圖片中…","success");
+    const b64=await compressImg(file,360,0.7);
+    window.G.epTierColorImages=window.G.epTierColorImages||{};
+    window.G.epTierColorImages[color]=b64;
+    epRenderTierColorPhotoSlots();
+    input.value="";
+    showToast(`「${color}」的照片已設定`,"success");
+  };
+  input.click();
+};
 window.epGenerateColorSizeSpecs=function(){
   const colorsRaw=document.getElementById("ep-tier-colors")?.value||"";
   const sizesRaw=document.getElementById("ep-tier-sizes")?.value||"";
@@ -4179,13 +4240,13 @@ window.epGenerateColorSizeSpecs=function(){
       const combo=`${c} / ${s}`;
       if(!window.G.epSpecsList.includes(combo)){
         window.G.epSpecsList.push(combo);
-        window.G.epSpecImages.push("");
+        window.G.epSpecImages.push(window.G.epTierColorImages?.[c]||"");
         added++;
       }
     });
   });
   epRenderSpecs();
-  showToast(`已產生 ${added} 筆規格組合`,"success");
+  showToast(`已產生 ${added} 筆規格組合${window.G.epTierColorImages&&Object.keys(window.G.epTierColorImages).length?"，同顏色已自動套用照片":""}`,"success");
 };
 // ── 同行參考價：可新增多筆（不同代購），格式「名稱 價格」或單純「價格」───────
 function parseRivalInput(val){
@@ -4425,6 +4486,46 @@ window.qaSpecDragStart=function(e,idx){
 // 顏色×尺寸自動展開：例如顏色填「米色,淺藍」、尺寸填「L,XL」，會自動產生
 // 「米色 / L」「米色 / XL」「淺藍 / L」「淺藍 / XL」四筆規格，不用一個個手打；
 // 之後登記喊單時，系統偵測到這種「顏色 / 尺寸」格式會自動變成「先選顏色、再選尺寸」的兩步驟
+window.qaRenderTierColorPhotoSlots=function(){
+  const colorsRaw=document.getElementById("qa-tier-colors")?.value||"";
+  const colors=colorsRaw.split(",").map(s=>s.trim()).filter(Boolean);
+  const box=document.getElementById("qa-tier-color-photos");
+  if(!box)return;
+  if(!colors.length){box.innerHTML="";return;}
+  window.G.qaTierColorImages=window.G.qaTierColorImages||{};
+  box.innerHTML=`<div style="font-size:10px;color:#9C7A5A;margin:8px 0 6px">💡 幫每個顏色各設一張照片，等一下按「產生組合」時，同顏色的所有尺寸會自動套用同一張，不用一個個補</div>`+
+    `<div style="display:flex;flex-wrap:wrap;gap:10px">`+
+    colors.map(c=>{
+      const img=window.G.qaTierColorImages[c]||"";
+      const esc=c.replace(/'/g,"\\'").replace(/"/g,"&quot;");
+      const thumb=img
+        ?`<span style="width:44px;height:44px;border-radius:8px;position:relative;display:inline-block">
+            <img onclick="event.stopPropagation();lbOpen('${img}')" src="${img}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;cursor:zoom-in"/>
+            <button onclick="event.stopPropagation();delete window.G.qaTierColorImages['${esc}'];qaRenderTierColorPhotoSlots()" style="position:absolute;top:-6px;right:-6px;width:16px;height:16px;border-radius:50%;background:#C0392B;color:white;border:none;font-size:9px;cursor:pointer;padding:0;line-height:1">×</button>
+          </span>`
+        :`<span onclick="qaTierColorPhotoBrowse('${esc}')" style="width:44px;height:44px;border-radius:8px;background:#F5EDE0;display:flex;align-items:center;justify-content:center;font-size:16px;color:#B0906A;cursor:pointer">📷</span>`;
+      return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:44px">${thumb}<span style="font-size:10px;color:#9C7A5A;text-align:center;line-height:1.2">${c}</span></div>`;
+    }).join("")+`</div>`;
+};
+window.qaTierColorPhotoBrowse=function(color){
+  let input=document.getElementById("qa-tier-color-img-input");
+  if(!input){
+    input=document.createElement("input");
+    input.type="file";input.accept="image/*";input.id="qa-tier-color-img-input";input.style.display="none";
+    document.body.appendChild(input);
+  }
+  input.onchange=async function(){
+    const file=input.files[0];if(!file)return;
+    showToast("壓縮圖片中…","success");
+    const b64=await compressImg(file,360,0.7);
+    window.G.qaTierColorImages=window.G.qaTierColorImages||{};
+    window.G.qaTierColorImages[color]=b64;
+    qaRenderTierColorPhotoSlots();
+    input.value="";
+    showToast(`「${color}」的照片已設定`,"success");
+  };
+  input.click();
+};
 window.qaGenerateColorSizeSpecs=function(){
   const colorsRaw=document.getElementById("qa-tier-colors")?.value||"";
   const sizesRaw=document.getElementById("qa-tier-sizes")?.value||"";
@@ -4439,13 +4540,13 @@ window.qaGenerateColorSizeSpecs=function(){
       const combo=`${c} / ${s}`;
       if(!window.G.qaSpecsList.includes(combo)){
         window.G.qaSpecsList.push(combo);
-        window.G.qaSpecImages.push("");
+        window.G.qaSpecImages.push(window.G.qaTierColorImages?.[c]||"");
         added++;
       }
     });
   });
   qaRenderSpecs();
-  showToast(`已產生 ${added} 筆規格組合`,"success");
+  showToast(`已產生 ${added} 筆規格組合${window.G.qaTierColorImages&&Object.keys(window.G.qaTierColorImages).length?"，同顏色已自動套用照片":""}`,"success");
 };
 window.qaAddSpec=function(val){
   val=(val||"").trim();
@@ -5943,6 +6044,34 @@ window.moRemoveMixItem=function(pid,spec){
   moRenderMixSiblingBtns();moRenderMixRows();
 };
 
+// 登記喊單時手打新規格，可以順便當場拍/選一張照片，不用另外跑去「修改商品」補
+window.moCustomSpecPhotoBrowse=function(){
+  let input=document.getElementById("mo-custom-spec-img-input");
+  if(!input){
+    input=document.createElement("input");
+    input.type="file";input.accept="image/*";input.id="mo-custom-spec-img-input";input.style.display="none";
+    document.body.appendChild(input);
+  }
+  input.onchange=async function(){
+    const file=input.files[0];if(!file)return;
+    showToast("壓縮圖片中…","success");
+    const b64=await compressImg(file,360,0.7);
+    window.G.moCustomSpecPhoto=b64;
+    const preview=document.getElementById("mo-custom-spec-photo-preview");
+    const img=document.getElementById("mo-custom-spec-photo-img");
+    if(img)img.src=b64;
+    if(preview){preview.style.display="flex";}
+    input.value="";
+    showToast("照片已附加","success");
+  };
+  input.click();
+};
+window.moClearCustomSpecPhoto=function(){
+  window.G.moCustomSpecPhoto=null;
+  const preview=document.getElementById("mo-custom-spec-photo-preview");
+  if(preview)preview.style.display="none";
+};
+
 window.addOrder=async function(){
   const productId=document.getElementById("mo-pid")?.textContent;if(!productId)return;
   const buyerInput=document.getElementById("mo-buyer")?.value.trim();
@@ -6010,7 +6139,7 @@ window.addOrder=async function(){
     if(prod?.specs?.length>1&&!spec){showToast("請先選擇規格！","error");return;}
     const id="O"+Date.now();
     await fbSet("orders",id,{productId,productName:cleanProductName(prod.name),productEmoji:prod.emoji,customerId,communityName,lineName,buyerName:communityName||lineName,qty:qtyFinal,unitPrice:prod.finalPrice,total:prod.finalPrice*qtyFinal,status:"pending",tripId,orderType,spec,purchased:orderType==="onsite",costSnapshot:onsiteCost,paymentMethodSnapshot:pmThisBatch,createdAt:Date.now()});
-    if(spec)addSpecToProductIfNew(productId,spec);
+    if(spec)addSpecToProductIfNew(productId,spec,window.G.moCustomSpecPhoto);
     totalKinds=1;
     lastSpecLabel=spec?" ("+spec+")":"";
   }
@@ -6029,6 +6158,7 @@ window.addOrder=async function(){
   window.G.moMixItems=[];
   window.G.moSpecSel={};
   const specEl=document.getElementById("mo-spec");if(specEl)specEl.value="";
+  moClearCustomSpecPhoto();
   closeModal("modal-order");showToast(`${orderTypeLabel} 已為 ${communityName||lineName} 登記${totalKinds>1?`（共 ${totalKinds} 筆 ${lastSpecLabel}）`:lastSpecLabel}`);
   // 強制刷新避免 Firebase onSnapshot 延遲導致畫面未更新
   setTimeout(()=>{renderList();renderCustomers();renderInvoice();},600);
@@ -10939,15 +11069,27 @@ window.markDepositReceived=async function(){
 // 下次同名的情況就不用再選一次，也不怕日後同名的人變多、又要重新猜一次
 // 訂單當下手打的自訂規格，如果商品本身還沒有這個規格，順便存回商品的規格清單，
 // 這樣下次同樣的規格才會變成快選按鈕，不用每次重打
-window.addSpecToProductIfNew=async function(productId,spec){
+window.addSpecToProductIfNew=async function(productId,spec,photoB64){
   if(!productId||!spec)return;
   const p=window.G.products.find(x=>x.id===productId);
   if(!p)return;
-  const specs=Array.isArray(p.specs)?p.specs:(p.specs?[p.specs]:[]);
-  if(specs.includes(spec))return;
-  const newSpecs=[...specs,spec];
-  p.specs=newSpecs; // 立刻更新本地快取，畫面上馬上看得到，不用等 Firestore 同步回來
-  await fbUpd("products",productId,{specs:newSpecs}).catch(()=>{});
+  const specs=Array.isArray(p.specs)?[...p.specs]:(p.specs?[p.specs]:[]);
+  const images=Array.isArray(p.specImages)?[...p.specImages]:[];
+  let idx=specs.indexOf(spec);
+  let changed=false;
+  if(idx===-1){
+    specs.push(spec);
+    idx=specs.length-1;
+    changed=true;
+  }
+  while(images.length<specs.length)images.push("");
+  if(photoB64&&!images[idx]){
+    images[idx]=photoB64;
+    changed=true;
+  }
+  if(!changed)return;
+  p.specs=specs;p.specImages=images; // 立刻更新本地快取，畫面上馬上看得到，不用等 Firestore 同步回來
+  await fbUpd("products",productId,{specs,specImages:images}).catch(()=>{});
 };
 
 window.bindCustomerLineUser=function(custId,userId,pictureUrl){
@@ -11289,6 +11431,10 @@ window.openQuickAdd=function(){
   const qaSpecs=document.getElementById("qa-specs");if(qaSpecs)qaSpecs.value="";
   window.G.qaSpecsList=[];window.G.qaSpecImages=[];
   if(typeof qaRenderSpecs==="function")qaRenderSpecs();
+  window.G.qaTierColorImages={};
+  const qaTierColorsReset=document.getElementById("qa-tier-colors");if(qaTierColorsReset)qaTierColorsReset.value="";
+  const qaTierSizesReset=document.getElementById("qa-tier-sizes");if(qaTierSizesReset)qaTierSizesReset.value="";
+  const qaTierPhotosReset=document.getElementById("qa-tier-color-photos");if(qaTierPhotosReset)qaTierPhotosReset.innerHTML="";
   window.G.qaPromoOriginal=null;window.G.qaPromoDivisor=null;window.G.qaPromoPct=null;
   if(typeof qaUpdatePromoBadge==="function")qaUpdatePromoBadge();
   const qaDiscPctReset=document.getElementById("qa-discount-pct");if(qaDiscPctReset)qaDiscPctReset.value="";
@@ -12806,6 +12952,10 @@ window.saveQuickAdd=async function(){
   const qaNoteEl=document.getElementById("qa-note");if(qaNoteEl)qaNoteEl.value="";
   window.G.qaSpecsList=[];window.G.qaSpecImages=[];
   if(typeof qaRenderSpecs==="function")qaRenderSpecs();
+  window.G.qaTierColorImages={};
+  const qaTierColorsPost=document.getElementById("qa-tier-colors");if(qaTierColorsPost)qaTierColorsPost.value="";
+  const qaTierSizesPost=document.getElementById("qa-tier-sizes");if(qaTierSizesPost)qaTierSizesPost.value="";
+  const qaTierPhotosPost=document.getElementById("qa-tier-color-photos");if(qaTierPhotosPost)qaTierPhotosPost.innerHTML="";
   // 重置「同時登記喊單」區塊，準備下一次快速上架
   const qaOrderTogglePost=document.getElementById("qa-order-toggle");if(qaOrderTogglePost)qaOrderTogglePost.checked=false;
   const qaOrderSecPost=document.getElementById("qa-order-section");if(qaOrderSecPost)qaOrderSecPost.style.display="none";
