@@ -935,7 +935,7 @@ body.live-mode .hide-live { display: none !important; }
     </div>
     <!-- 規格：一個口味一個標籤，可個別點開修改/刪除 -->
     <div style="margin-bottom:10px">
-      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">📐 規格（例如口味，點標籤可修改，點×可刪除）</label>
+      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">📐 規格（例如口味，按住 ⠿ 可拖曳排序，點標籤可修改，點×可刪除）</label>
       <div id="ep-specs-chips" style="display:flex;flex-wrap:wrap;gap:6px;padding:8px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;min-height:42px"></div>
       <div style="display:flex;gap:6px;margin-top:6px">
         <input type="text" id="ep-specs-new" placeholder="輸入新口味後按 Enter 或逗號新增" onpaste="handleSpecUrlPaste(event,'ep')" onkeydown="if((event.key==='Enter'||event.key===',')&&!event.isComposing&&event.keyCode!==229){event.preventDefault();epAddSpec(this.value);this.value='';}" style="flex:1;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:8px 12px;font-size:13px;outline:none;box-sizing:border-box"/>
@@ -1661,7 +1661,7 @@ body.live-mode .hide-live { display: none !important; }
     </div>
     <!-- 規格：跟修改商品一樣，一個口味一個標籤，可個別上傳照片、修改、刪除 -->
     <div style="margin-bottom:12px">
-      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">📐 規格（點標籤可修改，點×可刪除，點📷可設定照片）</label>
+      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">📐 規格（按住 ⠿ 可拖曳排序，點標籤可修改，點×可刪除，點📷可設定照片）</label>
       <div id="qa-specs-chips" style="display:flex;flex-wrap:wrap;gap:6px;padding:8px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;min-height:42px"></div>
       <div style="display:flex;gap:6px;margin-top:6px">
         <input type="text" id="qa-specs-new" placeholder="輸入新口味後按 Enter 或逗號新增" onpaste="handleSpecUrlPaste(event,'qa')" onkeydown="if((event.key==='Enter'||event.key===',')&&!event.isComposing&&event.keyCode!==229){event.preventDefault();qaAddSpec(this.value);this.value='';}" style="flex:1;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:8px 12px;font-size:13px;outline:none;box-sizing:border-box"/>
@@ -1884,9 +1884,10 @@ body.live-mode .hide-live { display: none !important; }
           <input type="hidden" id="qa-cust"/>
           <div id="qa-cust-list" style="display:none;position:absolute;z-index:200;left:0;right:0;top:calc(100% + 3px);background:white;border:1px solid #E8D5B0;border-radius:12px;max-height:200px;overflow-y:auto;box-shadow:0 4px 16px rgba(0,0,0,0.10)"></div>
         </div>
-        <div id="qa-order-spec-area" style="display:none;margin-bottom:12px">
-          <label style="display:block;font-size:11px;font-weight:700;color:#C0392B;margin-bottom:5px">📐 這筆喊單是哪個規格？（這個商品有多規格，一定要選）</label>
-          <div id="qa-order-spec-btns" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+        <div id="qa-order-spec-area" style="margin-bottom:12px">
+          <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">📐 這筆喊單的規格（選填，例如顏色／尺寸）</label>
+          <div id="qa-order-spec-btns" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px"></div>
+          <input type="text" id="qa-order-spec-input" placeholder="或自行輸入，例如：白色 245" oninput="window.G.qaOrderSpec=this.value" style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:8px 14px;font-size:13px;outline:none;box-sizing:border-box"/>
         </div>
         <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">數量</label>
         <div style="display:flex;align-items:center;gap:0;margin-bottom:12px;border:1px solid #E8D5B0;border-radius:10px;overflow:hidden;background:white;width:180px;max-width:100%">
@@ -3670,11 +3671,10 @@ window.openModal=function(id,data){
       const isTwoTier=specs.length>1&&specs.every(s=>s.includes(" / "));
       window.G._moTierSpecs=isTwoTier?specs.map((s,i)=>({spec:s,img:specImgs[i]||""})):null;
       if(specArea&&specBtns){
+        specArea.style.display="block";
         if(isTwoTier){
-          specArea.style.display="block";
           window.moRenderSpecTierColors();
         } else if(specs.length>0){
-          specArea.style.display="block";
           specBtns.innerHTML=specs.map((s,i)=>{
             const img=(p?.specImages||[])[i]||"";
             const zoomBtn=img?`<span onclick="event.stopPropagation();lbOpen('${img}')" style="position:absolute;inset:0;cursor:zoom-in"><img src="${img}" draggable="false" style="width:100%;height:100%;object-fit:cover;display:block;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent"/><span style="position:absolute;bottom:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,0.55);color:white;font-size:10px;display:flex;align-items:center;justify-content:center;pointer-events:none">🔍</span></span>`
@@ -3690,7 +3690,9 @@ window.openModal=function(id,data){
             if(firstBtn)moSelectSpec(specs[0],firstBtn);
           }
         } else {
-          specArea.style.display="none";
+          // 這個商品目前還沒有預先建立任何規格，不代表不能填規格——
+          // 快選按鈕列留空，但下面「或自行輸入規格」的欄位還是要能打字，
+          // 讓你可以在訂單當下才決定規格（例如鞋子現場看客人要什麼顏色/尺寸再打）
           specBtns.innerHTML="";
         }
       }
@@ -4075,13 +4077,58 @@ window.epRenderSpecs=function(){
         </span>`
       : `<span onclick="event.stopPropagation();epSpecImgArm(${i})" title="點一下，然後 Ctrl+V 貼上剪貼簿圖片" style="width:22px;height:22px;border-radius:6px;background:${isArmed?"#EDE4FB":"#F5EDE0"};flex-shrink:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:12px;${ringStyle}">📷</span>`;
     const browseBtn=`<button onclick="event.stopPropagation();epSpecImgBrowse(${i})" title="選擇檔案上傳" style="background:none;border:none;color:#B0906A;font-size:10px;cursor:pointer;padding:0;text-decoration:underline">選檔案</button>`;
-    return `<span data-idx="${i}" onclick="epEditSpec(this)" style="display:inline-flex;align-items:center;gap:5px;background:white;border:1px solid #D8C4A0;border-radius:99px;padding:5px 6px 5px 6px;font-size:13px;color:#3D2010;cursor:pointer">
+    const grip=`<span onpointerdown="event.stopPropagation();epSpecDragStart(event,${i})" onclick="event.stopPropagation()" title="按住拖曳排序" style="cursor:grab;color:#C5A880;font-size:14px;padding:0 1px;touch-action:none;user-select:none;-webkit-user-select:none">⠿</span>`;
+    return `<span data-idx="${i}" onclick="epEditSpec(this)" style="display:inline-flex;align-items:center;gap:5px;background:white;border:1px solid #D8C4A0;border-radius:99px;padding:5px 6px 5px 6px;font-size:13px;color:#3D2010;cursor:pointer;transition:opacity 0.15s">
+      ${grip}
       ${thumb}
       <span class="ep-spec-text">${esc}</span>
       ${browseBtn}
       <button onclick="event.stopPropagation();epRemoveSpec(${i})" style="background:#F5EDE0;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;color:#9C7A5A;cursor:pointer;line-height:1;padding:0">×</button>
     </span>`;
   }).join("");
+};
+// 規格順序拖曳排序：用 Pointer Events（不是 HTML5 原生 drag-and-drop），
+// 因為原生 drag-and-drop 在手機觸控螢幕上完全沒反應，Pointer Events 才能手機/滑鼠都通用
+window.epSpecDragStart=function(e,idx){
+  window.G._epDragIdx=idx;
+  window.G._epDragOverIdx=idx;
+  const box=document.getElementById("ep-specs-chips");
+  if(!box)return;
+  const chips=()=>Array.from(box.querySelectorAll("[data-idx]"));
+  const startChip=chips().find(c=>parseInt(c.dataset.idx)===idx);
+  if(startChip)startChip.style.opacity="0.4";
+  const clearOutlines=()=>chips().forEach(c=>{c.style.outline="";});
+  const move=(ev)=>{
+    ev.preventDefault();
+    const point=ev.touches?ev.touches[0]:ev;
+    const el=document.elementFromPoint(point.clientX,point.clientY);
+    const target=el?el.closest("[data-idx]"):null;
+    clearOutlines();
+    if(target){
+      window.G._epDragOverIdx=parseInt(target.dataset.idx);
+      target.style.outline="2px dashed #7C3AED";
+    }
+  };
+  const up=()=>{
+    document.removeEventListener("pointermove",move);
+    document.removeEventListener("pointerup",up);
+    clearOutlines();
+    if(startChip)startChip.style.opacity="";
+    const from=window.G._epDragIdx;
+    const to=window.G._epDragOverIdx;
+    window.G._epDragIdx=null;
+    window.G._epDragOverIdx=null;
+    if(from==null||to==null||from===to)return;
+    const specs=window.G.epSpecsList||[];
+    const imgs=window.G.epSpecImages||[];
+    const [movedSpec]=specs.splice(from,1);
+    const [movedImg]=imgs.splice(from,1);
+    specs.splice(to,0,movedSpec);
+    imgs.splice(to,0,movedImg);
+    epRenderSpecs();
+  };
+  document.addEventListener("pointermove",move);
+  document.addEventListener("pointerup",up);
 };
 window.handleSpecUrlPaste=function(e,mode){
   const text=(e.clipboardData||window.clipboardData)?.getData("text")?.trim()||"";
@@ -4311,7 +4358,9 @@ window.qaRenderSpecs=function(){
         </span>`
       : `<span onclick="event.stopPropagation();qaSpecImgArm(${i})" title="點一下，然後 Ctrl+V 貼上剪貼簿圖片" style="width:22px;height:22px;border-radius:6px;background:${isArmed?"#EDE4FB":"#F5EDE0"};flex-shrink:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:12px;${ringStyle}">📷</span>`;
     const browseBtn=`<button onclick="event.stopPropagation();qaSpecImgBrowse(${i})" title="選擇檔案上傳" style="background:none;border:none;color:#B0906A;font-size:10px;cursor:pointer;padding:0;text-decoration:underline">選檔案</button>`;
-    return `<span data-idx="${i}" onclick="qaEditSpec(this)" style="display:inline-flex;align-items:center;gap:5px;background:white;border:1px solid #D8C4A0;border-radius:99px;padding:5px 6px 5px 6px;font-size:13px;color:#3D2010;cursor:pointer">
+    const grip=`<span onpointerdown="event.stopPropagation();qaSpecDragStart(event,${i})" onclick="event.stopPropagation()" title="按住拖曳排序" style="cursor:grab;color:#C5A880;font-size:14px;padding:0 1px;touch-action:none;user-select:none;-webkit-user-select:none">⠿</span>`;
+    return `<span data-idx="${i}" onclick="qaEditSpec(this)" style="display:inline-flex;align-items:center;gap:5px;background:white;border:1px solid #D8C4A0;border-radius:99px;padding:5px 6px 5px 6px;font-size:13px;color:#3D2010;cursor:pointer;transition:opacity 0.15s">
+      ${grip}
       ${thumb}
       <span class="qa-spec-text">${esc}</span>
       ${browseBtn}
@@ -4319,6 +4368,49 @@ window.qaRenderSpecs=function(){
     </span>`;
   }).join("");
   if(typeof qaRenderOrderSpecPicker==="function")qaRenderOrderSpecPicker();
+};
+// 規格順序拖曳排序：用 Pointer Events（不是 HTML5 原生 drag-and-drop），
+// 因為原生 drag-and-drop 在手機觸控螢幕上完全沒反應，Pointer Events 才能手機/滑鼠都通用
+window.qaSpecDragStart=function(e,idx){
+  window.G._qaDragIdx=idx;
+  window.G._qaDragOverIdx=idx;
+  const box=document.getElementById("qa-specs-chips");
+  if(!box)return;
+  const chips=()=>Array.from(box.querySelectorAll("[data-idx]"));
+  const startChip=chips().find(c=>parseInt(c.dataset.idx)===idx);
+  if(startChip)startChip.style.opacity="0.4";
+  const clearOutlines=()=>chips().forEach(c=>{c.style.outline="";});
+  const move=(ev)=>{
+    ev.preventDefault();
+    const point=ev.touches?ev.touches[0]:ev;
+    const el=document.elementFromPoint(point.clientX,point.clientY);
+    const target=el?el.closest("[data-idx]"):null;
+    clearOutlines();
+    if(target){
+      window.G._qaDragOverIdx=parseInt(target.dataset.idx);
+      target.style.outline="2px dashed #7C3AED";
+    }
+  };
+  const up=()=>{
+    document.removeEventListener("pointermove",move);
+    document.removeEventListener("pointerup",up);
+    clearOutlines();
+    if(startChip)startChip.style.opacity="";
+    const from=window.G._qaDragIdx;
+    const to=window.G._qaDragOverIdx;
+    window.G._qaDragIdx=null;
+    window.G._qaDragOverIdx=null;
+    if(from==null||to==null||from===to)return;
+    const specs=window.G.qaSpecsList||[];
+    const imgs=window.G.qaSpecImages||[];
+    const [movedSpec]=specs.splice(from,1);
+    const [movedImg]=imgs.splice(from,1);
+    specs.splice(to,0,movedSpec);
+    imgs.splice(to,0,movedImg);
+    qaRenderSpecs();
+  };
+  document.addEventListener("pointermove",move);
+  document.addEventListener("pointerup",up);
 };
 // 顏色×尺寸自動展開：例如顏色填「米色,淺藍」、尺寸填「L,XL」，會自動產生
 // 「米色 / L」「米色 / XL」「淺藍 / L」「淺藍 / XL」四筆規格，不用一個個手打；
@@ -5890,6 +5982,7 @@ window.addOrder=async function(){
     if(prod?.specs?.length>1&&!spec){showToast("請先選擇規格！","error");return;}
     const id="O"+Date.now();
     await fbSet("orders",id,{productId,productName:cleanProductName(prod.name),productEmoji:prod.emoji,customerId,communityName,lineName,buyerName:communityName||lineName,qty:qtyFinal,unitPrice:prod.finalPrice,total:prod.finalPrice*qtyFinal,status:"pending",tripId,orderType,spec,purchased:orderType==="onsite",costSnapshot:onsiteCost,paymentMethodSnapshot:pmThisBatch,createdAt:Date.now()});
+    if(spec)addSpecToProductIfNew(productId,spec);
     totalKinds=1;
     lastSpecLabel=spec?" ("+spec+")":"";
   }
@@ -6353,7 +6446,7 @@ window.confirmChangeSpec=async function(){
   const hadNote=!!(o?.discountNote); // 原本就有備註的話，允許把它清空，不算「什麼都沒填」
   if(!newSpec&&!newNote&&!hadNote){showToast("規格或備註至少要填一個","error");return;}
   const upd={};
-  if(newSpec)upd.spec=newSpec;
+  if(newSpec){upd.spec=newSpec;if(o?.productId)addSpecToProductIfNew(o.productId,newSpec);}
   upd.discountNote=newNote; // 備註不論有沒有填都更新，才能支援「清空備註」
   await fbUpd("orders",oid,upd);
   showToast(newSpec?`已換成「${newSpec}」`:(newNote?"備註已儲存":"備註已清空"),"success");
@@ -6392,7 +6485,7 @@ window.eoRenderPending=function(){
     const typeBadge=item.orderType==="onsite"?"🛍️現場":item.orderType==="quote"?"📋待報價":"📱記事本+1";
     const qty=item.qty||1;
     div.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-      <span style="font-size:12px;font-weight:700;color:#166534;min-width:0">＋ ${item.productName}${item.spec?` (${item.spec})`:""} <span onclick="event.stopPropagation();window.eoPendingToggleType(${i})" title="點一下切換成另一種類型" style="font-size:10px;font-weight:700;color:#5C3A1E;background:#FDF6EC;border-radius:6px;padding:1px 5px;cursor:pointer;border-bottom:1px dotted #5C3A1E">${typeBadge} ✎</span> <span style="font-size:10px;font-weight:400;color:#4ADE80">（待儲存）</span></span>
+      <span style="font-size:12px;font-weight:700;color:#166534;min-width:0">＋ ${item.productName} <span onclick="event.stopPropagation();window.eoPendingEditSpec(${i})" title="點一下輸入/修改這筆的規格" style="font-size:10px;font-weight:700;color:#5C3A1E;background:#FDF6EC;border-radius:6px;padding:1px 5px;cursor:pointer;border-bottom:1px dotted #5C3A1E">📐 ${item.spec||"加規格"} ✎</span> <span onclick="event.stopPropagation();window.eoPendingToggleType(${i})" title="點一下切換成另一種類型" style="font-size:10px;font-weight:700;color:#5C3A1E;background:#FDF6EC;border-radius:6px;padding:1px 5px;cursor:pointer;border-bottom:1px dotted #5C3A1E">${typeBadge} ✎</span> <span style="font-size:10px;font-weight:400;color:#4ADE80">（待儲存）</span></span>
       <button onclick="window.G.eoPendingAdd.splice(${i},1);eoRenderPending();" style="flex-shrink:0;color:#DC2626;background:none;border:none;cursor:pointer;font-size:14px;font-weight:900">×</button>
     </div>
     <div style="display:flex;align-items:center;gap:10px;margin-top:8px">
@@ -6437,6 +6530,19 @@ window.eoPendingQtyAdj=function(i,delta){
   if(!item)return;
   item.qty=Math.max(1,(item.qty||1)+delta);
   item.total=item.unitPrice*item.qty;
+  eoRenderPending();
+};
+// 點一下待儲存清單裡的「規格」標籤，可以補填或修改這筆的規格（例如商品當初建立時規格留白，
+// 現場看客人決定要哪個顏色/尺寸才知道，這時候再打進去）；跟其他入口一樣，新規格會順便存回商品，
+// 下次同樣的規格就會變成快選按鈕
+window.eoPendingEditSpec=function(i){
+  const item=(window.G.eoPendingAdd||[])[i];
+  if(!item)return;
+  const val=window.prompt("這筆的規格（例如顏色／尺寸），留空表示不填：",item.spec||"");
+  if(val===null)return; // 使用者按取消，維持原樣
+  const trimmed=val.trim();
+  item.spec=trimmed;
+  if(trimmed)addSpecToProductIfNew(item.productId,trimmed);
   eoRenderPending();
 };
 
@@ -9290,10 +9396,26 @@ window.renderList=function(){
     cc.innerHTML=[["all","🌏 全部"],...Object.entries(CURR).filter(([k])=>usedCurs.includes(k)).map(([k,v])=>[k,`${v.flag} ${v.name}`])].map(([k,l])=>`<button onclick="window.G.listFilterCurrency='${k}';renderList()" style="flex-shrink:0;padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1px solid ${listFilterCurrency===k?"#5C3A1E":"#E8D5B0"};background:${listFilterCurrency===k?"#5C3A1E":"white"};color:${listFilterCurrency===k?"#F5E6C8":"#9C7A5A"};cursor:pointer">${l}</button>`).join("");
   }
   // 類別篩選
+  // 分類徽章上的數字，要跟畫面上實際會顯示的清單一致——所以套用跟主清單一樣的
+  // 封存/搜尋/幣別篩選，只是不篩「分類」本身（不然沒辦法算出每個分類各自的數量）
+  const matchesNonCatFilters=p=>{
+    const mArchived=window.G.listShowArchived?p.archived===true:!p.archived;
+    const mX=listFilterCurrency==="all"||(p.currency||"KRW")===listFilterCurrency;
+    const sq=listSearch.toLowerCase();
+    const pOrders2=orders.filter(o=>o.productId===p.id);
+    const buyerNames=pOrders2.map(o=>(o.communityName||o.lineName||o.buyerName||"").toLowerCase()).join(" ");
+    const specsStr=(Array.isArray(p.specs)?p.specs.join(","):p.specs||"").toLowerCase();
+    const channelAbbr={"oy":"olive young"};
+    const channelLower=(p.channel||"").toLowerCase();
+    const mChannelAbbr=sq&&channelAbbr[sq]&&channelLower.includes(channelAbbr[sq]);
+    const mS=!listSearch||p.name.toLowerCase().includes(sq)||p.id.toLowerCase().includes(sq)||buyerNames.includes(sq)||channelLower.includes(sq)||specsStr.includes(sq)||mChannelAbbr;
+    return mArchived&&mX&&mS;
+  };
+  const nonCatFilteredProducts=products.filter(matchesNonCatFilters);
   const fc=document.getElementById("cat-filters");
   if(fc){
-    const usedCats=CATS.filter(c=>products.some(p=>p.catKey===c.key));
-    fc.innerHTML=[["all","全部",products.length],...usedCats.map(c=>[c.key,c.emoji+" "+c.label,products.filter(p=>p.catKey===c.key).length])].map(([k,l,n])=>`<button onclick="window.G.listFilterCat='${k}';window.G.listFilterSubcat=null;renderList()" style="flex-shrink:0;padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1px solid ${listFilterCat===k?"#C5A880":"#E8D5B0"};background:${listFilterCat===k?"#C5A880":"white"};color:${listFilterCat===k?"white":"#9C7A5A"};cursor:pointer">${l}(${n})</button>`).join("");
+    const usedCats=CATS.filter(c=>nonCatFilteredProducts.some(p=>p.catKey===c.key));
+    fc.innerHTML=[["all","全部",nonCatFilteredProducts.length],...usedCats.map(c=>[c.key,c.emoji+" "+c.label,nonCatFilteredProducts.filter(p=>p.catKey===c.key).length])].map(([k,l,n])=>`<button onclick="window.G.listFilterCat='${k}';window.G.listFilterSubcat=null;renderList()" style="flex-shrink:0;padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1px solid ${listFilterCat===k?"#C5A880":"#E8D5B0"};background:${listFilterCat===k?"#C5A880":"white"};color:${listFilterCat===k?"white":"#9C7A5A"};cursor:pointer">${l}(${n})</button>`).join("");
   }
   // 子分類篩選列
   const sf=document.getElementById("subcat-filters");
@@ -10775,6 +10897,19 @@ window.markDepositReceived=async function(){
 // 直接傳送訂金請款訊息到客人的 LINE，不用複製再自己去官方帳號貼給客人
 // 客人一旦手動確認過是哪個LINE帳號（或系統自動比對到唯一一筆），就把這個綁定存到客戶資料上，
 // 下次同名的情況就不用再選一次，也不怕日後同名的人變多、又要重新猜一次
+// 訂單當下手打的自訂規格，如果商品本身還沒有這個規格，順便存回商品的規格清單，
+// 這樣下次同樣的規格才會變成快選按鈕，不用每次重打
+window.addSpecToProductIfNew=async function(productId,spec){
+  if(!productId||!spec)return;
+  const p=window.G.products.find(x=>x.id===productId);
+  if(!p)return;
+  const specs=Array.isArray(p.specs)?p.specs:(p.specs?[p.specs]:[]);
+  if(specs.includes(spec))return;
+  const newSpecs=[...specs,spec];
+  p.specs=newSpecs; // 立刻更新本地快取，畫面上馬上看得到，不用等 Firestore 同步回來
+  await fbUpd("products",productId,{specs:newSpecs}).catch(()=>{});
+};
+
 window.bindCustomerLineUser=function(custId,userId,pictureUrl){
   if(!custId||!userId)return;
   const c=window.G.customers.find(x=>x.id===custId);
@@ -11079,7 +11214,7 @@ window.openQuickAdd=function(){
   const qaOrderQtyReset=document.getElementById("qa-order-qty");if(qaOrderQtyReset)qaOrderQtyReset.value="1";
   if(typeof qaSetOrderType==="function")qaSetOrderType("onsite");
   window.G.qaOrderSpec="";
-  const qaOrderSpecAreaReset=document.getElementById("qa-order-spec-area");if(qaOrderSpecAreaReset)qaOrderSpecAreaReset.style.display="none";
+  const qaOrderSpecInputReset=document.getElementById("qa-order-spec-input");if(qaOrderSpecInputReset)qaOrderSpecInputReset.value="";
   const qdp=document.getElementById("qa-daiso-panel");
   if(qdp)qdp.style.display="none";
   setTimeout(()=>{if(typeof qaDaisoTypeChange==="function")qaDaisoTypeChange();},150);
@@ -12091,17 +12226,14 @@ window.qaOrderQtyAdj=function(delta){
 };
 // 這個商品有多個規格時，登記喊單一定要選是哪一個規格，不然訂單會不知道要出哪一款
 window.qaRenderOrderSpecPicker=function(){
-  const area=document.getElementById("qa-order-spec-area");
   const btns=document.getElementById("qa-order-spec-btns");
-  if(!area||!btns)return;
+  const input=document.getElementById("qa-order-spec-input");
+  if(!btns)return;
   const specs=(window.G.qaSpecsList||[]).map(s=>String(s).trim()).filter(Boolean);
-  if(specs.length<2){
-    area.style.display="none";
-    window.G.qaOrderSpec=specs[0]||"";
+  if(!specs.length){
+    btns.innerHTML="";
     return;
   }
-  area.style.display="block";
-  if(!specs.includes(window.G.qaOrderSpec))window.G.qaOrderSpec="";
   btns.innerHTML=specs.map(s=>{
     const esc=s.replace(/'/g,"\\'");
     const active=window.G.qaOrderSpec===s;
@@ -12110,6 +12242,8 @@ window.qaRenderOrderSpecPicker=function(){
 };
 window.qaSelectOrderSpec=function(s){
   window.G.qaOrderSpec=s;
+  const input=document.getElementById("qa-order-spec-input");
+  if(input)input.value=s;
   if(typeof qaRenderOrderSpecPicker==="function")qaRenderOrderSpecPicker();
 };
 window.qaClearCust=function(){
@@ -12503,6 +12637,15 @@ window.saveQuickAdd=async function(){
   if(orderToggleCheck?.checked&&qaSpecs.length>1&&!window.G.qaOrderSpec){
     showToast("這個商品有多規格，請先選這筆喊單是哪個規格","error");return;
   }
+  // 如果這筆喊單當下手打了一個規格、但商品本身的規格清單裡還沒有，先併進去，
+  // 這樣商品一建立起來，規格清單就是完整的，下次同樣的規格才會變成快選按鈕
+  if(orderToggleCheck?.checked){
+    const typedOrderSpec=(window.G.qaOrderSpec||"").trim();
+    if(typedOrderSpec&&!qaSpecs.includes(typedOrderSpec)){
+      qaSpecs.push(typedOrderSpec);
+      qaSpecImages.push("");
+    }
+  }
   const{afterTax,beforeTax}=calcCost(amt,qaCur,window.isDutyFreeChannel(window.G.qaChannel),window.G.qaPaymentMethod||"card");
   const sugg=suggestPrice(afterTax,cat,{},0,amt);
   const id=genId(cat,qaCur);
@@ -12559,7 +12702,7 @@ window.saveQuickAdd=async function(){
     const custSelect=document.getElementById("qa-cust")?.value;
     const qty=parseInt(document.getElementById("qa-order-qty")?.value)||1;
     const orderType=window.G.qaOrderType||"onsite";
-    const orderSpec=qaSpecs.length>1?(window.G.qaOrderSpec||""):(qaSpecs[0]||"");
+    const orderSpec=(window.G.qaOrderSpec||"").trim()||(qaSpecs.length===1?qaSpecs[0]:"");
     const tripId=window.G.moSelectedTripId||getLatestTrip()?.id||"";
     let communityName="",lineName="",customerId="";
     if(custSelect){
@@ -12596,6 +12739,7 @@ window.saveQuickAdd=async function(){
       const onsiteCost=orderType==="onsite"?calcCost(amt,qaCur,window.isDutyFreeChannel(window.G.qaChannel),pmForThis).afterTax:null;
       const oid="O"+Date.now();
       await fbSet("orders",oid,{productId:id,productName:cleanProductName(name),productEmoji:catObj?.emoji||"📦",customerId,communityName,lineName,buyerName:communityName||lineName,qty,unitPrice:finalPrice,total:finalPrice*qty,status:"pending",tripId,orderType,spec:orderSpec,purchased:orderType==="onsite",costSnapshot:onsiteCost,paymentMethodSnapshot:pmForThis,createdAt:Date.now()});
+      if(orderSpec)addSpecToProductIfNew(id,orderSpec);
       const orderTypeLabel=orderType==="onsite"?"🛍️現場":orderType==="quote"?"📋待報價":"📱記事本+1";
       showToast(`✨ ${name}${orderSpec?"（"+orderSpec+"）":""} 已建立！並幫 ${communityName||lineName} 登記 ${orderTypeLabel}`);
       setTimeout(()=>{renderCustomers();renderInvoice();},600);
@@ -12632,7 +12776,7 @@ window.saveQuickAdd=async function(){
   const qaOrderQtyPost=document.getElementById("qa-order-qty");if(qaOrderQtyPost)qaOrderQtyPost.value="1";
   if(typeof qaSetOrderType==="function")qaSetOrderType("onsite");
   window.G.qaOrderSpec="";
-  const qaOrderSpecAreaPost=document.getElementById("qa-order-spec-area");if(qaOrderSpecAreaPost)qaOrderSpecAreaPost.style.display="none";
+  const qaOrderSpecInputPost=document.getElementById("qa-order-spec-input");if(qaOrderSpecInputPost)qaOrderSpecInputPost.value="";
 };
 
 
