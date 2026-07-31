@@ -12347,18 +12347,20 @@ window.qaLiveCalc=function(){
 window.qaLiveImgPick=async function(input){
   if(!input.files||!input.files[0])return;
   const file=input.files[0];
-  const reader=new FileReader();
-  reader.onload=e=>{
-    const thumb=document.getElementById("qa-live-img-thumb");
-    const preview=document.getElementById("qa-live-img-preview");
-    const label=document.getElementById("qa-live-img-label");
-    thumb.src=e.target.result;
-    preview.style.display="block";
-    label.style.display="none";
-    window.G.qaLiveImgB64=e.target.result.split(",")[1]; // 給 AI 辨識用的純 base64（不含 data:...; 開頭)
-    window.G.qaLivePhoto=e.target.result; // 給商品「photo」欄位用的完整 data URL（含正確的圖片格式），上架時才不會存錯欄位/格式
-  };
-  reader.readAsDataURL(file);
+  // 這裡原本直接讀取原始檔案、完全沒有壓縮——手機拍的原圖動輒好幾MB，
+  // 一旦超過 Firebase 單份資料 1MB 的上限，整個商品就會存不進去，
+  // 而且不會有明顯的錯誤訊息，只會看起來像「按了立即上架卻沒反應」。
+  // 統一改成跟其他上傳照片的地方一樣，先壓縮再用。
+  showToast("壓縮圖片中…","success");
+  const b64=await compressImg(file,640,0.75);
+  const thumb=document.getElementById("qa-live-img-thumb");
+  const preview=document.getElementById("qa-live-img-preview");
+  const label=document.getElementById("qa-live-img-label");
+  if(thumb)thumb.src=b64;
+  if(preview)preview.style.display="block";
+  if(label)label.style.display="none";
+  window.G.qaLiveImgB64=b64.split(",")[1]; // 給 AI 辨識用的純 base64（不含 data:...; 開頭)
+  window.G.qaLivePhoto=b64; // 給商品「photo」欄位用的完整 data URL
 };
 
 window.qaAskGemini=async function(){
@@ -12818,7 +12820,12 @@ window.qaLiveSave=async function(){
     channel:"",flags:{},specs:"",
     photo:window.G.qaLivePhoto||"",photoPos:"50% 50%",
     tripId,createdAt:Date.now()};
-  await fbSet("products",id,prod);
+  try{
+    await fbSet("products",id,prod);
+  } catch(e){
+    showToast("上架失敗："+(e.message||"請稍後再試一次")+"（如果剛剛有選照片，可能是照片太大，可以先移除照片再試一次）","error");
+    return;
+  }
   // 如果勾了「同時登記喊單」，用剛剛建立的這個商品，順便幫客人登記一筆訂單，不用上架完再跑一次登記喊單流程
   const orderToggle=document.getElementById("qa-live-order-toggle");
   if(orderToggle?.checked){
@@ -13024,16 +13031,21 @@ window.saveQuickAdd=async function(){
   const qaRivalListSave=window.G.qaRivalList||[];
   const qaRivalPrice=qaRivalListSave.length?Math.min(...qaRivalListSave.map(r=>r.price)):0;
   const qaRivalPrices=qaRivalListSave;
-  await fbSet("products",id,{
-    id,name,catKey:cat,category:catObj?.label||"其他",emoji:catObj?.emoji||"📦",
-    currency:qaCur,currencySymbol:CURR[qaCur]?.symbol||"₩",paymentMethod:window.G.qaPaymentMethod||"card",foreignAmount:amt,
-    originalAmount:qaOriginalAmt,promoDivisor:qaPromoDivisor,promoPct:qaPromoPct,promoGroup:qaPromoGroup,
-    beforeTax,afterTax,suggested:sugg2,finalPrice,profit,margin,
-    flags:qaFlags,twPrice:qaTwPrice,rivalPrice:qaRivalPrice,rivalPrices:qaRivalPrices,url:qaGetAllUrls(),specs:qaSpecs,specImages:qaSpecImages,
-    channel:window.G.qaChannel||"",note:qaNote,
-    photo,photoPos,
-    createdAt:Date.now()
-  });
+  try{
+    await fbSet("products",id,{
+      id,name,catKey:cat,category:catObj?.label||"其他",emoji:catObj?.emoji||"📦",
+      currency:qaCur,currencySymbol:CURR[qaCur]?.symbol||"₩",paymentMethod:window.G.qaPaymentMethod||"card",foreignAmount:amt,
+      originalAmount:qaOriginalAmt,promoDivisor:qaPromoDivisor,promoPct:qaPromoPct,promoGroup:qaPromoGroup,
+      beforeTax,afterTax,suggested:sugg2,finalPrice,profit,margin,
+      flags:qaFlags,twPrice:qaTwPrice,rivalPrice:qaRivalPrice,rivalPrices:qaRivalPrices,url:qaGetAllUrls(),specs:qaSpecs,specImages:qaSpecImages,
+      channel:window.G.qaChannel||"",note:qaNote,
+      photo,photoPos,
+      createdAt:Date.now()
+    });
+  } catch(e){
+    showToast("上架失敗："+(e.message||"請稍後再試一次")+"（如果有選很多張規格照片，可能是照片太多太大，可以先減少幾張再試）","error");
+    return;
+  }
 
   // 如果勾了「同時登記喊單」，用剛剛建立的這個商品，順便幫客人登記一筆訂單，不用上架完再跑一次登記喊單流程
   const orderToggle=document.getElementById("qa-order-toggle");
