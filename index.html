@@ -1748,7 +1748,7 @@ body.live-mode .hide-live { display: none !important; }
         <div id="qa-price-hint-profit" style="font-size:9px;font-weight:700;margin-top:2px"></div>
       </div>
       <div style="position:relative;display:flex;align-items:stretch">
-        <input type="text" inputmode="decimal" id="qa-amt" placeholder="例如：12000" oninput="window.G.qaPromoOriginal=null;window.G.qaPromoDivisor=null;window.G.qaPromoPct=null;if(!this.value){window.G.qaSelectedPrice=null;const qc0=document.getElementById('qa-custom');if(qc0)qc0.value='';}qaUpdatePromoBadge();qaDaisoAutoSelectBest();qaCalcPrice()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:11px 40px 11px 14px;font-size:18px;font-weight:700;outline:none"/>
+        <input type="text" inputmode="decimal" id="qa-amt" placeholder="例如：12000" oninput="window.G.qaPromoOriginal=null;window.G.qaPromoDivisor=null;window.G.qaPromoPct=null;if(!this.value){window.G.qaSelectedPrice=null;const qc0=document.getElementById('qa-custom');if(qc0)qc0.value='';}clearTimeout(window._qaAmtTimer);window._qaAmtTimer=setTimeout(function(){qaUpdatePromoBadge();if(window.G.qaCatKey==='daiso')qaDaisoAutoSelectBest();qaCalcPrice();},200)" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:11px 40px 11px 14px;font-size:18px;font-weight:700;outline:none"/>
         <button onclick="document.getElementById('qa-amt').value='';window.G.qaSelectedPrice=null;window.G.qaPromoOriginal=null;window.G.qaPromoDivisor=null;window.G.qaPromoPct=null;const qc0=document.getElementById('qa-custom');if(qc0)qc0.value='';qaUpdatePromoBadge();qaCalcPrice();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
       </div>
     </div>
@@ -8169,7 +8169,7 @@ function detectCatFromName(name){
 window.qaAutoDetectCat=function(name){
   if(!name||name.length<2)return;
   const cat=detectCatFromName(name);
-  if(cat)qaSelectCat(cat);
+  if(cat&&cat!==window.G.qaCatKey)qaSelectCat(cat); // 類別沒變就不用重選、不用重算價格，減少每個字都觸發一次重新計算
 };
 // 關鍵字 → 大創子類型對照
 const DAISO_SUBTYPE_KEYWORDS={
@@ -12134,9 +12134,9 @@ window.openSendQuote=async function(oid){
   const price=prod?.finalPrice??(o.discountPrice||o.unitPrice||0);
   const productName=cleanProductName(prod?.name||o.productName||"商品");
   const priceLines=o.qty>1
-    ?`數量：${o.qty}\n💰 單價：NT$${price.toLocaleString()}\n總金額：NT$${(price*o.qty).toLocaleString()}`
-    :`💰 價格：NT$${price.toLocaleString()}`;
-  msgEl.value=`📦 ${productName}${o.spec?`（${o.spec}）`:""}\n${priceLines}`;
+    ?`數量：${o.qty}\n售價：NT$${price.toLocaleString()}\n\n總金額：NT$${(price*o.qty).toLocaleString()}`
+    :`售價：NT$${price.toLocaleString()}`;
+  msgEl.value=`📦 ${productName}${o.spec?`（${o.spec}）`:""}\n\n${priceLines}`;
   pickerEl.style.display="none";pickerEl.innerHTML="";
   statusEl.textContent="🔍 查詢中...";statusEl.style.color="#9C7A5A";
   sendBtn.disabled=true;sendBtn.style.opacity="0.5";
