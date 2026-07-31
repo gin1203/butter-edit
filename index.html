@@ -3143,6 +3143,7 @@ window.qaLiveReset=function(){
   const liveLbl=document.getElementById("qa-live-img-label");if(liveLbl)liveLbl.style.display="flex";
   const liveInput=document.getElementById("qa-live-img");if(liveInput)liveInput.value="";
   window.G.qaLivePhoto=null;
+  if(typeof qaLiveSetOrderType==="function")qaLiveSetOrderType("onsite");
 };
 
 // ── 移趟功能 ──────────────────────────────────────────────────────────────
@@ -12354,7 +12355,8 @@ window.qaLiveImgPick=async function(input){
     thumb.src=e.target.result;
     preview.style.display="block";
     label.style.display="none";
-    window.G.qaLiveImgB64=e.target.result.split(",")[1];
+    window.G.qaLiveImgB64=e.target.result.split(",")[1]; // 給 AI 辨識用的純 base64（不含 data:...; 開頭)
+    window.G.qaLivePhoto=e.target.result; // 給商品「photo」欄位用的完整 data URL（含正確的圖片格式），上架時才不會存錯欄位/格式
   };
   reader.readAsDataURL(file);
 };
@@ -12406,11 +12408,28 @@ window.qaAskGemini=async function(){
   btn.textContent="🔍 問 Gemini 這是什麼";btn.disabled=false;
 };
 
+// 一次性修復：之前連線模式上架的商品，照片被存到錯的欄位（imgB64），導致清單看不到圖。
+// 這個函式會把那些商品的照片搬到正確的 photo 欄位。可以在瀏覽器的「開發人員工具 / Console」
+// 貼上 migrateLiveModePhotos() 執行一次，之後這段可以不用管它。
+window.migrateLiveModePhotos=async function(){
+  const broken=(window.G.products||[]).filter(p=>p.imgB64&&!p.photo);
+  if(!broken.length){console.log("沒有找到需要修復的商品");return;}
+  let fixed=0;
+  for(const p of broken){
+    const fullUrl=`data:image/jpeg;base64,${p.imgB64}`;
+    await fbUpd("products",p.id,{photo:fullUrl,photoPos:"50% 50%"});
+    fixed++;
+  }
+  console.log(`已修復 ${fixed} 件商品的照片：`,broken.map(p=>p.name));
+  showToast(`✅ 已修復 ${fixed} 件商品的照片`,"success");
+};
+
 window.qaLiveImgClear=function(){
   document.getElementById("qa-live-img-preview").style.display="none";
   document.getElementById("qa-live-img-label").style.display="flex";
   document.getElementById("qa-live-img").value="";
   window.G.qaLiveImgB64=null;
+  window.G.qaLivePhoto=null;
 };
 
 // 連線極速模式：同時登記喊單區塊
@@ -12797,7 +12816,7 @@ window.qaLiveSave=async function(){
     margin:Math.round((finalPrice-costRounded)/finalPrice*100),
     catKey:"food",category:"超商/超市食品",emoji:"🍿",
     channel:"",flags:{},specs:"",
-    imgB64:window.G.qaLiveImgB64||null,
+    photo:window.G.qaLivePhoto||"",photoPos:"50% 50%",
     tripId,createdAt:Date.now()};
   await fbSet("products",id,prod);
   // 如果勾了「同時登記喊單」，用剛剛建立的這個商品，順便幫客人登記一筆訂單，不用上架完再跑一次登記喊單流程
@@ -12863,6 +12882,9 @@ window.qaLiveSave=async function(){
   if(typeof qaLiveUpdatePromoBadge==="function")qaLiveUpdatePromoBadge();
   qaLiveImgClear();
   qaLiveSelectCurrency("KRW");
+  // 「喊單類型」也要重置回預設的現場購買，不然上一個商品選的（例如待報價）會殘留到下一個新商品，
+  // 讓你以為忘記選、其實是沒重置乾淨
+  if(typeof qaLiveSetOrderType==="function")qaLiveSetOrderType("onsite");
   qaLiveCalc();
   if(!orderToggle?.checked)showToast("⚡ 已上架："+name);
   // 記住剛上架的商品，顯示「繼續幫其他客人+1」區塊，方便熱門商品連續登記多筆
