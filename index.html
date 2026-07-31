@@ -1506,8 +1506,9 @@ body.live-mode .hide-live { display: none !important; }
         </div>
         <!-- 品名 -->
         <div style="position:relative;margin-bottom:10px">
-          <input type="text" id="qa-live-name" placeholder="品名（例如：農心 쫄병 안성탕면）" oninput="qaLiveCalc()" style="width:100%;background:white;border:1.5px solid #F59E0B;border-radius:10px;padding:12px 40px 12px 14px;font-size:15px;font-weight:700;outline:none;box-sizing:border-box"/>
+          <input type="text" id="qa-live-name" placeholder="品名（例如：農心 쫄병 안성탕면）" oninput="qaLiveCalc();(function(v){setTimeout(function(){showBrandSuggestions(v,'live');},0);})(this.value)" style="width:100%;background:white;border:1.5px solid #F59E0B;border-radius:10px;padding:12px 40px 12px 14px;font-size:15px;font-weight:700;outline:none;box-sizing:border-box"/>
           <button onclick="document.getElementById('qa-live-name').value='';qaLiveCalc();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#F59E0B;font-size:18px;line-height:1;padding:0">✕</button>
+          <div id="qa-live-brand-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;z-index:99999;background:white;border:1.5px solid #C5A880;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.2);max-height:280px;overflow-y:auto"></div>
         </div>
         <!-- 幣別切換 -->
         <div style="display:flex;gap:6px;margin-bottom:8px">
@@ -3147,6 +3148,7 @@ window.qaGetAllUrls=function(){
 
 window.qaLiveReset=function(){
   const liveName=document.getElementById("qa-live-name");if(liveName)liveName.value="";
+  const liveBrandSugg=document.getElementById("qa-live-brand-suggestions");if(liveBrandSugg){liveBrandSugg.style.display="none";liveBrandSugg.innerHTML="";}
   const liveAmt=document.getElementById("qa-live-amt");if(liveAmt)liveAmt.value="";
   const liveCustom=document.getElementById("qa-live-custom");if(liveCustom)liveCustom.value="";
   window.G.qaLiveCustomPrice=null;window.G.qaLivePromoOriginal=null;window.G.qaLivePromoDivisor=null;
@@ -4841,9 +4843,9 @@ window.renderDupProductScan=function(){
   },10);
 };
 window.showBrandSuggestions=function showBrandSuggestions(val,mode){
-  // mode: true/"quick"=快速上架, "edit"=修改商品, false/其他=新增商品
-  var boxId=mode==="edit"?"ep-brand-suggestions":(mode?"qa-brand-suggestions":"brand-suggestions");
-  var inputId=mode==="edit"?"ep-name":(mode?"qa-name":"c-name");
+  // mode: true/"quick"=快速上架, "edit"=修改商品, "live"=連線極速模式, false/其他=新增商品
+  var boxId=mode==="edit"?"ep-brand-suggestions":(mode==="live"?"qa-live-brand-suggestions":(mode?"qa-brand-suggestions":"brand-suggestions"));
+  var inputId=mode==="edit"?"ep-name":(mode==="live"?"qa-live-name":(mode?"qa-name":"c-name"));
   var box=document.getElementById(boxId);
   var inp=document.getElementById(inputId);
   if(!box||!inp)return;
@@ -4865,7 +4867,8 @@ window.showBrandSuggestions=function showBrandSuggestions(val,mode){
 window.selectBrand=function(name,cat,mode){
   const isQA=mode==="true"||mode===true;
   const isEdit=mode==="edit";
-  const inputId=isEdit?"ep-name":(isQA?"qa-name":"c-name");
+  const isLive=mode==="live";
+  const inputId=isEdit?"ep-name":(isLive?"qa-live-name":(isQA?"qa-name":"c-name"));
   const input=document.getElementById(inputId);
   if(input){
     input.value=name+" ";
@@ -4873,11 +4876,16 @@ window.selectBrand=function(name,cat,mode){
     // 移到字串末尾
     input.setSelectionRange(input.value.length,input.value.length);
   }
-  const containerId=isEdit?"ep-brand-suggestions":(isQA?"qa-brand-suggestions":"brand-suggestions");
+  const containerId=isEdit?"ep-brand-suggestions":(isLive?"qa-live-brand-suggestions":(isQA?"qa-brand-suggestions":"brand-suggestions"));
   const box=document.getElementById(containerId);
   if(box)box.style.display="none";
   if(isEdit){
     // 修改商品：只帶入名稱，不自動切換分類（避免誤觸發改編號流程）
+    return;
+  }
+  if(isLive){
+    // 連線極速模式沒有分類選擇 UI（固定用食品分類），只帶入名稱、重新算一次建議售價就好
+    qaLiveCalc();
     return;
   }
   if(isQA){
@@ -4908,6 +4916,8 @@ document.addEventListener("click",e=>{
     {const b=document.getElementById("qa-brand-suggestions");if(b)b.style.display="none";}
   if(!e.target.closest("#ep-brand-suggestions")&&!e.target.closest("#ep-name"))
     {const b=document.getElementById("ep-brand-suggestions");if(b)b.style.display="none";}
+  if(!e.target.closest("#qa-live-brand-suggestions")&&!e.target.closest("#qa-live-name"))
+    {const b=document.getElementById("qa-live-brand-suggestions");if(b)b.style.display="none";}
 });
 
 window.calcUpdate=function(){
@@ -12871,6 +12881,7 @@ window.qaLiveSave=async function(){
   }
   // 清空欄位
   document.getElementById("qa-live-name").value="";
+  const liveBrandSuggPost=document.getElementById("qa-live-brand-suggestions");if(liveBrandSuggPost){liveBrandSuggPost.style.display="none";liveBrandSuggPost.innerHTML="";}
   document.getElementById("qa-live-amt").value="";
   document.getElementById("qa-live-custom").value="";
   window.G.qaLiveCustomPrice=null;
