@@ -12352,7 +12352,7 @@ window.qaLiveImgPick=async function(input){
   // 而且不會有明顯的錯誤訊息，只會看起來像「按了立即上架卻沒反應」。
   // 統一改成跟其他上傳照片的地方一樣，先壓縮再用。
   showToast("壓縮圖片中…","success");
-  const b64=await compressImg(file,640,0.75);
+  const b64=await compressImg(file,480,0.7);
   const thumb=document.getElementById("qa-live-img-thumb");
   const preview=document.getElementById("qa-live-img-preview");
   const label=document.getElementById("qa-live-img-label");
