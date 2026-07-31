@@ -1506,7 +1506,7 @@ body.live-mode .hide-live { display: none !important; }
         </div>
         <!-- 品名 -->
         <div style="position:relative;margin-bottom:10px">
-          <input type="text" id="qa-live-name" placeholder="品名（例如：農心 쫄병 안성탕면）" oninput="qaLiveCalc();(function(v){setTimeout(function(){showBrandSuggestions(v,'live');},0);})(this.value)" style="width:100%;background:white;border:1.5px solid #F59E0B;border-radius:10px;padding:12px 40px 12px 14px;font-size:15px;font-weight:700;outline:none;box-sizing:border-box"/>
+          <input type="text" id="qa-live-name" placeholder="品名（例如：農心 쫄병 안성탕면）" oninput="qaLiveCalc();clearTimeout(window._qaLiveBrandTimer);window._qaLiveBrandTimer=setTimeout(function(){showBrandSuggestions(document.getElementById('qa-live-name').value,'live');},300)" style="width:100%;background:white;border:1.5px solid #F59E0B;border-radius:10px;padding:12px 40px 12px 14px;font-size:15px;font-weight:700;outline:none;box-sizing:border-box"/>
           <button onclick="document.getElementById('qa-live-name').value='';qaLiveCalc();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#F59E0B;font-size:18px;line-height:1;padding:0">✕</button>
           <div id="qa-live-brand-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;z-index:99999;background:white;border:1.5px solid #C5A880;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.2);max-height:280px;overflow-y:auto"></div>
         </div>
