@@ -2048,12 +2048,22 @@ function setupCropDrag(boxId,thumbId,onUpdate){
   const box=document.getElementById(boxId);
   const thumb=document.getElementById(thumbId);
   if(!box||!thumb)return;
+  // 重要修正：這個函式每次選照片都會被呼叫一次，同一個 box（例如商品照片的裁切框）
+  // 如果每次都重新綁一次事件監聽器、舊的沒清掉，用一整天下來會疊加幾十個監聽器，
+  // 讓整個頁面越用越重、越容易卡頓閃退。改成「同一個 box 只綁定一次事件」，
+  // 之後只更新回呼函式跟起始位置，不會再重複疊加。
+  if(box._cropDragBound){
+    box._cropOnUpdate=onUpdate;
+    return box;
+  }
+  box._cropDragBound=true;
+  box._cropOnUpdate=onUpdate;
   let dragging=false,startX=0,startY=0,posX=50,posY=50;
   const update=(x,y)=>{
     posX=Math.max(0,Math.min(100,x));
     posY=Math.max(0,Math.min(100,y));
     thumb.style.objectPosition=`${posX}% ${posY}%`;
-    if(onUpdate)onUpdate(posX,posY);
+    if(box._cropOnUpdate)box._cropOnUpdate(posX,posY);
   };
   // mouse
   box.addEventListener("mousedown",e=>{dragging=true;startX=e.clientX;startY=e.clientY;box.style.cursor="grabbing";e.preventDefault();});
