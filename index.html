@@ -3781,6 +3781,15 @@ window.closeModal=function(id){
     }
   }
   if(el)el.style.display="none";
+  // 這個彈窗關掉之後，如果背後分頁在它開著的期間被標記「待更新」，現在補畫一次，
+  // 但如果還有另一個「輸入為主」的彈窗疊在上面開著，就先不用畫，等全部關完再畫
+  if(window.HEAVY_INPUT_MODALS?.includes(id)&&!window.isHeavyModalOpen()){
+    const tab=window.G.tab;
+    if(window.G._dirtyTabs?.[tab]&&TAB_RENDER_MAP[tab]){
+      window.G._dirtyTabs[tab]=false;
+      TAB_RENDER_MAP[tab]();
+    }
+  }
 };
 // 點外部關閉：改成呼叫正式的 closeModal，確保每次關閉都會跑完該做的清理
 // （例如把打開Modal時暫時藏起來的分頁內容恢復顯示），不會因為用這種方式關閉就漏掉，導致背後分頁變成空白
@@ -3793,8 +3802,16 @@ const NAV_MAP={calc:"nav-calc",list:"nav-list",customers:"nav-cust",invoice:"nav
 // 惰性重繪：資料庫有變動時，只有「目前正在看的分頁」會立刻重畫，
 // 沒在看的分頁先標記「待更新」，等使用者真的切過去才補畫一次，避免每次同步都把所有分頁全部重畫一輪
 window.G._dirtyTabs={list:false,customers:false,invoice:false};
+// 打開這些「輸入為主」的彈窗時，底下的分頁根本看不到，這時候如果資料庫有其他變動
+// （不管是自己的操作、還是另一個人在用同一個帳號），還是照樣會觸發整個分頁重畫一次，
+// 這其實才是「打字打到一半突然卡頓/閃退」的關鍵——你在打字，畫面卻在忙著重畫看不到的背景。
+// 現在改成：這些彈窗開著的時候，先標記「待更新」就好，不要真的重畫，等彈窗關閉了再一次補畫。
+window.HEAVY_INPUT_MODALS=["modal-quick","modal-order","modal-eprod","modal-batch-order","modal-eord"];
+window.isHeavyModalOpen=function(){
+  return window.HEAVY_INPUT_MODALS.some(id=>document.getElementById(id)?.style.display==="flex");
+};
 window.renderIfActiveElseMarkDirty=function(tabName,renderFn){
-  if(window.G.tab===tabName){renderFn();}
+  if(window.G.tab===tabName&&!window.isHeavyModalOpen()){renderFn();}
   else{window.G._dirtyTabs[tabName]=true;}
 };
 const TAB_RENDER_MAP={list:()=>renderList(),customers:()=>renderCustomers(),invoice:()=>renderInvoice()};
@@ -5127,10 +5144,20 @@ window.addEventListener("online",()=>updateSyncStatusUI());
 window.addEventListener("offline",()=>updateSyncStatusUI());
 
 // ── Firebase 監聽 ──────────────────────────────────────────────────────
+// 效能核心修正：以前每次「任何一筆商品有變動」，都會把全部商品重新整包解析一次
+// （s.docs.map(...) 會把 335 件商品、包含裡面所有規格照片的 base64 資料，全部重新建立一次物件），
+// 這是造成打字/上架會卡、甚至閃退的根本原因之一，尤其現在規格照片變多、又有兩人同時在用會更明顯。
+// 改成用 docChanges() 只處理「真的有變動」的那幾筆，其他沒變的商品直接沿用舊的物件、不用重建，
+// 大幅降低每次同步時的運算量。
+window.G._productsMap=window.G._productsMap||{};
 onSnapshot(collection(db,"products"),s=>{
   window.G._syncFlags.products={fromCache:s.metadata.fromCache,pending:s.metadata.hasPendingWrites};
   updateSyncStatusUI();
-  window.G.products=s.docs.map(d=>({id:d.id,...d.data()}));
+  s.docChanges().forEach(change=>{
+    if(change.type==="removed"){delete window.G._productsMap[change.doc.id];}
+    else{window.G._productsMap[change.doc.id]={id:change.doc.id,...change.doc.data()};}
+  });
+  window.G.products=Object.values(window.G._productsMap);
   window.G.productsLoaded=true;
   clearTimeout(window.G._prodRenderTimer);
   window.G._prodRenderTimer=setTimeout(()=>{
@@ -5144,10 +5171,15 @@ onSnapshot(collection(db,"promoGroupMeta"),s=>{
   s.docs.forEach(d=>{window.G.promoGroupMeta[d.id]=d.data();});
   if(document.getElementById("modal-promo-groups")?.style.display==="flex")renderPromoGroups();
 });
+window.G._customersMap=window.G._customersMap||{};
 onSnapshot(collection(db,"customers"),s=>{
   window.G._syncFlags.customers={fromCache:s.metadata.fromCache,pending:s.metadata.hasPendingWrites};
   updateSyncStatusUI();
-  window.G.customers=s.docs.map(d=>({id:d.id,...d.data()}));
+  s.docChanges().forEach(change=>{
+    if(change.type==="removed"){delete window.G._customersMap[change.doc.id];}
+    else{window.G._customersMap[change.doc.id]={id:change.doc.id,...change.doc.data()};}
+  });
+  window.G.customers=Object.values(window.G._customersMap);
   window.G.customersLoaded=true;
   clearTimeout(window.G._custRenderTimer);
   window.G._custRenderTimer=setTimeout(()=>renderIfActiveElseMarkDirty("customers",renderCustomers),500);
@@ -5173,10 +5205,19 @@ onSnapshot(collection(db,"trips"),s=>{
   window.G.trips=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>b.startDate>a.startDate?1:-1);
   renderTripList();renderTripBars();renderTripHistory();
 });
+window.G._ordersMap=window.G._ordersMap||{};
 onSnapshot(collection(db,"orders"),s=>{
   window.G._syncFlags.orders={fromCache:s.metadata.fromCache,pending:s.metadata.hasPendingWrites};
   updateSyncStatusUI();
-  window.G.orders=s.docs.map(d=>{const o={id:d.id,...d.data()};o.productName=cleanProductName(o.productName);return o;});
+  s.docChanges().forEach(change=>{
+    if(change.type==="removed"){delete window.G._ordersMap[change.doc.id];}
+    else{
+      const o={id:change.doc.id,...change.doc.data()};
+      o.productName=cleanProductName(o.productName);
+      window.G._ordersMap[change.doc.id]=o;
+    }
+  });
+  window.G.orders=Object.values(window.G._ordersMap);
   window.G.ordersLoaded=true;
   clearTimeout(window.G._orderRenderTimer);
   window.G._orderRenderTimer=setTimeout(()=>{
