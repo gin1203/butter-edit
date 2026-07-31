@@ -4858,7 +4858,7 @@ window.showBrandSuggestions=function showBrandSuggestions(val,mode){
   for(var i=0;i<matches.length;i++){
     var b=matches[i];
     var nm=b.n.replace(/\\/g,"\\\\").replace(/'/g,"\\'");
-    h+='<div onmousedown="event.preventDefault();selectBrand(\''+nm+'\',\''+b.cat+'\',\''+mode+'\')" style="padding:11px 16px;cursor:pointer;font-size:13px;color:#3D2010;border-bottom:1px solid #F5EDE0;display:flex;justify-content:space-between;align-items:center;background:white">';
+    h+='<div onmousedown="event.preventDefault();selectBrand(\''+nm+'\',\''+b.cat+'\',\''+mode+'\')" ontouchend="event.preventDefault();selectBrand(\''+nm+'\',\''+b.cat+'\',\''+mode+'\')" style="padding:11px 16px;cursor:pointer;font-size:13px;color:#3D2010;border-bottom:1px solid #F5EDE0;display:flex;justify-content:space-between;align-items:center;background:white">';
     h+='<b>'+b.n+'</b><span style="font-size:11px;color:#C5A880">'+(CL[b.cat]||b.cat)+'</span></div>';
   }
   box.innerHTML=h;
@@ -6028,7 +6028,7 @@ window.moFilterCusts=function(q){
     const ln=c.lineName?` / ${c.lineName}`:"";
     const escaped=nm.replace(/'/g,"\\'");
     const escapedln=(c.lineName||"").replace(/'/g,"\\'");
-    return `<div onmousedown="event.preventDefault();moSelectCust('${c.id}','${escaped}','${escapedln}')"
+    return `<div onmousedown="event.preventDefault();moSelectCust('${c.id}','${escaped}','${escapedln}')" ontouchend="event.preventDefault();moSelectCust('${c.id}','${escaped}','${escapedln}')"
       style="padding:11px 16px;cursor:pointer;font-size:13px;color:#3D2010;border-bottom:1px solid #F5EDE0;background:white">
       <b>${nm}</b><span style="color:#9C7A5A;font-size:11px">${ln}</span>
     </div>`;
@@ -7536,7 +7536,7 @@ window.pgSearchInput=function(inputEl,groupName){
     const already=(p.promoGroup||"").trim();
     const warn=already?`<span style="font-size:10px;color:#E07B39">（目前在「${already}」）</span>`:"";
     const specLabel=specText(p)?` <span style="color:#9C7A5A;font-size:11px">${specText(p)}</span>`:"";
-    return `<div onmousedown="event.preventDefault();addToPromoGroup('${p.id}','${gEsc}')" style="padding:9px 14px;cursor:pointer;font-size:12px;color:#3D2010;border-bottom:1px solid #F5EDE0;display:flex;justify-content:space-between;align-items:center;gap:8px">
+    return `<div onmousedown="event.preventDefault();addToPromoGroup('${p.id}','${gEsc}')" ontouchend="event.preventDefault();addToPromoGroup('${p.id}','${gEsc}')" style="padding:9px 14px;cursor:pointer;font-size:12px;color:#3D2010;border-bottom:1px solid #F5EDE0;display:flex;justify-content:space-between;align-items:center;gap:8px">
       <span>${p.id} · ${p.name}${specLabel} ${warn}</span>
       <span style="font-size:11px;color:#A08060;flex-shrink:0">NT$${(p.finalPrice||0).toLocaleString()}</span>
     </div>`;
@@ -12502,7 +12502,7 @@ window.qaLiveFilterCusts=function(q){
     const ln=c.lineName?` / ${c.lineName}`:"";
     const escaped=nm.replace(/'/g,"\\'");
     const escapedln=(c.lineName||"").replace(/'/g,"\\'");
-    return `<div onmousedown="event.preventDefault();qaLiveSelectCust('${c.id}','${escaped}','${escapedln}')"
+    return `<div onmousedown="event.preventDefault();qaLiveSelectCust('${c.id}','${escaped}','${escapedln}')" ontouchend="event.preventDefault();qaLiveSelectCust('${c.id}','${escaped}','${escapedln}')"
       style="padding:11px 16px;cursor:pointer;font-size:13px;color:#3D2010;border-bottom:1px solid #F5EDE0;background:white">
       <b>${nm}</b><span style="color:#9C7A5A;font-size:11px">${ln}</span>
     </div>`;
@@ -12618,7 +12618,7 @@ window.qaFilterCusts=function(q){
     const ln=c.lineName?` / ${c.lineName}`:"";
     const escaped=nm.replace(/'/g,"\\'");
     const escapedln=(c.lineName||"").replace(/'/g,"\\'");
-    return `<div onmousedown="event.preventDefault();qaSelectCust('${c.id}','${escaped}','${escapedln}')"
+    return `<div onmousedown="event.preventDefault();qaSelectCust('${c.id}','${escaped}','${escapedln}')" ontouchend="event.preventDefault();qaSelectCust('${c.id}','${escaped}','${escapedln}')"
       style="padding:11px 16px;cursor:pointer;font-size:13px;color:#3D2010;border-bottom:1px solid #F5EDE0;background:white">
       <b>${nm}</b><span style="color:#9C7A5A;font-size:11px">${ln}</span>
     </div>`;
@@ -12706,7 +12706,7 @@ window.qaLiveMoreFilterCusts=function(q){
     const ln=c.lineName?` / ${c.lineName}`:"";
     const escaped=nm.replace(/'/g,"\\'");
     const escapedln=(c.lineName||"").replace(/'/g,"\\'");
-    return `<div onmousedown="event.preventDefault();qaLiveMoreSelectCust('${c.id}','${escaped}','${escapedln}')"
+    return `<div onmousedown="event.preventDefault();qaLiveMoreSelectCust('${c.id}','${escaped}','${escapedln}')" ontouchend="event.preventDefault();qaLiveMoreSelectCust('${c.id}','${escaped}','${escapedln}')"
       style="padding:11px 16px;cursor:pointer;font-size:13px;color:#3D2010;border-bottom:1px solid #F5EDE0;background:white">
       <b>${nm}</b><span style="color:#9C7A5A;font-size:11px">${ln}</span>
     </div>`;
