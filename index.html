@@ -132,7 +132,7 @@ body.live-mode .hide-live { display: none !important; }
       <div>
         <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">商品名稱</label>
         <div style="position:relative">
-          <input type="text" id="c-name" oninput="calcUpdate();autoDetectCatFromName(this.value);(function(v){setTimeout(function(){showBrandSuggestions(v,false);},0);})(this.value);(function(v){setTimeout(function(){showDupWarning(v,'c-dup-warning');},0);})(this.value)" placeholder="例如：Matin Kim 短袖" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:12px 40px 12px 14px;font-size:14px;outline:none"/>
+          <input type="text" id="c-name" oninput="calcUpdate();autoDetectCatFromName(this.value);(function(v){setTimeout(function(){showBrandSuggestions(v,false);},0);})(this.value);showDupWarningDebounced(this.value,'c-dup-warning')" placeholder="例如：Matin Kim 短袖" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:12px 40px 12px 14px;font-size:14px;outline:none"/>
           <button onclick="document.getElementById('c-name').value='';calcUpdate();document.getElementById('c-dup-warning').style.display='none';" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
           <div id="brand-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;z-index:99999;background:white;border:1.5px solid #C5A880;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.2);max-height:280px;overflow-y:auto"></div>
         </div>
@@ -373,7 +373,7 @@ body.live-mode .hide-live { display: none !important; }
   <!-- 搜尋 + 按鈕列 -->
   <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center">
     <div style="position:relative;flex:1">
-      <input type="text" id="list-search" oninput="window.G.listSearch=this.value;renderList();document.getElementById('list-search-clear').style.display=this.value?'flex':'none'" placeholder="🔍 搜尋商品名稱、編號、通路、規格..." style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:10px 34px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
+      <input type="text" id="list-search" oninput="window.G.listSearch=this.value;document.getElementById('list-search-clear').style.display=this.value?'flex':'none';clearTimeout(window._listSearchTimer);window._listSearchTimer=setTimeout(renderList,300)" placeholder="🔍 搜尋商品名稱、編號、通路、規格..." style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:10px 34px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
       <button id="list-search-clear" onclick="const el=document.getElementById('list-search');el.value='';window.G.listSearch='';renderList();this.style.display='none';" style="display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);width:20px;height:20px;border-radius:50%;background:#E8D5B0;color:#5C3A1E;border:none;font-size:13px;font-weight:900;cursor:pointer;align-items:center;justify-content:center;padding:0;line-height:1">×</button>
     </div>
     <button onclick="openQuickAdd()" style="background:#C5A880;color:white;border:none;border-radius:10px;padding:10px 14px;font-size:18px;font-weight:700;cursor:pointer">＋</button>
@@ -415,7 +415,7 @@ body.live-mode .hide-live { display: none !important; }
 <div id="tab-customers" class="tab-page" style="padding:16px 16px 80px">
   <div style="display:flex;gap:8px;margin-bottom:8px">
     <div style="position:relative;flex:1">
-      <input type="text" id="cust-search" oninput="window.G.custSearch=this.value;renderCustomers()" placeholder="🔍 搜尋社群名、LINE名、電話、商品或規格..." style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:10px 34px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
+      <input type="text" id="cust-search" oninput="window.G.custSearch=this.value;clearTimeout(window._custSearchTimer);window._custSearchTimer=setTimeout(renderCustomers,300)" placeholder="🔍 搜尋社群名、LINE名、電話、商品或規格..." style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:10px 34px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
       <button onclick="const i=document.getElementById('cust-search');i.value='';window.G.custSearch='';renderCustomers();" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
     </div>
     <button onclick="openModal('modal-cust',{});" style="background:#C5A880;color:white;border:none;border-radius:10px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer">＋</button>
@@ -1677,7 +1677,7 @@ body.live-mode .hide-live { display: none !important; }
     <div style="margin-bottom:12px">
       <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">商品名稱</label>
       <div style="position:relative">
-        <input type="text" id="qa-name" placeholder="例如：크레용 신짱 인형 키링 / 蠟筆小新娃娃鑰匙圈" oninput="qaAutoDetectCat(this.value);(function(v){setTimeout(function(){showBrandSuggestions(v,true);},0);})(this.value);(function(v){setTimeout(function(){showDupWarning(v,'qa-dup-warning');},0);})(this.value)" style="width:100%;background:#FFF3E0;border:1.5px solid #F5B769;border-radius:10px;padding:11px 40px 11px 14px;font-size:14px;outline:none"/>
+        <input type="text" id="qa-name" placeholder="例如：크레용 신짱 인형 키링 / 蠟筆小新娃娃鑰匙圈" oninput="qaAutoDetectCat(this.value);(function(v){setTimeout(function(){showBrandSuggestions(v,true);},0);})(this.value);showDupWarningDebounced(this.value,'qa-dup-warning')" style="width:100%;background:#FFF3E0;border:1.5px solid #F5B769;border-radius:10px;padding:11px 40px 11px 14px;font-size:14px;outline:none"/>
         <button onclick="document.getElementById('qa-name').value='';document.getElementById('qa-dup-warning').style.display='none';" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
         <div id="qa-brand-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;z-index:99999;background:white;border:1.5px solid #C5A880;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.2);max-height:280px;overflow-y:auto"></div>
       </div>
@@ -4679,6 +4679,10 @@ window.normalizeProdName=function(s){
 // 中英韓混合文字都適用，不需要先做斷詞。
 window.nameSimilarity=function(a,b){
   const na=window.normalizeProdName(a),nb=window.normalizeProdName(b);
+  return window._nameSimilarityCore(na,nb);
+};
+// 核心比對邏輯拆出來，接受「已經正規化過」的字串，避免同一個查詢字串被重複正規化/重複建立 bigram
+window._nameSimilarityCore=function(na,nb){
   if(!na||!nb)return 0;
   if(na===nb)return 1;
   const longer=na.length>=nb.length?na:nb,shorter=na.length>=nb.length?nb:na;
@@ -4690,13 +4694,18 @@ window.nameSimilarity=function(a,b){
   return (2*inter)/(ba.size+bb.size);
 };
 // 找出跟給定名稱很像的既有商品（threshold預設0.55，可視需要調整）
+// 效能重點：查詢字串的正規化只做「一次」，不要在迴圈裡對每個商品都重算一次同樣的東西
+// （商品數一多，這個重複運算就是打字會卡頓的主因之一）
 window.findSimilarProducts=function(name,excludeId,threshold){
   threshold=threshold||0.55;
   const products=window.G.products||[];
+  const na=window.normalizeProdName(name);
+  if(!na)return [];
   const results=[];
   products.forEach(p=>{
     if(excludeId&&p.id===excludeId)return;
-    const sim=window.nameSimilarity(name,p.name);
+    const nb=window.normalizeProdName(p.name);
+    const sim=window._nameSimilarityCore(na,nb);
     if(sim>=threshold)results.push({p,sim});
   });
   results.sort((a,b)=>b.sim-a.sim);
@@ -4723,6 +4732,15 @@ window.showDupWarning=function(val,boxId,excludeId){
   }).join("");
   box.innerHTML=`<div style="font-size:11px;font-weight:700;color:#92400E">⚠️ 商品庫裡已經有名稱很像的商品，先確認一下是不是上架過了：</div>${rows}`;
   box.style.display="block";
+};
+// 打字打很快的時候，不要每個字都馬上掃一次全部商品比對相似度（商品一多，這樣會讓打字明顯卡頓），
+// 改成等使用者停下來一小段時間才真的掃描，體感上還是「打完馬上看到提示」，但不會拖慢打字本身
+window._dupWarnTimers={};
+window.showDupWarningDebounced=function(val,boxId,excludeId){
+  clearTimeout(window._dupWarnTimers[boxId]);
+  window._dupWarnTimers[boxId]=setTimeout(()=>{
+    window.showDupWarning(val,boxId,excludeId);
+  },350);
 };
 // 掃描整個商品庫，把名稱很像的商品分組列出來，方便回頭清理重複／合併規格
 window.showDupProductScan=function(){
@@ -5085,6 +5103,9 @@ window.resetSettings=function(){
 
 // ── 資料同步狀態 ──────────────────────────────────────────────────────
 // 兩人同時使用時，能一眼看出目前是「已同步／同步中／離線」，不用猜是不是網路的問題
+// 注意：不能單看 Firestore 的 fromCache——因為為了開啟速度快，本來就會先秀暫存資料、
+// 再跟伺服器確認，這個過程即使網路正常也一定會先出現 fromCache=true，用它來判斷離線會一直誤報。
+// 改成只信任瀏覽器自己回報的 navigator.onLine，這個才是真正可靠的「有沒有網路」依據。
 window.G._syncFlags={};
 window.updateSyncStatusUI=function(){
   const dot=document.getElementById("sync-status-dot");
@@ -5092,8 +5113,8 @@ window.updateSyncStatusUI=function(){
   const box=document.getElementById("sync-status");
   if(!dot||!text||!box)return;
   const flags=Object.values(window.G._syncFlags||{});
-  const offline=!navigator.onLine||flags.some(f=>f.fromCache);
-  const pending=flags.some(f=>f.pending);
+  const offline=!navigator.onLine;
+  const pending=!offline&&flags.some(f=>f.pending);
   if(offline){
     dot.style.background="#DC2626";text.textContent="離線中（顯示暫存資料）";text.style.color="#DC2626";box.style.borderColor="#F5B0B0";
   } else if(pending){
@@ -9564,26 +9585,37 @@ window.setListSortMode=function(mode){
 window.renderList=function(){
   const container=document.getElementById("product-cards");if(!container)return;
   const{products,orders,listSearch,listFilterCat,listFilterCurrency,selectedProducts}=window.G;
+  // 效能重點：以前每個商品都重新掃一次「全部訂單」找出屬於自己的訂單（商品數×訂單數的運算量），
+  // 商品/訂單一多，這個清單只要打字搜尋、或任何一筆訂單異動，就會整個卡住。
+  // 改成「先把訂單依商品分組建好一份對照表」，每個商品直接查表，運算量大幅降低。
+  const ordersByProduct={};
+  orders.forEach(o=>{if(!o.productId)return;(ordersByProduct[o.productId]=ordersByProduct[o.productId]||[]).push(o);});
+  const tripOrdersAll=getTripOrders();
+  const tripOrdersByProduct={};
+  tripOrdersAll.forEach(o=>{if(!o.productId)return;(tripOrdersByProduct[o.productId]=tripOrdersByProduct[o.productId]||[]).push(o);});
+  const sqGlobal=(listSearch||"").toLowerCase();
   const filtered=products.filter(p=>{
     const mArchived=window.G.listShowArchived?p.archived===true:!p.archived;
     const mC=listFilterCat==="all"||p.catKey===listFilterCat;
     const mSub=!window.G.listFilterSubcat||(window.G.listFilterSubcat==="__none__"?!window.getSubcat(p.name,p.catKey):window.getSubcat(p.name,p.catKey)?.key===window.G.listFilterSubcat);
     const mX=listFilterCurrency==="all"||(p.currency||"KRW")===listFilterCurrency;
-    const sq=listSearch.toLowerCase();
-    const pOrders2=orders.filter(o=>o.productId===p.id);
-    const buyerNames=pOrders2.map(o=>(o.communityName||o.lineName||o.buyerName||"").toLowerCase()).join(" ");
-    const specsStr=(Array.isArray(p.specs)?p.specs.join(","):p.specs||"").toLowerCase();
-    // 通路縮寫對照：輸入縮寫也能搜到對應的完整通路名稱
-    const channelAbbr={"oy":"olive young"};
-    const channelLower=(p.channel||"").toLowerCase();
-    const mChannelAbbr=sq&&channelAbbr[sq]&&channelLower.includes(channelAbbr[sq]);
-    const mS=!listSearch||p.name.toLowerCase().includes(sq)||p.id.toLowerCase().includes(sq)||buyerNames.includes(sq)||channelLower.includes(sq)||specsStr.includes(sq)||mChannelAbbr;
+    let mS=true;
+    if(sqGlobal){
+      const pOrders2=ordersByProduct[p.id]||[];
+      const buyerNames=pOrders2.map(o=>(o.communityName||o.lineName||o.buyerName||"").toLowerCase()).join(" ");
+      const specsStr=(Array.isArray(p.specs)?p.specs.join(","):p.specs||"").toLowerCase();
+      // 通路縮寫對照：輸入縮寫也能搜到對應的完整通路名稱
+      const channelAbbr={"oy":"olive young"};
+      const channelLower=(p.channel||"").toLowerCase();
+      const mChannelAbbr=channelAbbr[sqGlobal]&&channelLower.includes(channelAbbr[sqGlobal]);
+      mS=p.name.toLowerCase().includes(sqGlobal)||p.id.toLowerCase().includes(sqGlobal)||buyerNames.includes(sqGlobal)||channelLower.includes(sqGlobal)||specsStr.includes(sqGlobal)||mChannelAbbr;
+    }
     return mC&&mX&&mS&&mSub&&mArchived;
   });
   // 排序：預設維持上架順序；也可以切成熱銷排行或利潤高低
   const sortMode=window.G.listSortMode||"default";
   if(sortMode==="sold"){
-    const soldCount=p=>orders.filter(o=>o.productId===p.id).reduce((s,o)=>s+(o.qty||0),0);
+    const soldCount=p=>(ordersByProduct[p.id]||[]).reduce((s,o)=>s+(o.qty||0),0);
     filtered.sort((a,b)=>soldCount(b)-soldCount(a));
   } else if(sortMode==="profit"){
     const liveProfit=p=>{
@@ -9605,14 +9637,14 @@ window.renderList=function(){
   const matchesNonCatFilters=p=>{
     const mArchived=window.G.listShowArchived?p.archived===true:!p.archived;
     const mX=listFilterCurrency==="all"||(p.currency||"KRW")===listFilterCurrency;
-    const sq=listSearch.toLowerCase();
-    const pOrders2=orders.filter(o=>o.productId===p.id);
+    if(!sqGlobal)return mArchived&&mX;
+    const pOrders2=ordersByProduct[p.id]||[];
     const buyerNames=pOrders2.map(o=>(o.communityName||o.lineName||o.buyerName||"").toLowerCase()).join(" ");
     const specsStr=(Array.isArray(p.specs)?p.specs.join(","):p.specs||"").toLowerCase();
     const channelAbbr={"oy":"olive young"};
     const channelLower=(p.channel||"").toLowerCase();
-    const mChannelAbbr=sq&&channelAbbr[sq]&&channelLower.includes(channelAbbr[sq]);
-    const mS=!listSearch||p.name.toLowerCase().includes(sq)||p.id.toLowerCase().includes(sq)||buyerNames.includes(sq)||channelLower.includes(sq)||specsStr.includes(sq)||mChannelAbbr;
+    const mChannelAbbr=channelAbbr[sqGlobal]&&channelLower.includes(channelAbbr[sqGlobal]);
+    const mS=p.name.toLowerCase().includes(sqGlobal)||p.id.toLowerCase().includes(sqGlobal)||buyerNames.includes(sqGlobal)||channelLower.includes(sqGlobal)||specsStr.includes(sqGlobal)||mChannelAbbr;
     return mArchived&&mX&&mS;
   };
   const nonCatFilteredProducts=products.filter(matchesNonCatFilters);
@@ -9654,7 +9686,7 @@ window.renderList=function(){
   if(window.G.listViewMode==="grid"){
     container.innerHTML=`<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">`+filtered.map(p=>{
       const cur=CURR[p.currency||"KRW"];
-      const pOrders=getTripOrders().filter(o=>o.productId===p.id);
+      const pOrders=tripOrdersByProduct[p.id]||[];
       const pTotal=pOrders.reduce((s,o)=>s+o.qty,0);
       const liveAfterTax=Math.round(calcCost(p.foreignAmount||0,p.currency||"KRW",window.isDutyFreeChannel(p.channel),p.paymentMethod||"card").afterTax*10)/10;
       const badgeHtml=pOrders.length>0?('<div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:5px">'+pOrders.map(o=>'<div style="display:inline-flex;align-items:center;gap:3px;background:#C5A880;color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px"><span>'+(o.communityName||o.lineName||"客人")+'</span><button data-oid="'+o.id+'" onclick="event.stopPropagation();deleteOrderFromGrid(this.dataset.oid)" style="background:none;border:none;color:white;font-size:13px;cursor:pointer;padding:0 0 0 2px;line-height:1;font-weight:900">×</button></div>').join("")+'</div>'):'' ;
@@ -9677,7 +9709,7 @@ window.renderList=function(){
   }
 
   container.innerHTML=filtered.map(p=>{
-    const tripOrd=getTripOrders();const pOrders=tripOrd.filter(o=>o.productId===p.id);
+    const pOrders=tripOrdersByProduct[p.id]||[];
     const pTotal=pOrders.reduce((s,o)=>s+o.qty,0);
     const cur=CURR[p.currency||"KRW"];
     const checked=selectedProducts.has(p.id);
