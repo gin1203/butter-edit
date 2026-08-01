@@ -3233,10 +3233,10 @@ const SUBCAT_MAP = {
     {key:"保濕",    label:"💧 保濕/乳液",     kw:["保濕","乳液","面霜","face cream","水乳","精華","essence","serum","安瓶"]},
     {key:"眼霜",    label:"👁️ 眼部",          kw:["眼霜","眼膜","眼部","eye cream","eye"]},
     {key:"清潔",    label:"🫧 清潔/卸妝",    kw:["洗面","清潔","卸妝","泡沫","foam","cleanser","toner","化妝水"]},
-    {key:"彩妝",    label:"💄 彩妝",          kw:["唇膏","口紅","粉底","氣墊","眼影","睫毛","腮紅","修容","highlight","妝前","妝前乳","妝前膏","primer","定妝","定妝噴霧","setting spray","隱形毛孔","遮瑕"]},
+    {key:"彩妝",    label:"💄 彩妝",          kw:["唇膏","口紅","粉底","氣墊","眼影","睫毛","腮紅","修容","highlight","妝前","妝前乳","妝前膏","primer","定妝","定妝噴霧","setting spray","隱形毛孔","遮瑕","臥蠶","臥蠶筆","眼線","眼線筆","眼線液"]},
     {key:"身體",    label:"🧴 身體保養",     kw:["身體乳","body lotion","hand cream","護手","沐浴","浴鹽"]},
-    {key:"香水",    label:"🌸 香氛/香水",    kw:["香水","perfume","香氛","body mist","身體噴霧"]},
-    {key:"保健",    label:"💊 保健食品",     kw:["益生菌","乳酸菌","락토핏","유산균","lactofit","probiotic","維他命","綜合維他命","B群","膠原蛋白","魚油","葉黃素","鈣片","酵素","enzyme","紅蔘","人蔘","蜂膠","牛樟芝","保健食品","健康食品","營養品","營養補給"]},
+    {key:"香水",    label:"🌸 香氛/香水",    kw:["香水","perfume","香氛","body mist","身體噴霧","香精","淡香精","淡香水","eau de parfum","eau de toilette"]},
+    {key:"保健",    label:"💊 保健食品",     kw:["益生菌","乳酸菌","락토핏","유산균","lactofit","probiotic","維他命","綜合維他命","B群","膠原蛋白","魚油","葉黃素","鈣片","酵素","enzyme","紅蔘","人蔘","蜂膠","牛樟芝","保健食品","健康食品","營養品","營養補給","瘦身","瘦身錠","塑身","塑身錠","燃脂","代謝錠"]},
     {key:"美容儀器",label:"🔌 美容儀器",     kw:["美容儀","導入儀","導出儀","booster","microcurrent","微電流","音波儀","筋膜儀","按摩儀","脫毛儀","洗臉機","潔顏儀","洗顏機","led光療","光療儀","age-r","medicube"]},
   ],
   // 大創子分類
@@ -5178,10 +5178,22 @@ window.addEventListener("online",()=>updateSyncStatusUI());
 window.addEventListener("offline",()=>updateSyncStatusUI());
 
 // ── Firebase 監聽 ──────────────────────────────────────────────────────
+// 記憶體減量（安全版）：已封存的商品，反正平常畫面看不到，
+// 圖片資料（photo、specImages）就不需要一直留在記憶體裡佔位置。
+// 這裡不改查詢方式（避免有資料因為欄位問題突然消失的風險），
+// 只是把「已經封存、確定不會顯示」的商品，圖片欄位直接丟掉，其他欄位完全不動，
+// 需要看封存商品細節時（點進「查看已封存商品」），圖片沒了頂多顯示不出來，資料本身不會少。
 onSnapshot(collection(db,"products"),s=>{
   window.G._syncFlags.products={fromCache:s.metadata.fromCache,pending:s.metadata.hasPendingWrites};
   updateSyncStatusUI();
-  window.G.products=s.docs.map(d=>({id:d.id,...d.data()}));
+  window.G.products=s.docs.map(d=>{
+    const data=d.data();
+    if(data.archived){
+      const{photo,specImages,...rest}=data;
+      return{id:d.id,...rest};
+    }
+    return{id:d.id,...data};
+  });
   window.G.productsLoaded=true;
   clearTimeout(window.G._prodRenderTimer);
   window.G._prodRenderTimer=setTimeout(()=>{
@@ -5342,15 +5354,44 @@ window.batchArchiveProducts=async function(){
   const ids=[...window.G.selectedProducts];
   if(!ids.length){showToast("請先選擇商品","warning");return;}
   if(!confirm(`確定封存 ${ids.length} 件商品？（封存不會刪除資料，之後隨時可以取消封存）`))return;
-  for(const id of ids){await fbUpd("products",id,{archived:true});}
-  window.G.selectedProducts.clear();showToast(`已封存 ${ids.length} 件商品`);
+  let ok=0,fail=0;
+  for(const id of ids){
+    try{
+      await fbUpd("products",id,{archived:true});
+      ok++;
+    }catch(e){
+      fail++;
+      console.error("封存失敗：",id,e);
+    }
+  }
+  window.G.selectedProducts.clear();
+  if(fail===0){
+    showToast(`已封存 ${ok} 件商品`);
+  } else {
+    showToast(`封存完成：成功 ${ok} 件，失敗 ${fail} 件（可能是網路問題，請稍後重試失敗的部分）`,"error");
+  }
 };
 window.batchDeleteProducts=async function(){
   const ids=[...window.G.selectedProducts];
   if(!ids.length){showToast("請先選擇商品","warning");return;}
   if(!confirm(`確定刪除 ${ids.length} 件商品？`))return;
-  for(const id of ids){await fbDel("products",id);window.G.orders.filter(o=>o.productId===id).forEach(o=>fbDel("orders",o.id));}
-  window.G.selectedProducts.clear();showToast(`已刪除 ${ids.length} 件商品`);
+  let ok=0,fail=0;
+  for(const id of ids){
+    try{
+      await fbDel("products",id);
+      window.G.orders.filter(o=>o.productId===id).forEach(o=>fbDel("orders",o.id).catch(()=>{}));
+      ok++;
+    }catch(e){
+      fail++;
+      console.error("刪除失敗：",id,e);
+    }
+  }
+  window.G.selectedProducts.clear();
+  if(fail===0){
+    showToast(`已刪除 ${ok} 件商品`);
+  } else {
+    showToast(`刪除完成：成功 ${ok} 件，失敗 ${fail} 件（可能是網路問題，請稍後重試失敗的部分）`,"error");
+  }
 };
 
 // 合併商品：把勾選的多個商品（例如同一款貝果脆片、只是口味不同分開建檔）合併成一個，
@@ -7612,7 +7653,7 @@ window.renamePromoGroup=async function(oldName,newNameRaw){
 };
 
 window.showStockPlan=function(){
-  const tripOrders=getTripOrders().filter(o=>o.orderType!=="quote"&&o.status!=="shipped");
+  const tripOrders=getTripOrders().filter(o=>o.orderType!=="quote"&&o.status!=="shipped"&&o.status!=="settled");
   const products=window.G.products;
   if(!tripOrders.length){showToast("目前沒有待購買的喊單","warning");return;}
   window.setStockPlanViewMode(window.G.stockPlanViewMode||"buy");
@@ -7905,7 +7946,7 @@ window.renderStockPlanContent=function(){
     renderStockPlanQuoteContent();
     return;
   }
-  let tripOrders=getTripOrders().filter(o=>o.orderType!=="quote"&&o.status!=="shipped");
+  let tripOrders=getTripOrders().filter(o=>o.orderType!=="quote"&&o.status!=="shipped"&&o.status!=="settled");
   if(window.G.stockPlanUnpurchasedOnly)tripOrders=tripOrders.filter(o=>!o.purchased);
   if(window.G.stockPlanColdOnly){
     tripOrders=tripOrders.filter(o=>{
@@ -8212,7 +8253,7 @@ const CAT_KEYWORDS={
   shoes:["鞋","sneaker","shoes","boots","拖鞋","涼鞋","運動鞋","球鞋","Nike","nike","Adidas","adidas","PUMA","Puma","puma","New Balance","NB","Converse","converse","Vans","vans","Asics","ASICS","Reebok","Saucony","Salomon","On Running","Hoka","Brooks","Mizuno","Onitsuka","鬼塚虎","Air Force","Jordan","Dunk","Yeezy","Stan Smith","Gel-Kayano","Fresh Foam","靴","涼鞋","穆勒"],
   bag:["包包","bag","tote","後背包","手提包","肩背包","側背包","clutch","pouch","錢包"],
   sunglasses:["墨鏡","太陽眼鏡","sunglasses","glasses","眼鏡"],
-  accessory:["鑰匙圈","吊飾","髮夾","髮圈","耳環","項鍊","手環","戒指","別針","brooch","keyring","charm","娃娃","玩偶","公仔","貼紙","文具","筆記本","資料夾"],
+  accessory:["鑰匙圈","吊飾","髮夾","髮圈","耳環","項鍊","手環","手鍊","手鏈","腳鍊","戒指","別針","brooch","keyring","charm","bracelet","娃娃","玩偶","公仔","貼紙","文具","筆記本","資料夾"],
   home:["香氛蠟燭","擴香","居家","棉被","床單","枕頭","毛巾","杯子","碗盤","收納"],
   device:["美容儀","按摩","吹風機","電動","充電","耳機","喇叭","家電"],
   luxury:["LV","Chanel","Dior","Gucci","Prada","Celine","Hermes","Louis Vuitton","精品","Loewe","Saint Laurent","YSL","Bottega","Fendi","Burberry","Valentino","Givenchy","Balenciaga","Alexander McQueen","Miu Miu","Versace","Bulgari","Tiffany","Cartier","Coach","Kate Spade","Marc Jacobs","Michael Kors","Longchamp","Furla","Matin Kim","Stand Oil","Gentle Monster","GM"],
