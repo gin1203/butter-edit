@@ -132,7 +132,7 @@ body.live-mode .hide-live { display: none !important; }
       <div>
         <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">商品名稱</label>
         <div style="position:relative">
-          <input type="text" id="c-name" oninput="calcUpdate();autoDetectCatFromName(this.value);showBrandSuggestionsDebounced(this.value,false);showDupWarningDebounced(this.value,'c-dup-warning')" placeholder="例如：Matin Kim 短袖" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:12px 40px 12px 14px;font-size:14px;outline:none"/>
+          <input type="text" id="c-name" oninput="calcUpdate();autoDetectCatFromName(this.value)" placeholder="例如：Matin Kim 短袖" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:12px 40px 12px 14px;font-size:14px;outline:none"/>
           <button onclick="document.getElementById('c-name').value='';calcUpdate();document.getElementById('c-dup-warning').style.display='none';" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
           <div id="brand-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;z-index:99999;background:white;border:1.5px solid #C5A880;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.2);max-height:280px;overflow-y:auto"></div>
         </div>
@@ -944,7 +944,7 @@ body.live-mode .hide-live { display: none !important; }
       <div style="flex:3">
         <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">商品名稱</label>
         <div style="position:relative">
-          <input type="text" id="ep-name" oninput="showBrandSuggestionsDebounced(this.value,'edit')" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 40px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
+          <input type="text" id="ep-name" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 40px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
           <button onclick="document.getElementById('ep-name').value=''" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
           <div id="ep-brand-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;z-index:99999;background:white;border:1.5px solid #C5A880;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.2);max-height:280px;overflow-y:auto"></div>
         </div>
@@ -1506,7 +1506,7 @@ body.live-mode .hide-live { display: none !important; }
         </div>
         <!-- 品名 -->
         <div style="position:relative;margin-bottom:10px">
-          <input type="text" id="qa-live-name" placeholder="品名（例如：農心 쫄병 안성탕면）" oninput="qaLiveCalc();showBrandSuggestionsDebounced(this.value,'live')" style="width:100%;background:white;border:1.5px solid #F59E0B;border-radius:10px;padding:12px 40px 12px 14px;font-size:15px;font-weight:700;outline:none;box-sizing:border-box"/>
+          <input type="text" id="qa-live-name" placeholder="品名（例如：農心 쫄병 안성탕면）" oninput="qaLiveCalc()" style="width:100%;background:white;border:1.5px solid #F59E0B;border-radius:10px;padding:12px 40px 12px 14px;font-size:15px;font-weight:700;outline:none;box-sizing:border-box"/>
           <button onclick="document.getElementById('qa-live-name').value='';qaLiveCalc();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#F59E0B;font-size:18px;line-height:1;padding:0">✕</button>
           <div id="qa-live-brand-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;z-index:99999;background:white;border:1.5px solid #C5A880;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.2);max-height:280px;overflow-y:auto"></div>
         </div>
@@ -1680,7 +1680,7 @@ body.live-mode .hide-live { display: none !important; }
     <div style="margin-bottom:12px">
       <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">商品名稱</label>
       <div style="position:relative">
-        <input type="text" id="qa-name" placeholder="例如：크레용 신짱 인형 키링 / 蠟筆小新娃娃鑰匙圈" oninput="qaAutoDetectCat(this.value);showBrandSuggestionsDebounced(this.value,true);showDupWarningDebounced(this.value,'qa-dup-warning')" style="width:100%;background:#FFF3E0;border:1.5px solid #F5B769;border-radius:10px;padding:11px 40px 11px 14px;font-size:14px;outline:none"/>
+        <input type="text" id="qa-name" placeholder="例如：크레용 신짱 인형 키링 / 蠟筆小新娃娃鑰匙圈" oninput="qaAutoDetectCat(this.value)" style="width:100%;background:#FFF3E0;border:1.5px solid #F5B769;border-radius:10px;padding:11px 40px 11px 14px;font-size:14px;outline:none"/>
         <button onclick="document.getElementById('qa-name').value='';document.getElementById('qa-dup-warning').style.display='none';" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
         <div id="qa-brand-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;z-index:99999;background:white;border:1.5px solid #C5A880;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.2);max-height:280px;overflow-y:auto"></div>
       </div>
@@ -11779,7 +11779,7 @@ window.G.qaProdPhotoPos={x:50,y:50};
 window.qaProdImgPick=async function(input){
   const file=input.files[0];if(!file)return;
   showToast("壓縮圖片中…","success");
-  const b64=await compressImg(file,640,0.75);
+  const b64=await compressImg(file,520,0.72);
   window.G.qaProdPhoto=b64;
   window.G.qaProdPhotoPos={x:50,y:50};
   const thumb=document.getElementById("qa-prod-img-thumb");
