@@ -397,6 +397,7 @@ body.live-mode .hide-live { display: none !important; }
     <span id="list-sel-count" style="font-size:12px;font-weight:700;color:#9C7A5A">已選 0 件</span>
     <div style="display:flex;gap:6px">
       <button onclick="batchEditProducts()" style="font-size:11px;background:#FDF6EC;color:#C5A880;border:1px solid #E8D5B0;padding:5px 10px;border-radius:8px;font-weight:700;cursor:pointer">✏️ 批次修改售價</button>
+      <button onclick="batchArchiveProducts()" style="font-size:11px;background:#EFEBE9;color:#6D4C41;border:1px solid #BCAAA4;padding:5px 10px;border-radius:8px;font-weight:700;cursor:pointer">📦 批次封存</button>
       <button onclick="mergeSelectedProducts()" style="font-size:11px;background:#EDE9FE;color:#5B21B6;border:1px solid #C4B5FD;padding:5px 10px;border-radius:8px;font-weight:700;cursor:pointer">🔗 合併商品</button>
       <button onclick="batchDeleteProducts()" style="font-size:11px;background:#FDEDEC;color:#C0392B;border:1px solid #F1948A;padding:5px 10px;border-radius:8px;font-weight:700;cursor:pointer">🗑️ 批次刪除</button>
     </div>
@@ -5337,6 +5338,13 @@ window.deleteProduct=async function(id){
   showToast("商品已刪除");
 };
 
+window.batchArchiveProducts=async function(){
+  const ids=[...window.G.selectedProducts];
+  if(!ids.length){showToast("請先選擇商品","warning");return;}
+  if(!confirm(`確定封存 ${ids.length} 件商品？（封存不會刪除資料，之後隨時可以取消封存）`))return;
+  for(const id of ids){await fbUpd("products",id,{archived:true});}
+  window.G.selectedProducts.clear();showToast(`已封存 ${ids.length} 件商品`);
+};
 window.batchDeleteProducts=async function(){
   const ids=[...window.G.selectedProducts];
   if(!ids.length){showToast("請先選擇商品","warning");return;}
@@ -7604,7 +7612,7 @@ window.renamePromoGroup=async function(oldName,newNameRaw){
 };
 
 window.showStockPlan=function(){
-  const tripOrders=getTripOrders().filter(o=>o.orderType!=="quote");
+  const tripOrders=getTripOrders().filter(o=>o.orderType!=="quote"&&o.status!=="shipped");
   const products=window.G.products;
   if(!tripOrders.length){showToast("目前沒有待購買的喊單","warning");return;}
   window.setStockPlanViewMode(window.G.stockPlanViewMode||"buy");
@@ -7897,7 +7905,7 @@ window.renderStockPlanContent=function(){
     renderStockPlanQuoteContent();
     return;
   }
-  let tripOrders=getTripOrders().filter(o=>o.orderType!=="quote");
+  let tripOrders=getTripOrders().filter(o=>o.orderType!=="quote"&&o.status!=="shipped");
   if(window.G.stockPlanUnpurchasedOnly)tripOrders=tripOrders.filter(o=>!o.purchased);
   if(window.G.stockPlanColdOnly){
     tripOrders=tripOrders.filter(o=>{
