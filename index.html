@@ -7749,6 +7749,23 @@ window.setStockPlanColdOnly=function(on){
       btn.textContent="☐ 只看冷藏商品";
     }
   }
+  // 冷藏跟常溫是互斥的篩選，開一個就把另一個關掉，不然兩個一起勾會篩出空清單
+  if(on&&window.G.stockPlanRoomOnly)window.setStockPlanRoomOnly(false);
+  window.renderStockPlanContent();
+};
+window.setStockPlanRoomOnly=function(on){
+  window.G.stockPlanRoomOnly=on;
+  const btn=document.getElementById("sp-filter-room");
+  if(btn){
+    if(on){
+      btn.style.background="#B45309";btn.style.color="white";btn.style.borderColor="#B45309";
+      btn.textContent="☑ 只看常溫品";
+    } else {
+      btn.style.background="#FEF3C7";btn.style.color="#B45309";btn.style.borderColor="#FCD34D";
+      btn.textContent="☐ 只看常溫品";
+    }
+  }
+  if(on&&window.G.stockPlanColdOnly)window.setStockPlanColdOnly(false);
   window.renderStockPlanContent();
 };
 
@@ -7902,7 +7919,9 @@ function renderStockPlanQuoteContent(){
   const products=window.G.products;
   const mode=window.G.stockPlanMode||"time";
   const prodMap={};
+  // 同樣道理：商品被刪除但訂單還在的話，不要讓它繼續污染分類數字
   quoteOrders.forEach(o=>{
+    if(!products.find(x=>x.id===o.productId))return;
     if(!prodMap[o.productId])prodMap[o.productId]=[];
     prodMap[o.productId].push(o);
   });
@@ -7954,10 +7973,20 @@ window.renderStockPlanContent=function(){
       return p?.flags?.isCold||p?.flags?.coldHigh;
     });
   }
+  if(window.G.stockPlanRoomOnly){
+    tripOrders=tripOrders.filter(o=>{
+      const p=window.G.products.find(x=>x.id===o.productId);
+      return !(p?.flags?.isCold||p?.flags?.coldHigh);
+    });
+  }
   const products=window.G.products;
   const mode=window.G.stockPlanMode||"time";
   const prodMap={};
+  // 商品被刪除、但訂單沒有一起清掉的話（孤兒訂單），只計算數字卻畫不出東西來，
+  // 會讓通路/時間分類上的數字跟底下實際看到的清單對不起來，這裡先把這種訂單濾掉，
+  // 確保「數字」跟「畫面」永遠是同一份資料算出來的
   tripOrders.forEach(o=>{
+    if(!products.find(x=>x.id===o.productId))return;
     if(!prodMap[o.productId])prodMap[o.productId]=[];
     prodMap[o.productId].push(o);
   });
@@ -13309,9 +13338,12 @@ window.swUpdate = function(){
         <button id="sp-mode-channel" onclick="setStockPlanMode('channel')" style="font-size:12px;font-weight:700;padding:6px 12px;border-radius:99px;border:none;background:white;color:#9C7A5A;cursor:pointer;transition:background 0.15s,color 0.15s">🏪 通路</button>
       </div>
     </div>
-    <div id="sp-buy-subfilter-row" style="display:flex;gap:8px;margin-bottom:10px">
+    <div id="sp-buy-subfilter-row" style="display:flex;gap:8px;margin-bottom:8px">
       <button id="sp-filter-unpurchased" onclick="setStockPlanUnpurchasedOnly(!window.G.stockPlanUnpurchasedOnly)" style="flex:1;font-size:12px;font-weight:700;padding:8px 12px;border-radius:10px;border:1.5px solid #FCD34D;background:#FEF3C7;color:#92400E;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">☐ 隱藏已買到的</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:10px">
       <button id="sp-filter-cold" onclick="setStockPlanColdOnly(!window.G.stockPlanColdOnly)" style="flex:1;font-size:12px;font-weight:700;padding:8px 12px;border-radius:10px;border:1.5px solid #BEE0F5;background:#EAF4FB;color:#1E5F8C;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">☐ 只看冷藏商品</button>
+      <button id="sp-filter-room" onclick="setStockPlanRoomOnly(!window.G.stockPlanRoomOnly)" style="flex:1;font-size:12px;font-weight:700;padding:8px 12px;border-radius:10px;border:1.5px solid #FCD34D;background:#FEF3C7;color:#B45309;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">☐ 只看常溫品</button>
     </div>
     <div id="sp-capacity-row" style="margin-bottom:14px;background:#EAF4FB;border:1px solid #BEE0F5;border-radius:10px;padding:9px 12px">
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
