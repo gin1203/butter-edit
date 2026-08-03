@@ -1140,6 +1140,11 @@ body.live-mode .hide-live { display: none !important; }
           <input type="text" id="eo-shared-tracking" placeholder="選填" style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:13px;outline:none"/>
         </div>
       </div>
+      <div id="eo-discount-reason-area" style="margin-top:8px">
+        <div style="font-size:10px;color:#9C7A5A;margin-bottom:5px">🏷️ 折扣原因（選填，可複選，會一起顯示在給客人的結清單裡）</div>
+        <div id="eo-discount-reason-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px"></div>
+        <input type="text" id="eo-discount-reason-custom" placeholder="或自行輸入其他原因..." oninput="eoUpdateDiscountPreview()" style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:12px;outline:none;box-sizing:border-box"/>
+      </div>
       <div style="display:flex;gap:8px;margin-top:8px;align-items:flex-end">
         <div style="flex:1">
           <div style="font-size:10px;color:#9C7A5A;margin-bottom:3px">🔖 打幾折（直接改這批的售價）</div>
@@ -1147,7 +1152,7 @@ body.live-mode .hide-live { display: none !important; }
         </div>
         <button onclick="eoApplyBatchPercent()" style="flex-shrink:0;background:#FFE0B2;border:1px solid #FFB74D;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;color:#E65100;cursor:pointer">套用折數</button>
         <label style="flex-shrink:0;display:flex;align-items:center;gap:5px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;cursor:pointer">
-          <input type="checkbox" id="eo-free-shipping" onchange="document.getElementById('eo-shipping-cost-wrap').style.display=this.checked?'flex':'none'" style="width:15px;height:15px"/>
+          <input type="checkbox" id="eo-free-shipping" onchange="document.getElementById('eo-shipping-cost-wrap').style.display=this.checked?'flex':'none';document.getElementById('eo-shipping-reason-area').style.display=this.checked?'block':'none'" style="width:15px;height:15px"/>
           <span style="font-size:12px;font-weight:700;color:#5C3A1E;white-space:nowrap">🚚 免運</span>
         </label>
       </div>
@@ -1155,6 +1160,11 @@ body.live-mode .hide-live { display: none !important; }
         <span style="font-size:11px;color:#9C7A5A;white-space:nowrap">我要吸收的運費</span>
         <input type="text" inputmode="numeric" id="eo-shipping-cost" value="38" style="width:70px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:5px 8px;font-size:12px;outline:none"/>
         <span style="font-size:11px;color:#9C7A5A">元（會直接算進成本，反映在利潤上）</span>
+      </div>
+      <div id="eo-shipping-reason-area" style="display:none;margin-top:8px">
+        <div style="font-size:10px;color:#9C7A5A;margin-bottom:5px">🚚 免運原因（選填，會一起顯示在給客人的結清單裡）</div>
+        <div id="eo-shipping-reason-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px"></div>
+        <input type="text" id="eo-shipping-reason-custom" placeholder="或自行輸入其他原因..." style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:12px;outline:none;box-sizing:border-box"/>
       </div>
       <div id="eo-discount-preview" style="display:none;margin-top:8px;background:#FFF9F0;border:1px solid #FCD34D;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;color:#92400E"></div>
     </div>
@@ -1417,6 +1427,16 @@ body.live-mode .hide-live { display: none !important; }
     <button onclick="copyDepositMsgOnly()" style="width:100%;padding:12px;border-radius:10px;border:1.5px solid #FCD34D;background:#FEF3C7;color:#92400E;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">📋 改成複製請款訊息（貼到別的地方）</button>
     <button onclick="markDepositReceived()" style="width:100%;padding:12px;border-radius:10px;border:none;background:#C5A880;color:white;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">✅ 客人已付款，標記已收訂金</button>
     <button onclick="cancelAskDeposit()" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;font-size:13px;font-weight:700;cursor:pointer">取消</button>
+  </div>
+</div>
+
+<div id="modal-ask-settlement" class="modal-overlay" style="display:none;position:fixed;inset:0;z-index:80;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;padding:16px">
+  <div style="background:white;border-radius:18px;width:100%;max-width:380px;padding:22px">
+    <div style="font-size:14px;font-weight:900;color:#3D2010;margin-bottom:4px;text-align:center">📋 結清單</div>
+    <div id="ask-settlement-subtitle" style="font-size:12px;color:#9C7A5A;margin-bottom:16px;text-align:center"></div>
+    <button onclick="closeModal('modal-ask-settlement');openSendSettlement(window.G._askSettlementBuyerKey)" style="width:100%;padding:12px;border-radius:10px;border:none;background:#06C755;color:white;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">📤 直接傳送到LINE給客人</button>
+    <button onclick="copyBuyerOrder(window.G._askSettlementBuyerKey);closeModal('modal-ask-settlement')" style="width:100%;padding:12px;border-radius:10px;border:1.5px solid #90D7FF;background:#EAF4FD;color:#0277BD;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">📋 改成複製（貼到別的地方）</button>
+    <button onclick="closeModal('modal-ask-settlement')" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;font-size:13px;font-weight:700;cursor:pointer">取消</button>
   </div>
 </div>
 
@@ -3488,6 +3508,12 @@ window.showToast=(msg,type="success")=>{
 // ── Modal helpers ──────────────────────────────────────────────────────
 window.openModal=function(id,data){
   window.G.activeModalData=data;
+  // 手機瀏覽器打開這種蓋滿畫面的彈窗時，常常會自己把底下的頁面偷偷捲動一下
+  // （通常是為了讓彈窗好對焦），關閉的時候不會自動復原，所以先記住目前捲到哪，
+  // 等關閉的時候不管有沒有存檔，都把畫面捲回原本的位置
+  if(window.HEAVY_INPUT_MODALS?.includes(id)&&!window.isHeavyModalOpen()){
+    window.G._scrollBeforeModal=window.scrollY;
+  }
   const el=document.getElementById(id);
   if(el){el.style.display="flex";}
   if(id==="modal-cust"&&data){
@@ -3768,6 +3794,12 @@ window.closeModal=function(id){
   if(id==="modal-eord"&&window.G._eoHiddenTab){
     window.G._eoHiddenTab.classList.add("active");
     window.G._eoHiddenTab=null;
+    // 分頁被藏起來的這段期間，內容都不在畫面上，瀏覽器會把捲動位置歸零，
+    // 現在恢復顯示了，把它捲回原本停留的地方，不管彈窗裡有沒有存檔都要復原
+    if(typeof window.G._scrollBeforeModal==="number"){
+      const y=window.G._scrollBeforeModal;
+      requestAnimationFrame(()=>window.scrollTo(0,y));
+    }
   }
   const el=document.getElementById(id);
   if(id==="modal-eprod"&&window.G.cameFromPromoGroups&&el){
@@ -3804,7 +3836,11 @@ window.closeModal=function(id){
     const tab=window.G.tab;
     if(window.G._dirtyTabs?.[tab]&&TAB_RENDER_MAP[tab]){
       window.G._dirtyTabs[tab]=false;
+      // 補畫這件事本身會把清單整個重新產生一次，這個動作會讓頁面捲動位置跳回最上面，
+      // 先記住現在捲到哪、補畫完再捲回去，這樣使用者不用每次存檔完都要重新往下滑找人
+      const scrollY=window.scrollY;
       TAB_RENDER_MAP[tab]();
+      requestAnimationFrame(()=>window.scrollTo(0,scrollY));
     }
   }
 };
@@ -3828,7 +3864,13 @@ window.isHeavyModalOpen=function(){
   return window.HEAVY_INPUT_MODALS.some(id=>document.getElementById(id)?.style.display==="flex");
 };
 window.renderIfActiveElseMarkDirty=function(tabName,renderFn){
-  if(window.G.tab===tabName&&!window.isHeavyModalOpen()){renderFn();}
+  if(window.G.tab===tabName&&!window.isHeavyModalOpen()){
+    // 背景同步觸發的重畫（例如另一個人也在用、或這個分頁本身有東西異動），
+    // 一樣會重建整個清單、把捲動位置彈回最上面，這裡一併保護起來
+    const scrollY=window.scrollY;
+    renderFn();
+    if(scrollY>0)requestAnimationFrame(()=>window.scrollTo(0,scrollY));
+  }
   else{window.G._dirtyTabs[tabName]=true;}
 };
 const TAB_RENDER_MAP={list:()=>renderList(),customers:()=>renderCustomers(),invoice:()=>renderInvoice()};
@@ -6885,6 +6927,89 @@ window.eoApplyBatchPercent=function(){
   eoUpdateDiscountPreview();
   showToast(`已把 ${rows.length} 筆訂單的售價套用 ${pctInput}折，記得按下面「儲存全部修改」才會真的存檔`,"success");
 };
+// 折扣原因：常用的先列出來，用複選（可以同時勾多個，例如「新客」+「滿額」），
+// 也留一個自訂輸入框給還沒列進去的原因，兩邊會合併成一串文字存起來
+window.DISCOUNT_REASON_PRESETS=["新客滿800折50","常客回饋","瑕疵折讓","生日優惠","揪團優惠"];
+window.G.eoDiscountReasons=new Set();
+window.eoRenderDiscountReasonChips=function(){
+  const box=document.getElementById("eo-discount-reason-chips");
+  if(!box)return;
+  box.innerHTML=window.DISCOUNT_REASON_PRESETS.map(r=>{
+    const active=window.G.eoDiscountReasons.has(r);
+    const esc=r.replace(/'/g,"\\'");
+    return `<button type="button" onclick="eoToggleDiscountReason('${esc}')" style="padding:5px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid ${active?"#C5A880":"#E8D5B0"};background:${active?"#C5A880":"white"};color:${active?"white":"#9C7A5A"};cursor:pointer">${r}</button>`;
+  }).join("");
+};
+window.eoToggleDiscountReason=function(reason){
+  if(window.G.eoDiscountReasons.has(reason))window.G.eoDiscountReasons.delete(reason);
+  else window.G.eoDiscountReasons.add(reason);
+  eoRenderDiscountReasonChips();
+  eoUpdateDiscountPreview();
+};
+// 把勾選的原因＋自訂輸入的文字，合併成一串存進資料庫的文字
+window.eoGetDiscountReasonText=function(){
+  const chosen=[...window.G.eoDiscountReasons];
+  const custom=(document.getElementById("eo-discount-reason-custom")?.value||"").trim();
+  if(custom)chosen.push(custom);
+  return chosen.join("、");
+};
+// 打開商品修改視窗時，如果這批訂單之前已經存過折扣原因，要把畫面上的勾選狀態還原回去，
+// 不然每次打開都要重新勾一次
+window.eoRestoreDiscountReasonUI=function(reasonText){
+  window.G.eoDiscountReasons=new Set();
+  const customEl=document.getElementById("eo-discount-reason-custom");
+  if(customEl)customEl.value="";
+  if(reasonText){
+    const parts=reasonText.split("、");
+    const leftover=[];
+    parts.forEach(p=>{
+      if(window.DISCOUNT_REASON_PRESETS.includes(p))window.G.eoDiscountReasons.add(p);
+      else leftover.push(p);
+    });
+    if(customEl)customEl.value=leftover.join("、");
+  }
+  eoRenderDiscountReasonChips();
+};
+
+// 免運原因：跟折扣原因用同一套邏輯，複選＋自訂輸入
+window.FREE_SHIPPING_REASON_PRESETS=["滿$3500免運","常客招待","活動優惠","瑕疵補償"];
+window.G.eoShippingReasons=new Set();
+window.eoRenderShippingReasonChips=function(){
+  const box=document.getElementById("eo-shipping-reason-chips");
+  if(!box)return;
+  box.innerHTML=window.FREE_SHIPPING_REASON_PRESETS.map(r=>{
+    const active=window.G.eoShippingReasons.has(r);
+    const esc=r.replace(/'/g,"\\'");
+    return `<button type="button" onclick="eoToggleShippingReason('${esc}')" style="padding:5px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1.5px solid ${active?"#5C3A1E":"#E8D5B0"};background:${active?"#5C3A1E":"white"};color:${active?"white":"#9C7A5A"};cursor:pointer">${r}</button>`;
+  }).join("");
+};
+window.eoToggleShippingReason=function(reason){
+  if(window.G.eoShippingReasons.has(reason))window.G.eoShippingReasons.delete(reason);
+  else window.G.eoShippingReasons.add(reason);
+  eoRenderShippingReasonChips();
+};
+window.eoGetShippingReasonText=function(){
+  const chosen=[...window.G.eoShippingReasons];
+  const custom=(document.getElementById("eo-shipping-reason-custom")?.value||"").trim();
+  if(custom)chosen.push(custom);
+  return chosen.join("、");
+};
+window.eoRestoreShippingReasonUI=function(reasonText){
+  window.G.eoShippingReasons=new Set();
+  const customEl=document.getElementById("eo-shipping-reason-custom");
+  if(customEl)customEl.value="";
+  if(reasonText){
+    const parts=reasonText.split("、");
+    const leftover=[];
+    parts.forEach(p=>{
+      if(window.FREE_SHIPPING_REASON_PRESETS.includes(p))window.G.eoShippingReasons.add(p);
+      else leftover.push(p);
+    });
+    if(customEl)customEl.value=leftover.join("、");
+  }
+  eoRenderShippingReasonChips();
+};
+
 window.eoUpdateDiscountPreview=function(){
   const disc=parseFloat(document.getElementById("eo-shared-discount")?.value)||0;
   const preview=document.getElementById("eo-discount-preview");
@@ -6927,7 +7052,9 @@ window.saveAllEditOrders=async function(){
       const upd={qty,discountPrice:price,total:price*qty,tracking:sharedTracking,discountNote};
       if(i===0){
         upd.sharedDiscount=sharedDiscount>0?sharedDiscount:0;
+        upd.sharedDiscountReason=sharedDiscount>0?eoGetDiscountReasonText():"";
         upd.freeShipping=freeShipping;
+        upd.freeShippingReason=freeShipping?eoGetShippingReasonText():"";
         upd.shippingCost=shippingCost;
         upd.depositAmt=sharedDeposit;
       } else {
@@ -9811,9 +9938,26 @@ window.renderList=function(){
   }
   const ss={pending:"#FEF3C7",settled:"#D1FAE5",shipped:"#DBEAFE"};
 
+  // ── 分批顯示（真正的記憶體減量修正）──────────────────────────────────
+  // 之前商品清單是「符合篩選的全部商品」一次整批畫出來，包含每一張商品照片
+  // 都變成畫面上的 <img>，商品一多、圖片一多，瀏覽器要同時處理的東西就暴增，
+  // 這是這幾天「打字/操作會卡、閃退」背後真正的底層原因。
+  // 改成一次只畫一批（30件），捲到底/按「顯示更多」才畫下一批，
+  // 不管商品庫多大，畫面上同時存在的圖片數量都有上限，這才是真正治本的做法。
+  const LIST_PAGE_SIZE=30;
+  const filterSig=JSON.stringify([listSearch,listFilterCat,listFilterCurrency,window.G.listFilterSubcat,window.G.listShowArchived,window.G.listSortMode,window.G.listViewMode]);
+  if(window.G._listFilterSig!==filterSig){
+    window.G._listFilterSig=filterSig;
+    window.G.listShownCount=LIST_PAGE_SIZE;
+  }
+  const shownCount=window.G.listShownCount||LIST_PAGE_SIZE;
+  const displayList=filtered.slice(0,shownCount);
+  const hasMore=filtered.length>shownCount;
+  const showMoreHtml=hasMore?`<button onclick="window.showMoreProducts()" style="width:100%;margin-top:10px;padding:12px;background:#FDF6EC;border:1px solid #E8D5B0;border-radius:12px;color:#A08060;font-size:13px;font-weight:700;cursor:pointer">顯示更多（還有 ${filtered.length-shownCount} 件，目前顯示 ${shownCount}/${filtered.length}）</button>`:"";
+
   // ── 網格模式 ──────────────────────────────────────────────────────────────
   if(window.G.listViewMode==="grid"){
-    container.innerHTML=`<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">`+filtered.map(p=>{
+    container.innerHTML=`<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">`+displayList.map(p=>{
       const cur=CURR[p.currency||"KRW"];
       const pOrders=tripOrdersByProduct[p.id]||[];
       const pTotal=pOrders.reduce((s,o)=>s+o.qty,0);
@@ -9833,11 +9977,11 @@ window.renderList=function(){
         +'<div style="font-size:10px;color:#9C7A5A">'+(cur?.symbol||"₩")+(p.foreignAmount||0).toLocaleString()+'</div>'
         +'<div style="font-size:10px;font-weight:700;color:#166534">利潤 NT$'+Math.round((p.finalPrice-liveAfterTax)*10)/10+'</div>'
         +'</div></div></div>';
-    }).join("")+`</div>`;
+    }).join("")+`</div>`+showMoreHtml;
     return;
   }
 
-  container.innerHTML=filtered.map(p=>{
+  container.innerHTML=displayList.map(p=>{
     const pOrders=tripOrdersByProduct[p.id]||[];
     const pTotal=pOrders.reduce((s,o)=>s+o.qty,0);
     const cur=CURR[p.currency||"KRW"];
@@ -9929,8 +10073,12 @@ window.renderList=function(){
         ${pOrders.length>0?`<div style="font-size:9px;font-weight:700;color:#90A4AE;margin-bottom:4px">📋 喊單明細</div><div style="display:flex;flex-direction:column;gap:5px">${(()=>{const sorted=[...pOrders].sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));return sorted.map((o,i)=>{return`<div style="display:flex;align-items:center;gap:6px;font-size:11px"><span style="flex-shrink:0;font-size:10px;font-weight:900;color:#9C7A5A;min-width:18px">#${i+1}</span><span style="flex:1;display:inline-flex;align-items:center;gap:4px;font-weight:700;background:#EBF7EE;color:#2E7D32;border:1px solid #C8E6C9;padding:3px 8px;border-radius:99px">${o.communityName||o.buyerName}${o.spec?` <span style="background:#C8E6C9;border-radius:4px;padding:0 4px;font-size:10px">${o.spec}</span>`:""} ×${o.qty}</span><button onclick="deleteOrder('${o.id}')" style="color:#E53935;background:none;border:none;cursor:pointer;font-weight:900;font-size:14px;line-height:1;flex-shrink:0">×</button></div>`;}).join("");})()}</div>`:`<div style="font-size:10px;color:#9C7A5A;font-style:italic">尚無喊單</div>`}
       </div>
     </div>`;
-  }).join("");
+  }).join("")+showMoreHtml;
   updateBatchBar("product");
+};
+window.showMoreProducts=function(){
+  window.G.listShownCount=(window.G.listShownCount||30)+30;
+  renderList();
 };
 
 // ── 安全 Modal 開啟（避免 JSON inline 解析問題） ───────────────────────
@@ -9950,7 +10098,7 @@ window.openEditOrd=function(oid){
   // 開彈窗時先把背景那個分頁（例如客戶清單，資料量大時本身就很重）暫時藏起來，
   // 減輕瀏覽器在彈窗互動當下要處理的畫面複雜度，關閉彈窗時再恢復顯示
   const activeTabPage=document.querySelector(".tab-page.active");
-  if(activeTabPage){window.G._eoHiddenTab=activeTabPage;activeTabPage.classList.remove("active");}
+  if(activeTabPage){window.G._scrollBeforeModal=window.scrollY;window.G._eoHiddenTab=activeTabPage;activeTabPage.classList.remove("active");}
   const cid=o.customerId||"";
   window.G.activeEordCustId=cid;
   window.G.eoPendingAdd=[];
@@ -9984,7 +10132,11 @@ window.openEditOrd=function(oid){
   const existingDeposit=cOrders.find(x=>x.depositAmt>0)?.depositAmt||"";
   const existingTracking=cOrders.find(x=>x.tracking)?.tracking||"";
   const existingDiscount=cOrders.find(x=>x.sharedDiscount>0)?.sharedDiscount||"";
+  const existingDiscountReason=cOrders.find(x=>x.sharedDiscount>0)?.sharedDiscountReason||"";
+  window.eoRestoreDiscountReasonUI(existingDiscountReason);
   const existingFreeShipping=cOrders.some(x=>x.freeShipping===true);
+  const existingShippingReason=cOrders.find(x=>x.freeShipping===true)?.freeShippingReason||"";
+  window.eoRestoreShippingReasonUI(existingShippingReason);
   const existingShippingCost=cOrders.find(x=>x.shippingCost>0)?.shippingCost||38;
   const depEl=document.getElementById("eo-shared-deposit");
   const trkEl=document.getElementById("eo-shared-tracking");
@@ -10000,6 +10152,8 @@ window.openEditOrd=function(oid){
   if(pctEl)pctEl.value="";
   if(scEl)scEl.value=existingShippingCost;
   if(scWrap)scWrap.style.display=existingFreeShipping?"flex":"none";
+  const shipReasonArea=document.getElementById("eo-shipping-reason-area");
+  if(shipReasonArea)shipReasonArea.style.display=existingFreeShipping?"block":"none";
   const prevEl=document.getElementById("eo-discount-preview");
   if(prevEl)prevEl.style.display="none";
 
@@ -10894,7 +11048,8 @@ window.renderInvoice=function(){
         </div>
         <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end">
           <button data-bkey="${encodeURIComponent(b.key)}" onclick="copyDepositOrder(null,decodeURIComponent(this.dataset.bkey))" style="font-size:10px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:700">💰 收訂金</button>
-          <button data-bkey="${encodeURIComponent(b.key)}" onclick="copyBuyerOrder(decodeURIComponent(this.dataset.bkey))" style="font-size:10px;background:#EAF4FD;color:#0277BD;border:1px solid #90D7FF;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700">複製結清</button>
+          <button data-bkey="${encodeURIComponent(b.key)}" onclick="openAskSettlement(decodeURIComponent(this.dataset.bkey))" style="font-size:10px;background:#EAF4FD;color:#0277BD;border:1px solid #90D7FF;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700">複製結清</button>
+          <button data-cid="${b.orders[0]?.customerId||""}" onclick="this.dataset.cid?openShopModal(this.dataset.cid):showToast('這位客人還沒建立客戶資料，沒辦法開賣場','warning')" style="font-size:10px;background:#FFF3E0;color:#E65100;border:1px solid #FFCC80;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700">🏪 開賣場</button>
           <button data-oid="${b.orders[0]?.id}" onclick="openEditOrd(this.dataset.oid)" style="font-size:10px;padding:4px 10px;border-radius:6px;font-weight:700;border:1px solid #E8D5B0;background:#FDF6EC;color:#C5A880;cursor:pointer">✏️ 修改</button>
         </div>`}
       </div>
@@ -11506,6 +11661,11 @@ window.copyCustOrder=function(cid){
 };
 
 // ── 複製對帳單（對帳單頁）──────────────────────────────────────────────
+window.openAskSettlement=function(buyerKey){
+  window.G._askSettlementBuyerKey=buyerKey;
+  const modal=document.getElementById("modal-ask-settlement");
+  if(modal)modal.style.display="flex";
+};
 window.copyBuyerOrder=function(buyerKey){
   const buyerOrders=getTripOrders().filter(o=>{
     const key=o.customerId||o.communityName||o.buyerName||"未知";
@@ -11513,15 +11673,33 @@ window.copyBuyerOrder=function(buyerKey){
   });
   if(!buyerOrders.length){showToast("找不到訂單","warning");return;}
   const name=buyerOrders[0].communityName||buyerOrders[0].buyerName||"買家";
-  const total=buyerOrders.reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0);
+  // 這兩個是「整批設定」裡設的，只記在其中一筆訂單身上，代表整批共用，
+  // 之前這裡完全沒算到，導致傳給客人的金額跟對帳單畫面上實際顯示的金額對不起來
+  const sharedDisc=buyerOrders.find(o=>o.sharedDiscount>0)?.sharedDiscount||0;
+  const sharedDiscReason=buyerOrders.find(o=>o.sharedDiscount>0)?.sharedDiscountReason||"";
+  const hasFreeShipping=buyerOrders.some(o=>o.freeShipping);
+  const shipReason=buyerOrders.find(o=>o.freeShipping)?.freeShippingReason||"";
+  const rawTotal=buyerOrders.reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0);
+  const total=rawTotal-sharedDisc;
   const totalDeposit=buyerOrders.reduce((s,o)=>s+(o.depositAmt||0),0);
-  const payNow=Math.max(0,total-totalDeposit-100);
-  const lines=buyerOrders.map(o=>{const dp=o.discountPrice||o.unitPrice||0;return "• "+(cleanProductName((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品"))+" ×"+o.qty+"  NT$"+(dp*o.qty).toLocaleString();});
+  const codReserve=hasFreeShipping?0:100;
+  const payNow=Math.max(0,total-totalDeposit-codReserve);
+  const lines=buyerOrders.map(o=>{const dp=o.discountPrice||o.unitPrice||0;return "• "+(cleanProductName((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品"))+(o.spec?`（${o.spec}）`:"")+" ×"+o.qty+"  NT$"+(dp*o.qty).toLocaleString();});
+  const discLine=sharedDisc>0?`\n折扣　-NT$${sharedDisc.toLocaleString()}${sharedDiscReason?`（${sharedDiscReason}）`:""}`:"";
+  const shipLine=hasFreeShipping?`\n🚚 免運${shipReason?`（${shipReason}）`:""}`:"";
   const remainder=total-totalDeposit;
+  const payLine=codReserve===0
+    ?`🌟應付金額　NT$${payNow.toLocaleString()}`
+    :`🌟應付金額　NT$${payNow.toLocaleString()}（尾款共NT$${remainder.toLocaleString()}，先付這些，剩NT$100交貨時付清）`;
   const summaryBlock=totalDeposit>0
-    ?`\n───────────\n總金額　NT$${total.toLocaleString()}\n已付訂金　NT$${totalDeposit.toLocaleString()}\n───────────\n尾款　NT$${remainder.toLocaleString()} （保留 NT$100 交貨便貨到付款）\n\n本次應匯款　NT$${payNow.toLocaleString()}`
-    :`\n───────────\n總金額　NT$${total.toLocaleString()}\n\n本次應匯款　NT$${payNow.toLocaleString()} （保留 NT$100 交貨便貨到付款）`;
-  const text=`【訂單明細】\n\n${lines.join("\n")}${summaryBlock}`;
+    ?`\n───────────\n總金額　NT$${rawTotal.toLocaleString()}${discLine}${shipLine}\n已付訂金　NT$${totalDeposit.toLocaleString()}\n───────────\n${payLine}`
+    :`\n───────────\n總金額　NT$${rawTotal.toLocaleString()}${discLine}${shipLine}\n\n${payLine}`;
+  const bs=window.G.settings||{};
+  const bankLines=[];
+  if(bs.bank1Name||bs.bank1Account)bankLines.push(`${bs.bank1Name||""}\n${bs.bank1Account||""}`);
+  if(bs.bank2Name||bs.bank2Account)bankLines.push(`${bs.bank2Name||""}\n${bs.bank2Account||""}`);
+  const bankText=bankLines.length?`\n\n${bankLines.join("\n\n")}`:"";
+  const text=`【訂單明細】\n\n${lines.join("\n")}${summaryBlock}${bankText}`;
 
 
 
@@ -11531,6 +11709,157 @@ window.copyBuyerOrder=function(buyerKey){
     try{document.execCommand("copy");showToast("對帳單已複製！");}catch(e){showToast("複製失敗","error");}
     document.body.removeChild(ta);
   });
+};
+
+// 把結清單直接傳送到客人的LINE，不用自己複製貼上——同名多筆一樣會列出來讓你自己選，不會傳錯人
+window.openSendSettlement=async function(buyerKey){
+  const buyerOrders=getTripOrders().filter(o=>{
+    const key=o.customerId||o.communityName||o.buyerName||"未知";
+    return key===buyerKey;
+  });
+  if(!buyerOrders.length){showToast("找不到訂單","warning");return;}
+  const first=buyerOrders[0];
+  const c=window.G.customers.find(x=>x.id===first.customerId);
+  const custName=c?(c.communityName||c.lineName||"客人"):(first.communityName||first.buyerName||"客人");
+  const sharedDisc=buyerOrders.find(o=>o.sharedDiscount>0)?.sharedDiscount||0;
+  const sharedDiscReason=buyerOrders.find(o=>o.sharedDiscount>0)?.sharedDiscountReason||"";
+  const hasFreeShipping=buyerOrders.some(o=>o.freeShipping);
+  const shipReason=buyerOrders.find(o=>o.freeShipping)?.freeShippingReason||"";
+  const rawTotal=buyerOrders.reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0);
+  const total=rawTotal-sharedDisc;
+  const totalDeposit=buyerOrders.reduce((s,o)=>s+(o.depositAmt||0),0);
+  const codReserve=hasFreeShipping?0:100;
+  const payNow=Math.max(0,total-totalDeposit-codReserve);
+  const lines=buyerOrders.map(o=>{const dp=o.discountPrice||o.unitPrice||0;return "• "+(cleanProductName((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品"))+(o.spec?`（${o.spec}）`:"")+" ×"+o.qty+"  NT$"+(dp*o.qty).toLocaleString();});
+  const discLine=sharedDisc>0?`\n折扣　-NT$${sharedDisc.toLocaleString()}${sharedDiscReason?`（${sharedDiscReason}）`:""}`:"";
+  const shipLine=hasFreeShipping?`\n🚚 免運${shipReason?`（${shipReason}）`:""}`:"";
+  const remainder=total-totalDeposit;
+  const payLine=codReserve===0
+    ?`🌟應付金額　NT$${payNow.toLocaleString()}`
+    :`🌟應付金額　NT$${payNow.toLocaleString()}（尾款共NT$${remainder.toLocaleString()}，先付這些，剩NT$100交貨時付清）`;
+  const summaryBlock=totalDeposit>0
+    ?`\n───────────\n總金額　NT$${rawTotal.toLocaleString()}${discLine}${shipLine}\n已付訂金　NT$${totalDeposit.toLocaleString()}\n───────────\n${payLine}`
+    :`\n───────────\n總金額　NT$${rawTotal.toLocaleString()}${discLine}${shipLine}\n\n${payLine}`;
+  const bs=window.G.settings||{};
+  const bankLines=[];
+  if(bs.bank1Name||bs.bank1Account)bankLines.push(`${bs.bank1Name||""}\n${bs.bank1Account||""}`);
+  if(bs.bank2Name||bs.bank2Account)bankLines.push(`${bs.bank2Name||""}\n${bs.bank2Account||""}`);
+  const bankText=bankLines.length?`\n\n${bankLines.join("\n\n")}`:"";
+  const text=`【訂單明細】\n\n${lines.join("\n")}${summaryBlock}${bankText}`;
+
+  const modal=document.getElementById("modal-send-settlement");
+  const nameEl=document.getElementById("ss-cust-name");
+  const statusEl=document.getElementById("ss-line-id-status");
+  const pickerEl=document.getElementById("ss-line-id-picker");
+  const msgEl=document.getElementById("ss-message");
+  const sendBtn=document.getElementById("ss-send-btn");
+  if(!modal||!nameEl||!statusEl||!pickerEl||!msgEl||!sendBtn)return;
+  nameEl.textContent=`👤 ${custName}`;
+  msgEl.value=text;
+  pickerEl.style.display="none";pickerEl.innerHTML="";
+  statusEl.textContent="🔍 查詢中...";statusEl.style.color="#9C7A5A";
+  sendBtn.disabled=true;sendBtn.style.opacity="0.5";
+  window.G._ssLineUserId=null;
+  window.G._ssCustId=c?.id||null;
+  if(c?.lineUserId){
+    window.G._ssLineUserId=c.lineUserId;
+    statusEl.innerHTML=`${lineAvatarSmallHtml(c.lineUserAvatar)}✅ 已綁定的LINE帳號（上次確認過）　<span onclick="unbindCustomerLineUser('${c.id}','modal-send-settlement')" style="color:#C0392B;text-decoration:underline;cursor:pointer;font-size:10px">不是本人？重新選擇</span>`;statusEl.style.color="#16A34A";
+    sendBtn.disabled=false;sendBtn.style.opacity="1";
+    modal.style.display="flex";
+    return;
+  }
+  try{
+    const {getDocs,collection:col}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    const snap=await getDocs(col(db,"line_users"));
+    const lineUsers=snap.docs.map(d=>d.data());
+    const lineName=(c?.lineName||c?.communityName||first.lineName||first.communityName||first.buyerName||"").trim().toLowerCase();
+    const matches=lineUsers.filter(u=>(u.displayName||"").trim().toLowerCase()===lineName);
+    if(matches.length===1){
+      window.G._ssLineUserId=matches[0].userId;
+      statusEl.innerHTML=`${lineAvatarSmallHtml(matches[0].pictureUrl)}✅ LINE 帳號：${matches[0].displayName}`;statusEl.style.color="#16A34A";
+      sendBtn.disabled=false;sendBtn.style.opacity="1";
+      bindCustomerLineUser(c?.id,matches[0].userId,matches[0].pictureUrl);
+    } else if(matches.length>1){
+      statusEl.innerHTML=`⚠️ 有 ${matches.length} 位LINE用戶顯示名稱都是「${custName}」，請確認是哪一位再送出<br><span style="font-size:10px;color:#9C7A5A">選對之後會記住這個客人對應哪個LINE帳號，之後不用再選；如果真的無法分辨，建議改用下方「改成複製」自己傳給客人</span>`;
+      statusEl.style.color="#D97706";sendBtn.disabled=true;sendBtn.style.opacity="0.5";
+      pickerEl.style.display="block";
+      pickerEl.innerHTML=`<div style="font-size:11px;font-weight:700;color:#92400E;margin-bottom:8px">👇 請選擇正確的LINE帳號</div>`+
+        matches.map(u=>{
+          const uidShort=(u.userId||"").slice(0,6)+"..."+(u.userId||"").slice(-4);
+          const avatar=u.pictureUrl?`<img src="${u.pictureUrl}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0"/>`:`<div style="width:32px;height:32px;border-radius:50%;background:#E8D5B0;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px">👤</div>`;
+          const status=u.statusMessage?`<div style="font-size:10px;color:#9C7A5A">${u.statusMessage}</div>`:"";
+          return `<div data-uid="${u.userId}" data-uname="${(u.displayName||"").replace(/"/g,"&quot;")}" data-upic="${(u.pictureUrl||"").replace(/"/g,"&quot;")}" onclick="window.ssSelectLineUser(this.dataset.uid,this.dataset.uname,this.dataset.upic)" ontouchend="event.preventDefault();window.ssSelectLineUser(this.dataset.uid,this.dataset.uname,this.dataset.upic)" style="display:flex;align-items:center;gap:8px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer">
+            ${avatar}
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12px;font-weight:700;color:#3D2010">${u.displayName||"（無名稱）"}</div>
+              ${status}
+              <div style="font-size:9px;color:#B0906A;font-family:monospace">${uidShort}</div>
+            </div>
+          </div>`;
+        }).join("");
+    } else {
+      statusEl.innerHTML=`⚠️ 找不到此客人的 LINE ID<br><span style="font-size:10px;color:#9C7A5A">請確認客人曾傳訊息給官方帳號，或改用下方「改成複製」</span>`;
+      statusEl.style.color="#D97706";sendBtn.disabled=true;sendBtn.style.opacity="0.5";
+    }
+  } catch(e){
+    statusEl.textContent="❌ 查詢失敗："+e.message;statusEl.style.color="#C0392B";sendBtn.disabled=true;sendBtn.style.opacity="0.5";
+  }
+  modal.style.display="flex";
+};
+window.ssSelectLineUser=function(userId,displayName,pictureUrl){
+  window.G._ssLineUserId=userId;
+  bindCustomerLineUser(window.G._ssCustId,userId,pictureUrl);
+  const statusEl=document.getElementById("ss-line-id-status");
+  const sendBtn=document.getElementById("ss-send-btn");
+  const pickerEl=document.getElementById("ss-line-id-picker");
+  if(statusEl){statusEl.innerHTML=`${lineAvatarSmallHtml(pictureUrl)}✅ 已選定 LINE 帳號：${displayName}`;statusEl.style.color="#16A34A";}
+  if(pickerEl){
+    pickerEl.querySelectorAll("[data-uid]").forEach(el=>{
+      el.style.border=el.dataset.uid===userId?"2px solid #06C755":"1px solid #E8D5B0";
+      el.style.background=el.dataset.uid===userId?"#F0FFF4":"white";
+    });
+  }
+  if(sendBtn){sendBtn.disabled=false;sendBtn.style.opacity="1";}
+};
+window.copySettlementMessage=function(){
+  const text=document.getElementById("ss-message")?.value||"";
+  navigator.clipboard?.writeText(text).then(()=>showToast("結清單已複製！")).catch(()=>{
+    const ta=document.createElement("textarea");ta.value=text;ta.style.position="fixed";
+    document.body.appendChild(ta);ta.focus();ta.select();
+    try{document.execCommand("copy");showToast("結清單已複製！");}catch(e){showToast("複製失敗","error");}
+    document.body.removeChild(ta);
+  });
+};
+window.sendSettlementMessage=async function(){
+  const message=document.getElementById("ss-message")?.value.trim();
+  const userId=window.G._ssLineUserId;
+  const sendBtn=document.getElementById("ss-send-btn");
+  if(!message){showToast("請填入訊息內容","error");return;}
+  if(!userId){showToast("找不到客人 LINE ID","error");return;}
+  sendBtn.disabled=true;sendBtn.textContent="傳送中...";
+  try{
+    const controller=new AbortController();
+    const timeoutId=setTimeout(()=>controller.abort(),10000); // 網路太差時，最多等10秒就放棄，不要一直卡著
+    const resp=await fetch("https://butter-ai.kueigin.workers.dev",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","X-Service":"line-quote"},
+      body:JSON.stringify({userId,message}),
+      signal:controller.signal,
+    });
+    clearTimeout(timeoutId);
+    const result=await resp.json();
+    if(result.success){
+      showToast("✅ 結清單已傳送給客人！");
+      document.getElementById("modal-send-settlement").style.display="none";
+    } else {
+      showToast("傳送失敗："+JSON.stringify(result.error),"error");
+    }
+  } catch(e){
+    showToast(e.name==="AbortError"?"網路太慢，傳送逾時，請確認網路後再試一次":"傳送失敗："+e.message,"error");
+  }
+  sendBtn.disabled=false;
+  sendBtn.style.opacity="1";
+  sendBtn.textContent="傳送給客人";
 };
 
 // 整批更新同一買家的所有訂單狀態
@@ -11949,7 +12278,7 @@ window.openEditCustOrOrder=function(custId, custName){
 window.doQuickAddOrder=function(custId, custName){
   // 直接開啟修改訂單 modal（即使沒有訂單也能新增）
   const activeTabPage=document.querySelector(".tab-page.active");
-  if(activeTabPage){window.G._eoHiddenTab=activeTabPage;activeTabPage.classList.remove("active");}
+  if(activeTabPage){window.G._scrollBeforeModal=window.scrollY;window.G._eoHiddenTab=activeTabPage;activeTabPage.classList.remove("active");}
   window.G.activeEordCustId=custId;
   window.G.eoPendingAdd=[];
   window.G.eoSessionPaymentMethod=null;
@@ -12028,26 +12357,21 @@ window.openShopModal=function(custId){
   if(!c)return;
   const lineName=c.lineName||c.communityName||"客人";
   const shopName=lineName+"專屬賣場";
-  // 從 DOM 抓已渲染的商品名稱（最可靠，與客戶列表顯示完全一致）
+  // 直接從訂單資料算商品清單，不要去抓畫面上的 DOM——之前這樣寫，只有從「客戶頁」呼叫才抓得到，
+  // 從對帳單頁呼叫的話，卡片排版不一樣，會抓空、退回顯示「商品」這種沒有意義的預設值
+  const custOrders=getTripOrders().filter(o=>{
+    if(o.orderType==="quote")return false;
+    return o.customerId
+      ?o.customerId===c.id
+      :(((c.communityName||"").trim().toLowerCase()===(o.communityName||o.buyerName||"").trim().toLowerCase())||
+        ((c.lineName||"").trim().toLowerCase()===(o.lineName||"").trim().toLowerCase()&&(c.lineName||"")!==""));
+  });
   let productList="商品";
-  try{
-    const cards=document.querySelectorAll("#customer-cards > div");
-    for(const card of cards){
-      const btn=card.querySelector(`button[data-cid="${custId}"]`);
-      if(btn){
-        const spans=card.querySelectorAll("span");
-        const items=[];
-        for(const sp of spans){
-          const txt=sp.textContent.trim();
-          if(txt.includes("×")&&!txt.startsWith("NT$")&&txt.length>2){
-            items.push(txt);
-          }
-        }
-        if(items.length>0)productList=items.join("、");
-        break;
-      }
-    }
-  }catch(e){}
+  const items=custOrders.map(o=>{
+    const name=cleanProductName((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品");
+    return name+(o.spec?`(${o.spec})`:"")+`×${o.qty}`;
+  });
+  if(items.length)productList=items.join("、");
   // 建立 modal
   const existing=document.getElementById("modal-shop");
   if(existing)existing.remove();
@@ -12092,6 +12416,18 @@ window.openShopModal=function(custId){
   document.body.appendChild(div);
 };
 
+// 之前這裡「面交」「物流」兩個按鈕都只是顯示一句「已標記出貨」的假訊息，
+// 從來沒有真的把訂單狀態改成已出貨，資料庫裡完全沒變動——這裡補上真正的寫入動作
+window.markCustomerOrdersShipped=async function(custId,tracking){
+  const targetOrders=window.G.orders.filter(o=>o.customerId===custId&&o.orderType!=="quote"&&o.status!=="shipped");
+  if(!targetOrders.length)return 0;
+  for(const o of targetOrders){
+    const upd={status:"shipped"};
+    if(tracking)upd.tracking=tracking;
+    await fbUpd("orders",o.id,upd).catch(()=>{});
+  }
+  return targetOrders.length;
+};
 window.lnSelectType=function(type){
   const faceBtn=document.getElementById("ln-btn-face");
   const delivBtn=document.getElementById("ln-btn-delivery");
@@ -12102,8 +12438,10 @@ window.lnSelectType=function(type){
     section.style.display="none";
     // 面交直接確認出貨，關閉 modal
     if(confirm("確認面交出貨？")){
-      document.getElementById("modal-line-notify").style.display="none";
-      showToast("✅ 已標記面交出貨！");
+      markCustomerOrdersShipped(window.G._lnCustId,"面交").then(count=>{
+        document.getElementById("modal-line-notify").style.display="none";
+        showToast(count>0?`✅ 已將 ${count} 筆訂單標記為已出貨！`:"這位客人目前沒有可標記出貨的訂單");
+      });
     }
   } else {
     delivBtn.style.background="#3D2010";delivBtn.style.color="white";delivBtn.style.borderColor="#3D2010";
@@ -12115,6 +12453,7 @@ window.lnSelectType=function(type){
 window.openLineNotify=async function(custId){
   const c=window.G.customers.find(x=>x.id===custId);
   if(!c){showToast("找不到客人資料","error");return;}
+  window.G._lnCustId=custId;
   const modal=document.getElementById("modal-line-notify");
   const nameEl=document.getElementById("ln-cust-name");
   const statusEl=document.getElementById("ln-line-id-status");
@@ -12231,7 +12570,8 @@ window.sendLineNotify=async function(){
     });
     const result=await resp.json();
     if(result.success){
-      showToast("✅ 出貨通知已傳送！");
+      const count=await markCustomerOrdersShipped(window.G._lnCustId,tracking);
+      showToast(count>0?`✅ 出貨通知已傳送，${count} 筆訂單已標記為已出貨！`:"✅ 出貨通知已傳送！");
       document.getElementById("modal-line-notify").style.display="none";
     } else {
       showToast("傳送失敗："+JSON.stringify(result.error),"error");
@@ -13482,6 +13822,24 @@ window.lbTouchEnd=function(e){
 
 <!-- LINE 出貨通知 Modal -->
 <!-- 待報價傳送報價給客人 Modal -->
+<div id="modal-send-settlement" class="modal-overlay" style="display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;padding:16px">
+  <div onclick="event.stopPropagation()" style="background:white;border-radius:16px;width:100%;max-width:420px;padding:20px;max-height:90vh;overflow-y:auto;box-sizing:border-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <h3 style="margin:0;font-size:15px;font-weight:900;color:#3D2010">📤 傳送結清單給客人</h3>
+      <button onclick="closeModal('modal-send-settlement')" style="font-size:22px;color:#9C7A5A;background:none;border:none;cursor:pointer;line-height:1">×</button>
+    </div>
+    <div id="ss-cust-name" style="font-size:13px;font-weight:700;color:#3D2010;margin-bottom:10px;background:#FDF6EC;border-radius:8px;padding:8px 10px"></div>
+    <div id="ss-line-id-status" style="font-size:11px;margin-bottom:12px"></div>
+    <div id="ss-line-id-picker" style="display:none;margin-bottom:12px;border:1.5px solid #FCD34D;background:#FFFBEB;border-radius:10px;padding:10px"></div>
+    <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:4px">訊息內容（可以自己修改）</label>
+    <textarea id="ss-message" rows="10" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;font-size:13px;outline:none;box-sizing:border-box;margin-bottom:14px;resize:vertical;font-family:inherit"></textarea>
+    <div style="display:flex;gap:8px">
+      <button onclick="copySettlementMessage()" style="flex:1;background:#EAF4FD;color:#0277BD;border:1px solid #90D7FF;border-radius:10px;padding:14px;font-size:13px;font-weight:700;cursor:pointer">📋 改成複製</button>
+      <button id="ss-send-btn" onclick="sendSettlementMessage()" disabled style="flex:2;background:#06C755;color:white;border:none;border-radius:10px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;opacity:0.5">傳送給客人</button>
+    </div>
+  </div>
+</div>
+
 <div id="modal-send-quote" class="modal-overlay" style="display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;padding:16px">
   <div onclick="event.stopPropagation()" style="background:white;border-radius:16px;width:100%;max-width:420px;padding:20px;max-height:90vh;overflow-y:auto;box-sizing:border-box">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
