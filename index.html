@@ -404,7 +404,10 @@ body.live-mode .hide-live { display: none !important; }
       <button onclick="batchDeleteProducts()" style="font-size:11px;background:#FDEDEC;color:#C0392B;border:1px solid #F1948A;padding:5px 10px;border-radius:8px;font-weight:700;cursor:pointer">🗑️ 批次刪除</button>
     </div>
   </div>
-  <button id="list-archived-toggle" onclick="toggleListShowArchived()" style="width:100%;font-size:11px;font-weight:700;padding:7px 10px;border-radius:8px;border:1px solid #BCAAA4;background:#EFEBE9;color:#6D4C41;cursor:pointer;margin-bottom:8px">📦 查看已封存商品</button>
+  <div style="display:flex;gap:6px;margin-bottom:8px">
+    <button id="list-archived-toggle" onclick="toggleListShowArchived()" style="flex:1;font-size:11px;font-weight:700;padding:7px 10px;border-radius:8px;border:1px solid #BCAAA4;background:#EFEBE9;color:#6D4C41;cursor:pointer">📦 查看已封存商品</button>
+    <button id="list-ordered-toggle" onclick="toggleListOnlyOrdered()" style="flex:1;font-size:11px;font-weight:700;padding:7px 10px;border-radius:8px;border:1px solid #AED6F1;background:#EBF5FB;color:#2980B9;cursor:pointer">🛒 只看有喊單商品</button>
+  </div>
   <div id="cur-filters" class="scrollbar-none" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:6px"></div>
   <div id="cat-filters" class="scrollbar-none" style="display:flex;flex-wrap:wrap;gap:6px;padding-bottom:4px;margin-bottom:6px"></div>
   <div id="subcat-filters" class="scrollbar-none" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;min-height:0"></div>
@@ -448,6 +451,7 @@ body.live-mode .hide-live { display: none !important; }
     <button id="cust-view-hascold" onclick="setCustViewFilter(window.G.custViewFilter==='hasCold'?'all':'hasCold')" style="flex:1;padding:8px 4px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #BEE0F5;background:#EAF4FB;color:#1E5F8C;cursor:pointer">🧊 有冷藏</button>
   </div>
   <button onclick="openBatchOrder()" style="width:100%;margin-bottom:8px;padding:9px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #F8BBD0;background:#FCE4EC;color:#AD1457;cursor:pointer">📋 批次貼上喊單文字</button>
+  <button onclick="showTripOrphanScan()" style="width:100%;margin-bottom:8px;padding:9px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #FCD34D;background:#FFFBEB;color:#92400E;cursor:pointer">✈️ 檢查沒有歸屬趟次的訂單</button>
   <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#9C7A5A;margin-bottom:8px;cursor:pointer">
     <input type="checkbox" id="cust-select-all" onchange="toggleSelectAll('customer')" style="width:16px;height:16px;accent-color:#C5A880"/> 全選
   </label>
@@ -3507,6 +3511,8 @@ window.doMoveTrip=async function(newTripId){
   document.getElementById("modal-move-trip")?.remove();
   window.G.moveTripOids=[];
   showToast(`已移到「${t?.name||newTripId}」✅`,"success");
+  const orphanModal=document.getElementById("modal-trip-orphan-scan");
+  if(orphanModal&&orphanModal.style.display!=="none")renderTripOrphanScan();
 };
 
 // ── 商品子分類自動偵測 ────────────────────────────────────────────────────
@@ -5108,6 +5114,77 @@ window.showDupWarningDebounced=function(val,boxId,excludeId){
   },350);
 };
 // 掃描整個商品庫，把名稱很像的商品分組列出來，方便回頭清理重複／合併規格
+// ── 檢查沒有歸屬趟次的訂單 ────────────────────────────────────────────
+// 用途：訂單如果沒有明確標記 tripId，系統會用「建立時間」去對照趟次日期區間自動歸類；
+// 但如果訂單是事後手動補登記的（建立當下的日期，不落在任何一趟的起訖區間內），
+// 就會變成「切到任何一個特定趟次都看不到、只有選『全部趟次』才找得到」的孤兒訂單。
+// 這個工具就是把這種訂單一次全部掃出來，列表裡直接可以點「移趟」修正歸屬。
+window.showTripOrphanScan=function(){
+  let modal=document.getElementById("modal-trip-orphan-scan");
+  if(!modal){
+    modal=document.createElement("div");
+    modal.id="modal-trip-orphan-scan";
+    modal.className="modal-overlay";
+    modal.style.cssText="display:none;position:fixed;inset:0;z-index:120;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;padding:16px";
+    modal.innerHTML=`<div style="background:white;border-radius:18px;width:100%;max-width:480px;max-height:85vh;display:flex;flex-direction:column">
+      <div style="padding:18px 20px 12px;border-bottom:1px solid #F0E6D0;display:flex;justify-content:space-between;align-items:center">
+        <h3 style="margin:0;font-size:15px;font-weight:900;color:#3D2010">✈️ 檢查沒有歸屬趟次的訂單</h3>
+        <button onclick="document.getElementById('modal-trip-orphan-scan').style.display='none'" style="background:none;border:none;font-size:20px;color:#9C7A5A;cursor:pointer">×</button>
+      </div>
+      <div id="trip-orphan-scan-content" style="padding:14px 20px 20px;overflow-y:auto;flex:1"></div>
+    </div>`;
+    document.body.appendChild(modal);
+  }
+  modal.style.display="flex";
+  renderTripOrphanScan();
+};
+window.renderTripOrphanScan=function(){
+  const box=document.getElementById("trip-orphan-scan-content");
+  if(!box)return;
+  box.innerHTML=`<div style="text-align:center;padding:20px;color:#9C7A5A;font-size:12px">掃描中…</div>`;
+  setTimeout(()=>{
+    const trips=window.G.trips||[];
+    const orders=window.G.orders||[];
+    if(!trips.length){
+      box.innerHTML=`<div style="text-align:center;padding:24px 10px;color:#9C7A5A;font-size:13px">目前還沒有建立任何趟次，沒辦法判斷歸屬。</div>`;
+      return;
+    }
+    const orphans=orders.filter(o=>{
+      if(o.tripId)return !trips.some(t=>t.id===o.tripId); // 有標記，但那個趟次已經不存在了
+      return !detectTripForOrder(o); // 沒有標記，日期也對不到任何一趟
+    });
+    if(!orphans.length){
+      box.innerHTML=`<div style="text-align:center;padding:24px 10px;color:#166534;font-size:13px">✅ 每一筆訂單都有明確歸屬到某個趟次，沒有發現孤兒訂單</div>`;
+      return;
+    }
+    // 依客戶分組，方便一次看完同一個人有哪幾筆需要處理
+    const groupMap={};
+    orphans.forEach(o=>{
+      const key=o.customerId||o.communityName||o.buyerName||o.lineName||"未知";
+      if(!groupMap[key])groupMap[key]={name:o.communityName||o.buyerName||o.lineName||"（未知客戶）",items:[]};
+      groupMap[key].items.push(o);
+    });
+    const groups=Object.values(groupMap).sort((a,b)=>b.items.length-a.items.length);
+    box.innerHTML=`<div style="font-size:11px;color:#9C7A5A;margin-bottom:12px">共抓到 ${orphans.length} 筆訂單沒有明確歸屬到任何一個趟次（通常是事後補登記、建立日期不落在任何一趟的起訖區間內），點「移趟」可以直接指定歸屬。</div>`+
+      groups.map(g=>{
+        const rows=g.items.map(o=>{
+          const dateStr=o.createdAt?new Date(o.createdAt).toLocaleDateString("zh-TW"):"（無建立時間）";
+          return `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;background:#FAF8F5;border-radius:9px;padding:8px 12px">
+            <div style="min-width:0">
+              <div style="font-size:12px;font-weight:700;color:#3D2010;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.productName||o.productId||"（未知商品）"}${o.spec?" ("+o.spec+")":""} ×${o.qty||1}</div>
+              <div style="font-size:10px;color:#9C7A5A">建立於 ${dateStr}${o.tripId?"・目前標記的趟次已不存在":"・沒有標記趟次"}</div>
+            </div>
+            <button onclick="openMoveTrip('${o.id}')" style="flex-shrink:0;color:#0277BD;background:#E3F2FD;border:1px solid #90CAF9;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;font-weight:700">移趟</button>
+          </div>`;
+        }).join("");
+        return `<div style="border:1px solid #FCD34D;border-left:4px solid #F59E0B;border-radius:12px;padding:10px 12px;margin-bottom:12px;background:#FFFBEB">
+          <div style="font-size:11px;font-weight:700;color:#92400E;margin-bottom:6px">👤 ${g.name}（${g.items.length}筆）</div>
+          <div style="display:flex;flex-direction:column;gap:6px">${rows}</div>
+        </div>`;
+      }).join("");
+  },10);
+};
+
 window.showDupProductScan=function(){
   let modal=document.getElementById("modal-dup-scan");
   if(!modal){
@@ -7448,10 +7525,13 @@ window.saveAllEditOrders=async function(){
     // 新增暫存商品
     const cid=window.G.activeEordCustId;
     const c=window.G.customers.find(x=>x.id===cid);
-    // 同樣優先用畫面上目前選取的趟次篩選，避免誤判成已結束的舊趟次
-    const tripId=window.G.moSelectedTripId||(window.G.tripFilter&&window.G.tripFilter!=="all"?window.G.tripFilter:null)||getLatestTrip()?.id||"";
     const pending=window.G.eoPendingAdd||[];
     for(const item of pending){
+      // 注意：這裡不要重新計算 tripId 去覆蓋掉！item.tripId 是「加入這個商品到訂單的當下」
+      // 就已經算好、記在這個項目身上的正確趟次；如果存檔時又重算一次現在的趟次去蓋掉它，
+      // 一旦兩個時間點的「目前趟次」判斷結果不一樣，就會存成錯的趟次（之前遇到的 bug）。
+      // 只有在極少數這個項目當初真的完全沒算到任何趟次時，才在這裡補一個保底值。
+      const tripId=item.tripId||window.G.moSelectedTripId||(window.G.tripFilter&&window.G.tripFilter!=="all"?window.G.tripFilter:null)||getLatestTrip()?.id||"";
       const saveOrder={...item,customerId:cid,
         communityName:c?.communityName||"",lineName:c?.lineName||"",
         buyerName:c?.communityName||c?.lineName||"",tripId};
@@ -10210,6 +10290,20 @@ window.setListSortMode=function(mode){
   });
   renderList();
 };
+window.toggleListOnlyOrdered=function(){
+  window.G.listOnlyOrdered=!window.G.listOnlyOrdered;
+  const btn=document.getElementById("list-ordered-toggle");
+  if(btn){
+    if(window.G.listOnlyOrdered){
+      btn.textContent="🛒 只看有喊單商品（已套用）";
+      btn.style.background="#2980B9";btn.style.color="white";btn.style.borderColor="#2980B9";
+    } else {
+      btn.textContent="🛒 只看有喊單商品";
+      btn.style.background="#EBF5FB";btn.style.color="#2980B9";btn.style.borderColor="#AED6F1";
+    }
+  }
+  renderList();
+};
 
 window.renderList=function(){
   const container=document.getElementById("product-cards");if(!container)return;
@@ -10228,6 +10322,8 @@ window.renderList=function(){
     const mC=listFilterCat==="all"||p.catKey===listFilterCat;
     const mSub=!window.G.listFilterSubcat||(window.G.listFilterSubcat==="__none__"?!window.getSubcat(p.name,p.catKey):window.getSubcat(p.name,p.catKey)?.key===window.G.listFilterSubcat);
     const mX=listFilterCurrency==="all"||(p.currency||"KRW")===listFilterCurrency;
+    // 只看有喊單商品：這個商品目前有沒有任何一筆訂單（不分件數多寡，有登記過就算）
+    const mOrdered=!window.G.listOnlyOrdered||((ordersByProduct[p.id]||[]).reduce((s,o)=>s+(o.qty||0),0)>0);
     let mS=true;
     if(sqGlobal){
       const pOrders2=ordersByProduct[p.id]||[];
@@ -10239,7 +10335,7 @@ window.renderList=function(){
       const mChannelAbbr=channelAbbr[sqGlobal]&&channelLower.includes(channelAbbr[sqGlobal]);
       mS=p.name.toLowerCase().includes(sqGlobal)||p.id.toLowerCase().includes(sqGlobal)||buyerNames.includes(sqGlobal)||channelLower.includes(sqGlobal)||specsStr.includes(sqGlobal)||mChannelAbbr;
     }
-    return mC&&mX&&mS&&mSub&&mArchived;
+    return mC&&mX&&mS&&mSub&&mArchived&&mOrdered;
   });
   // 排序：預設維持上架順序；也可以切成熱銷排行或利潤高低
   const sortMode=window.G.listSortMode||"default";
@@ -10266,7 +10362,8 @@ window.renderList=function(){
   const matchesNonCatFilters=p=>{
     const mArchived=window.G.listShowArchived?p.archived===true:!p.archived;
     const mX=listFilterCurrency==="all"||(p.currency||"KRW")===listFilterCurrency;
-    if(!sqGlobal)return mArchived&&mX;
+    const mOrdered=!window.G.listOnlyOrdered||((ordersByProduct[p.id]||[]).reduce((s,o)=>s+(o.qty||0),0)>0);
+    if(!sqGlobal)return mArchived&&mX&&mOrdered;
     const pOrders2=ordersByProduct[p.id]||[];
     const buyerNames=pOrders2.map(o=>(o.communityName||o.lineName||o.buyerName||"").toLowerCase()).join(" ");
     const specsStr=(Array.isArray(p.specs)?p.specs.join(","):p.specs||"").toLowerCase();
@@ -10274,7 +10371,7 @@ window.renderList=function(){
     const channelLower=(p.channel||"").toLowerCase();
     const mChannelAbbr=channelAbbr[sqGlobal]&&channelLower.includes(channelAbbr[sqGlobal]);
     const mS=p.name.toLowerCase().includes(sqGlobal)||p.id.toLowerCase().includes(sqGlobal)||buyerNames.includes(sqGlobal)||channelLower.includes(sqGlobal)||specsStr.includes(sqGlobal)||mChannelAbbr;
-    return mArchived&&mX&&mS;
+    return mArchived&&mX&&mS&&mOrdered;
   };
   const nonCatFilteredProducts=products.filter(matchesNonCatFilters);
   const fc=document.getElementById("cat-filters");
@@ -10318,7 +10415,7 @@ window.renderList=function(){
   // 改成一次只畫一批（30件），捲到底/按「顯示更多」才畫下一批，
   // 不管商品庫多大，畫面上同時存在的圖片數量都有上限，這才是真正治本的做法。
   const LIST_PAGE_SIZE=30;
-  const filterSig=JSON.stringify([listSearch,listFilterCat,listFilterCurrency,window.G.listFilterSubcat,window.G.listShowArchived,window.G.listSortMode,window.G.listViewMode]);
+  const filterSig=JSON.stringify([listSearch,listFilterCat,listFilterCurrency,window.G.listFilterSubcat,window.G.listShowArchived,window.G.listOnlyOrdered,window.G.listSortMode,window.G.listViewMode]);
   if(window.G._listFilterSig!==filterSig){
     window.G._listFilterSig=filterSig;
     window.G.listShownCount=LIST_PAGE_SIZE;
