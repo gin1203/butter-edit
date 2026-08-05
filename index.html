@@ -360,6 +360,7 @@ body.live-mode .hide-live { display: none !important; }
         </div>
         <div style="display:flex;gap:8px;margin-top:8px">
           <label for="c-img-input" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:8px;border:1px solid #E8D5B0;border-radius:8px;cursor:pointer;font-size:11px;font-weight:700;color:#9C7A5A;background:#FAF8F5">📷 重新選擇</label>
+          <button onclick="openTextOverlay('c')" style="flex:1;padding:8px;border:1px solid #C5A880;border-radius:8px;font-size:11px;font-weight:700;color:#5C3A1E;background:#FDF6EC;cursor:pointer">✏️ 加文字</button>
           <button onclick="cImgClear()" style="flex:1;padding:8px;border:1px solid #F1948A;border-radius:8px;font-size:11px;font-weight:700;color:#C0392B;background:#FDEDEC;cursor:pointer">刪除圖片</button>
         </div>
       </div>
@@ -467,8 +468,10 @@ body.live-mode .hide-live { display: none !important; }
     <button data-invf="settled"    onclick="setInvFilter('settled')"    style="flex:1;min-width:60px;padding:8px 2px;border-radius:10px;font-size:10px;font-weight:700;border:1px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">已付尾款</button>
     <button data-invf="shipped"    onclick="setInvFilter('shipped')"    style="flex:1;min-width:60px;padding:8px 2px;border-radius:10px;font-size:10px;font-weight:700;border:1px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">已寄出</button>
   </div>
-  <button id="inv-unpurchased-btn" data-invf="unpurchased" onclick="toggleInvUnpurchased()" style="width:100%;margin-bottom:10px;padding:9px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #C4B5FD;background:#F3F0FF;color:#6D28D9;cursor:pointer">🛒 查看尚未購買的代買單</button>
-  <button id="inv-cold-btn" onclick="toggleInvColdOnly()" style="width:100%;margin-bottom:10px;padding:9px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #BEE0F5;background:#EAF4FB;color:#1E5F8C;cursor:pointer">🧊 只看冷藏商品</button>
+  <div style="display:flex;gap:8px;margin-bottom:10px">
+    <button id="inv-unpurchased-btn" data-invf="unpurchased" onclick="toggleInvUnpurchased()" style="flex:1;padding:9px 4px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #C4B5FD;background:#F3F0FF;color:#6D28D9;cursor:pointer">🛒 查看尚未購買的代買單</button>
+    <button id="inv-cold-btn" onclick="toggleInvColdOnly()" style="flex:1;padding:9px 4px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #BEE0F5;background:#EAF4FB;color:#1E5F8C;cursor:pointer">🧊 只看冷藏商品</button>
+  </div>
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px">
     <div style="background:white;border:1px solid #E8D5B0;border-radius:10px;padding:8px;text-align:center"><div style="font-size:8px;color:#9C7A5A">待訂金</div><div id="inv-pending" style="font-size:16px;font-weight:900;color:#E07B39">0</div></div>
     <div style="background:white;border:1px solid #E8D5B0;border-radius:10px;padding:8px;text-align:center"><div style="font-size:8px;color:#9C7A5A">已付訂金</div><div id="inv-deposit" style="font-size:16px;font-weight:900;color:#9C7A5A">0</div></div>
@@ -792,7 +795,7 @@ body.live-mode .hide-live { display: none !important; }
       <div id="mo-spec-btns" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px"></div>
       <div style="display:flex;gap:6px;align-items:stretch">
         <input type="text" id="mo-spec" placeholder="或自行輸入..." style="flex:1;min-width:0;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 14px;font-size:13px;outline:none"/>
-        <button type="button" onclick="moCustomSpecPhotoBrowse()" title="幫這個新規格順便加一張照片" style="flex-shrink:0;width:38px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;font-size:16px;cursor:pointer;color:#B0906A">📷</button>
+        <button type="button" id="mo-custom-spec-photo-btn" onclick="moCustomSpecPhotoBrowse()" title="幫這個新規格順便加一張照片" style="flex-shrink:0;width:38px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;font-size:16px;cursor:pointer;color:#B0906A">📷</button>
       </div>
       <div id="mo-custom-spec-photo-preview" style="display:none;margin-top:6px;align-items:center;gap:8px">
         <span style="position:relative;display:inline-block;width:40px;height:40px">
@@ -935,6 +938,7 @@ body.live-mode .hide-live { display: none !important; }
         </div>
         <div style="display:flex;gap:8px;margin-top:8px">
           <label for="ep-img-input" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:8px;border:1px solid #E8D5B0;border-radius:8px;cursor:pointer;font-size:11px;font-weight:700;color:#9C7A5A;background:#FAF8F5">📷 重新選擇</label>
+          <button onclick="openTextOverlay('ep')" style="flex:1;padding:8px;border:1px solid #C5A880;border-radius:8px;font-size:11px;font-weight:700;color:#5C3A1E;background:#FDF6EC;cursor:pointer">✏️ 加文字</button>
           <button onclick="epImgClear()" style="flex:1;padding:8px;border:1px solid #F1948A;border-radius:8px;font-size:11px;font-weight:700;color:#C0392B;background:#FDEDEC;cursor:pointer">刪除圖片</button>
         </div>
       </div>
@@ -1274,6 +1278,50 @@ body.live-mode .hide-live { display: none !important; }
 <div id="lightbox" onclick="closeLightbox()" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.92);align-items:center;justify-content:center">
   <img id="lightbox-img" style="max-width:96vw;max-height:92vh;object-fit:contain;border-radius:8px;pointer-events:none"/>
   <button onclick="closeLightbox()" style="position:fixed;top:16px;right:16px;background:rgba(255,255,255,0.15);color:white;border:none;border-radius:99px;width:36px;height:36px;font-size:20px;cursor:pointer;line-height:1">×</button>
+</div>
+
+<!-- 圖片加文字 -->
+<div id="modal-text-overlay" class="modal-overlay" style="display:none;position:fixed;inset:0;z-index:70;background:rgba(0,0,0,0.55);align-items:center;justify-content:center;padding:16px">
+  <div style="background:white;border-radius:16px;padding:20px;max-width:420px;width:100%;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h3 style="margin:0;font-size:15px;font-weight:900;color:#3D2010">✏️ 圖片加文字</h3>
+      <button onclick="closeTextOverlay()" style="font-size:22px;color:#9C7A5A;background:none;border:none;cursor:pointer;line-height:1">×</button>
+    </div>
+    <div style="font-size:10px;color:#9C7A5A;margin-bottom:6px;text-align:center">👆 拖曳文字調整位置・點其他文字可切換編輯</div>
+    <div id="to-preview-box" style="width:100%;aspect-ratio:1/1;border-radius:10px;overflow:hidden;background:#2b2b2b;position:relative;border:2px solid #C5A880;touch-action:none;display:flex;align-items:center;justify-content:center">
+      <img id="to-preview-img" style="max-width:100%;max-height:100%;display:block;pointer-events:none" draggable="false"/>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button onclick="toAddLabel()" style="flex:1;background:#EAF4FD;color:#0277BD;border:1px solid #90D7FF;border-radius:10px;padding:9px;font-size:12px;font-weight:700;cursor:pointer">➕ 新增一個文字</button>
+      <button onclick="toDeleteActiveLabel()" style="flex:1;background:#FDEDEC;color:#C0392B;border:1px solid #F1948A;border-radius:10px;padding:9px;font-size:12px;font-weight:700;cursor:pointer">🗑 刪除這個文字</button>
+    </div>
+    <button onclick="toRevertOriginal()" style="width:100%;margin-top:8px;background:#FDF6EC;color:#9C7A5A;border:1px dashed #E8D5B0;border-radius:10px;padding:8px;font-size:11px;font-weight:700;cursor:pointer">↩️ 還原成加文字前的原圖</button>
+    <div style="font-size:10px;color:#9C7A5A;margin-top:6px;text-align:center">下面欄位是在編輯「目前選取」的那個文字（畫面上有藍色虛線框的那個）</div>
+    <div style="margin-top:10px">
+      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">文字內容</label>
+      <input type="text" id="to-text-input" oninput="toUpdate()" placeholder="例如：01／現貨／已售完" style="width:100%;background:#FAF8F5;border:1.5px solid #E8D5B0;border-radius:10px;padding:10px 12px;font-size:14px;outline:none;box-sizing:border-box"/>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:12px">
+      <div style="flex:1">
+        <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">文字顏色</label>
+        <input type="color" id="to-color" value="#FFFFFF" oninput="toUpdate()" style="width:100%;height:38px;border:1.5px solid #E8D5B0;border-radius:10px;cursor:pointer;padding:2px;box-sizing:border-box"/>
+      </div>
+      <div style="flex:1">
+        <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">大小</label>
+        <input type="range" id="to-size" min="14" max="60" value="28" oninput="toUpdate()" style="width:100%;margin-top:10px"/>
+      </div>
+    </div>
+    <div style="margin-top:12px">
+      <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#9C7A5A;cursor:pointer;margin-bottom:8px">
+        <input type="checkbox" id="to-bg-toggle" onchange="toUpdate()" style="width:16px;height:16px;cursor:pointer"/>
+        加底色
+      </label>
+      <div id="to-bg-color-row" style="display:none">
+        <input type="color" id="to-bg-color" value="#000000" oninput="toUpdate()" style="width:100%;height:38px;border:1.5px solid #E8D5B0;border-radius:10px;cursor:pointer;padding:2px;box-sizing:border-box"/>
+      </div>
+    </div>
+    <button onclick="toApply()" style="width:100%;margin-top:16px;background:#5C3A1E;color:#F5E6C8;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer">✅ 套用全部文字到圖片</button>
+  </div>
 </div>
 
 <!-- 新增趟次 -->
@@ -1703,6 +1751,7 @@ body.live-mode .hide-live { display: none !important; }
           </div>
           <div style="display:flex;gap:8px;margin-top:8px">
             <label for="qa-prod-img-input" style="flex:1;text-align:center;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:6px;font-size:11px;color:#9C7A5A;cursor:pointer;font-weight:700">📷 重新選擇</label>
+            <button onclick="openTextOverlay('qaProd')" style="flex:1;background:#FDF6EC;color:#5C3A1E;border:1px solid #C5A880;border-radius:8px;padding:6px;font-size:11px;font-weight:700;cursor:pointer">✏️ 加文字</button>
             <button onclick="qaProdImgClear()" style="flex:1;background:#FDEDEC;color:#C0392B;border:1px solid #F1948A;border-radius:8px;padding:6px;font-size:11px;font-weight:700;cursor:pointer">刪除圖片</button>
           </div>
         </div>
@@ -2120,6 +2169,213 @@ function setupCropDrag(boxId,thumbId,onUpdate){
   return box;
 }
 
+// ── 圖片加文字（新增商品/修改商品/快速上架三個地方共用）────────────────────
+// target 對應到各自存圖片 base64 的欄位，套用文字後直接覆蓋回同一個欄位，
+// 跟原本「拖曳調整焦點」一樣是各自獨立的一份資料，不會互相影響
+const TO_TARGETS={
+  c:{thumb:"c-img-thumb",photoKey:"calcPhoto",originalKey:"calcPhotoOriginal"},
+  ep:{thumb:"ep-img-thumb",photoKey:"editPhoto",originalKey:"editPhotoOriginal"},
+  qaProd:{thumb:"qa-prod-img-thumb",photoKey:"qaProdPhoto",originalKey:"qaProdPhotoOriginal"},
+};
+// 支援「多個」文字框（例如幫每個商品編號 01、02、03），每個文字框有自己的內容/位置/顏色/大小/底色，
+// items 存全部文字框，activeId 是目前畫面上選取、下方欄位正在編輯的那一個
+window.G.textOverlay={target:null,items:[],activeId:null};
+let toIdSeq=1;
+let toDragState=null;
+let toDragHandlersBound=false;
+function toActiveItem(){
+  const st=window.G.textOverlay;
+  return st.items.find(i=>i.id===st.activeId)||null;
+}
+function toEnsureDragHandlers(){
+  if(toDragHandlersBound)return;
+  toDragHandlersBound=true;
+  const move=(clientX,clientY)=>{
+    if(!toDragState)return;
+    const box=document.getElementById("to-preview-box");if(!box)return;
+    const rect=box.getBoundingClientRect();
+    let x=(clientX-rect.left)/rect.width*100;
+    let y=(clientY-rect.top)/rect.height*100;
+    x=Math.max(0,Math.min(100,x));y=Math.max(0,Math.min(100,y));
+    const item=window.G.textOverlay.items.find(i=>i.id===toDragState);
+    if(!item)return;
+    item.x=x;item.y=y;
+    const div=box.querySelector(`.to-label[data-id="${item.id}"]`);
+    if(div){div.style.left=x+"%";div.style.top=y+"%";}
+  };
+  window.addEventListener("mousemove",e=>move(e.clientX,e.clientY));
+  window.addEventListener("mouseup",()=>{toDragState=null;});
+  window.addEventListener("touchmove",e=>{if(!toDragState)return;const t=e.touches[0];move(t.clientX,t.clientY);e.preventDefault();},{passive:false});
+  window.addEventListener("touchend",()=>{toDragState=null;});
+}
+function toRenderLabels(){
+  const box=document.getElementById("to-preview-box");if(!box)return;
+  box.querySelectorAll(".to-label").forEach(el=>el.remove());
+  const st=window.G.textOverlay;
+  st.items.forEach(item=>{
+    const div=document.createElement("div");
+    div.className="to-label";
+    div.dataset.id=item.id;
+    const isActive=item.id===st.activeId;
+    div.style.cssText=`position:absolute;left:${item.x}%;top:${item.y}%;transform:translate(-50%,-50%);font-weight:900;white-space:nowrap;cursor:grab;user-select:none;color:${item.color};font-size:${item.size}px;`;
+    div.textContent=item.text||"文字";
+    if(item.bg){
+      div.style.background=item.bgColor;
+      div.style.padding=Math.round(item.size*0.3)+"px "+Math.round(item.size*0.55)+"px";
+      div.style.borderRadius=Math.round(item.size*0.2)+"px";
+    } else {
+      div.style.textShadow="0 1px 4px rgba(0,0,0,.6)";
+    }
+    if(isActive){div.style.outline="2px dashed #29B6F6";div.style.outlineOffset="3px";}
+    const onDown=(clientX,clientY)=>{toSelectLabel(item.id);toDragState=item.id;};
+    div.addEventListener("mousedown",e=>{onDown(e.clientX,e.clientY);e.preventDefault();e.stopPropagation();});
+    div.addEventListener("touchstart",e=>{const t=e.touches[0];onDown(t.clientX,t.clientY);e.preventDefault();e.stopPropagation();},{passive:false});
+    box.appendChild(div);
+  });
+}
+window.toSelectLabel=function(id){
+  const st=window.G.textOverlay;
+  const item=st.items.find(i=>i.id===id);if(!item)return;
+  st.activeId=id;
+  const ti=document.getElementById("to-text-input");if(ti)ti.value=item.text;
+  const tc=document.getElementById("to-color");if(tc)tc.value=item.color;
+  const ts=document.getElementById("to-size");if(ts)ts.value=item.size;
+  const tbt=document.getElementById("to-bg-toggle");if(tbt)tbt.checked=item.bg;
+  const tbc=document.getElementById("to-bg-color");if(tbc)tbc.value=item.bgColor;
+  const bgRow=document.getElementById("to-bg-color-row");if(bgRow)bgRow.style.display=item.bg?"block":"none";
+  toRenderLabels();
+};
+window.toAddLabel=function(){
+  const st=window.G.textOverlay;
+  const last=toActiveItem()||st.items[st.items.length-1];
+  const id=toIdSeq++;
+  const item={
+    id,text:"",
+    color:last?last.color:"#FFFFFF",
+    size:last?last.size:28,
+    x:last?Math.max(8,Math.min(92,last.x+10)):50,
+    y:last?Math.max(8,Math.min(92,last.y)):80,
+    bg:last?last.bg:false,
+    bgColor:last?last.bgColor:"#000000",
+  };
+  st.items.push(item);
+  toSelectLabel(id);
+  const ti=document.getElementById("to-text-input");if(ti){ti.value="";ti.focus();}
+};
+window.toDeleteActiveLabel=function(){
+  const st=window.G.textOverlay;
+  if(!st.activeId)return;
+  st.items=st.items.filter(i=>i.id!==st.activeId);
+  st.activeId=st.items.length?st.items[st.items.length-1].id:null;
+  if(st.activeId){toSelectLabel(st.activeId);}
+  else{const ti=document.getElementById("to-text-input");if(ti)ti.value="";toRenderLabels();}
+};
+window.openTextOverlay=function(target){
+  const cfg=TO_TARGETS[target];if(!cfg)return;
+  // 修改商品時，如果商品本來就有圖片，畫面縮圖會直接顯示原圖，
+  // 但 window.G.editPhoto 這時候是 null（代表「沒有更動圖片」），不是真的沒有圖片，
+  // 所以這裡多一層 fallback：變數是空的話，改抓縮圖目前實際顯示的圖片內容
+  const thumbEl=document.getElementById(cfg.thumb);
+  const thumbSrc=thumbEl?.getAttribute("src")||"";
+  const src=window.G[cfg.photoKey]||thumbSrc;
+  if(!src){showToast("請先選擇圖片","warning");return;}
+  window.G.textOverlay={target,items:[],activeId:null};
+  const img=document.getElementById("to-preview-img");
+  if(img)img.src=src;
+  toEnsureDragHandlers();
+  toAddLabel(); // 預設先放一個文字框，維持一開視窗就能打字的體驗，之後可以按「新增一個文字」繼續加
+  const m=document.getElementById("modal-text-overlay");
+  if(m)m.style.display="flex";
+};
+window.closeTextOverlay=function(){
+  const m=document.getElementById("modal-text-overlay");if(m)m.style.display="none";
+  toDragState=null;
+};
+window.toUpdate=function(){
+  const item=toActiveItem();if(!item)return;
+  item.text=document.getElementById("to-text-input")?.value||"";
+  item.color=document.getElementById("to-color")?.value||"#FFFFFF";
+  item.size=parseInt(document.getElementById("to-size")?.value)||28;
+  item.bg=!!document.getElementById("to-bg-toggle")?.checked;
+  item.bgColor=document.getElementById("to-bg-color")?.value||"#000000";
+  const bgRow=document.getElementById("to-bg-color-row");
+  if(bgRow)bgRow.style.display=item.bg?"block":"none";
+  toRenderLabels();
+};
+window.toRevertOriginal=function(){
+  const st=window.G.textOverlay;
+  const cfg=TO_TARGETS[st.target];if(!cfg)return;
+  const original=window.G[cfg.originalKey];
+  if(!original){showToast("沒有可以還原的原圖","warning");return;}
+  window.G[cfg.photoKey]=original;
+  const thumb=document.getElementById(cfg.thumb);
+  if(thumb)thumb.src=original;
+  const img=document.getElementById("to-preview-img");
+  if(img)img.src=original;
+  st.items=[];
+  st.activeId=null;
+  toAddLabel();
+  showToast("已還原成加文字前的原圖","success");
+};
+window.toApply=function(){
+  const st=window.G.textOverlay;
+  const cfg=TO_TARGETS[st.target];if(!cfg)return;
+  const validItems=st.items.filter(i=>i.text&&i.text.trim());
+  if(!validItems.length){showToast("請先輸入文字","warning");return;}
+  const img=document.getElementById("to-preview-img");
+  const box=document.getElementById("to-preview-box");
+  if(!img||!box)return;
+  const nw=img.naturalWidth,nh=img.naturalHeight;
+  if(!nw||!nh){showToast("圖片還在載入，請稍後再試一次","warning");return;}
+  const cw=box.clientWidth,ch=box.clientHeight;
+  const scale=Math.min(cw/nw,ch/nh);
+  const dw=nw*scale,dh=nh*scale;
+  const offsetX=(cw-dw)/2,offsetY=(ch-dh)/2;
+  const canvas=document.createElement("canvas");
+  canvas.width=nw;canvas.height=nh;
+  const ctx=canvas.getContext("2d");
+  ctx.drawImage(img,0,0,nw,nh);
+  validItems.forEach(item=>{
+    const labelPxX=item.x/100*cw,labelPxY=item.y/100*ch;
+    const imgX=(labelPxX-offsetX)/scale;
+    const imgY=(labelPxY-offsetY)/scale;
+    const fontPx=item.size/scale;
+    ctx.font=`900 ${fontPx}px 'Inter','Noto Sans TC',sans-serif`;
+    ctx.textAlign="center";
+    ctx.textBaseline="middle";
+    if(item.bg){
+      // 底色矩形：寬度用實際文字量測，加上跟預覽同比例的內距，畫在文字下面
+      const textW=ctx.measureText(item.text).width;
+      const padX=fontPx*0.55,padY=fontPx*0.3;
+      const rectW=textW+padX*2,rectH=fontPx+padY*2;
+      const rectX=imgX-rectW/2,rectY=imgY-rectH/2;
+      const radius=fontPx*0.2;
+      ctx.fillStyle=item.bgColor;
+      ctx.beginPath();
+      ctx.moveTo(rectX+radius,rectY);
+      ctx.arcTo(rectX+rectW,rectY,rectX+rectW,rectY+rectH,radius);
+      ctx.arcTo(rectX+rectW,rectY+rectH,rectX,rectY+rectH,radius);
+      ctx.arcTo(rectX,rectY+rectH,rectX,rectY,radius);
+      ctx.arcTo(rectX,rectY,rectX+rectW,rectY,radius);
+      ctx.closePath();
+      ctx.fill();
+    } else {
+      ctx.lineJoin="round";
+      ctx.lineWidth=Math.max(2,fontPx*0.1);
+      ctx.strokeStyle="rgba(0,0,0,0.55)";
+      ctx.strokeText(item.text,imgX,imgY);
+    }
+    ctx.fillStyle=item.color;
+    ctx.fillText(item.text,imgX,imgY);
+  });
+  const outB64=canvas.toDataURL("image/jpeg",0.85);
+  window.G[cfg.photoKey]=outB64;
+  const thumb=document.getElementById(cfg.thumb);
+  if(thumb)thumb.src=outB64;
+  closeTextOverlay();
+  showToast(`已把 ${validItems.length} 個文字加到圖片上了`,"success");
+};
+
 // ── 新增商品頁圖片 ─────────────────────────────────────────────────────
 window.G.calcPhoto="";
 window.G.calcPhotoPos={x:50,y:50};
@@ -2128,6 +2384,7 @@ window.cImgPick=async function(input){
   showToast("壓縮圖片中…","success");
   const b64=await compressImg(file,640,0.75);
   window.G.calcPhoto=b64;
+  window.G.calcPhotoOriginal=b64;
   window.G.calcPhotoPos={x:50,y:50};
   const thumb=document.getElementById("c-img-thumb");
   const prev=document.getElementById("c-img-preview");
@@ -2143,7 +2400,7 @@ window.cImgPick=async function(input){
   showToast("圖片已選取，拖曳調整焦點","success");
 };
 window.cImgClear=function(){
-  window.G.calcPhoto="";window.G.calcPhotoPos={x:50,y:50};
+  window.G.calcPhoto="";window.G.calcPhotoOriginal="";window.G.calcPhotoPos={x:50,y:50};
   const thumb=document.getElementById("c-img-thumb");
   const prev=document.getElementById("c-img-preview");
   const label=document.getElementById("c-img-label");
@@ -2162,6 +2419,7 @@ window.epImgPick=async function(input){
   showToast("壓縮圖片中…","success");
   const b64=await compressImg(file,640,0.75);
   window.G.editPhoto=b64;
+  window.G.editPhotoOriginal=b64;
   window.G.editPhotoPos={x:50,y:50};
   const thumb=document.getElementById("ep-img-thumb");
   const prev=document.getElementById("ep-img-preview");
@@ -2176,7 +2434,7 @@ window.epImgPick=async function(input){
   showToast("圖片已選取，拖曳調整焦點","success");
 };
 window.epImgClear=function(){
-  window.G.editPhoto="";window.G.editPhotoPos=null;
+  window.G.editPhoto="";window.G.editPhotoOriginal="";window.G.editPhotoPos=null;
   const thumb=document.getElementById("ep-img-thumb");
   const prev=document.getElementById("ep-img-preview");
   const lbl=document.getElementById("ep-img-label");
@@ -3634,6 +3892,7 @@ window.openModal=function(id,data){
       }
       // 圖片預覽
       window.G.editPhoto=null;
+      window.G.editPhotoOriginal=data.photo||null;
       const epThumb=document.getElementById("ep-img-thumb");
       const epPrev=document.getElementById("ep-img-preview");
       const epLt=document.getElementById("ep-img-label-text");
@@ -3683,6 +3942,10 @@ window.openModal=function(id,data){
     window.G.moCustomSpecPhoto=null;
     setTimeout(()=>{
       const moCustomSpecPreviewReset=document.getElementById("mo-custom-spec-photo-preview");if(moCustomSpecPreviewReset)moCustomSpecPreviewReset.style.display="none";
+      // 商品本身沒有圖片時，規格旁邊那個「順便加照片」的相機圖示先隱藏起來，
+      // 不然一個完全沒圖片的商品旁邊冒出加照片按鈕會很突兀
+      const customSpecPhotoBtn=document.getElementById("mo-custom-spec-photo-btn");
+      if(customSpecPhotoBtn)customSpecPhotoBtn.style.display=p?.photo?"block":"none";
       document.getElementById("mo-pid").textContent=data.productId;
       document.getElementById("mo-pname").textContent=p?`${p.emoji} ${p.name}`:"";
       // 活動提醒：商品名稱裡如果有（1+1）／（2+1）／（3+1）這類標籤，登記喊單時明顯提醒一下，
@@ -3884,6 +4147,8 @@ window.G._dirtyTabs={list:false,customers:false,invoice:false};
 // 這其實才是「打字打到一半突然卡頓/閃退」的關鍵——你在打字，畫面卻在忙著重畫看不到的背景。
 // 現在改成：這些彈窗開著的時候，先標記「待更新」就好，不要真的重畫，等彈窗關閉了再一次補畫。
 window.HEAVY_INPUT_MODALS=["modal-quick","modal-order","modal-eprod","modal-batch-order","modal-eord"];
+// 「給貨」按鈕先隱藏（跟「出貨」功能重疊），想要重新顯示的話把這裡改成 true 就好，不用重寫程式碼
+window.SHOW_GIVE_BUTTON=false;
 window.isHeavyModalOpen=function(){
   return window.HEAVY_INPUT_MODALS.some(id=>document.getElementById(id)?.style.display==="flex");
 };
@@ -8044,21 +8309,21 @@ function renderStockProductBlock(pid,orders){
         ? `<span style="flex-shrink:0;font-size:9px;font-weight:700;color:${overCapacity?"#C0392B":"#5C8CA8"};background:${overCapacity?"#FDEDEC":"#EAF4FB"};border:1px solid ${overCapacity?"#F1948A":"#BEE0F5"};border-radius:6px;padding:2px 6px;white-space:nowrap">🧊${g.cumulative}${capacity?"/"+capacity:""}${overCapacity?" ⚠️":""}</span>`
         : "";
       html+=`<div id="sp-row-${o.id}" style="margin-bottom:6px;padding:8px 10px;background:${bought?"#F0FDF4":(overCapacity?"#FFF5F5":"white")};border-radius:10px;border:1px solid ${bought?"#BBF7D0":(overCapacity?"#F5B7B1":"#E8D5B0")}">`;
-      html+=`<div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px">
-        <span style="flex-shrink:0;font-size:10px;font-weight:900;color:#C5A880">#${i+1}</span>
-        <span style="font-size:13px;font-weight:700;color:#3D2010;word-break:break-word;overflow-wrap:anywhere">${buyer}</span>
-      </div>`;
-      html+=`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px">`;
+      html+=`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">`;
+      html+=`<span style="flex-shrink:0;font-size:10px;font-weight:900;color:#C5A880">#${i+1}</span>`;
+      html+=`<span style="font-size:12px;font-weight:700;color:#3D2010;flex:1;min-width:36px;overflow-wrap:anywhere">${buyer}</span>`;
       html+=globalBadge;
       html+=`<button data-oid="${o.id}" onclick="spTogglePurchased(this.dataset.oid,this)" style="flex-shrink:0;font-size:11px;font-weight:700;padding:5px 8px;border-radius:8px;cursor:pointer;border:1.5px solid ${bought?"#6EE7B7":"#FCD34D"};background:${bought?"#D1FAE5":"#FEF3C7"};color:${bought?"#065F46":"#92400E"}">${bought?"✓ 已購買":"待購買"}</button>`;
       html+=`<div style="display:flex;align-items:center;gap:0;border:1px solid #E8D5B0;border-radius:8px;overflow:hidden;background:#FAF8F5;flex-shrink:0">
-        <button onclick="spQtyAdj('${o.id}',-1)" style="-webkit-appearance:none;appearance:none;width:28px;height:28px;font-size:15px;font-weight:700;border:none;background:transparent;color:#9C7A5A;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;margin:0">－</button>
-        <input id="sp-qty-${o.id}" type="text" inputmode="numeric" value="${o.qty}" style="width:28px;text-align:center;border:none;background:transparent;font-size:13px;font-weight:900;color:#3D2010;outline:none;padding:0"/>
-        <button onclick="spQtyAdj('${o.id}',1,${o.qty})" style="-webkit-appearance:none;appearance:none;width:28px;height:28px;font-size:15px;font-weight:700;border:none;background:transparent;color:#9C7A5A;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;margin:0">＋</button>
+        <button onclick="spQtyAdj('${o.id}',-1)" style="-webkit-appearance:none;appearance:none;width:26px;height:26px;font-size:14px;font-weight:700;border:none;background:transparent;color:#9C7A5A;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;margin:0">－</button>
+        <input id="sp-qty-${o.id}" type="text" inputmode="numeric" value="${o.qty}" style="width:24px;text-align:center;border:none;background:transparent;font-size:12px;font-weight:900;color:#3D2010;outline:none;padding:0"/>
+        <button onclick="spQtyAdj('${o.id}',1,${o.qty})" style="-webkit-appearance:none;appearance:none;width:26px;height:26px;font-size:14px;font-weight:700;border:none;background:transparent;color:#9C7A5A;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;padding:0;margin:0">＋</button>
       </div>`;
       html+=`</div>`;
       const given=o.givenFromStock===true;
-      const giveBtnHtml=given
+      // 「給貨」跟「出貨」現在功能重疊、出貨更完整，先隱藏這個按鈕，不刪掉底層邏輯，
+      // 之後如果又想要，把 window.SHOW_GIVE_BUTTON 改回 true 就會重新出現，不用重寫
+      const giveBtnHtml=!window.SHOW_GIVE_BUTTON?"":given
         ?`<button class="sp-give-btn" data-given="1" data-remain-id="${o.remainOrderId||""}" onclick="stockPlanGive('${o.id}',this,${o.qty})" style="width:100%;background:#E8F5E9;color:#777;border:1.5px solid #C8E6C9;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer">✅ 已給（點一下取消）</button>`
         :`<button class="sp-give-btn" onclick="stockPlanGive('${o.id}',this,${o.qty})" style="width:100%;background:#A5D6A7;color:#1B5E20;border:1.5px solid #A5D6A7;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer">✓ 給貨</button>`;
       html+=giveBtnHtml;
@@ -10284,6 +10549,8 @@ window.openEditOrd=function(oid){
         </div>
         <div style="display:flex;align-items:center;gap:6px">
           <span style="font-size:10px;font-weight:700;color:${scol[x.status]||"#9C7A5A"}">${sl[x.status]||""}</span>
+          <button onclick="openChangeSpec('${x.id}')" style="color:#9C6B2E;background:#FDF3E0;border:1px solid #F0D9A8;border-radius:6px;padding:2px 7px;font-size:11px;cursor:pointer;font-weight:700">換規格</button>
+          <button onclick="openMoveTrip('${x.id}')" style="color:#0277BD;background:#E3F2FD;border:1px solid #90CAF9;border-radius:6px;padding:2px 7px;font-size:11px;cursor:pointer;font-weight:700">移趟</button>
           <button onclick="openReassignCustomer('${x.id}')" style="color:#1E5F8C;background:#EAF4FB;border:1px solid #BEE0F5;border-radius:6px;padding:2px 7px;font-size:11px;cursor:pointer;font-weight:700">換客戶</button>
           <button onclick="eoDeleteOrder('${x.id}')" style="color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;border-radius:6px;padding:2px 7px;font-size:11px;cursor:pointer;font-weight:700">刪除</button>
         </div>
@@ -10852,6 +11119,13 @@ window.renderCustomers=function(){
       if(!groupMap[gk]){groupMap[gk]=[];groupKeys.push(gk);}
       groupMap[gk].push(o);
     });
+    // 還沒買到的排最上面，已經買到的往下沉——這樣一眼就看得出還缺什麼，
+    // 不用把已經買到的東西也看過一遍才找得到還沒買的
+    groupKeys.sort((a,b)=>{
+      const aDone=groupMap[a].every(o=>o.orderType!=="preorder"||o.purchased===true);
+      const bDone=groupMap[b].every(o=>o.orderType!=="preorder"||o.purchased===true);
+      return aDone===bDone?0:aDone?1:-1;
+    });
     // 訂單種類多的客戶，預設先收合只顯示前4組，減少整個客戶頁一次要渲染的DOM量（手機記憶體有限，訂單筆數一多容易卡頓）
     const COLLAPSE_N=4;
     window.G.custExpandedSet=window.G.custExpandedSet||new Set();
@@ -10883,8 +11157,6 @@ window.renderCustomers=function(){
           ${isQuote?`<button data-oid="${o.id}" onclick="event.stopPropagation();openSendQuote(this.dataset.oid)" style="font-size:10px;color:#065F46;background:#D1FAE5;border:1px solid #6EE7B7;padding:2px 6px;border-radius:5px;cursor:pointer;font-weight:700">傳送報價</button>`:""}
           ${isQuote?`<button data-oid="${o.id}" onclick="event.stopPropagation();quoteConvert(this.dataset.oid)" style="font-size:10px;color:#5B21B6;background:#EDE9FE;border:1px solid #C4B5FD;padding:2px 6px;border-radius:5px;cursor:pointer;font-weight:700">轉正式訂單</button>`:""}
           ${o.tracking?`<span style="font-size:9px;color:#6090B0;background:#EAF4FD;border:1px solid #BDD9F0;padding:2px 5px;border-radius:5px">📦</span>`:""}
-          ${!isQuote?`<button data-oid="${o.id}" onclick="event.stopPropagation();openChangeSpec(this.dataset.oid)" style="font-size:10px;color:#9C6B2E;background:#FDF3E0;border:1px solid #F0D9A8;padding:2px 5px;border-radius:5px;cursor:pointer">換規格</button>`:""}
-          <button data-oid="${o.id}" onclick="event.stopPropagation();openMoveTrip(this.dataset.oid)" style="font-size:10px;color:#0277BD;background:#E3F2FD;border:1px solid #90CAF9;padding:2px 5px;border-radius:5px;cursor:pointer">移趟</button>
           <button data-oid="${o.id}" onclick="event.stopPropagation();deleteOrder(this.dataset.oid)" style="font-size:10px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:2px 5px;border-radius:5px;cursor:pointer">🗑️</button>
         </div>
       </div>`;
@@ -11230,7 +11502,11 @@ window.renderInvoice=function(){
       </div>
       <!-- 商品明細 -->
       <div style="padding:8px 14px">
-        ${b.orders.map(o=>{
+        ${[...b.orders].sort((x,y)=>{
+          const xDone=x.orderType!=="preorder"||x.purchased===true;
+          const yDone=y.orderType!=="preorder"||y.purchased===true;
+          return xDone===yDone?0:xDone?1:-1;
+        }).map(o=>{
           const dp=o.discountPrice||o.unitPrice||0;
           const checked2=selectedOrders.has(o.id);
           const isPreorder=o.orderType==="preorder";
@@ -11247,10 +11523,8 @@ window.renderInvoice=function(){
               ${purchasedBtn}
               <span style="font-size:12px;font-weight:700;color:#3D2010">NT$${(dp*o.qty).toLocaleString()}</span>
               ${(()=>{const prod=window.G.products.find(x=>x.id===o.productId)||window.G.products.find(x=>cleanProductName(x.name)===cleanProductName(o.productName||""));if(!prod)return"";const lineProfit=(dp-getOrderUnitCost(o,prod))*o.qty;const lineRevenue=dp*o.qty;const margin=lineRevenue>0?Math.round((lineProfit/lineRevenue)*100):0;return `<span class="hide-staff" style="font-size:10px;font-weight:700;color:${lineProfit>=0?"#2E7D32":"#C0392B"}">利潤 NT$${Math.round(lineProfit).toLocaleString()}（毛利${margin}%）</span>`;})()}
-              <button data-oid="${o.id}" onclick="event.stopPropagation();openChangeSpec(this.dataset.oid)" style="font-size:10px;color:#9C6B2E;background:#FDF3E0;border:1px solid #F0D9A8;padding:2px 5px;border-radius:5px;cursor:pointer">換規格</button>
               ${o.status==="shipped"?`<button data-oid="${o.id}" onclick="event.stopPropagation();revertOrderShipped(this.dataset.oid)" title="這筆單獨改回還沒出貨，不影響同一位客人其他訂單" style="font-size:10px;color:#1E40AF;background:#DBEAFE;border:1px solid #93C5FD;padding:2px 5px;border-radius:5px;cursor:pointer">↩️ 取消已出貨</button>`:""}
-              <button data-oid="${o.id}" onclick="event.stopPropagation();openMoveTrip(this.dataset.oid)" style="font-size:10px;color:#0277BD;background:#E3F2FD;border:1px solid #90CAF9;padding:2px 5px;border-radius:5px;cursor:pointer">移趟</button>
-              <button data-oid="${o.id}" onclick="event.stopPropagation();deleteOrder(this.dataset.oid)" style="font-size:10px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:2px 5px;border-radius:5px;cursor:pointer">🗑️</button>
+                  <button data-oid="${o.id}" onclick="event.stopPropagation();deleteOrder(this.dataset.oid)" style="font-size:10px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:2px 5px;border-radius:5px;cursor:pointer">🗑️</button>
             </div>
           </div>`;}).join("")}
         ${(b.quotes&&b.quotes.length)?`
@@ -11315,6 +11589,10 @@ window.quoteConvert=function(oid){
   if(symEl)symEl.textContent=` (${CURR[prod.currency]?.symbol||""})`;
   const foreignEl=document.getElementById("qc-foreign");
   if(foreignEl)foreignEl.value=prod.foreignAmount||prod.krw||0;
+  // 預設帶入商品「目前」實際的售價(finalPrice)，不是重新算的建議售價，
+  // 這樣如果你之前已經在商品頁手動改過售價，這裡才會跟著連動，而不是被公式算出來的建議售價蓋掉
+  const finalElInit=document.getElementById("qc-final-price");
+  if(finalElInit){finalElInit.value=prod.finalPrice||0;finalElInit.dataset.manual="1";}
   window.qcSetType("onsite");
   window.qcSetPm("card");
   window.qcRecalc();
@@ -11843,21 +12121,26 @@ window.openAskSettlement=function(buyerKey){
   if(modal)modal.style.display="flex";
 };
 window.copyBuyerOrder=function(buyerKey){
-  const buyerOrders=getTripOrders().filter(o=>{
+  const allBuyerOrders=getTripOrders().filter(o=>{
     const key=o.customerId||o.communityName||o.buyerName||"未知";
     return key===buyerKey;
   });
-  if(!buyerOrders.length){showToast("找不到訂單","warning");return;}
+  if(!allBuyerOrders.length){showToast("找不到訂單","warning");return;}
+  // 已經出貨的品項代表款項已經收完、流程已經走完，不該再被算進「這次還要收多少錢」的結清單裡，
+  // 不然客人會收到一份把已經付清的東西也一起列進待收金額的帳單，變成算錯錢
+  const shippedCount=allBuyerOrders.filter(o=>o.status==="shipped").length;
+  const buyerOrders=allBuyerOrders.filter(o=>o.status!=="shipped");
+  if(!buyerOrders.length){showToast("這位客人的品項都已經出貨、結清了，沒有還需要收款的部分","warning");return;}
   const name=buyerOrders[0].communityName||buyerOrders[0].buyerName||"買家";
   // 這兩個是「整批設定」裡設的，只記在其中一筆訂單身上，代表整批共用，
   // 之前這裡完全沒算到，導致傳給客人的金額跟對帳單畫面上實際顯示的金額對不起來
-  const sharedDisc=buyerOrders.find(o=>o.sharedDiscount>0)?.sharedDiscount||0;
-  const sharedDiscReason=buyerOrders.find(o=>o.sharedDiscount>0)?.sharedDiscountReason||"";
-  const hasFreeShipping=buyerOrders.some(o=>o.freeShipping);
-  const shipReason=buyerOrders.find(o=>o.freeShipping)?.freeShippingReason||"";
+  const sharedDisc=allBuyerOrders.find(o=>o.sharedDiscount>0)?.sharedDiscount||0;
+  const sharedDiscReason=allBuyerOrders.find(o=>o.sharedDiscount>0)?.sharedDiscountReason||"";
+  const hasFreeShipping=allBuyerOrders.some(o=>o.freeShipping);
+  const shipReason=allBuyerOrders.find(o=>o.freeShipping)?.freeShippingReason||"";
   const rawTotal=buyerOrders.reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0);
   const total=rawTotal-sharedDisc;
-  const totalDeposit=buyerOrders.reduce((s,o)=>s+(o.depositAmt||0),0);
+  const totalDeposit=allBuyerOrders.reduce((s,o)=>s+(o.depositAmt||0),0);
   const codReserve=100; // 貨到付款服務費固定要留，跟有沒有免運無關（免運只是運費，是不同的錢）
   const payNow=Math.max(0,total-totalDeposit-codReserve);
   const lines=buyerOrders.map(o=>{const dp=o.discountPrice||o.unitPrice||0;return "• "+(cleanProductName((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品"))+(o.spec?`（${o.spec}）`:"")+" ×"+o.qty+"  NT$"+(dp*o.qty).toLocaleString();});
@@ -11879,31 +12162,38 @@ window.copyBuyerOrder=function(buyerKey){
 
 
 
-  navigator.clipboard?.writeText(text).then(()=>showToast("對帳單已複製！")).catch(()=>{
+  const copyToastMsg=shippedCount>0?`對帳單已複製！（已排除 ${shippedCount} 件已出貨的品項）`:"對帳單已複製！";
+  navigator.clipboard?.writeText(text).then(()=>showToast(copyToastMsg)).catch(()=>{
     const ta=document.createElement("textarea");ta.value=text;ta.style.position="fixed";
     document.body.appendChild(ta);ta.focus();ta.select();
-    try{document.execCommand("copy");showToast("對帳單已複製！");}catch(e){showToast("複製失敗","error");}
+    try{document.execCommand("copy");showToast(copyToastMsg);}catch(e){showToast("複製失敗","error");}
     document.body.removeChild(ta);
   });
 };
 
 // 把結清單直接傳送到客人的LINE，不用自己複製貼上——同名多筆一樣會列出來讓你自己選，不會傳錯人
 window.openSendSettlement=async function(buyerKey){
-  const buyerOrders=getTripOrders().filter(o=>{
+  const allBuyerOrders=getTripOrders().filter(o=>{
     const key=o.customerId||o.communityName||o.buyerName||"未知";
     return key===buyerKey;
   });
-  if(!buyerOrders.length){showToast("找不到訂單","warning");return;}
+  if(!allBuyerOrders.length){showToast("找不到訂單","warning");return;}
+  // 已經出貨的品項代表款項已經收完、流程已經走完，不該再被算進「這次還要收多少錢」的結清單裡
+  const shippedCountForSettlement=allBuyerOrders.filter(o=>o.status==="shipped").length;
+  const buyerOrders=allBuyerOrders.filter(o=>o.status!=="shipped");
+  if(!buyerOrders.length){showToast("這位客人的品項都已經出貨、結清了，沒有還需要收款的部分","warning");return;}
   const first=buyerOrders[0];
   const c=window.G.customers.find(x=>x.id===first.customerId);
   const custName=c?(c.communityName||c.lineName||"客人"):(first.communityName||first.buyerName||"客人");
-  const sharedDisc=buyerOrders.find(o=>o.sharedDiscount>0)?.sharedDiscount||0;
-  const sharedDiscReason=buyerOrders.find(o=>o.sharedDiscount>0)?.sharedDiscountReason||"";
-  const hasFreeShipping=buyerOrders.some(o=>o.freeShipping);
+  // 折扣/免運是「整批共用」的設定，可能剛好記在已經出貨的那筆訂單身上，
+  // 所以這兩個要從全部訂單裡找，不能只從還沒出貨的 buyerOrders 裡找，不然可能會找不到
+  const sharedDisc=allBuyerOrders.find(o=>o.sharedDiscount>0)?.sharedDiscount||0;
+  const sharedDiscReason=allBuyerOrders.find(o=>o.sharedDiscount>0)?.sharedDiscountReason||"";
+  const hasFreeShipping=allBuyerOrders.some(o=>o.freeShipping);
   const shipReason=buyerOrders.find(o=>o.freeShipping)?.freeShippingReason||"";
   const rawTotal=buyerOrders.reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0);
   const total=rawTotal-sharedDisc;
-  const totalDeposit=buyerOrders.reduce((s,o)=>s+(o.depositAmt||0),0);
+  const totalDeposit=allBuyerOrders.reduce((s,o)=>s+(o.depositAmt||0),0);
   const codReserve=100; // 貨到付款服務費固定要留，跟有沒有免運無關（免運只是運費，是不同的錢）
   const payNow=Math.max(0,total-totalDeposit-codReserve);
   const lines=buyerOrders.map(o=>{const dp=o.discountPrice||o.unitPrice||0;return "• "+(cleanProductName((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品"))+(o.spec?`（${o.spec}）`:"")+" ×"+o.qty+"  NT$"+(dp*o.qty).toLocaleString();});
@@ -11930,7 +12220,7 @@ window.openSendSettlement=async function(buyerKey){
   const msgEl=document.getElementById("ss-message");
   const sendBtn=document.getElementById("ss-send-btn");
   if(!modal||!nameEl||!statusEl||!pickerEl||!msgEl||!sendBtn)return;
-  nameEl.textContent=`👤 ${custName}`;
+  nameEl.textContent=`👤 ${custName}${shippedCountForSettlement>0?`（已排除 ${shippedCountForSettlement} 件已出貨品項）`:""}`;
   msgEl.value=text;
   pickerEl.style.display="none";pickerEl.innerHTML="";
   statusEl.textContent="🔍 查詢中...";statusEl.style.color="#9C7A5A";
@@ -12368,6 +12658,7 @@ window.qaProdImgPick=async function(input){
   showToast("壓縮圖片中…","success");
   const b64=await compressImg(file,520,0.72);
   window.G.qaProdPhoto=b64;
+  window.G.qaProdPhotoOriginal=b64;
   window.G.qaProdPhotoPos={x:50,y:50};
   const thumb=document.getElementById("qa-prod-img-thumb");
   const prev=document.getElementById("qa-prod-img-preview");
@@ -12384,6 +12675,7 @@ window.qaProdImgPick=async function(input){
 
 window.qaProdImgClear=function(){
   window.G.qaProdPhoto=null;
+  window.G.qaProdPhotoOriginal=null;
   window.G.qaProdPhotoPos=null;
   const thumb=document.getElementById("qa-prod-img-thumb");
   const prev=document.getElementById("qa-prod-img-preview");
@@ -12499,6 +12791,8 @@ window.doQuickAddOrder=function(custId, custName){
           <span style="font-size:13px;font-weight:700;color:#3D2010">${(window.G.products.find(p=>p.id===x.productId)?.name)||x.productName||"商品"}</span>
           <div style="display:flex;align-items:center;gap:6px">
             <span style="font-size:10px;font-weight:700;color:${scol[x.status]||"#9C7A5A"}">${sl[x.status]||""}</span>
+            <button onclick="openChangeSpec('${x.id}')" style="color:#9C6B2E;background:#FDF3E0;border:1px solid #F0D9A8;border-radius:6px;padding:2px 7px;font-size:11px;cursor:pointer;font-weight:700">換規格</button>
+            <button onclick="openMoveTrip('${x.id}')" style="color:#0277BD;background:#E3F2FD;border:1px solid #90CAF9;border-radius:6px;padding:2px 7px;font-size:11px;cursor:pointer;font-weight:700">移趟</button>
             <button onclick="openReassignCustomer('${x.id}')" style="color:#1E5F8C;background:#EAF4FB;border:1px solid #BEE0F5;border-radius:6px;padding:2px 7px;font-size:11px;cursor:pointer;font-weight:700">換客戶</button>
             <button onclick="eoDeleteOrder('${x.id}')" style="color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;border-radius:6px;padding:2px 7px;font-size:11px;cursor:pointer;font-weight:700">刪除</button>
           </div>
@@ -12799,6 +13093,15 @@ window.lnSelectLineUser=function(userId,displayName,pictureUrl){
   if(sendBtn)sendBtn.disabled=false;
 };
 
+// 有些訂單客人已經另外通知過了（例如已經口頭講過、或用別的方式講過），
+// 不想再讓對方收到重複的LINE通知，這裡只做「存單號＋標記已出貨」，跳過傳送這一步
+window.lnMarkShippedOnly=async function(){
+  const tracking=window.lnGetTrackingText();
+  if(!tracking){showToast("請填入物流單號","error");return;}
+  const count=await markCustomerOrdersShipped(window.G._lnCustId,tracking,window.G._lnSelectedOrderIds);
+  showToast(count>0?`已記錄單號，${count} 筆訂單標記為已出貨（沒有傳送LINE訊息）`:"沒有可標記出貨的訂單");
+  document.getElementById("modal-line-notify").style.display="none";
+};
 window.sendLineNotify=async function(){
   const tracking=window.lnGetTrackingText();
   const userId=window.G._lineUserId;
@@ -14207,7 +14510,8 @@ window.lbTouchEnd=function(e){
       <div style="background:#F0FFF4;border:1px solid #86EFAC;border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:#166534">
         🚛出貨通知<br><br>物流單號：<span id="ln-tracking-preview">（輸入後顯示）</span>
       </div>
-      <button id="ln-send-btn" onclick="sendLineNotify()" style="width:100%;background:#06C755;color:white;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer">傳送通知給客人</button>
+      <button id="ln-send-btn" onclick="sendLineNotify()" style="width:100%;background:#06C755;color:white;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px">傳送通知給客人</button>
+      <button onclick="lnMarkShippedOnly()" style="width:100%;background:#EAF4FB;color:#1E5F8C;border:1px solid #BEE0F5;border-radius:12px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">已經通知過客人了，只記單號、標記已出貨（不重複傳訊息）</button>
     </div>
   </div>
 </div>
