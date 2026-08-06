@@ -12282,11 +12282,66 @@ window.copyCustOrder=function(cid){
   });
   if(!cO.length){showToast("此客戶沒有訂單","warning");return;}
   const name=c.communityName||c.lineName||"客戶";
-  const total=cO.reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0);
   const sharedDiscount=cO.find(o=>o.sharedDiscount>0)?.sharedDiscount||0;
   const sharedDiscountReason=cO.find(o=>o.sharedDiscount>0)?.sharedDiscountReason||"";
+  // 有些商品是「買二送一」這種活動，之前的做法是把 220 元除以 3 包、四捨五入成單包 73 元，
+  // 再用 73 × 數量去乘回去 —— 這樣只要總包數是活動組數的倍數，就會因為除不盡的小數被捨去，
+  // 累積出跟真正應收金額對不起來的落差（例如 9 包本來該收 660，用 73×9 只會收到 657）。
+  // 所以有填「活動群組」+「買幾送幾」的商品，改成把整組合起來，用組數去精算應收金額，
+  // 不再拆成一包一包各自捨去計算；顯示上也改成「買二送一 NT$220」整組標題，底下口味不再各自標價
+  const promoGroups=new Map(); // 活動群組名稱 -> {divisor, items:Map(name+spec -> qty), totalQty, sampleUnitPrice}
+  const normalGroupMap=new Map();
+  const normalGroupOrder=[];
+  const promoGroupOrder=[];
+  cO.forEach(o=>{
+    const p=window.G.products.find(x=>x.id===o.productId);
+    const productName=cleanProductName(p?.name||o.productName||"商品");
+    const dp=o.discountPrice||o.unitPrice||0;
+    if(p&&p.promoDivisor>1){
+      // 只要商品本身有套用買幾送幾，就自動用「這個商品」當作一組去精算（同一個商品底下不同規格/口味都算在一起），
+      // 不強制要求填「活動群組」；只有想把「不同商品」湊在同一波活動時，才需要另外填活動群組
+      const gKey=p.promoGroup||("_pid_"+p.id);
+      const groupLabel=p.promoGroup||cleanProductName(p.name).replace(/[（(]\s*\d+\s*\+\s*\d+\s*[）)]/g,"").trim();
+      if(!promoGroups.has(gKey)){promoGroups.set(gKey,{label:groupLabel,divisor:p.promoDivisor,items:new Map(),itemOrder:[],totalQty:0,sampleUnitPrice:dp});promoGroupOrder.push(gKey);}
+      const g=promoGroups.get(gKey);
+      const ik=productName+"◆"+(o.spec||"");
+      if(!g.items.has(ik)){g.items.set(ik,{name:productName,spec:o.spec||"",qty:0});g.itemOrder.push(ik);}
+      g.items.get(ik).qty+=o.qty;
+      g.totalQty+=o.qty;
+    } else {
+      const up=o.unitPrice||dp;
+      const key=productName+"◆"+(o.spec||"");
+      if(!normalGroupMap.has(key)){normalGroupMap.set(key,{name:productName,spec:o.spec||"",qty:0,amt:0,origAmt:0});normalGroupOrder.push(key);}
+      const ng=normalGroupMap.get(key);
+      ng.qty+=o.qty;
+      ng.amt+=dp*o.qty;
+      ng.origAmt+=up*o.qty;
+    }
+  });
+  const normalLines=normalGroupOrder.map(key=>{
+    const g=normalGroupMap.get(key);
+    const origNote=g.origAmt>g.amt?`（原價NT$${g.origAmt.toLocaleString()}）`:"";
+    return "• "+g.name+(g.spec?" ("+g.spec+")":"")+" ×"+g.qty+"  NT$"+g.amt.toLocaleString()+origNote;
+  });
+  const normalTotal=normalGroupOrder.reduce((s,key)=>s+normalGroupMap.get(key).amt,0);
+  let promoTotal=0;
+  const promoBlocks=promoGroupOrder.map(gKey=>{
+    const g=promoGroups.get(gKey);
+    const divisor=g.divisor;
+    // 反推單包原價：目前存的單價是「均分後」的價格，乘回 divisor/(divisor-1) 還原成沒打折的單包價
+    const origSingle=Math.round(g.sampleUnitPrice*divisor/(divisor-1));
+    const fullSets=Math.floor(g.totalQty/divisor);
+    const remainder=g.totalQty%divisor;
+    const groupTotal=fullSets*(divisor-1)*origSingle+remainder*origSingle;
+    promoTotal+=groupTotal;
+    const labels={2:"買一送一",3:"買二送一",4:"買三送一"};
+    const promoLabel=labels[divisor]||`買${divisor-1}送1`;
+    const itemLines=g.itemOrder.map(ik=>{const it=g.items.get(ik);return "　"+it.name+(it.spec?" ("+it.spec+")":"")+" ×"+it.qty;});
+    return `🎁 ${g.label}（${promoLabel}，單包NT$${origSingle}）\n${itemLines.join("\n")}\n　小計 NT$${groupTotal.toLocaleString()}`;
+  });
+  const total=normalTotal+promoTotal;
   const discountedTotal=total-sharedDiscount;
-  const lines=cO.map(o=>{const dp=o.discountPrice||o.unitPrice||0;return "• "+(cleanProductName((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品"))+(o.spec?" ("+o.spec+")":"")+" ×"+o.qty+"  NT$"+(dp*o.qty).toLocaleString();});
+  const lines=[...normalLines,...promoBlocks];
   // 只列商品明細跟總額，不主動提匯款/訂金，因為客人有時候只是想查目前訂了什麼
   const totalBlock=sharedDiscount>0
     ?`\n\n商品小計 NT$${total.toLocaleString()}\n折扣  -NT$${sharedDiscount.toLocaleString()}${sharedDiscountReason?`（${sharedDiscountReason}）`:""}\n\n應付金額 NT$${discountedTotal.toLocaleString()}`
