@@ -11291,6 +11291,7 @@ window.renderCustomers=function(){
     const cDisc=cO.find(o=>o.sharedDiscount>0)?.sharedDiscount||0;
     const cT=cO.filter(o=>o.orderType!=="quote").reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0)-cDisc;
     const cP=cO.filter(o=>o.status==="pending"&&o.orderType!=="quote").length;
+    const cQty=cO.filter(o=>o.orderType!=="quote").reduce((s,o)=>s+(o.qty||1),0);
     const cQuoteCount=cO.filter(o=>o.orderType==="quote").length;
     // 開啟「待購代買」篩選時，卡片內的商品明細也只顯示尚未購買的代買項目；開啟「待報價」篩選時只顯示待報價項目
     const cODisplay=custViewFilter==="unpurchased"?cO.filter(o=>o.orderType==="preorder"&&!o.purchased)
@@ -11410,6 +11411,7 @@ window.renderCustomers=function(){
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${cO.length?"8px":"0"}">
           <div style="display:flex;gap:8px;font-size:11px;align-items:center">
             <span style="font-weight:700;color:#3D2010">訂單 ${cO.length} 筆</span>
+            ${cQty>0?`<span style="color:#9C7A5A">（共${cQty}件）</span>`:""}
             ${cP>0?`<span style="font-weight:700;color:#E07B39">待對帳 ${cP}</span>`:""}
             ${cQuoteCount>0?`<span style="font-weight:700;color:#0277BD">📋待報價 ${cQuoteCount}</span>`:""}
             ${cO.some(o=>o.freeShipping)?`<span style="font-weight:700;color:#2E7D32">🚚免運（吸收NT$${cO.find(o=>o.freeShipping)?.shippingCost||0}）</span>`:""}
@@ -12282,11 +12284,12 @@ window.copyCustOrder=function(cid){
   const name=c.communityName||c.lineName||"客戶";
   const total=cO.reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0);
   const sharedDiscount=cO.find(o=>o.sharedDiscount>0)?.sharedDiscount||0;
+  const sharedDiscountReason=cO.find(o=>o.sharedDiscount>0)?.sharedDiscountReason||"";
   const discountedTotal=total-sharedDiscount;
   const lines=cO.map(o=>{const dp=o.discountPrice||o.unitPrice||0;return "• "+(cleanProductName((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品"))+(o.spec?" ("+o.spec+")":"")+" ×"+o.qty+"  NT$"+(dp*o.qty).toLocaleString();});
   // 只列商品明細跟總額，不主動提匯款/訂金，因為客人有時候只是想查目前訂了什麼
   const totalBlock=sharedDiscount>0
-    ?`\n\n折扣：-NT$${sharedDiscount.toLocaleString()}\n總金額 NT$${discountedTotal.toLocaleString()}`
+    ?`\n\n商品小計 NT$${total.toLocaleString()}\n折扣  -NT$${sharedDiscount.toLocaleString()}${sharedDiscountReason?`（${sharedDiscountReason}）`:""}\n\n應付金額 NT$${discountedTotal.toLocaleString()}`
     :`\n\n總金額 NT$${total.toLocaleString()}`;
   const text=`【訂單明細】\n${lines.join("\n")}${totalBlock}`;
 
