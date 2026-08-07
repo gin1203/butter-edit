@@ -5998,6 +5998,25 @@ window.epRivalCheck=function(){
   }
   const fd=document.getElementById("ep-final-display");
   if(fd)fd.textContent=price>0?`NT$ ${price}`:"-";
+  // 含運費即時參考：手動改最終售價時，這裡也要一起重算，不然含運費利潤會停在改價前的舊數字
+  const weight=parseFloat(document.getElementById("ep-weight")?.value)||0;
+  const kgRate=window.G.settings?.shippingPerKg;
+  const shipRow=document.getElementById("ep-ship-row");
+  if(weight>0&&kgRate&&shipRow&&afterText&&afterText!=="-"){
+    const afterTax=parseFloat(afterText)||0;
+    const shipCost=Math.round((weight/1000)*kgRate*10)/10;
+    const totalCost=afterTax+shipCost;
+    const shipProfit=Math.round((price-totalCost)*10)/10;
+    const shipMargin=price>0?Math.round((shipProfit/price)*100):0;
+    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+    set("ep-ship-cost",`NT$${shipCost}`);
+    set("ep-ship-total-cost",`NT$${totalCost}`);
+    const spEl=document.getElementById("ep-ship-profit");if(spEl){spEl.textContent=`NT$${shipProfit}`;spEl.style.color=shipProfit>=0?"#1E5F8C":"#C0392B";}
+    const smEl=document.getElementById("ep-ship-margin-label");if(smEl){smEl.textContent=`毛利率 ${shipMargin}%`;smEl.style.color=shipMargin>=0?"#1E5F8C":"#C0392B";}
+    shipRow.style.display="flex";
+  } else if(shipRow&&!(weight>0&&kgRate)){
+    shipRow.style.display="none";
+  }
   if(!msgEl)return;
   if(rival>0&&price>0){
     const diff=price-rival;
