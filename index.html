@@ -399,6 +399,7 @@ body.live-mode .hide-live { display: none !important; }
     <button onclick="showStockPlan()" style="flex:1;font-size:11px;background:#FFF3E0;color:#E07B39;border:1px solid #FFCC80;padding:7px 4px;border-radius:8px;font-weight:700;cursor:pointer">備貨清單</button>
     <button onclick="showPromoGroups()" style="flex:1;font-size:11px;background:#FDF2E9;color:#C0392B;border:1px solid #F1948A;padding:7px 4px;border-radius:8px;font-weight:700;cursor:pointer">行銷活動</button>
     <button onclick="showDupProductScan()" style="flex:1;font-size:11px;background:#FFF9F0;color:#92400E;border:1px solid #FCD34D;padding:7px 4px;border-radius:8px;font-weight:700;cursor:pointer">檢查重複</button>
+    <button onclick="showProductOrphanScan()" style="flex:1;font-size:11px;background:#FDEDEC;color:#943126;border:1px solid #F1948A;padding:7px 4px;border-radius:8px;font-weight:700;cursor:pointer">連結異常</button>
   </div>
   <div class="hide-live" style="display:flex;gap:4px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:99px;padding:3px;margin-bottom:8px">
     <button id="list-sort-default" onclick="setListSortMode('default')" style="flex:1;font-size:12px;font-weight:700;padding:8px 4px;border-radius:99px;border:none;background:#C5A880;color:white;cursor:pointer;transition:background 0.15s,color 0.15s">🕐 上架順序</button>
@@ -4091,13 +4092,11 @@ window.openModal=function(id,data){
           specBtns.innerHTML=specs.map((s,i)=>{
             const img=(p?.specImages||[])[i]||"";
             const esc=s.replace(/"/g,"&quot;");
-            if(!img){
-              // 沒有照片的規格，不要生一個空空的縮圖格子出來，直接做成精簡的圓角標籤就好，不佔版面
-              return `<button type="button" class="mo-spec-card" data-spec="${esc}" onclick="moSelectSpec(this.dataset.spec,this)" style="border-radius:99px;font-size:13px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;padding:9px 18px;cursor:pointer;-webkit-tap-highlight-color:transparent">${s}</button>`;
-            }
-            const zoomBtn=`<span onclick="event.stopPropagation();lbOpen('${img}')" style="position:absolute;inset:0;cursor:zoom-in"><img src="${img}" draggable="false" style="width:100%;height:100%;object-fit:cover;display:block;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent"/><span style="position:absolute;bottom:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,0.55);color:white;font-size:10px;display:flex;align-items:center;justify-content:center;pointer-events:none">🔍</span></span>`;
+            const thumbInner=img
+              ?`<span onclick="event.stopPropagation();lbOpen('${img}')" style="position:absolute;inset:0;cursor:zoom-in"><img src="${img}" draggable="false" style="width:100%;height:100%;object-fit:cover;display:block;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent"/><span style="position:absolute;bottom:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,0.55);color:white;font-size:10px;display:flex;align-items:center;justify-content:center;pointer-events:none">🔍</span></span>`
+              :`<span style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:24px;color:#DCC9A8">🍡</span>`;
             return `<div class="mo-spec-card" data-spec="${esc}" style="display:flex;flex-direction:column;align-items:stretch;border-radius:12px;font-size:12px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;width:84px;overflow:hidden">
-              <span style="width:100%;height:68px;background:#FAF8F5;flex-shrink:0;position:relative;display:block">${zoomBtn}</span>
+              <span style="width:100%;height:68px;background:#FAF8F5;flex-shrink:0;position:relative;display:block">${thumbInner}</span>
               <button type="button" data-spec="${esc}" onclick="moSelectSpec(this.dataset.spec,this.closest('.mo-spec-card'))" style="width:100%;border:none;border-top:1px solid rgba(0,0,0,0.08);background:transparent;color:inherit;font:inherit;font-weight:700;padding:8px 4px;cursor:pointer;min-height:36px;-webkit-tap-highlight-color:transparent">${s}</button>
             </div>`;
           }).join("");
@@ -5153,6 +5152,81 @@ window.showDupWarningDebounced=function(val,boxId,excludeId){
 // 但如果訂單是事後手動補登記的（建立當下的日期，不落在任何一趟的起訖區間內），
 // 就會變成「切到任何一個特定趟次都看不到、只有選『全部趟次』才找得到」的孤兒訂單。
 // 這個工具就是把這種訂單一次全部掃出來，列表裡直接可以點「移趟」修正歸屬。
+// ── 檢查連不上商品的訂單 ──────────────────────────────────────────────
+// 用途：如果一個商品被刪除、又重新建立過一次（不管是手動重刪重建，還是用「複製」功能複製出新的），
+// 舊訂單身上存的 productId 會指向已經不存在的舊商品。這種訂單在備貨清單裡會被「靜默排除」
+// （備貨清單的邏輯本來就是商品對不到就跳過，避免數字跟畫面對不起來），出發採購前如果沒發現，
+// 照備貨清單買東西就會買少。這個工具把這種訂單抓出來，讓你可以幫它重新連結到正確的現有商品。
+window.showProductOrphanScan=function(){
+  let modal=document.getElementById("modal-product-orphan-scan");
+  if(!modal){
+    modal=document.createElement("div");
+    modal.id="modal-product-orphan-scan";
+    modal.className="modal-overlay";
+    modal.style.cssText="display:none;position:fixed;inset:0;z-index:120;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;padding:16px";
+    modal.innerHTML=`<div style="background:white;border-radius:18px;width:100%;max-width:480px;max-height:85vh;display:flex;flex-direction:column">
+      <div style="padding:18px 20px 12px;border-bottom:1px solid #F0E6D0;display:flex;justify-content:space-between;align-items:center">
+        <h3 style="margin:0;font-size:15px;font-weight:900;color:#3D2010">🔗 檢查連不上商品的訂單</h3>
+        <button onclick="document.getElementById('modal-product-orphan-scan').style.display='none'" style="background:none;border:none;font-size:20px;color:#9C7A5A;cursor:pointer">×</button>
+      </div>
+      <div id="product-orphan-scan-content" style="padding:14px 20px 20px;overflow-y:auto;flex:1"></div>
+    </div>`;
+    document.body.appendChild(modal);
+  }
+  modal.style.display="flex";
+  renderProductOrphanScan();
+};
+window.renderProductOrphanScan=function(){
+  const box=document.getElementById("product-orphan-scan-content");
+  if(!box)return;
+  box.innerHTML=`<div style="text-align:center;padding:20px;color:#9C7A5A;font-size:12px">掃描中…</div>`;
+  setTimeout(()=>{
+    const orders=window.G.orders||[];
+    const products=window.G.products||[];
+    const orphans=orders.filter(o=>o.orderType!=="quote"&&!products.some(p=>p.id===o.productId));
+    if(!orphans.length){
+      box.innerHTML=`<div style="text-align:center;padding:24px 10px;color:#166534;font-size:13px">✅ 每一筆訂單都連得到現有商品，沒有發現異常</div>`;
+      return;
+    }
+    const groupMap={};
+    const groupOrder=[];
+    orphans.forEach(o=>{
+      const key=(o.productName||"未知商品")+"◆"+(o.spec||"");
+      if(!groupMap[key]){groupMap[key]={name:o.productName||"（未知商品）",spec:o.spec||"",items:[]};groupOrder.push(key);}
+      groupMap[key].items.push(o);
+    });
+    box.innerHTML=`<div style="font-size:11px;color:#9C7A5A;margin-bottom:12px">共抓到 ${orphans.length} 筆訂單連不上任何現有商品（通常是商品被刪除重建過），備貨清單會漏算這些。幫每一組搜尋、挑選正確的現有商品重新連結。</div>`+
+      groupOrder.map((key,gi)=>{
+        const g=groupMap[key];
+        const totalQty=g.items.reduce((s,o)=>s+(o.qty||1),0);
+        const oids=g.items.map(o=>o.id).join(",");
+        return `<div style="border:1px solid #F1948A;border-left:4px solid #E74C3C;border-radius:12px;padding:10px 12px;margin-bottom:12px;background:#FDEDEC">
+          <div style="font-size:12px;font-weight:700;color:#943126;margin-bottom:6px">📦 ${g.name}${g.spec?" ("+g.spec+")":""}　共${g.items.length}筆訂單／${totalQty}件</div>
+          <input type="text" id="pos-search-${gi}" placeholder="搜尋現有商品名稱，挑選正確的重新連結..." oninput="renderPosSearchResults(${gi})" style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;font-size:12px;outline:none;box-sizing:border-box"/>
+          <div id="pos-results-${gi}" data-oids="${oids}" style="margin-top:6px;display:flex;flex-direction:column;gap:4px"></div>
+        </div>`;
+      }).join("");
+  },10);
+};
+window.renderPosSearchResults=function(gi){
+  const input=document.getElementById(`pos-search-${gi}`);
+  const resultsBox=document.getElementById(`pos-results-${gi}`);
+  if(!input||!resultsBox)return;
+  const q=input.value.trim().toLowerCase();
+  if(!q){resultsBox.innerHTML="";return;}
+  const matches=(window.G.products||[]).filter(p=>!p.archived&&p.name.toLowerCase().includes(q)).slice(0,5);
+  const oids=resultsBox.dataset.oids;
+  resultsBox.innerHTML=matches.map(p=>`<button onclick="relinkOrphanOrders('${oids}','${p.id}')" style="text-align:left;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;font-size:12px;color:#3D2010;cursor:pointer">${p.emoji||"📦"} ${p.name} <span style="color:#9C7A5A">NT$${p.finalPrice}</span></button>`).join("")||`<div style="font-size:11px;color:#9C7A5A;padding:4px">找不到符合的商品</div>`;
+};
+window.relinkOrphanOrders=async function(oidsStr,newProductId){
+  const oids=oidsStr.split(",").filter(Boolean);
+  const p=(window.G.products||[]).find(x=>x.id===newProductId);
+  if(!p||!oids.length)return;
+  await Promise.all(oids.map(id=>fbUpd("orders",id,{productId:newProductId,productName:p.name})));
+  showToast(`已把 ${oids.length} 筆訂單重新連結到「${p.name}」✅`,"success");
+  renderProductOrphanScan();
+};
+
 window.showTripOrphanScan=function(){
   let modal=document.getElementById("modal-trip-orphan-scan");
   if(!modal){
@@ -5425,7 +5499,7 @@ window.calcUpdate=function(){
     const shipRow=document.getElementById("r-ship-row");
     if(weight>0&&kgRate&&shipRow){
       const shipCost=Math.round((weight/1000)*kgRate*10)/10;
-      const totalCost=afterTax+shipCost;
+      const totalCost=Math.round((afterTax+shipCost)*10)/10;
       const shipProfit=Math.round((final-totalCost)*10)/10;
       const shipMargin=final>0?Math.round((shipProfit/final)*100):0;
       set("r-ship-cost",`NT$${shipCost}`);
@@ -5759,8 +5833,10 @@ window.saveProduct=async function(){
   const photoPos=photo?(window.G.calcPhotoPos||{x:50,y:50}):{x:50,y:50};
   const photoPosCss=`${photoPos.x}% ${photoPos.y}%`;
   const weight=parseFloat(document.getElementById("c-weight")?.value)||0;
-  await fbSet("products",id,{name:name.trim(),catKey:cat,category:catObj?.label||"其他",emoji:catObj?.emoji||"📦",currency:cur,currencySymbol:CURR[cur]?.symbol||"₩",foreignAmount:amt,originalAmount:window.G.calcPromoOriginal||amt,paymentMethod:window.G.calcPaymentMethod||"card",beforeTax,afterTax,suggested:sugg,finalPrice:final,profit,margin,twPrice,rivalPrice,rivalPrices,url,specs,photo,photoPos:photoPosCss,flags,channel:window.G.calcChannel||"",weight,createdAt:Date.now()});
+  // 先清空重量輸入框，再送出存檔，不要等非同步存檔完成才清——
+  // 避免存檔還在跑的時候使用者已經開始打下一個商品，或萬一存檔中途出錯，導致這欄位一直殘留上一次的數字
   const cWeightEl=document.getElementById("c-weight");if(cWeightEl)cWeightEl.value="";
+  await fbSet("products",id,{name:name.trim(),catKey:cat,category:catObj?.label||"其他",emoji:catObj?.emoji||"📦",currency:cur,currencySymbol:CURR[cur]?.symbol||"₩",foreignAmount:amt,originalAmount:window.G.calcPromoOriginal||amt,paymentMethod:window.G.calcPaymentMethod||"card",beforeTax,afterTax,suggested:sugg,finalPrice:final,profit,margin,twPrice,rivalPrice,rivalPrices,url,specs,photo,photoPos:photoPosCss,flags,channel:window.G.calcChannel||"",weight,createdAt:Date.now()});
   ["c-name","c-amt","c-custom","c-twprice","c-specs","c-url"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});document.querySelectorAll(".c-url-extra").forEach(el=>el.parentElement.remove());
   window.G.calcRivalList=[];window.calcRenderRivals();
   ["flag-cold","flag-coldHigh","flag-heavy","flag-large","flag-limited"].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=false;});
@@ -6005,7 +6081,7 @@ window.epRivalCheck=function(){
   if(weight>0&&kgRate&&shipRow&&afterText&&afterText!=="-"){
     const afterTax=parseFloat(afterText)||0;
     const shipCost=Math.round((weight/1000)*kgRate*10)/10;
-    const totalCost=afterTax+shipCost;
+    const totalCost=Math.round((afterTax+shipCost)*10)/10;
     const shipProfit=Math.round((price-totalCost)*10)/10;
     const shipMargin=price>0?Math.round((shipProfit/price)*100):0;
     const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
@@ -6106,7 +6182,7 @@ function updateEpCalc(amt,cur,cat,twPrice,flags){
   const shipRow=document.getElementById("ep-ship-row");
   if(weight>0&&kgRate&&shipRow){
     const shipCost=Math.round((weight/1000)*kgRate*10)/10;
-    const totalCost=afterTax+shipCost;
+    const totalCost=Math.round((afterTax+shipCost)*10)/10;
     const shipProfit=Math.round((finalPrice-totalCost)*10)/10;
     const shipMargin=finalPrice>0?Math.round((shipProfit/finalPrice)*100):0;
     set("ep-ship-cost",`NT$${shipCost}`);
@@ -10625,12 +10701,12 @@ window.renderList=function(){
         const kgRate=window.G.settings?.shippingPerKg;
         if(!p.weight||!kgRate)return"";
         const shipCost=Math.round((p.weight/1000)*kgRate*10)/10;
-        const totalCost=liveAfterTax+shipCost;
+        const totalCost=Math.round((liveAfterTax+shipCost)*10)/10;
         const shipProfit=Math.round((p.finalPrice-totalCost)*10)/10;
         const shipMargin=p.finalPrice>0?Math.round((shipProfit/p.finalPrice)*100):0;
         return `<div class="hide-staff" style="background:#F0F7FF;border:1px solid #C7E0FF;border-radius:10px;padding:6px 10px;margin-bottom:10px;font-size:10px;color:#1E5F8C;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px">
           <span>⚖️ ${p.weight}g・運費約 NT$${shipCost}（參考）</span>
-          <span style="font-weight:700;color:${shipMargin>=0?"#1E5F8C":"#C0392B"}">含運費毛利率 ${shipMargin}%</span>
+          <span style="font-weight:700;color:${shipMargin>=0?"#1E5F8C":"#C0392B"}">含運費利潤 NT$${shipProfit}・毛利率 ${shipMargin}%</span>
         </div>`;
       })()}
       <div style="border-top:1px solid #FAF8F5;padding-top:10px">
@@ -12813,7 +12889,7 @@ window.qaCalcPrice=function(){
   const shipRow=document.getElementById("qa-prod-ship-row");
   if(weight>0&&kgRate&&shipRow){
     const shipCost=Math.round((weight/1000)*kgRate*10)/10;
-    const totalCost=afterTax+shipCost;
+    const totalCost=Math.round((afterTax+shipCost)*10)/10;
     const shipProfit=Math.round((finalPrice-totalCost)*10)/10;
     const shipMargin=finalPrice>0?Math.round((shipProfit/finalPrice)*100):0;
     const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
