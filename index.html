@@ -1194,6 +1194,7 @@ body.live-mode .hide-live { display: none !important; }
       <button onclick="closeModal('modal-eord')" style="font-size:24px;font-weight:900;color:#9C7A5A;background:none;border:none;cursor:pointer">×</button>
     </div>
     <div id="eo-suggestion-banner" style="display:none;padding:8px 16px 0;flex-shrink:0"></div>
+    <div id="eo-old-percent-banner" style="display:none;margin:8px 16px 0;background:#FFF3E0;border:1.5px solid #FFB74D;border-radius:10px;padding:10px 12px;flex-shrink:0"></div>
     <!-- 共用訂金 + 物流 -->
     <div style="border-bottom:1px solid #F0E6D0;flex-shrink:0">
       <button type="button" onclick="eoToggleBatchSettings()" id="eo-batch-settings-toggle" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 16px;background:#FDF6EC;border:none;cursor:pointer;text-align:left">
@@ -1223,8 +1224,8 @@ body.live-mode .hide-live { display: none !important; }
       </div>
       <div style="display:flex;gap:8px;margin-top:8px;align-items:flex-end">
         <div style="flex:1">
-          <div style="font-size:10px;color:#9C7A5A;margin-bottom:3px">🔖 打幾折（直接改這批的售價）</div>
-          <input type="text" inputmode="decimal" id="eo-batch-percent" placeholder="例如9＝9折" style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:13px;outline:none;box-sizing:border-box"/>
+          <div style="font-size:10px;color:#9C7A5A;margin-bottom:3px">🔖 打幾折（整批折算，不會改每個商品的售價）</div>
+          <input type="text" inputmode="decimal" id="eo-batch-percent" placeholder="例如9＝9折" oninput="eoUpdateDiscountPreview()" style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:13px;outline:none;box-sizing:border-box"/>
         </div>
         <button onclick="eoApplyBatchPercent()" style="flex-shrink:0;background:#FFE0B2;border:1px solid #FFB74D;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;color:#E65100;cursor:pointer">套用折數</button>
         <label style="flex-shrink:0;display:flex;align-items:center;gap:5px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;cursor:pointer">
@@ -5363,8 +5364,14 @@ window.renderTotalsCrossCheck=function(){
       custGroupMap[key].push(o);
     });
     let custPageTotal=0;
-    Object.values(custGroupMap).forEach(list=>{
-      const disc=list.find(o=>o.sharedDiscount>0)?.sharedDiscount||0;
+    // 折扣一律從「全部訂單」裡找，不要被目前的趟次篩選限制住，避免這個核對工具本身也踩到同樣的bug
+    const findDiscByKey=(key)=>{
+      const o=(window.G.orders||[]).find(x=>x.sharedDiscount>0&&(x.customerId||x.communityName||x.buyerName||"未知")===key);
+      return o?.sharedDiscount||0;
+    };
+    Object.keys(custGroupMap).forEach(key=>{
+      const list=custGroupMap[key];
+      const disc=findDiscByKey(key);
       custPageTotal+=list.reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0)-disc;
     });
     // 統計頁：用另一個獨立的 statsTripFilter 篩選
@@ -5383,6 +5390,42 @@ window.renderTotalsCrossCheck=function(){
     const sameScope=(window.G.tripFilter||"all")===(window.G.statsTripFilter||"all")||
       (["all",undefined,null].includes(window.G.tripFilter)&&["all",undefined,null].includes(window.G.statsTripFilter));
     const diff=Math.round(custPageTotal-statsTotal);
+    // 逐客戶比對：兩種算法本來就該完全一致，如果整體對不起來，
+    // 這裡把每個客戶分開重算一次，抓出「哪個客戶」的兩種算法有落差，
+    // 這樣才知道要去查哪一筆資料，不是只丟一個總金額差異給你自己猜
+    let diffRows="";
+    if(sameScope&&diff!==0){
+      const custKeys=new Set(Object.keys(custGroupMap));
+      statsOrders.forEach(o=>custKeys.add(o.customerId||o.communityName||o.buyerName||"未知"));
+      const perCustomerDiffs=[];
+      custKeys.forEach(key=>{
+        const custList=custGroupMap[key]||[];
+        const custDisc=findDiscByKey(key);
+        const custAmt=custList.reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0)-custDisc;
+        const statsList=statsOrders.filter(o=>(o.customerId||o.communityName||o.buyerName||"未知")===key);
+        const statsDisc=statsDiscMap[key]||0;
+        const statsAmt=statsList.reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0)-statsDisc;
+        const d=Math.round(custAmt-statsAmt);
+        if(d!==0){
+          const rep=custList[0]||statsList[0];
+          const name=rep?.communityName||rep?.buyerName||rep?.lineName||key;
+          perCustomerDiffs.push({name,custAmt:Math.round(custAmt),statsAmt:Math.round(statsAmt),diff:d,custDisc,statsDisc});
+        }
+      });
+      if(perCustomerDiffs.length){
+        diffRows=`<div style="margin-top:10px">
+          <div style="font-size:11px;font-weight:700;color:#943126;margin-bottom:6px">🔍 抓到這幾位客戶的兩種算法對不起來：</div>
+          ${perCustomerDiffs.map(r=>`
+            <div style="background:#FDEDEC;border:1px solid #F1948A;border-radius:10px;padding:10px 12px;margin-bottom:6px;font-size:11px;color:#943126">
+              <div style="font-weight:700;margin-bottom:4px">👤 ${r.name}　差 NT$${Math.abs(r.diff).toLocaleString()}</div>
+              <div>客戶／對帳單頁算出來：NT$${r.custAmt.toLocaleString()}（折扣 NT$${r.custDisc}）</div>
+              <div>統計頁算出來：NT$${r.statsAmt.toLocaleString()}（折扣 NT$${r.statsDisc}）</div>
+              ${r.custDisc!==r.statsDisc?`<div style="margin-top:4px;font-weight:700">⚠️ 折扣金額兩邊不一樣，很可能是這個客戶身上有超過一筆訂單存了折扣紀錄，導致其中一種算法重複扣了折扣</div>`:""}
+            </div>
+          `).join("")}
+        </div>`;
+      }
+    }
     box.innerHTML=`
       <div style="background:#FAF8F5;border:1px solid #E8D5B0;border-radius:12px;padding:12px 14px;margin-bottom:10px">
         <div style="font-size:11px;color:#9C7A5A;margin-bottom:4px">客戶頁 ／ 對帳單頁（兩邊共用同一套分組邏輯）</div>
@@ -5397,7 +5440,7 @@ window.renderTotalsCrossCheck=function(){
       ${sameScope
         ?(diff===0
           ?`<div style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:12px;padding:12px 14px;color:#166534;font-size:13px;font-weight:700;text-align:center">✅ 兩邊選的是同一個趟次範圍，金額完全對得起來，沒有發現不一致</div>`
-          :`<div style="background:#FDEDEC;border:1px solid #F1948A;border-radius:12px;padding:12px 14px;color:#943126;font-size:13px;font-weight:700;text-align:center">⚠️ 兩邊選的是同一個趟次範圍，但金額差了 NT$${Math.abs(diff).toLocaleString()}，這代表真的有資料算錯，需要進一步檢查</div>`)
+          :`<div style="background:#FDEDEC;border:1px solid #F1948A;border-radius:12px;padding:12px 14px;color:#943126;font-size:13px;font-weight:700;text-align:center">⚠️ 兩邊選的是同一個趟次範圍，但金額差了 NT$${Math.abs(diff).toLocaleString()}，這代表真的有資料算錯，需要進一步檢查</div>${diffRows}`)
         :`<div style="background:#FFFBEB;border:1px solid #FCD34D;border-radius:12px;padding:12px 14px;color:#92400E;font-size:12px;line-height:1.6">ℹ️ 客戶頁跟統計頁目前選的「趟次篩選」不一樣，所以總額本來就會不同，這不算錯誤。<br><br>把兩邊都切到「全部趟次」再點一次這個按鈕重新核對，如果還是對不起來，才代表有真的問題。</div>`
       }
       <div style="font-size:10px;color:#B0906A;margin-top:10px;line-height:1.6">
@@ -5406,6 +5449,7 @@ window.renderTotalsCrossCheck=function(){
     `;
   },10);
 };
+window.showTripOrphanScan=function(){
   let modal=document.getElementById("modal-trip-orphan-scan");
   if(!modal){
     modal=document.createElement("div");
@@ -7627,19 +7671,14 @@ window.eoPendingEditSpec=function(i){
   eoRenderPending();
 };
 
-// 打幾折：直接把目前畫面上這批訂單的售價都乘上折數重新計算，不是像折扣(NT$)那樣只從總額扣一筆固定金額
+// 打幾折：改成跟折扣(NT$)一樣，是「整批層級」的設定，不直接去改每一筆商品的售價——
+// 這樣客人看到的商品明細，每一項都還是原本的售價，折扣只會在最後結算的地方統一扣一次，
+// 不會像以前那樣把每個商品的售價都個別改掉、還留下一堆「(原價XXX)」的備註
 window.eoApplyBatchPercent=function(){
   const pctInput=parseFloat(document.getElementById("eo-batch-percent")?.value);
   if(isNaN(pctInput)||pctInput<=0||pctInput>10){showToast("折數請輸入0~10之間的數字，例如9代表9折","error");return;}
-  const factor=pctInput/10;
-  const rows=document.querySelectorAll("#eo-order-list .eo-price");
-  if(!rows.length){showToast("沒有可以套用的訂單","warning");return;}
-  rows.forEach(input=>{
-    const cur=parseFloat(input.value)||0;
-    input.value=Math.round(cur*factor);
-  });
   eoUpdateDiscountPreview();
-  showToast(`已把 ${rows.length} 筆訂單的售價套用 ${pctInput}折，記得按下面「儲存全部修改」才會真的存檔`,"success");
+  showToast(`已設定 ${pctInput} 折，記得按下面「儲存全部修改」才會真的存檔`,"success");
 };
 // 折扣原因：常用的先列出來，用複選（可以同時勾多個，例如「新客」+「滿額」），
 // 也留一個自訂輸入框給還沒列進去的原因，兩邊會合併成一串文字存起來
@@ -7809,18 +7848,24 @@ window.eoApplySuggestedFreeShipping=function(){
 
 window.eoUpdateDiscountPreview=function(){
   const disc=parseFloat(document.getElementById("eo-shared-discount")?.value)||0;
+  const pct=parseFloat(document.getElementById("eo-batch-percent")?.value)||0;
   const preview=document.getElementById("eo-discount-preview");
   if(!preview)return;
-  if(disc>0){
-    const rows=document.querySelectorAll("#eo-order-list .eo-row");
+  if(disc>0||(pct>0&&pct<10)){
+    const rows=document.querySelectorAll("#eo-order-list .eo-collapsible-row");
     let total=0;
     rows.forEach(row=>{
       const qty=parseInt(row.querySelector(".eo-qty")?.value)||1;
       const price=parseFloat(row.querySelector(".eo-price")?.value)||0;
       total+=price*qty;
     });
+    // 打幾折先算（乘上折數），折扣(NT$)再從打完折的金額裡扣一次，兩個可以同時用
+    const afterPct=(pct>0&&pct<10)?Math.round(total*pct/10):total;
+    const final=afterPct-disc;
+    const pctNote=(pct>0&&pct<10)?`打${pct}折後 NT$${afterPct.toLocaleString()}`:"";
+    const discNote=disc>0?`折NT$${disc}`:"";
     preview.style.display="block";
-    preview.textContent=`原總價 NT$${total.toLocaleString()} → 折扣後 NT$${(total-disc).toLocaleString()}（折 NT$${disc}）`;
+    preview.textContent=`原總價 NT$${total.toLocaleString()}${pctNote?" → "+pctNote:""} → 應收 NT$${final.toLocaleString()}${discNote?"（"+discNote+"）":""}`;
   } else {
     preview.style.display="none";
   }
@@ -7831,6 +7876,7 @@ window.saveAllEditOrders=async function(){
   const sharedDeposit=parseFloat(document.getElementById("eo-shared-deposit")?.value)||0;
   const sharedTracking=window.eoGetTrackingText();
   const sharedDiscount=parseFloat(document.getElementById("eo-shared-discount")?.value)||0;
+  const sharedDiscountPercent=parseFloat(document.getElementById("eo-batch-percent")?.value)||0;
   const freeShipping=document.getElementById("eo-free-shipping")?.checked||false;
   const shippingCost=freeShipping?(parseFloat(document.getElementById("eo-shipping-cost")?.value)||0):0;
   let count=0;
@@ -7845,11 +7891,13 @@ window.saveAllEditOrders=async function(){
       const qty=parseInt(row.querySelector(".eo-qty")?.value)||1;
       const price=parseFloat(row.querySelector(".eo-price")?.value)||0;
       const discountNote=row.querySelector(".eo-discount-note")?.value.trim()||"";
-      // 折扣、免運、訂金都只記在第一筆，避免同一件事在同一批訂單裡被記錄了好幾次、加總時被重複計算
+      // 折扣、免運、訂金、打幾折都只記在第一筆，避免同一件事在同一批訂單裡被記錄了好幾次、加總時被重複計算；
+      // 打幾折不再去改每一筆商品的售價，商品明細裡的售價維持原本填的金額，折算只在結算總額時統一處理
       const upd={qty,discountPrice:price,total:price*qty,tracking:sharedTracking,discountNote};
       if(i===0){
         upd.sharedDiscount=sharedDiscount>0?sharedDiscount:0;
         upd.sharedDiscountReason=sharedDiscount>0?eoGetDiscountReasonText():"";
+        upd.sharedDiscountPercent=(sharedDiscountPercent>0&&sharedDiscountPercent<10)?sharedDiscountPercent:0;
         upd.freeShipping=freeShipping;
         upd.freeShippingReason=freeShipping?eoGetShippingReasonText():"";
         upd.shippingCost=shippingCost;
@@ -10929,6 +10977,47 @@ window.openEditCust=function(id){
   if(!c){showToast("找不到客戶","error");return;}
   openModal("modal-cust",c);
 };
+// 偵測舊版「打幾折」留下的資料：舊版做法是直接把每個商品的售價改低，
+// 沒有記錄折數本身；這裡找出「有原價可比對、售價明顯比原價低、而且好幾筆比例都一致」的訂單，
+// 判斷很可能是同一次舊版打折動作留下的，提供一鍵修復成新版格式（商品顯示原價，折數記在整批設定）
+window.eoDetectOldPercentDiscount=function(cOrders){
+  const banner=document.getElementById("eo-old-percent-banner");
+  if(!banner)return;
+  banner.style.display="none";
+  banner.innerHTML="";
+  if(cOrders.some(o=>o.sharedDiscountPercent>0))return; // 已經是新格式了，不用提示
+  const candidates=cOrders.filter(o=>o.unitPrice>0&&o.discountPrice>0&&o.discountPrice<o.unitPrice*0.995);
+  if(candidates.length<2)return; // 只有1筆比較可能是單品折讓，不主動提示
+  const ratios=candidates.map(o=>o.discountPrice/o.unitPrice);
+  const avgRatio=ratios.reduce((s,r)=>s+r,0)/ratios.length;
+  const consistent=ratios.every(r=>Math.abs(r-avgRatio)<0.02);
+  if(!consistent)return; // 比例不一致，比較像是各自單獨談的折扣，不是整批打折，不亂動
+  const pctGuess=Math.round(avgRatio*10);
+  if(pctGuess<=0||pctGuess>=10)return;
+  window.G._eoOldPercentCandidates=candidates.map(o=>o.id);
+  window.G._eoOldPercentGuess=pctGuess;
+  banner.style.display="block";
+  banner.innerHTML=`<div style="font-size:12px;font-weight:700;color:#B45309;margin-bottom:6px">🔧 偵測到 ${candidates.length} 筆商品疑似用舊版方式打了 ${pctGuess} 折（售價被直接改低，沒有記錄折數本身）</div>
+    <div style="font-size:11px;color:#9C7A5A;margin-bottom:8px">可以一鍵還原：每個商品恢復顯示原價，改在「整批設定」套用 ${pctGuess} 折</div>
+    <button id="eo-fix-old-percent-btn" onclick="eoFixOldPercentDiscount()" style="background:#FFB74D;color:white;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer">✅ 一鍵修復成新版格式</button>`;
+};
+window.eoFixOldPercentDiscount=async function(){
+  const ids=window.G._eoOldPercentCandidates||[];
+  const pct=window.G._eoOldPercentGuess;
+  if(!ids.length||!pct)return;
+  const btn=document.getElementById("eo-fix-old-percent-btn");
+  if(btn){btn.disabled=true;btn.textContent="修復中…";}
+  for(const id of ids){
+    const o=window.G.orders.find(x=>x.id===id);
+    if(!o)continue;
+    await fbUpd("orders",id,{discountPrice:o.unitPrice,total:o.unitPrice*o.qty});
+  }
+  // 折數記在整批第一筆訂單身上，跟其他整批設定（訂金/折扣/免運）的存法一致
+  const firstOrder=window.G.orders.find(o=>ids.includes(o.id));
+  if(firstOrder)await fbUpd("orders",firstOrder.id,{sharedDiscountPercent:pct});
+  showToast(`已修復 ${ids.length} 筆商品，改成整批打${pct}折的新格式`,"success");
+  setTimeout(()=>window.openEditOrd(ids[0]),500);
+};
 window.openEditOrd=function(oid){
   const o=window.G.orders.find(x=>x.id===oid);
   if(!o){showToast("找不到訂單","error");return;}
@@ -10970,6 +11059,7 @@ window.openEditOrd=function(oid){
   const existingTracking=cOrders.find(x=>x.tracking)?.tracking||"";
   const existingDiscount=cOrders.find(x=>x.sharedDiscount>0)?.sharedDiscount||"";
   const existingDiscountReason=cOrders.find(x=>x.sharedDiscount>0)?.sharedDiscountReason||"";
+  const existingDiscountPercent=cOrders.find(x=>x.sharedDiscountPercent>0)?.sharedDiscountPercent||"";
   window.eoRestoreDiscountReasonUI(existingDiscountReason);
   const existingFreeShipping=cOrders.some(x=>x.freeShipping===true);
   const existingShippingReason=cOrders.find(x=>x.freeShipping===true)?.freeShippingReason||"";
@@ -10985,7 +11075,7 @@ window.openEditOrd=function(oid){
   window.eoRestoreTrackingList(existingTracking);
   if(discEl)discEl.value=existingDiscount;
   if(fsEl)fsEl.checked=existingFreeShipping;
-  if(pctEl)pctEl.value="";
+  if(pctEl)pctEl.value=existingDiscountPercent;
   if(scEl)scEl.value=existingShippingCost;
   if(scWrap)scWrap.style.display=existingFreeShipping?"flex":"none";
   const shipReasonArea=document.getElementById("eo-shipping-reason-area");
@@ -11038,6 +11128,7 @@ window.openEditOrd=function(oid){
 
   const el=document.getElementById("modal-eord");
   if(el)el.style.display="flex";
+  window.eoDetectOldPercentDiscount(cOrders);
 };
 window.eoToggleExpand=function(){
   window.G.eoExpanded=true;
@@ -11566,8 +11657,27 @@ window.renderCustomers=function(){
       if(cLine&&oLine&&cLine===oLine)return true;
       return false;
     }).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
-    const cDisc=cO.find(o=>o.sharedDiscount>0)?.sharedDiscount||0;
-    const cT=cO.filter(o=>o.orderType!=="quote").reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0)-cDisc;
+    // 折扣要從這個客戶「全部」訂單裡找，不能只在目前趟次篩選出來的這批裡面找，
+    // 而且要「加總」所有不同批次的折扣紀錄，不是只抓第一筆——因為同一個客戶完全可能
+    // 在不同趟次各自拿過折扣（例如六月一次、八月一次），每一筆都是真實發生過的，都該算進去
+    const cDiscOrders=(window.G.orders||[]).filter(o=>{
+      if(!(o.sharedDiscount>0))return false;
+      if(o.customerId)return o.customerId===c.id;
+      const oName=(o.communityName||o.buyerName||"").trim().toLowerCase();
+      const oLine=(o.lineName||"").trim().toLowerCase();
+      return (cName&&oName&&cName===oName)||(cLine&&oLine&&cLine===oLine);
+    });
+    const cDisc=cDiscOrders.reduce((s,o)=>s+o.sharedDiscount,0);
+    // 打幾折：跟折扣(NT$)不同，百分比沒辦法簡單加總多筆，抓最近一次設定的折數套用到這個客戶的總額上
+    const cPctOrder=(window.G.orders||[]).find(o=>{
+      if(!(o.sharedDiscountPercent>0&&o.sharedDiscountPercent<10))return false;
+      if(o.customerId)return o.customerId===c.id;
+      const oName=(o.communityName||o.buyerName||"").trim().toLowerCase();
+      const oLine=(o.lineName||"").trim().toLowerCase();
+      return (cName&&oName&&cName===oName)||(cLine&&oLine&&cLine===oLine);
+    });
+    const cRawT=cO.filter(o=>o.orderType!=="quote").reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0);
+    const cT=(cPctOrder?Math.round(cRawT*cPctOrder.sharedDiscountPercent/10):cRawT)-cDisc;
     const cP=cO.filter(o=>o.status==="pending"&&o.orderType!=="quote").length;
     const cQty=cO.filter(o=>o.orderType!=="quote").reduce((s,o)=>s+(o.qty||1),0);
     const cShippedQty=cO.filter(o=>o.orderType!=="quote"&&o.status==="shipped").reduce((s,o)=>s+(o.qty||1),0);
@@ -11937,9 +12047,22 @@ window.renderInvoice=function(){
     const statusColor={pending:"#F59E0B",deposit:"#9333EA",settled:"#10B981",shipped:"#3B82F6",mixed:"#9C7A5A",none:"#0277BD"};
     const statusLabel={pending:"待訂金",deposit:"已付訂金",settled:"已付尾款",shipped:"已寄出",mixed:"狀態不一",none:"僅待報價"};
     const totalDeposit=b.orders.reduce((s,o)=>s+(o.depositAmt||0),0);
-    const bDisc=b.orders.find(o=>o.sharedDiscount>0)?.sharedDiscount||0;
+    // 折扣要從這個買家「全部」訂單裡找、而且要加總所有不同批次的折扣紀錄，
+    // 理由跟客戶頁那邊完全一樣：同一個買家可能在不同趟次各自拿過折扣，每一筆都該算
+    const bDiscOrders=(window.G.orders||[]).filter(o=>{
+      if(!(o.sharedDiscount>0))return false;
+      const key=o.customerId||o.communityName||o.buyerName||"未知";
+      return key===b.key;
+    });
+    const bDisc=bDiscOrders.reduce((s,o)=>s+o.sharedDiscount,0);
+    // 打幾折：抓這個買家身上設定過的折數，套用到總額上
+    const bPctOrder=(window.G.orders||[]).find(o=>{
+      if(!(o.sharedDiscountPercent>0&&o.sharedDiscountPercent<10))return false;
+      const key=o.customerId||o.communityName||o.buyerName||"未知";
+      return key===b.key;
+    });
     const bShipping=b.orders.find(o=>o.freeShipping)?.shippingCost||0;
-    const totalAmt=b.total-bDisc;
+    const totalAmt=(bPctOrder?Math.round(b.total*bPctOrder.sharedDiscountPercent/10):b.total)-bDisc;
     const remaining=totalAmt-totalDeposit;
     return `<div style="background:white;border-radius:14px;border:1px solid ${allChecked?"#C5A880":"#E8D5B0"};margin-bottom:10px;overflow:hidden">
       <!-- 客戶標題列 -->
@@ -12649,15 +12772,37 @@ window.copyCustOrder=function(cid){
   });
   if(!cO.length){showToast("此客戶沒有訂單","warning");return;}
   const name=c.communityName||c.lineName||"客戶";
-  const sharedDiscount=cO.find(o=>o.sharedDiscount>0)?.sharedDiscount||0;
-  const sharedDiscountReason=cO.find(o=>o.sharedDiscount>0)?.sharedDiscountReason||"";
+  // 折扣要從這個客戶「全部」訂單裡找，不能只在目前趟次篩選出來的這批裡面找
+  const discOrder=(window.G.orders||[]).find(o=>{
+    if(!(o.sharedDiscount>0))return false;
+    if(o.customerId)return o.customerId===cid;
+    const nm=(c.communityName||"").trim().toLowerCase();
+    const ln=(c.lineName||"").trim().toLowerCase();
+    const on=(o.communityName||o.buyerName||"").trim().toLowerCase();
+    const ol=(o.lineName||"").trim().toLowerCase();
+    return (nm&&nm===on)||(ln&&ln===ol);
+  });
+  const sharedDiscount=discOrder?.sharedDiscount||0;
+  const sharedDiscountReason=discOrder?.sharedDiscountReason||"";
+  const pctOrder=(window.G.orders||[]).find(o=>{
+    if(!(o.sharedDiscountPercent>0&&o.sharedDiscountPercent<10))return false;
+    if(o.customerId)return o.customerId===cid;
+    const nm=(c.communityName||"").trim().toLowerCase();
+    const ln=(c.lineName||"").trim().toLowerCase();
+    const on=(o.communityName||o.buyerName||"").trim().toLowerCase();
+    const ol=(o.lineName||"").trim().toLowerCase();
+    return (nm&&nm===on)||(ln&&ln===ol);
+  });
   const grouped=window.buildGroupedOrderLines(cO);
   const lines=grouped.lines;
   const total=grouped.total;
-  const discountedTotal=total-sharedDiscount;
-  // 只列商品明細跟總額，不主動提匯款/訂金，因為客人有時候只是想查目前訂了什麼
-  const totalBlock=sharedDiscount>0
-    ?`\n\n商品小計 NT$${total.toLocaleString()}\n折扣  -NT$${sharedDiscount.toLocaleString()}${sharedDiscountReason?`（${sharedDiscountReason}）`:""}\n\n應付金額 NT$${discountedTotal.toLocaleString()}`
+  const afterPct=pctOrder?Math.round(total*pctOrder.sharedDiscountPercent/10):total;
+  const discountedTotal=afterPct-sharedDiscount;
+  // 只列商品明細跟總額，不主動提匯款/訂金，因為客人有時候只是想查目前訂了什麼——
+  // 打幾折跟折扣(NT$)都是在最後統一列一行，不會分別標註在每個商品後面
+  const pctLine=pctOrder?`\n打${pctOrder.sharedDiscountPercent}折後  NT$${afterPct.toLocaleString()}`:"";
+  const totalBlock=(sharedDiscount>0||pctOrder)
+    ?`\n\n商品小計 NT$${total.toLocaleString()}${pctLine}${sharedDiscount>0?`\n折扣  -NT$${sharedDiscount.toLocaleString()}${sharedDiscountReason?`（${sharedDiscountReason}）`:""}`:""}\n\n應付金額 NT$${discountedTotal.toLocaleString()}`
     :`\n\n總金額 NT$${total.toLocaleString()}`;
   const text=`【訂單明細】\n${lines.join("\n")}\n\n共計 ${grouped.totalQty} 件商品${totalBlock}`;
 
@@ -12689,19 +12834,30 @@ window.copyBuyerOrder=function(buyerKey){
   const buyerOrders=allBuyerOrders.filter(o=>o.status!=="shipped");
   if(!buyerOrders.length){showToast("這位客人的品項都已經出貨、結清了，沒有還需要收款的部分","warning");return;}
   const name=buyerOrders[0].communityName||buyerOrders[0].buyerName||"買家";
-  // 這兩個是「整批設定」裡設的，只記在其中一筆訂單身上，代表整批共用，
-  // 之前這裡完全沒算到，導致傳給客人的金額跟對帳單畫面上實際顯示的金額對不起來
-  const sharedDisc=allBuyerOrders.find(o=>o.sharedDiscount>0)?.sharedDiscount||0;
-  const sharedDiscReason=allBuyerOrders.find(o=>o.sharedDiscount>0)?.sharedDiscountReason||"";
+  // 折扣要從這個買家「全部」訂單裡找，不能只在目前趟次篩選出來的這批裡面找
+  const discOrder=(window.G.orders||[]).find(o=>{
+    if(!(o.sharedDiscount>0))return false;
+    const key=o.customerId||o.communityName||o.buyerName||"未知";
+    return key===buyerKey;
+  });
+  const sharedDisc=discOrder?.sharedDiscount||0;
+  const sharedDiscReason=discOrder?.sharedDiscountReason||"";
+  const pctOrder=(window.G.orders||[]).find(o=>{
+    if(!(o.sharedDiscountPercent>0&&o.sharedDiscountPercent<10))return false;
+    const key=o.customerId||o.communityName||o.buyerName||"未知";
+    return key===buyerKey;
+  });
   const hasFreeShipping=allBuyerOrders.some(o=>o.freeShipping);
   const shipReason=allBuyerOrders.find(o=>o.freeShipping)?.freeShippingReason||"";
   const grouped=window.buildGroupedOrderLines(buyerOrders);
   const lines=grouped.lines;
   const rawTotal=grouped.total;
-  const total=rawTotal-sharedDisc;
+  const afterPct=pctOrder?Math.round(rawTotal*pctOrder.sharedDiscountPercent/10):rawTotal;
+  const total=afterPct-sharedDisc;
   const totalDeposit=allBuyerOrders.reduce((s,o)=>s+(o.depositAmt||0),0);
   const codReserve=100; // 貨到付款服務費固定要留，跟有沒有免運無關（免運只是運費，是不同的錢）
   const payNow=Math.max(0,total-totalDeposit-codReserve);
+  const pctLine=pctOrder?`\n打${pctOrder.sharedDiscountPercent}折後　NT$${afterPct.toLocaleString()}`:"";
   const discLine=sharedDisc>0?`\n折扣　-NT$${sharedDisc.toLocaleString()}${sharedDiscReason?`（${sharedDiscReason}）`:""}`:"";
   const shipLine=hasFreeShipping?`\n🚚 免運${shipReason?`（${shipReason}）`:""}`:"";
   const remainder=total-totalDeposit;
@@ -12709,8 +12865,8 @@ window.copyBuyerOrder=function(buyerKey){
     ?`🌟應付金額　NT$${payNow.toLocaleString()}`
     :`🌟應付金額　NT$${payNow.toLocaleString()}（保留 NT$100 賣貨便貨到付款）`;
   const summaryBlock=totalDeposit>0
-    ?`\n───────────\n總金額　NT$${rawTotal.toLocaleString()}${discLine}${shipLine}\n已付訂金　NT$${totalDeposit.toLocaleString()}\n───────────\n${payLine}`
-    :`\n───────────\n總金額　NT$${rawTotal.toLocaleString()}${discLine}${shipLine}\n\n${payLine}`;
+    ?`\n───────────\n總金額　NT$${rawTotal.toLocaleString()}${pctLine}${discLine}${shipLine}\n已付訂金　NT$${totalDeposit.toLocaleString()}\n───────────\n${payLine}`
+    :`\n───────────\n總金額　NT$${rawTotal.toLocaleString()}${pctLine}${discLine}${shipLine}\n\n${payLine}`;
   const bs=window.G.settings||{};
   const bankLines=[];
   if(bs.bank1Name||bs.bank1Account)bankLines.push(`${bs.bank1Name||""}\n${bs.bank1Account||""}`);
@@ -12743,19 +12899,31 @@ window.openSendSettlement=async function(buyerKey){
   const first=buyerOrders[0];
   const c=window.G.customers.find(x=>x.id===first.customerId);
   const custName=c?(c.communityName||c.lineName||"客人"):(first.communityName||first.buyerName||"客人");
-  // 折扣/免運是「整批共用」的設定，可能剛好記在已經出貨的那筆訂單身上，
-  // 所以這兩個要從全部訂單裡找，不能只從還沒出貨的 buyerOrders 裡找，不然可能會找不到
-  const sharedDisc=allBuyerOrders.find(o=>o.sharedDiscount>0)?.sharedDiscount||0;
-  const sharedDiscReason=allBuyerOrders.find(o=>o.sharedDiscount>0)?.sharedDiscountReason||"";
+  // 折扣/免運是「整批共用」的設定，不能只在目前趟次篩選出來的這批裡面找，
+  // 一定要從這個買家「全部」訂單裡找，才不會因為篩選範圍改變而忽有忽無
+  const discOrder2=(window.G.orders||[]).find(o=>{
+    if(!(o.sharedDiscount>0))return false;
+    const key=o.customerId||o.communityName||o.buyerName||"未知";
+    return key===buyerKey;
+  });
+  const sharedDisc=discOrder2?.sharedDiscount||0;
+  const sharedDiscReason=discOrder2?.sharedDiscountReason||"";
+  const pctOrder=(window.G.orders||[]).find(o=>{
+    if(!(o.sharedDiscountPercent>0&&o.sharedDiscountPercent<10))return false;
+    const key=o.customerId||o.communityName||o.buyerName||"未知";
+    return key===buyerKey;
+  });
   const hasFreeShipping=allBuyerOrders.some(o=>o.freeShipping);
   const shipReason=buyerOrders.find(o=>o.freeShipping)?.freeShippingReason||"";
   const grouped2=window.buildGroupedOrderLines(buyerOrders);
   const lines=grouped2.lines;
   const rawTotal=grouped2.total;
-  const total=rawTotal-sharedDisc;
+  const afterPct=pctOrder?Math.round(rawTotal*pctOrder.sharedDiscountPercent/10):rawTotal;
+  const total=afterPct-sharedDisc;
   const totalDeposit=allBuyerOrders.reduce((s,o)=>s+(o.depositAmt||0),0);
   const codReserve=100; // 貨到付款服務費固定要留，跟有沒有免運無關（免運只是運費，是不同的錢）
   const payNow=Math.max(0,total-totalDeposit-codReserve);
+  const pctLine=pctOrder?`\n打${pctOrder.sharedDiscountPercent}折後　NT$${afterPct.toLocaleString()}`:"";
   const discLine=sharedDisc>0?`\n折扣　-NT$${sharedDisc.toLocaleString()}${sharedDiscReason?`（${sharedDiscReason}）`:""}`:"";
   const shipLine=hasFreeShipping?`\n🚚 免運${shipReason?`（${shipReason}）`:""}`:"";
   const remainder=total-totalDeposit;
@@ -12763,8 +12931,8 @@ window.openSendSettlement=async function(buyerKey){
     ?`🌟應付金額　NT$${payNow.toLocaleString()}`
     :`🌟應付金額　NT$${payNow.toLocaleString()}（保留 NT$100 賣貨便貨到付款）`;
   const summaryBlock=totalDeposit>0
-    ?`\n───────────\n總金額　NT$${rawTotal.toLocaleString()}${discLine}${shipLine}\n已付訂金　NT$${totalDeposit.toLocaleString()}\n───────────\n${payLine}`
-    :`\n───────────\n總金額　NT$${rawTotal.toLocaleString()}${discLine}${shipLine}\n\n${payLine}`;
+    ?`\n───────────\n總金額　NT$${rawTotal.toLocaleString()}${pctLine}${discLine}${shipLine}\n已付訂金　NT$${totalDeposit.toLocaleString()}\n───────────\n${payLine}`
+    :`\n───────────\n總金額　NT$${rawTotal.toLocaleString()}${pctLine}${discLine}${shipLine}\n\n${payLine}`;
   const bs=window.G.settings||{};
   const bankLines=[];
   if(bs.bank1Name||bs.bank1Account)bankLines.push(`${bs.bank1Name||""}\n${bs.bank1Account||""}`);
