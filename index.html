@@ -196,11 +196,27 @@ body.live-mode .hide-live { display: none !important; }
       </div>
     </div>
     <!-- 含運費即時參考（有填重量才顯示） -->
-    <div id="r-ship-row" style="display:none;background:#F0F7FF;border:1px solid #C7E0FF;border-radius:10px;padding:8px 12px;margin-bottom:8px;font-size:11px;color:#1E5F8C;justify-content:space-between;flex-wrap:wrap;gap:4px">
-      <span>⚖️ 運費約 <b id="r-ship-cost">-</b></span>
-      <span>含運費成本 <b id="r-ship-total-cost">-</b></span>
-      <span>含運費利潤 <b id="r-ship-profit">-</b></span>
-      <span style="font-weight:900" id="r-ship-margin-label">-</span>
+    <div id="r-ship-row" style="display:none;margin-bottom:8px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+        <div style="background:#F3F4F6;border:1px solid #E5E7EB;border-radius:10px;padding:7px;text-align:center">
+          <div style="font-size:8px;color:#6B7280;font-weight:700">⚖️ 運費</div>
+          <div id="r-ship-cost" style="font-size:12px;font-weight:900;color:#374151">-</div>
+        </div>
+        <div style="background:#DBEAFE;border:1px solid #BFDBFE;border-radius:10px;padding:7px;text-align:center">
+          <div style="font-size:8px;color:#1E40AF;font-weight:700">含運費成本</div>
+          <div id="r-ship-total-cost" style="font-size:12px;font-weight:900;color:#1E40AF">-</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:10px;padding:7px;text-align:center">
+          <div style="font-size:8px;color:#166534;font-weight:700">含運費利潤</div>
+          <div id="r-ship-profit" style="font-size:12px;font-weight:900;color:#166534">-</div>
+        </div>
+        <div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:10px;padding:7px;text-align:center">
+          <div style="font-size:8px;color:#92400E;font-weight:700">含運費毛利率</div>
+          <div id="r-ship-margin-label" style="font-size:12px;font-weight:900;color:#92400E">-</div>
+        </div>
+      </div>
     </div>
     <!-- 快速選價 -->
     <div id="r-quick-btns" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px;min-height:34px"></div>
@@ -483,6 +499,7 @@ body.live-mode .hide-live { display: none !important; }
     <button data-invf="deposit"    onclick="setInvFilter('deposit')"    style="flex:1;min-width:60px;padding:8px 2px;border-radius:10px;font-size:10px;font-weight:700;border:1px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">已付訂金</button>
     <button data-invf="settled"    onclick="setInvFilter('settled')"    style="flex:1;min-width:60px;padding:8px 2px;border-radius:10px;font-size:10px;font-weight:700;border:1px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">已付尾款</button>
     <button data-invf="shipped"    onclick="setInvFilter('shipped')"    style="flex:1;min-width:60px;padding:8px 2px;border-radius:10px;font-size:10px;font-weight:700;border:1px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">已寄出</button>
+    <button data-invf="notshipped" onclick="setInvFilter('notshipped')" style="flex:1;min-width:80px;padding:8px 2px;border-radius:10px;font-size:10px;font-weight:700;border:1px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🚚 尚未寄出</button>
   </div>
   <div style="display:flex;gap:8px;margin-bottom:10px">
     <button id="inv-unpurchased-btn" data-invf="unpurchased" onclick="toggleInvUnpurchased()" style="flex:1;padding:9px 4px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #C4B5FD;background:#F3F0FF;color:#6D28D9;cursor:pointer">🛒 查看尚未購買的代買單</button>
@@ -1061,11 +1078,27 @@ body.live-mode .hide-live { display: none !important; }
       <div id="ep-before" style="display:none">-</div>
     </div>
     <!-- 含運費即時參考（有填重量才顯示） -->
-    <div id="ep-ship-row" style="display:none;background:#F0F7FF;border:1px solid #C7E0FF;border-radius:10px;padding:8px 12px;margin-bottom:8px;font-size:11px;color:#1E5F8C;justify-content:space-between;flex-wrap:wrap;gap:4px">
-      <span>⚖️ 運費約 <b id="ep-ship-cost">-</b></span>
-      <span>含運費成本 <b id="ep-ship-total-cost">-</b></span>
-      <span>含運費利潤 <b id="ep-ship-profit">-</b></span>
-      <span style="font-weight:900" id="ep-ship-margin-label">-</span>
+    <div id="ep-ship-row" style="display:none;margin-bottom:8px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+        <div style="background:#F3F4F6;border:1px solid #E5E7EB;border-radius:10px;padding:7px;text-align:center">
+          <div style="font-size:8px;color:#6B7280;font-weight:700">⚖️ 運費</div>
+          <div id="ep-ship-cost" style="font-size:12px;font-weight:900;color:#374151">-</div>
+        </div>
+        <div style="background:#DBEAFE;border:1px solid #BFDBFE;border-radius:10px;padding:7px;text-align:center">
+          <div style="font-size:8px;color:#1E40AF;font-weight:700">含運費成本</div>
+          <div id="ep-ship-total-cost" style="font-size:12px;font-weight:900;color:#1E40AF">-</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:10px;padding:7px;text-align:center">
+          <div style="font-size:8px;color:#166534;font-weight:700">含運費利潤</div>
+          <div id="ep-ship-profit" style="font-size:12px;font-weight:900;color:#166534">-</div>
+        </div>
+        <div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:10px;padding:7px;text-align:center">
+          <div style="font-size:8px;color:#92400E;font-weight:700">含運費毛利率</div>
+          <div id="ep-ship-margin-label" style="font-size:12px;font-weight:900;color:#92400E">-</div>
+        </div>
+      </div>
     </div>
     <div style="margin-bottom:8px;display:flex;align-items:center;gap:8px">
       <label style="font-size:11px;font-weight:700;color:#1E5F8C;white-space:nowrap">⚖️ 重量(克)</label>
@@ -1625,6 +1658,16 @@ body.live-mode .hide-live { display: none !important; }
           <button type="button" onclick="qaLiveSelectCurrency('THB')" data-curr="THB" class="qa-live-curr-btn" style="flex:1;background:white;color:#B45309;border:1.5px solid #F59E0B;border-radius:8px;padding:7px 4px;font-size:12px;font-weight:700;cursor:pointer">🇹🇭 泰銖</button>
           <button type="button" onclick="qaLiveSelectCurrency('USD')" data-curr="USD" class="qa-live-curr-btn" style="flex:1;background:white;color:#B45309;border:1.5px solid #F59E0B;border-radius:8px;padding:7px 4px;font-size:12px;font-weight:700;cursor:pointer">🇺🇸 美金</button>
         </div>
+        <!-- 刷卡/現金 + 無法退稅：直接影響成本算得準不準，之前這裡完全沒有這兩個開關，
+             固定當作「刷卡、有退稅」去算，現場如果實際是付現金/不能退稅，成本會算低 -->
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <button type="button" onclick="qaLiveSelectPayment('card')" data-pm="card" class="qa-live-pm-btn" style="flex:1;background:#F59E0B;color:white;border:1.5px solid #F59E0B;border-radius:8px;padding:7px 4px;font-size:12px;font-weight:700;cursor:pointer">💳 刷卡</button>
+          <button type="button" onclick="qaLiveSelectPayment('cash')" data-pm="cash" class="qa-live-pm-btn" style="flex:1;background:white;color:#B45309;border:1.5px solid #F59E0B;border-radius:8px;padding:7px 4px;font-size:12px;font-weight:700;cursor:pointer">💵 現金</button>
+        </div>
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:#B45309;margin-bottom:10px;cursor:pointer">
+          <input type="checkbox" id="qa-live-norefund" onchange="qaLiveCalc()" style="accent-color:#F59E0B;width:15px;height:15px"/>
+          🚫 這筆無法退稅（路邊攤／已含稅等）
+        </label>
         <!-- 促銷狀態徽章 -->
         <div id="qa-live-promo-badge-row" style="display:none;align-items:center;gap:6px;margin-bottom:6px">
           <span id="qa-live-promo-badge" style="font-size:10px;font-weight:700;color:#166534;background:#DCFCE7;border-radius:6px;padding:2px 6px"></span>
@@ -1665,6 +1708,34 @@ body.live-mode .hide-live { display: none !important; }
           <div style="background:#FFE4E6;border:1px solid #FECDD3;border-radius:10px;padding:8px;text-align:center">
             <div style="font-size:9px;color:#9F1239;font-weight:700">最終售價</div>
             <div id="qa-live-final" style="font-size:14px;font-weight:900;color:#9F1239">-</div>
+          </div>
+        </div>
+        <!-- 重量（選填） -->
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <label style="font-size:11px;font-weight:700;color:#B45309;white-space:nowrap">⚖️ 重量(克)</label>
+          <input type="text" inputmode="decimal" id="qa-live-weight" oninput="qaLiveCalc()" placeholder="選填，例：620" style="flex:1;background:white;border:1.5px solid #F59E0B;border-radius:8px;padding:6px 10px;font-size:13px;outline:none;box-sizing:border-box"/>
+        </div>
+        <!-- 含運費即時參考（有填重量才顯示） -->
+        <div id="qa-live-ship-row" style="display:none;margin-bottom:10px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+            <div style="background:#F3F4F6;border:1px solid #E5E7EB;border-radius:10px;padding:7px;text-align:center">
+              <div style="font-size:8px;color:#6B7280;font-weight:700">⚖️ 運費</div>
+              <div id="qa-live-ship-cost" style="font-size:12px;font-weight:900;color:#374151">-</div>
+            </div>
+            <div style="background:#DBEAFE;border:1px solid #BFDBFE;border-radius:10px;padding:7px;text-align:center">
+              <div style="font-size:8px;color:#1E40AF;font-weight:700">含運費成本</div>
+              <div id="qa-live-ship-total-cost" style="font-size:12px;font-weight:900;color:#1E40AF">-</div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            <div style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:10px;padding:7px;text-align:center">
+              <div style="font-size:8px;color:#166534;font-weight:700">含運費利潤</div>
+              <div id="qa-live-ship-profit" style="font-size:12px;font-weight:900;color:#166534">-</div>
+            </div>
+            <div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:10px;padding:7px;text-align:center">
+              <div style="font-size:8px;color:#92400E;font-weight:700">含運費毛利率</div>
+              <div id="qa-live-ship-margin-label" style="font-size:12px;font-weight:900;color:#92400E">-</div>
+            </div>
           </div>
         </div>
         <!-- 自訂售價 -->
@@ -1869,11 +1940,27 @@ body.live-mode .hide-live { display: none !important; }
       <input type="text" inputmode="decimal" id="qa-prod-weight" oninput="qaCalcPrice()" placeholder="選填，例：620" style="flex:1;background:#F0F7FF;border:1px solid #C7E0FF;border-radius:8px;padding:7px 10px;font-size:13px;outline:none;box-sizing:border-box"/>
     </div>
     <!-- 含運費即時參考（有填重量才顯示） -->
-    <div id="qa-prod-ship-row" style="display:none;background:#F0F7FF;border:1px solid #C7E0FF;border-radius:10px;padding:8px 12px;margin-bottom:8px;font-size:11px;color:#1E5F8C;justify-content:space-between;flex-wrap:wrap;gap:4px">
-      <span>⚖️ 運費約 <b id="qa-prod-ship-cost">-</b></span>
-      <span>含運費成本 <b id="qa-prod-ship-total-cost">-</b></span>
-      <span>含運費利潤 <b id="qa-prod-ship-profit">-</b></span>
-      <span style="font-weight:900" id="qa-prod-ship-margin-label">-</span>
+    <div id="qa-prod-ship-row" style="display:none;margin-bottom:8px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+        <div style="background:#F3F4F6;border:1px solid #E5E7EB;border-radius:10px;padding:7px;text-align:center">
+          <div style="font-size:8px;color:#6B7280;font-weight:700">⚖️ 運費</div>
+          <div id="qa-prod-ship-cost" style="font-size:12px;font-weight:900;color:#374151">-</div>
+        </div>
+        <div style="background:#DBEAFE;border:1px solid #BFDBFE;border-radius:10px;padding:7px;text-align:center">
+          <div style="font-size:8px;color:#1E40AF;font-weight:700">含運費成本</div>
+          <div id="qa-prod-ship-total-cost" style="font-size:12px;font-weight:900;color:#1E40AF">-</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:10px;padding:7px;text-align:center">
+          <div style="font-size:8px;color:#166534;font-weight:700">含運費利潤</div>
+          <div id="qa-prod-ship-profit" style="font-size:12px;font-weight:900;color:#166534">-</div>
+        </div>
+        <div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:10px;padding:7px;text-align:center">
+          <div style="font-size:8px;color:#92400E;font-weight:700">含運費毛利率</div>
+          <div id="qa-prod-ship-margin-label" style="font-size:12px;font-weight:900;color:#92400E">-</div>
+        </div>
+      </div>
     </div>
     <!-- 快速選價 -->
     <div id="qa-quick-btns" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px"></div>
@@ -3492,6 +3579,8 @@ window.qaLiveReset=function(){
   const liveBrandSugg=document.getElementById("qa-live-brand-suggestions");if(liveBrandSugg){liveBrandSugg.style.display="none";liveBrandSugg.innerHTML="";}
   const liveAmt=document.getElementById("qa-live-amt");if(liveAmt)liveAmt.value="";
   const liveCustom=document.getElementById("qa-live-custom");if(liveCustom)liveCustom.value="";
+  const liveWeight=document.getElementById("qa-live-weight");if(liveWeight)liveWeight.value="";
+  const liveShipRow=document.getElementById("qa-live-ship-row");if(liveShipRow)liveShipRow.style.display="none";
   window.G.qaLiveCustomPrice=null;window.G.qaLivePromoOriginal=null;window.G.qaLivePromoDivisor=null;
   ["qa-live-cost","qa-live-sugg","qa-live-profit","qa-live-final"].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent="-";});
   const liveThumb=document.getElementById("qa-live-img-thumb");if(liveThumb){liveThumb.src="";liveThumb.removeAttribute("src");}
@@ -5504,9 +5593,9 @@ window.calcUpdate=function(){
       const shipMargin=final>0?Math.round((shipProfit/final)*100):0;
       set("r-ship-cost",`NT$${shipCost}`);
       set("r-ship-total-cost",`NT$${totalCost}`);
-      const spEl=document.getElementById("r-ship-profit");if(spEl){spEl.textContent=`NT$${shipProfit}`;spEl.style.color=shipProfit>=0?"#1E5F8C":"#C0392B";}
-      const smEl=document.getElementById("r-ship-margin-label");if(smEl){smEl.textContent=`毛利率 ${shipMargin}%`;smEl.style.color=shipMargin>=0?"#1E5F8C":"#C0392B";}
-      shipRow.style.display="flex";
+      const spEl=document.getElementById("r-ship-profit");if(spEl){spEl.textContent=`NT$${shipProfit}`;spEl.style.color=shipProfit>=0?"#166534":"#C0392B";}
+      const smEl=document.getElementById("r-ship-margin-label");if(smEl){smEl.textContent=`${shipMargin}%`;smEl.style.color=shipMargin>=0?"#92400E":"#C0392B";}
+      shipRow.style.display="block";
     } else if(shipRow){
       shipRow.style.display="none";
     }
@@ -6087,9 +6176,9 @@ window.epRivalCheck=function(){
     const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
     set("ep-ship-cost",`NT$${shipCost}`);
     set("ep-ship-total-cost",`NT$${totalCost}`);
-    const spEl=document.getElementById("ep-ship-profit");if(spEl){spEl.textContent=`NT$${shipProfit}`;spEl.style.color=shipProfit>=0?"#1E5F8C":"#C0392B";}
-    const smEl=document.getElementById("ep-ship-margin-label");if(smEl){smEl.textContent=`毛利率 ${shipMargin}%`;smEl.style.color=shipMargin>=0?"#1E5F8C":"#C0392B";}
-    shipRow.style.display="flex";
+    const spEl=document.getElementById("ep-ship-profit");if(spEl){spEl.textContent=`NT$${shipProfit}`;spEl.style.color=shipProfit>=0?"#166534":"#C0392B";}
+    const smEl=document.getElementById("ep-ship-margin-label");if(smEl){smEl.textContent=`${shipMargin}%`;smEl.style.color=shipMargin>=0?"#92400E":"#C0392B";}
+    shipRow.style.display="block";
   } else if(shipRow&&!(weight>0&&kgRate)){
     shipRow.style.display="none";
   }
@@ -6187,9 +6276,9 @@ function updateEpCalc(amt,cur,cat,twPrice,flags){
     const shipMargin=finalPrice>0?Math.round((shipProfit/finalPrice)*100):0;
     set("ep-ship-cost",`NT$${shipCost}`);
     set("ep-ship-total-cost",`NT$${totalCost}`);
-    const spEl=document.getElementById("ep-ship-profit");if(spEl){spEl.textContent=`NT$${shipProfit}`;spEl.style.color=shipProfit>=0?"#1E5F8C":"#C0392B";}
-    const smEl=document.getElementById("ep-ship-margin-label");if(smEl){smEl.textContent=`毛利率 ${shipMargin}%`;smEl.style.color=shipMargin>=0?"#1E5F8C":"#C0392B";}
-    shipRow.style.display="flex";
+    const spEl=document.getElementById("ep-ship-profit");if(spEl){spEl.textContent=`NT$${shipProfit}`;spEl.style.color=shipProfit>=0?"#166534":"#C0392B";}
+    const smEl=document.getElementById("ep-ship-margin-label");if(smEl){smEl.textContent=`${shipMargin}%`;smEl.style.color=shipMargin>=0?"#92400E":"#C0392B";}
+    shipRow.style.display="block";
   } else if(shipRow){
     shipRow.style.display="none";
   }
@@ -10764,7 +10853,7 @@ window.openEditOrd=function(oid){
   const rr=document.getElementById("eo-prod-results");if(rr)rr.style.display="none";
   const cname=(o.communityName||o.buyerName||"").trim().toLowerCase();
   const cline=(o.lineName||"").trim().toLowerCase();
-  const cOrders=window.G.orders.filter(x=>{
+  const cOrders=getTripOrders().filter(x=>{
     if(cid&&x.customerId===cid)return true;
     if(!cid){
       const xname=(x.communityName||x.buyerName||"").trim().toLowerCase();
@@ -11387,6 +11476,8 @@ window.renderCustomers=function(){
     const cT=cO.filter(o=>o.orderType!=="quote").reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0)-cDisc;
     const cP=cO.filter(o=>o.status==="pending"&&o.orderType!=="quote").length;
     const cQty=cO.filter(o=>o.orderType!=="quote").reduce((s,o)=>s+(o.qty||1),0);
+    const cShippedQty=cO.filter(o=>o.orderType!=="quote"&&o.status==="shipped").reduce((s,o)=>s+(o.qty||1),0);
+    const cUnshippedQty=cQty-cShippedQty;
     const cQuoteCount=cO.filter(o=>o.orderType==="quote").length;
     // 開啟「待購代買」篩選時，卡片內的商品明細也只顯示尚未購買的代買項目；開啟「待報價」篩選時只顯示待報價項目
     const cODisplay=custViewFilter==="unpurchased"?cO.filter(o=>o.orderType==="preorder"&&!o.purchased)
@@ -11430,7 +11521,7 @@ window.renderCustomers=function(){
       const leftBar=isQuote?"border-left:4px solid #0277BD":isPreorder?`border-left:4px solid ${isPurchased?"#A7F3D0":"#9333EA"}`:"border-left:4px solid transparent";
       return `<div data-oid="${o.id}" onclick="${isPreorder?`togglePurchased(this.dataset.oid)`:''}" style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:4px 8px;background:${rowBg};border-radius:8px;padding:6px 10px;${leftBar};${isPreorder?"cursor:pointer;":""}" title="${isPreorder?(isPurchased?"已買到，點擊切換":"待購入，點擊切換已買到"):""}">
         <div style="display:flex;align-items:center;gap:6px;min-width:140px;flex:1 1 auto">
-          <span style="font-size:11px;color:#3D2010;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${isQuote?"📋 ":isPreorder?(isPurchased?"✅ ":"🛒 "):""}${cleanProductName((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品")}${o.spec?" ("+o.spec+")":""} ×${o.qty}</span>
+          <span style="font-size:11px;color:#3D2010;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${isQuote?"📋 ":isPreorder?(isPurchased?"✅ ":"🛒 "):""}${(window.G.products.find(x=>x.id===o.productId)?.flags?.isCold)?"🧊 ":""}${cleanProductName((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品")}${o.spec?" ("+o.spec+")":""} ×${o.qty}</span>
           ${o.givenFromStock?`<span onclick="event.stopPropagation();cancelGivenFromStock('${o.id}')" title="點一下取消已給狀態，改回待購買" style="font-size:9px;background:#C8E6C9;color:#1B5E20;border-radius:4px;padding:1px 5px;font-weight:700;white-space:nowrap;flex-shrink:0;cursor:pointer">✅ 已給</span>`:""}
           ${isQuote?`<span style="font-size:9px;background:#BBDEFB;color:#0277BD;border-radius:4px;padding:1px 5px;font-weight:700;white-space:nowrap;flex-shrink:0">待報價，不算進統計</span>`:""}
         </div>
@@ -11457,7 +11548,7 @@ window.renderCustomers=function(){
       const allPurchased=items.every(o=>o.orderType!=="preorder"||o.purchased===true);
       const anyPreorder=items.some(o=>o.orderType==="preorder");
       const rep=items[0];
-      const nameLabel=cleanProductName((window.G.products.find(x=>x.id===rep.productId)?.name)||rep.productName||"商品")+(rep.spec?" ("+rep.spec+")":"");
+      const nameLabel=((window.G.products.find(x=>x.id===rep.productId)?.flags?.isCold)?"🧊 ":"")+cleanProductName((window.G.products.find(x=>x.id===rep.productId)?.name)||rep.productName||"商品")+(rep.spec?" ("+rep.spec+")":"");
       const gkEsc=gk.replace(/'/g,"\\'");
       const groupHeader=`<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:4px 8px;background:#FAF8F5;border-radius:8px;padding:6px 10px;border-left:4px solid ${anyPreorder?(allPurchased?"#A7F3D0":"#9333EA"):"transparent"};cursor:pointer" data-cid="${c.id}" data-gk="${gkEsc}" onclick="window.toggleCustOrderGroup(this.dataset.cid,this.dataset.gk)">
         <div style="display:flex;align-items:center;gap:6px;min-width:140px;flex:1 1 auto">
@@ -11506,7 +11597,7 @@ window.renderCustomers=function(){
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${cO.length?"8px":"0"}">
           <div style="display:flex;gap:8px;font-size:11px;align-items:center">
             <span style="font-weight:700;color:#3D2010">訂單 ${cO.length} 筆</span>
-            ${cQty>0?`<span style="color:#9C7A5A">（共${cQty}件）</span>`:""}
+            ${cQty>0?`<span style="color:#9C7A5A">（共${cQty}件${cShippedQty>0?`・已出貨${cShippedQty}・未出貨${cUnshippedQty}`:""}）</span>`:""}
             ${cP>0?`<span style="font-weight:700;color:#E07B39">待對帳 ${cP}</span>`:""}
             ${cQuoteCount>0?`<span style="font-weight:700;color:#0277BD">📋待報價 ${cQuoteCount}</span>`:""}
             ${cO.some(o=>o.freeShipping)?`<span style="font-weight:700;color:#2E7D32">🚚免運（吸收NT$${cO.find(o=>o.freeShipping)?.shippingCost||0}）</span>`:""}
@@ -11658,6 +11749,9 @@ window.renderInvoice=function(){
   if(orderFilter==="unpurchased"){
     // 代買且尚未標記已買到的訂單
     filtered=filtered.filter(o=>o.orderType==="preorder"&&!o.purchased);
+  } else if(orderFilter==="notshipped"){
+    // 只要還沒出貨，不管目前是待訂金／已付訂金／已付尾款哪個階段，都算進來
+    filtered=filtered.filter(o=>o.status!=="shipped");
   } else {
     filtered=orderFilter==="all"?filtered:filtered.filter(o=>o.status===orderFilter);
   }
@@ -11779,6 +11873,7 @@ window.renderInvoice=function(){
         <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end">
           <button data-bkey="${encodeURIComponent(b.key)}" onclick="copyDepositOrder(null,decodeURIComponent(this.dataset.bkey))" style="font-size:10px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:700">💰 收訂金</button>
           <button data-bkey="${encodeURIComponent(b.key)}" onclick="openAskSettlement(decodeURIComponent(this.dataset.bkey))" style="font-size:10px;background:#EAF4FD;color:#0277BD;border:1px solid #90D7FF;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700">複製結清</button>
+          <button data-cid="${b.orders[0]?.customerId||""}" onclick="this.dataset.cid?openLineNotify(this.dataset.cid):showToast('這位客人還沒建立客戶資料，沒辦法發出貨通知','warning')" style="font-size:10px;background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700">🚚 出貨</button>
           <button data-cid="${b.orders[0]?.customerId||""}" onclick="this.dataset.cid?openShopModal(this.dataset.cid):showToast('這位客人還沒建立客戶資料，沒辦法開賣場','warning')" style="font-size:10px;background:#FFF3E0;color:#E65100;border:1px solid #FFCC80;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700">🏪 開賣場</button>
           <button data-oid="${b.orders[0]?.id}" onclick="openEditOrd(this.dataset.oid)" style="font-size:10px;padding:4px 10px;border-radius:6px;font-weight:700;border:1px solid #E8D5B0;background:#FDF6EC;color:#C5A880;cursor:pointer">✏️ 修改</button>
         </div>`}
@@ -11799,7 +11894,7 @@ window.renderInvoice=function(){
           return `<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:4px 8px;padding:6px 4px;border-bottom:1px solid #F5EDE0;background:${rowBg};border-radius:4px;margin:1px 0">
             <div style="display:flex;align-items:center;gap:6px;min-width:140px;flex:1 1 auto">
               <input type="checkbox" ${checked2?"checked":""} onchange="toggleSelectItem('order','${o.id}')" style="width:14px;height:14px;accent-color:#C5A880;flex-shrink:0"/>
-              <span style="font-size:12px;color:#3D2010;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${cleanProductName((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品")}${o.spec?" ("+o.spec+")":""} ×${o.qty}</span>
+              <span style="font-size:12px;color:#3D2010;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${(window.G.products.find(x=>x.id===o.productId)?.flags?.isCold)?"🧊 ":""}${cleanProductName((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品")}${o.spec?" ("+o.spec+")":""} ×${o.qty}</span>
               ${o.discountNote?`<span style="font-size:9px;background:#FDF6EC;color:#A08060;padding:1px 5px;border-radius:4px;flex-shrink:0">${o.discountNote}</span>`:""}
             </div>
             <div style="display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;gap:5px;flex:1 1 auto;min-width:0">
@@ -11834,7 +11929,7 @@ window.renderInvoice=function(){
       <!-- 金額小計 + 訂金資訊 -->
       <div style="padding:8px 14px;background:#FAF8F5;border-top:1px solid #F0E6D0;border-bottom:1px solid #F0E6D0">
         <div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:11px;color:#9C7A5A">${b.orders.reduce((s,o)=>s+o.qty,0)} 件</span>
+          <span style="font-size:11px;color:#9C7A5A">${(()=>{const totQ=b.orders.reduce((s,o)=>s+o.qty,0);const shipQ=b.orders.filter(o=>o.status==="shipped").reduce((s,o)=>s+o.qty,0);const unshipQ=totQ-shipQ;return shipQ>0?`共${totQ}件・已出貨${shipQ}・未出貨${unshipQ}`:`${totQ} 件`;})()}</span>
           <div style="text-align:right">
             <span style="font-size:13px;font-weight:900;color:#3D2010">NT$${totalAmt.toLocaleString()}</span>
             ${totalDeposit>0?(allStatus==="pending"
@@ -12365,36 +12460,20 @@ window.sendDepositLineMessage=async function(){
   sendBtn.textContent="傳送給客人";
 };
 
-window.copyCustOrder=function(cid){
-  const c=window.G.customers.find(x=>x.id===cid);if(!c)return;
-  const cO=getTripOrders().filter(o=>{
-    if(o.customerId)return o.customerId===cid;
-    const nm=(c.communityName||"").trim().toLowerCase();
-    const ln=(c.lineName||"").trim().toLowerCase();
-    const on=(o.communityName||o.buyerName||"").trim().toLowerCase();
-    const ol=(o.lineName||"").trim().toLowerCase();
-    return (nm&&nm===on)||(ln&&ln===ol);
-  });
-  if(!cO.length){showToast("此客戶沒有訂單","warning");return;}
-  const name=c.communityName||c.lineName||"客戶";
-  const sharedDiscount=cO.find(o=>o.sharedDiscount>0)?.sharedDiscount||0;
-  const sharedDiscountReason=cO.find(o=>o.sharedDiscount>0)?.sharedDiscountReason||"";
-  // 有些商品是「買二送一」這種活動，之前的做法是把 220 元除以 3 包、四捨五入成單包 73 元，
-  // 再用 73 × 數量去乘回去 —— 這樣只要總包數是活動組數的倍數，就會因為除不盡的小數被捨去，
-  // 累積出跟真正應收金額對不起來的落差（例如 9 包本來該收 660，用 73×9 只會收到 657）。
-  // 所以有填「活動群組」+「買幾送幾」的商品，改成把整組合起來，用組數去精算應收金額，
-  // 不再拆成一包一包各自捨去計算；顯示上也改成「買二送一 NT$220」整組標題，底下口味不再各自標價
-  const promoGroups=new Map(); // 活動群組名稱 -> {divisor, items:Map(name+spec -> qty), totalQty, sampleUnitPrice}
+// 共用工具：把一批訂單依「商品+規格」合併加總，遇到有套用買幾送幾的商品，
+// 改成整組（同一活動群組或同一商品底下的規格）用組數去精算，不再是一包一包各自捨去計算再相乘，
+// 避免除不盡的小數誤差；回傳 {lines, total} 給複製訂單/複製結清/傳送結清三個地方共用，
+// 以後要調整這套邏輯，改這一個函式，三個地方會同步生效，不會再有只改到一處的漏改問題
+window.buildGroupedOrderLines=function(orders){
+  const promoGroups=new Map();
+  const promoGroupOrder=[];
   const normalGroupMap=new Map();
   const normalGroupOrder=[];
-  const promoGroupOrder=[];
-  cO.forEach(o=>{
+  orders.forEach(o=>{
     const p=window.G.products.find(x=>x.id===o.productId);
     const productName=cleanProductName(p?.name||o.productName||"商品");
     const dp=o.discountPrice||o.unitPrice||0;
     if(p&&p.promoDivisor>1){
-      // 只要商品本身有套用買幾送幾，就自動用「這個商品」當作一組去精算（同一個商品底下不同規格/口味都算在一起），
-      // 不強制要求填「活動群組」；只有想把「不同商品」湊在同一波活動時，才需要另外填活動群組
       const gKey=p.promoGroup||("_pid_"+p.id);
       const groupLabel=p.promoGroup||cleanProductName(p.name).replace(/[（(]\s*\d+\s*\+\s*\d+\s*[）)]/g,"").trim();
       if(!promoGroups.has(gKey)){promoGroups.set(gKey,{label:groupLabel,divisor:p.promoDivisor,items:new Map(),itemOrder:[],totalQty:0,sampleUnitPrice:dp});promoGroupOrder.push(gKey);}
@@ -12413,17 +12492,34 @@ window.copyCustOrder=function(cid){
       ng.origAmt+=up*o.qty;
     }
   });
-  const normalLines=normalGroupOrder.map(key=>{
+  // 同一個商品名稱如果出現兩種以上規格（例如魷魚條有原味、辣味），
+  // 品名只列一次、底下縮排列規格就好，不用每行都重複打一次全名；
+  // 只有單一規格的商品維持原本「• 品名 (規格) ×數量」的單行寫法
+  const byProductName=new Map();
+  normalGroupOrder.forEach(key=>{
     const g=normalGroupMap.get(key);
-    const origNote=g.origAmt>g.amt?`（原價NT$${g.origAmt.toLocaleString()}）`:"";
-    return "• "+g.name+(g.spec?" ("+g.spec+")":"")+" ×"+g.qty+"  NT$"+g.amt.toLocaleString()+origNote;
+    if(!byProductName.has(g.name))byProductName.set(g.name,[]);
+    byProductName.get(g.name).push(g);
+  });
+  const normalLines=[];
+  byProductName.forEach((items,name)=>{
+    if(items.length>1){
+      const subLines=items.map(g=>{
+        const origNote=g.origAmt>g.amt?`（原價NT$${g.origAmt.toLocaleString()}）`:"";
+        return "　"+(g.spec||"（無規格）")+" ×"+g.qty+"  NT$"+g.amt.toLocaleString()+origNote;
+      });
+      normalLines.push("• "+name+"\n"+subLines.join("\n"));
+    } else {
+      const g=items[0];
+      const origNote=g.origAmt>g.amt?`（原價NT$${g.origAmt.toLocaleString()}）`:"";
+      normalLines.push("• "+g.name+(g.spec?" ("+g.spec+")":"")+" ×"+g.qty+"  NT$"+g.amt.toLocaleString()+origNote);
+    }
   });
   const normalTotal=normalGroupOrder.reduce((s,key)=>s+normalGroupMap.get(key).amt,0);
   let promoTotal=0;
   const promoBlocks=promoGroupOrder.map(gKey=>{
     const g=promoGroups.get(gKey);
     const divisor=g.divisor;
-    // 反推單包原價：目前存的單價是「均分後」的價格，乘回 divisor/(divisor-1) 還原成沒打折的單包價
     const origSingle=Math.round(g.sampleUnitPrice*divisor/(divisor-1));
     const fullSets=Math.floor(g.totalQty/divisor);
     const remainder=g.totalQty%divisor;
@@ -12431,12 +12527,29 @@ window.copyCustOrder=function(cid){
     promoTotal+=groupTotal;
     const labels={2:"買一送一",3:"買二送一",4:"買三送一"};
     const promoLabel=labels[divisor]||`買${divisor-1}送1`;
-    const itemLines=g.itemOrder.map(ik=>{const it=g.items.get(ik);return "　"+it.name+(it.spec?" ("+it.spec+")":"")+" ×"+it.qty;});
-    return `🎁 ${g.label}（${promoLabel}，單包NT$${origSingle}）\n${itemLines.join("\n")}\n　小計 NT$${groupTotal.toLocaleString()}`;
+    const itemLines=g.itemOrder.map(ik=>{const it=g.items.get(ik);return "　"+(it.spec||it.name)+" ×"+it.qty;});
+    return `• ${g.label}（${promoLabel}，單包NT$${origSingle}）\n${itemLines.join("\n")}\n　小計 NT$${groupTotal.toLocaleString()}`;
   });
-  const total=normalTotal+promoTotal;
+  return {lines:[...normalLines,...promoBlocks],total:normalTotal+promoTotal};
+};
+window.copyCustOrder=function(cid){
+  const c=window.G.customers.find(x=>x.id===cid);if(!c)return;
+  const cO=getTripOrders().filter(o=>{
+    if(o.customerId)return o.customerId===cid;
+    const nm=(c.communityName||"").trim().toLowerCase();
+    const ln=(c.lineName||"").trim().toLowerCase();
+    const on=(o.communityName||o.buyerName||"").trim().toLowerCase();
+    const ol=(o.lineName||"").trim().toLowerCase();
+    return (nm&&nm===on)||(ln&&ln===ol);
+  });
+  if(!cO.length){showToast("此客戶沒有訂單","warning");return;}
+  const name=c.communityName||c.lineName||"客戶";
+  const sharedDiscount=cO.find(o=>o.sharedDiscount>0)?.sharedDiscount||0;
+  const sharedDiscountReason=cO.find(o=>o.sharedDiscount>0)?.sharedDiscountReason||"";
+  const grouped=window.buildGroupedOrderLines(cO);
+  const lines=grouped.lines;
+  const total=grouped.total;
   const discountedTotal=total-sharedDiscount;
-  const lines=[...normalLines,...promoBlocks];
   // 只列商品明細跟總額，不主動提匯款/訂金，因為客人有時候只是想查目前訂了什麼
   const totalBlock=sharedDiscount>0
     ?`\n\n商品小計 NT$${total.toLocaleString()}\n折扣  -NT$${sharedDiscount.toLocaleString()}${sharedDiscountReason?`（${sharedDiscountReason}）`:""}\n\n應付金額 NT$${discountedTotal.toLocaleString()}`
@@ -12477,12 +12590,13 @@ window.copyBuyerOrder=function(buyerKey){
   const sharedDiscReason=allBuyerOrders.find(o=>o.sharedDiscount>0)?.sharedDiscountReason||"";
   const hasFreeShipping=allBuyerOrders.some(o=>o.freeShipping);
   const shipReason=allBuyerOrders.find(o=>o.freeShipping)?.freeShippingReason||"";
-  const rawTotal=buyerOrders.reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0);
+  const grouped=window.buildGroupedOrderLines(buyerOrders);
+  const lines=grouped.lines;
+  const rawTotal=grouped.total;
   const total=rawTotal-sharedDisc;
   const totalDeposit=allBuyerOrders.reduce((s,o)=>s+(o.depositAmt||0),0);
   const codReserve=100; // 貨到付款服務費固定要留，跟有沒有免運無關（免運只是運費，是不同的錢）
   const payNow=Math.max(0,total-totalDeposit-codReserve);
-  const lines=buyerOrders.map(o=>{const dp=o.discountPrice||o.unitPrice||0;return "• "+(cleanProductName((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品"))+(o.spec?`（${o.spec}）`:"")+" ×"+o.qty+"  NT$"+(dp*o.qty).toLocaleString();});
   const discLine=sharedDisc>0?`\n折扣　-NT$${sharedDisc.toLocaleString()}${sharedDiscReason?`（${sharedDiscReason}）`:""}`:"";
   const shipLine=hasFreeShipping?`\n🚚 免運${shipReason?`（${shipReason}）`:""}`:"";
   const remainder=total-totalDeposit;
@@ -12530,12 +12644,13 @@ window.openSendSettlement=async function(buyerKey){
   const sharedDiscReason=allBuyerOrders.find(o=>o.sharedDiscount>0)?.sharedDiscountReason||"";
   const hasFreeShipping=allBuyerOrders.some(o=>o.freeShipping);
   const shipReason=buyerOrders.find(o=>o.freeShipping)?.freeShippingReason||"";
-  const rawTotal=buyerOrders.reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0);
+  const grouped2=window.buildGroupedOrderLines(buyerOrders);
+  const lines=grouped2.lines;
+  const rawTotal=grouped2.total;
   const total=rawTotal-sharedDisc;
   const totalDeposit=allBuyerOrders.reduce((s,o)=>s+(o.depositAmt||0),0);
   const codReserve=100; // 貨到付款服務費固定要留，跟有沒有免運無關（免運只是運費，是不同的錢）
   const payNow=Math.max(0,total-totalDeposit-codReserve);
-  const lines=buyerOrders.map(o=>{const dp=o.discountPrice||o.unitPrice||0;return "• "+(cleanProductName((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品"))+(o.spec?`（${o.spec}）`:"")+" ×"+o.qty+"  NT$"+(dp*o.qty).toLocaleString();});
   const discLine=sharedDisc>0?`\n折扣　-NT$${sharedDisc.toLocaleString()}${sharedDiscReason?`（${sharedDiscReason}）`:""}`:"";
   const shipLine=hasFreeShipping?`\n🚚 免運${shipReason?`（${shipReason}）`:""}`:"";
   const remainder=total-totalDeposit;
@@ -12674,7 +12789,13 @@ window.updateBuyerStatus=async function(buyerKey,status){
     const key=o.customerId||o.communityName||o.buyerName||"未知";
     return key===buyerKey;
   });
-  for(const o of buyerOrders)await fbUpd("orders",o.id,{status});
+  for(const o of buyerOrders){
+    const upd={status};
+    // 改成「已寄出」的話，順便把代買且還沒標記買到的品項也一起標成已買到——
+    // 都已經出貨了，邏輯上一定買到了，不該還留著「待購入」的舊標籤
+    if(status==="shipped"&&o.orderType==="preorder"&&!o.purchased)upd.purchased=true;
+    await fbUpd("orders",o.id,upd);
+  }
   const sl={pending:"待訂金",deposit:"已付訂金",settled:"已付尾款",shipped:"已寄出"};
   showToast(`已更新 ${buyerOrders.length} 筆為「${sl[status]}」`);
 };
@@ -12761,6 +12882,8 @@ window.openQuickAdd=function(){
   const liveName=document.getElementById("qa-live-name");if(liveName)liveName.value="";
   const liveAmt=document.getElementById("qa-live-amt");if(liveAmt)liveAmt.value="";
   const liveCustom=document.getElementById("qa-live-custom");if(liveCustom)liveCustom.value="";
+  const liveWeightReset=document.getElementById("qa-live-weight");if(liveWeightReset)liveWeightReset.value="";
+  const liveShipRowReset=document.getElementById("qa-live-ship-row");if(liveShipRowReset)liveShipRowReset.style.display="none";
   window.G.qaLiveCustomPrice=null;window.G.qaLivePromoOriginal=null;window.G.qaLivePromoDivisor=null;
   const liveCost=document.getElementById("qa-live-cost");if(liveCost)liveCost.textContent="-";
   const liveSugg=document.getElementById("qa-live-sugg");if(liveSugg)liveSugg.textContent="-";
@@ -12895,9 +13018,9 @@ window.qaCalcPrice=function(){
     const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
     set("qa-prod-ship-cost",`NT$${shipCost}`);
     set("qa-prod-ship-total-cost",`NT$${totalCost}`);
-    const spEl=document.getElementById("qa-prod-ship-profit");if(spEl){spEl.textContent=`NT$${shipProfit}`;spEl.style.color=shipProfit>=0?"#1E5F8C":"#C0392B";}
-    const smEl=document.getElementById("qa-prod-ship-margin-label");if(smEl){smEl.textContent=`毛利率 ${shipMargin}%`;smEl.style.color=shipMargin>=0?"#1E5F8C":"#C0392B";}
-    shipRow.style.display="flex";
+    const spEl=document.getElementById("qa-prod-ship-profit");if(spEl){spEl.textContent=`NT$${shipProfit}`;spEl.style.color=shipProfit>=0?"#166534":"#C0392B";}
+    const smEl=document.getElementById("qa-prod-ship-margin-label");if(smEl){smEl.textContent=`${shipMargin}%`;smEl.style.color=shipMargin>=0?"#92400E":"#C0392B";}
+    shipRow.style.display="block";
   } else if(shipRow){
     shipRow.style.display="none";
   }
@@ -13270,6 +13393,8 @@ window.markCustomerOrdersShipped=async function(custId,tracking,orderIds){
   for(const o of targetOrders){
     const upd={status:"shipped"};
     if(tracking)upd.tracking=tracking;
+    // 已經出貨了，代買品項邏輯上一定已經買到，順便清掉殘留的「待購入」標籤
+    if(o.orderType==="preorder"&&!o.purchased)upd.purchased=true;
     await fbUpd("orders",o.id,upd).catch(()=>{});
   }
   return targetOrders.length;
@@ -13301,6 +13426,34 @@ window.lnToggleItem=function(oid,checked){
   window.G._lnSelectedOrderIds=window.G._lnSelectedOrderIds||new Set();
   if(checked)window.G._lnSelectedOrderIds.add(oid);
   else window.G._lnSelectedOrderIds.delete(oid);
+};
+window.lnToggleAllItems=function(){
+  const itemListEl=document.getElementById("ln-item-list");
+  if(!itemListEl)return;
+  const checkboxes=itemListEl.querySelectorAll('input[type="checkbox"]');
+  if(!checkboxes.length)return;
+  const allChecked=[...checkboxes].every(cb=>cb.checked);
+  const newState=!allChecked; // 目前全部勾了就取消全部，否則全部勾起來
+  checkboxes.forEach(cb=>{cb.checked=newState;window.lnToggleItem(cb.dataset.oid,newState);});
+  const btn=document.getElementById("ln-toggle-all-btn");
+  if(btn)btn.textContent=newState?"取消全選":"全選";
+};
+// 依溫層快速篩選：只勾冷藏商品、或只勾常溫商品，分溫層出貨時不用一個個手動點
+window.lnFilterByTemp=function(temp){
+  const itemListEl=document.getElementById("ln-item-list");
+  if(!itemListEl)return;
+  const checkboxes=itemListEl.querySelectorAll('input[type="checkbox"]');
+  checkboxes.forEach(cb=>{
+    const oid=cb.dataset.oid;
+    const o=window.G.orders.find(x=>x.id===oid);
+    const p=o?window.G.products.find(x=>x.id===o.productId):null;
+    const isCold=!!(p?.flags?.isCold||p?.flags?.coldHigh);
+    const shouldCheck=temp==="cold"?isCold:!isCold;
+    cb.checked=shouldCheck;
+    window.lnToggleItem(oid,shouldCheck);
+  });
+  const btn=document.getElementById("ln-toggle-all-btn");
+  if(btn)btn.textContent="全選";
 };
 window.lnRenderTrackingList=function(){
   const box=document.getElementById("ln-tracking-list");
@@ -13345,15 +13498,19 @@ window.openLineNotify=async function(custId){
   const shippableOrders=window.G.orders.filter(o=>o.customerId===custId&&o.orderType!=="quote"&&o.status!=="shipped");
   window.G._lnSelectedOrderIds=new Set(shippableOrders.map(o=>o.id));
   const itemListEl=document.getElementById("ln-item-list");
+  const toggleAllBtn=document.getElementById("ln-toggle-all-btn");
+  if(toggleAllBtn)toggleAllBtn.textContent="取消全選";
   if(itemListEl){
     if(!shippableOrders.length){
       itemListEl.innerHTML=`<div style="font-size:12px;color:#9C7A5A;text-align:center;padding:8px">這位客人目前沒有還沒出貨的訂單</div>`;
     } else {
       itemListEl.innerHTML=shippableOrders.map(o=>{
-        const pName=cleanProductName((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品");
+        const prod=window.G.products.find(x=>x.id===o.productId);
+        const pName=cleanProductName(prod?.name||o.productName||"商品");
+        const coldIcon=(prod?.flags?.isCold||prod?.flags?.coldHigh)?"🧊 ":"";
         return `<label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#3D2010;cursor:pointer;padding:4px 2px">
           <input type="checkbox" data-oid="${o.id}" checked onchange="lnToggleItem('${o.id}',this.checked)" style="accent-color:#5C3A1E;flex-shrink:0"/>
-          <span style="flex:1">${pName}${o.spec?`（${o.spec}）`:""} ×${o.qty}</span>
+          <span style="flex:1">${coldIcon}${pName}${o.spec?`（${o.spec}）`:""} ×${o.qty}</span>
         </label>`;
       }).join("");
     }
@@ -13371,6 +13528,9 @@ window.openLineNotify=async function(custId){
   const pickerEl=document.getElementById("ln-line-id-picker");
   if(pickerEl){pickerEl.style.display="none";pickerEl.innerHTML="";}
   sendBtn.disabled=true;
+  sendBtn.style.background="#06C755";
+  sendBtn.style.cursor="pointer";
+  sendBtn.title="";
   window.G._lineNotifyCustId=custId;
   window.G._lineUserId=null;
   // 這個客戶之前已經確認過綁定哪個LINE帳號了，直接用，不用每次都重新猜
@@ -13418,14 +13578,29 @@ window.openLineNotify=async function(custId){
           }).join("");
       }
     } else {
-      statusEl.innerHTML=`⚠️ 找不到此客人的 LINE ID<br><span style="font-size:10px;color:#9C7A5A">請確認客人曾傳訊息給官方帳號</span>`;
+      // 完全比對不到的話（例如客戶資料裡的LINE名稱被手動改過、跟LINE實際顯示名稱對不起來），
+      // 提供一個搜尋框，讓你可以手動打關鍵字、從全部有互動過的LINE用戶裡找出正確的人手動綁定，
+      // 不用卡在「自動比對失敗就沒救」的情況
+      window.G._lnAllLineUsers=lineUsers;
+      statusEl.innerHTML=`⚠️ 自動比對不到此客人的 LINE ID<br><span style="font-size:10px;color:#9C7A5A">可能是客戶資料裡的LINE名稱後來被改過、跟LINE本人顯示名稱對不上了。可以在下面手動搜尋找出他，選對之後會記住，之後不用再選</span>`;
       statusEl.style.color="#D97706";
       sendBtn.disabled=true;
+      sendBtn.style.background="#D4BC96";
+      sendBtn.style.cursor="not-allowed";
+      sendBtn.title="請先在下面手動搜尋綁定LINE帳號，或改用下方複製訊息";
+      if(pickerEl){
+        pickerEl.style.display="block";
+        pickerEl.innerHTML=`<div style="font-size:11px;font-weight:700;color:#92400E;margin-bottom:8px">🔍 手動搜尋這位客人的LINE帳號</div>
+          <input type="text" oninput="window.lnManualSearch(this.value)" placeholder="輸入LINE顯示名稱關鍵字..." style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:12px;outline:none;box-sizing:border-box;margin-bottom:8px"/>
+          <div id="ln-manual-search-results" style="max-height:200px;overflow-y:auto"></div>`;
+      }
     }
   } catch(e){
     statusEl.textContent="❌ 查詢失敗："+e.message;
     statusEl.style.color="#C0392B";
     sendBtn.disabled=true;
+    sendBtn.style.background="#D4BC96";
+    sendBtn.style.cursor="not-allowed";
   }
   modal.style.display="flex";
 };
@@ -13447,7 +13622,36 @@ window.lnSelectLineUser=function(userId,displayName,pictureUrl){
       el.style.background=el.dataset.uid===userId?"#F0FFF4":"white";
     });
   }
-  if(sendBtn)sendBtn.disabled=false;
+  if(sendBtn){
+    sendBtn.disabled=false;
+    sendBtn.style.background="#06C755";
+    sendBtn.style.cursor="pointer";
+    sendBtn.title="";
+  }
+};
+// 手動搜尋LINE帳號：從全部有跟官方帳號互動過的人裡面，用關鍵字篩選，
+// 給「客戶資料的LINE名稱已經跟真實LINE顯示名稱對不起來」這種自動比對失敗的情況一個手動救援管道
+window.lnManualSearch=function(keyword){
+  const resultsEl=document.getElementById("ln-manual-search-results");
+  if(!resultsEl)return;
+  const q=(keyword||"").trim().toLowerCase();
+  if(!q){resultsEl.innerHTML="";return;}
+  const all=window.G._lnAllLineUsers||[];
+  const matches=all.filter(u=>(u.displayName||"").toLowerCase().includes(q)).slice(0,10);
+  if(!matches.length){resultsEl.innerHTML=`<div style="font-size:11px;color:#9C7A5A;padding:6px 2px">找不到符合的LINE用戶</div>`;return;}
+  resultsEl.innerHTML=matches.map(u=>{
+    const uidShort=(u.userId||"").slice(0,6)+"..."+(u.userId||"").slice(-4);
+    const avatar=u.pictureUrl?`<img src="${u.pictureUrl}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0"/>`:`<div style="width:32px;height:32px;border-radius:50%;background:#E8D5B0;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px">👤</div>`;
+    const status=u.statusMessage?`<div style="font-size:10px;color:#9C7A5A">${u.statusMessage}</div>`:"";
+    return `<div data-uid="${u.userId}" data-uname="${(u.displayName||"").replace(/"/g,"&quot;")}" data-upic="${(u.pictureUrl||"").replace(/"/g,"&quot;")}" onclick="window.lnSelectLineUser(this.dataset.uid,this.dataset.uname,this.dataset.upic)" style="display:flex;align-items:center;gap:8px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer">
+      ${avatar}
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:700;color:#3D2010">${u.displayName||"（無名稱）"}</div>
+        ${status}
+        <div style="font-size:9px;color:#B0906A;font-family:monospace">${uidShort}</div>
+      </div>
+    </div>`;
+  }).join("");
 };
 
 // 有些訂單客人已經另外通知過了（例如已經口頭講過、或用別的方式講過），
@@ -13486,6 +13690,20 @@ window.sendLineNotify=async function(){
   }
   sendBtn.disabled=false;
   sendBtn.textContent="傳送給客人";
+};
+// 客人沒有 LINE ID（例如從沒傳過訊息給官方帳號）時，官方帳號本來就沒辦法主動推播訊息給他——
+// 這是 LINE 平台本身的限制，不是系統故障。這裡提供備案：把訊息文字複製出來，
+// 讓你可以自己開對話手動傳（例如用個人LINE、簡訊等其他管道），不會卡住不知道怎麼辦
+window.lnCopyMessage=function(){
+  const tracking=window.lnGetTrackingText();
+  if(!tracking){showToast("請先填入物流單號","error");return;}
+  const text=`🚛出貨通知\n\n物流單號：${tracking}`;
+  navigator.clipboard?.writeText(text).then(()=>showToast("訊息文字已複製！")).catch(()=>{
+    const ta=document.createElement("textarea");ta.value=text;ta.style.position="fixed";
+    document.body.appendChild(ta);ta.focus();ta.select();
+    try{document.execCommand("copy");showToast("訊息文字已複製！");}catch(e){showToast("複製失敗","error");}
+    document.body.removeChild(ta);
+  });
 };
 
 // 待報價訂單直接傳送報價給客人，不用自己複製貼上——沿用出貨通知同一套「找LINE帳號」邏輯，
@@ -13654,6 +13872,15 @@ window.qaLiveSelectCurrency=function(cur){
   if(amtEl&&info)amtEl.placeholder=`${info.name}金額 ${info.symbol}`;
   qaLiveCalc();
 };
+window.qaLiveSelectPayment=function(pm){
+  window.G.qaLivePaymentMethod=pm;
+  document.querySelectorAll(".qa-live-pm-btn").forEach(b=>{
+    const active=b.dataset.pm===pm;
+    b.style.background=active?"#F59E0B":"white";
+    b.style.color=active?"white":"#B45309";
+  });
+  qaLiveCalc();
+};
 window.qaLiveCalc=function(){
   const amt=parseFloat(document.getElementById("qa-live-amt")?.value)||0;
   if(!amt){
@@ -13663,9 +13890,12 @@ window.qaLiveCalc=function(){
     document.getElementById("qa-live-final").textContent="-";
     return;
   }
-  // 使用與定價頁、快速上架完全相同的計算函數
+  // 使用與定價頁、快速上架完全相同的計算函數，帶入刷卡/現金跟能不能退稅，
+  // 不再固定假設「刷卡、有退稅」，避免現場實際是現金/不能退稅時成本算低
   const currency=window.G.qaLiveCurrency||"KRW";
-  const{afterTax}=calcCost(amt,currency);
+  const paymentMethod=window.G.qaLivePaymentMethod||"card";
+  const noRefund=document.getElementById("qa-live-norefund")?.checked||false;
+  const{afterTax}=calcCost(amt,currency,noRefund,paymentMethod);
   const cat=window.G.qaCatKey||"food";
   const sugg=suggestPrice(afterTax,cat,{},0,amt);
   const finalPrice=window.G.qaLiveCustomPrice||sugg;
@@ -13674,6 +13904,24 @@ window.qaLiveCalc=function(){
   document.getElementById("qa-live-sugg").textContent="NT$"+sugg;
   document.getElementById("qa-live-profit").textContent="NT$"+profit;
   document.getElementById("qa-live-final").textContent="NT$"+finalPrice;
+  // 含運費即時參考：有填重量、設定裡也有每公斤運費，才顯示這行
+  const weight=parseFloat(document.getElementById("qa-live-weight")?.value)||0;
+  const kgRate=window.G.settings?.shippingPerKg;
+  const shipRow=document.getElementById("qa-live-ship-row");
+  if(weight>0&&kgRate&&shipRow){
+    const shipCost=Math.round((weight/1000)*kgRate*10)/10;
+    const totalCost=Math.round((afterTax+shipCost)*10)/10;
+    const shipProfit=Math.round((finalPrice-totalCost)*10)/10;
+    const shipMargin=finalPrice>0?Math.round((shipProfit/finalPrice)*100):0;
+    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+    set("qa-live-ship-cost",`NT$${shipCost}`);
+    set("qa-live-ship-total-cost",`NT$${totalCost}`);
+    const spEl=document.getElementById("qa-live-ship-profit");if(spEl){spEl.textContent=`NT$${shipProfit}`;spEl.style.color=shipProfit>=0?"#166534":"#C0392B";}
+    const smEl=document.getElementById("qa-live-ship-margin-label");if(smEl){smEl.textContent=`${shipMargin}%`;smEl.style.color=shipMargin>=0?"#92400E":"#C0392B";}
+    shipRow.style.display="block";
+  } else if(shipRow){
+    shipRow.style.display="none";
+  }
 };
 
 window.qaLiveImgPick=async function(input){
@@ -14181,7 +14429,10 @@ window.qaLiveSave=async function(){
   const currency=window.G.qaLiveCurrency||"KRW";
   if(!name){showToast("請填入品名","error");return;}
   if(!amt){showToast(`請填入${CURR[currency]?.name||"外幣"}金額`,"error");return;}
-  const{beforeTax,afterTax}=calcCost(amt,currency);
+  const paymentMethod=window.G.qaLivePaymentMethod||"card";
+  const noRefund=document.getElementById("qa-live-norefund")?.checked||false;
+  const weight=parseFloat(document.getElementById("qa-live-weight")?.value)||0;
+  const{beforeTax,afterTax}=calcCost(amt,currency,noRefund,paymentMethod);
   const cost=afterTax;
   const costRounded=Math.round(cost);
   let sugg=costRounded;
@@ -14207,9 +14458,9 @@ window.qaLiveSave=async function(){
     finalPrice,profit:finalPrice-costRounded,
     margin:Math.round((finalPrice-costRounded)/finalPrice*100),
     catKey:"food",category:"超商/超市食品",emoji:"🍿",
-    channel:"",flags:{},specs:"",
+    channel:"",paymentMethod,flags:{noTaxRefund:noRefund},specs:"",
     photo:window.G.qaLivePhoto||"",photoPos:"50% 50%",
-    tripId,createdAt:Date.now()};
+    weight,tripId,createdAt:Date.now()};
   try{
     await fbSet("products",id,prod);
   } catch(e){
@@ -14847,7 +15098,14 @@ window.lbTouchEnd=function(e){
       <button onclick="document.getElementById('modal-line-notify').style.display='none'" style="font-size:24px;color:#9C7A5A;background:none;border:none;cursor:pointer">×</button>
     </div>
     <div id="ln-cust-name" style="font-size:13px;font-weight:700;color:#9C7A5A;margin-bottom:8px"></div>
-    <div style="font-size:11px;color:#9C7A5A;margin-bottom:6px">📦 這次要出貨的品項（不同溫層分開出貨的話，先取消勾選還沒出的）</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;gap:8px;flex-wrap:wrap">
+      <div style="font-size:11px;color:#9C7A5A;flex:1 1 180px">📦 這次要出貨的品項（不同溫層分開出貨的話，先取消勾選還沒出的）</div>
+      <div style="display:flex;gap:4px;flex-shrink:0;flex-wrap:wrap">
+        <button onclick="lnFilterByTemp('cold')" style="font-size:10px;font-weight:700;color:#1E5F8C;background:#EAF4FB;border:1px solid #BEE0F5;border-radius:6px;padding:3px 8px;cursor:pointer;white-space:nowrap">🧊 只選冷藏</button>
+        <button onclick="lnFilterByTemp('normal')" style="font-size:10px;font-weight:700;color:#9C7A5A;background:#FDF6EC;border:1px solid #E8D5B0;border-radius:6px;padding:3px 8px;cursor:pointer;white-space:nowrap">🌡️ 只選常溫</button>
+        <button id="ln-toggle-all-btn" onclick="lnToggleAllItems()" style="font-size:10px;font-weight:700;color:#5C3A1E;background:#F0E6D0;border:1px solid #E8D5B0;border-radius:6px;padding:3px 8px;cursor:pointer;white-space:nowrap">取消全選</button>
+      </div>
+    </div>
     <div id="ln-item-list" style="display:flex;flex-direction:column;gap:4px;margin-bottom:16px;max-height:180px;overflow-y:auto;border:1px solid #E8D5B0;border-radius:10px;padding:8px;background:#FAF8F5"></div>
     <!-- 面交 / 物流 選擇 -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
@@ -14869,6 +15127,7 @@ window.lbTouchEnd=function(e){
         🚛出貨通知<br><br>物流單號：<span id="ln-tracking-preview">（輸入後顯示）</span>
       </div>
       <button id="ln-send-btn" onclick="sendLineNotify()" style="width:100%;background:#06C755;color:white;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px">傳送通知給客人</button>
+      <button onclick="lnCopyMessage()" style="width:100%;background:#FDF6EC;color:#9C7A5A;border:1px solid #E8D5B0;border-radius:12px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:8px">📋 找不到客人LINE ID？複製訊息文字自己傳</button>
       <button onclick="lnMarkShippedOnly()" style="width:100%;background:#EAF4FB;color:#1E5F8C;border:1px solid #BEE0F5;border-radius:12px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">已經通知過客人了，只記單號、標記已出貨（不重複傳訊息）</button>
     </div>
   </div>
