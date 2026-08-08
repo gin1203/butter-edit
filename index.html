@@ -480,6 +480,7 @@ body.live-mode .hide-live { display: none !important; }
     <button onclick="openBatchOrder()" style="flex:1;min-width:0;padding:7px 2px;border-radius:10px;font-size:10.5px;font-weight:700;border:1px solid #F8BBD0;background:#FCE4EC;color:#AD1457;cursor:pointer;text-align:center">📋 喊單文字</button>
     <button onclick="showTripOrphanScan()" style="flex:1;min-width:0;padding:7px 2px;border-radius:10px;font-size:10.5px;font-weight:700;border:1px solid #FCD34D;background:#FFFBEB;color:#92400E;cursor:pointer;text-align:center">✈️ 趟次異常</button>
   </div>
+  <button onclick="showTotalsCrossCheck()" style="width:100%;margin-bottom:8px;padding:8px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #A7D8C5;background:#EAFAF3;color:#166534;cursor:pointer">🔍 客戶／對帳單／統計 三頁金額交叉核對</button>
   <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#9C7A5A;margin-bottom:8px;cursor:pointer">
     <input type="checkbox" id="cust-select-all" onchange="toggleSelectAll('customer')" style="width:16px;height:16px;accent-color:#C5A880"/> 全選
   </label>
@@ -5316,7 +5317,95 @@ window.relinkOrphanOrders=async function(oidsStr,newProductId){
   renderProductOrphanScan();
 };
 
-window.showTripOrphanScan=function(){
+// ── 三頁面金額交叉核對 ────────────────────────────────────────────────
+// 用途：客戶頁跟對帳單頁本來就是用同一套「依客戶/買家分組」的邏輯去加總，
+// 理論上兩邊金額必然相等（除非其中一邊的畫面渲染邏輯本身有另外的 bug）；
+// 統計頁則是用「另一個獨立的趟次篩選（statsTripFilter）」去算，
+// 跟客戶頁/對帳單頁共用的 tripFilter 不一定是同一個趟次，這是最常見「數字對不起來」的原因，
+// 不一定是真的算錯。這個工具把這些數字實際算一次給你看，不用自己心算猜。
+window.showTotalsCrossCheck=function(){
+  let modal=document.getElementById("modal-totals-crosscheck");
+  if(!modal){
+    modal=document.createElement("div");
+    modal.id="modal-totals-crosscheck";
+    modal.className="modal-overlay";
+    modal.style.cssText="display:none;position:fixed;inset:0;z-index:120;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;padding:16px";
+    modal.innerHTML=`<div style="background:white;border-radius:18px;width:100%;max-width:480px;max-height:85vh;display:flex;flex-direction:column">
+      <div style="padding:18px 20px 12px;border-bottom:1px solid #F0E6D0;display:flex;justify-content:space-between;align-items:center">
+        <h3 style="margin:0;font-size:15px;font-weight:900;color:#3D2010">🔍 三頁面金額交叉核對</h3>
+        <button onclick="document.getElementById('modal-totals-crosscheck').style.display='none'" style="background:none;border:none;font-size:20px;color:#9C7A5A;cursor:pointer">×</button>
+      </div>
+      <div id="totals-crosscheck-content" style="padding:14px 20px 20px;overflow-y:auto;flex:1"></div>
+    </div>`;
+    document.body.appendChild(modal);
+  }
+  modal.style.display="flex";
+  window.renderTotalsCrossCheck();
+};
+window.renderTotalsCrossCheck=function(){
+  const box=document.getElementById("totals-crosscheck-content");
+  if(!box)return;
+  box.innerHTML=`<div style="text-align:center;padding:20px;color:#9C7A5A;font-size:12px">計算中…</div>`;
+  setTimeout(()=>{
+    const trips=window.G.trips||[];
+    const tripName=(id)=>{
+      if(id==="all"||!id)return "全部趟次";
+      if(id==="auto"){const l=getLatestTrip();return l?("目前趟次："+l.name):"全部趟次";}
+      return trips.find(t=>t.id===id)?.name||id;
+    };
+    // 客戶頁／對帳單頁：都是用 window.G.tripFilter 篩選、依「客戶/買家」分組、
+    // 各自減一次共用折扣，這套分組邏輯兩邊完全一樣，算出來的總額理論上必然相等
+    const custOrders=getTripOrders().filter(o=>o.orderType!=="quote");
+    const custGroupMap={};
+    custOrders.forEach(o=>{
+      const key=o.customerId||o.communityName||o.buyerName||"未知";
+      if(!custGroupMap[key])custGroupMap[key]=[];
+      custGroupMap[key].push(o);
+    });
+    let custPageTotal=0;
+    Object.values(custGroupMap).forEach(list=>{
+      const disc=list.find(o=>o.sharedDiscount>0)?.sharedDiscount||0;
+      custPageTotal+=list.reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0)-disc;
+    });
+    // 統計頁：用另一個獨立的 statsTripFilter 篩選
+    const statsOrders=getStatsOrders();
+    const statsDiscMap={};
+    statsOrders.forEach(o=>{
+      if(o.sharedDiscount>0){
+        const key=o.customerId||o.communityName||o.buyerName||"";
+        statsDiscMap[key]=(statsDiscMap[key]||0)+o.sharedDiscount;
+      }
+    });
+    const statsDiscount=Object.values(statsDiscMap).reduce((s,v)=>s+v,0);
+    const statsTotal=statsOrders.reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0)-statsDiscount;
+    const custScope=tripName(window.G.tripFilter);
+    const statsScope=tripName(window.G.statsTripFilter);
+    const sameScope=(window.G.tripFilter||"all")===(window.G.statsTripFilter||"all")||
+      (["all",undefined,null].includes(window.G.tripFilter)&&["all",undefined,null].includes(window.G.statsTripFilter));
+    const diff=Math.round(custPageTotal-statsTotal);
+    box.innerHTML=`
+      <div style="background:#FAF8F5;border:1px solid #E8D5B0;border-radius:12px;padding:12px 14px;margin-bottom:10px">
+        <div style="font-size:11px;color:#9C7A5A;margin-bottom:4px">客戶頁 ／ 對帳單頁（兩邊共用同一套分組邏輯）</div>
+        <div style="font-size:10px;color:#B0906A;margin-bottom:6px">目前篩選：${custScope}</div>
+        <div style="font-size:18px;font-weight:900;color:#3D2010">NT$${Math.round(custPageTotal).toLocaleString()}</div>
+      </div>
+      <div style="background:#FAF8F5;border:1px solid #E8D5B0;border-radius:12px;padding:12px 14px;margin-bottom:10px">
+        <div style="font-size:11px;color:#9C7A5A;margin-bottom:4px">統計頁總營業額</div>
+        <div style="font-size:10px;color:#B0906A;margin-bottom:6px">目前篩選：${statsScope}</div>
+        <div style="font-size:18px;font-weight:900;color:#3D2010">NT$${Math.round(statsTotal).toLocaleString()}</div>
+      </div>
+      ${sameScope
+        ?(diff===0
+          ?`<div style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:12px;padding:12px 14px;color:#166534;font-size:13px;font-weight:700;text-align:center">✅ 兩邊選的是同一個趟次範圍，金額完全對得起來，沒有發現不一致</div>`
+          :`<div style="background:#FDEDEC;border:1px solid #F1948A;border-radius:12px;padding:12px 14px;color:#943126;font-size:13px;font-weight:700;text-align:center">⚠️ 兩邊選的是同一個趟次範圍，但金額差了 NT$${Math.abs(diff).toLocaleString()}，這代表真的有資料算錯，需要進一步檢查</div>`)
+        :`<div style="background:#FFFBEB;border:1px solid #FCD34D;border-radius:12px;padding:12px 14px;color:#92400E;font-size:12px;line-height:1.6">ℹ️ 客戶頁跟統計頁目前選的「趟次篩選」不一樣，所以總額本來就會不同，這不算錯誤。<br><br>把兩邊都切到「全部趟次」再點一次這個按鈕重新核對，如果還是對不起來，才代表有真的問題。</div>`
+      }
+      <div style="font-size:10px;color:#B0906A;margin-top:10px;line-height:1.6">
+        💡 客戶頁跟對帳單頁的分組邏輯完全共用同一段程式碼，理論上不可能只有其中一邊算錯；如果你發現畫面上兩邊「看起來」數字不一樣，通常是因為兩個頁面當下選的趟次篩選不同，不是真的算錯，可以先確認一下兩邊選的趟次是否一致。
+      </div>
+    `;
+  },10);
+};
   let modal=document.getElementById("modal-trip-orphan-scan");
   if(!modal){
     modal=document.createElement("div");
@@ -9501,6 +9590,11 @@ function getTripOrders(){
 
 window.setTripFilter=function(f){
   window.G.tripFilter=f;
+  // 切換趟次時，畫面上顯示的訂單整批換掉了，但如果不清空「已勾選」的狀態，
+  // 之前勾的那幾筆（可能是別的趟次、現在畫面上根本看不到）會被原封不動留著，
+  // 這時候如果按下批次操作按鈕，改到的其實是看不見的舊選取，不是你眼前這批——非常危險，一定要清空
+  window.G.selectedOrders=new Set();
+  if(window.G.selectedCustomers)window.G.selectedCustomers=new Set();
   updateStats();renderTripBars();renderInvoice();renderList();renderCustomers();
 };
 
@@ -12479,8 +12573,9 @@ window.buildGroupedOrderLines=function(orders){
       if(!promoGroups.has(gKey)){promoGroups.set(gKey,{label:groupLabel,divisor:p.promoDivisor,items:new Map(),itemOrder:[],totalQty:0,sampleUnitPrice:dp});promoGroupOrder.push(gKey);}
       const g=promoGroups.get(gKey);
       const ik=productName+"◆"+(o.spec||"");
-      if(!g.items.has(ik)){g.items.set(ik,{name:productName,spec:o.spec||"",qty:0});g.itemOrder.push(ik);}
+      if(!g.items.has(ik)){g.items.set(ik,{name:productName,spec:o.spec||"",qty:0,amt:0});g.itemOrder.push(ik);}
       g.items.get(ik).qty+=o.qty;
+      g.items.get(ik).amt+=dp*o.qty;
       g.totalQty+=o.qty;
     } else {
       const up=o.unitPrice||dp;
@@ -12520,17 +12615,27 @@ window.buildGroupedOrderLines=function(orders){
   const promoBlocks=promoGroupOrder.map(gKey=>{
     const g=promoGroups.get(gKey);
     const divisor=g.divisor;
-    const origSingle=Math.round(g.sampleUnitPrice*divisor/(divisor-1));
-    const fullSets=Math.floor(g.totalQty/divisor);
     const remainder=g.totalQty%divisor;
-    const groupTotal=fullSets*(divisor-1)*origSingle+remainder*origSingle;
+    // 反推單包原價：目前存的單價是「均分後」的價格，乘回 divisor/(divisor-1) 還原成沒打折的單包價
+    const origSingle=Math.round(g.sampleUnitPrice*divisor/(divisor-1));
+    let groupTotal;
+    if(remainder===0){
+      // 剛好湊滿整數組，才用整組精算（這是原本要修的除不盡誤差）
+      const fullSets=g.totalQty/divisor;
+      groupTotal=fullSets*(divisor-1)*origSingle;
+    } else {
+      // 湊不滿一組（可能是特殊客人只買一件、刻意用折扣價賣），不要自動假設零頭要收全額，
+      // 直接用實際存的成交價加總，尊重賣家當初真的收多少錢
+      groupTotal=g.itemOrder.reduce((s,ik)=>s+g.items.get(ik).amt,0);
+    }
     promoTotal+=groupTotal;
     const labels={2:"買一送一",3:"買二送一",4:"買三送一"};
     const promoLabel=labels[divisor]||`買${divisor-1}送1`;
     const itemLines=g.itemOrder.map(ik=>{const it=g.items.get(ik);return "　"+(it.spec||it.name)+" ×"+it.qty;});
     return `• ${g.label}（${promoLabel}，單包NT$${origSingle}）\n${itemLines.join("\n")}\n　小計 NT$${groupTotal.toLocaleString()}`;
   });
-  return {lines:[...normalLines,...promoBlocks],total:normalTotal+promoTotal};
+  const totalQty=orders.reduce((s,o)=>s+(o.qty||1),0);
+  return {lines:[...normalLines,...promoBlocks],total:normalTotal+promoTotal,totalQty};
 };
 window.copyCustOrder=function(cid){
   const c=window.G.customers.find(x=>x.id===cid);if(!c)return;
@@ -12554,7 +12659,7 @@ window.copyCustOrder=function(cid){
   const totalBlock=sharedDiscount>0
     ?`\n\n商品小計 NT$${total.toLocaleString()}\n折扣  -NT$${sharedDiscount.toLocaleString()}${sharedDiscountReason?`（${sharedDiscountReason}）`:""}\n\n應付金額 NT$${discountedTotal.toLocaleString()}`
     :`\n\n總金額 NT$${total.toLocaleString()}`;
-  const text=`【訂單明細】\n${lines.join("\n")}${totalBlock}`;
+  const text=`【訂單明細】\n${lines.join("\n")}\n\n共計 ${grouped.totalQty} 件商品${totalBlock}`;
 
 
 
@@ -12611,7 +12716,7 @@ window.copyBuyerOrder=function(buyerKey){
   if(bs.bank1Name||bs.bank1Account)bankLines.push(`${bs.bank1Name||""}\n${bs.bank1Account||""}`);
   if(bs.bank2Name||bs.bank2Account)bankLines.push(`${bs.bank2Name||""}\n${bs.bank2Account||""}`);
   const bankText=bankLines.length?`\n\n${bankLines.join("\n\n")}`:"";
-  const text=`【訂單明細】\n\n${lines.join("\n")}${summaryBlock}${bankText}`;
+  const text=`【訂單明細】\n\n${lines.join("\n")}\n\n共計 ${grouped.totalQty} 件商品${summaryBlock}${bankText}`;
 
 
 
@@ -12665,7 +12770,7 @@ window.openSendSettlement=async function(buyerKey){
   if(bs.bank1Name||bs.bank1Account)bankLines.push(`${bs.bank1Name||""}\n${bs.bank1Account||""}`);
   if(bs.bank2Name||bs.bank2Account)bankLines.push(`${bs.bank2Name||""}\n${bs.bank2Account||""}`);
   const bankText=bankLines.length?`\n\n${bankLines.join("\n\n")}`:"";
-  const text=`【訂單明細】\n\n${lines.join("\n")}${summaryBlock}${bankText}`;
+  const text=`【訂單明細】\n\n${lines.join("\n")}\n\n共計 ${grouped2.totalQty} 件商品${summaryBlock}${bankText}`;
 
   const modal=document.getElementById("modal-send-settlement");
   const nameEl=document.getElementById("ss-cust-name");
@@ -12784,8 +12889,11 @@ window.sendSettlementMessage=async function(){
 
 // 整批更新同一買家的所有訂單狀態
 window.updateBuyerStatus=async function(buyerKey,status){
-  const{orders}=window.G;
-  const buyerOrders=orders.filter(o=>{
+  // 這裡原本直接抓 window.G.orders（這個客人從古至今全部趟次的訂單），
+  // 完全沒有照目前畫面上選的趟次篩選——導致不管你在看哪個趟次，
+  // 點下狀態按鈕都會連帶改到這個客人在「其他趟次」的訂單，非常危險。
+  // 改成跟畫面顯示邏輯一致，只抓「目前趟次篩選下看得到」的訂單。
+  const buyerOrders=getTripOrders().filter(o=>{
     const key=o.customerId||o.communityName||o.buyerName||"未知";
     return key===buyerKey;
   });
