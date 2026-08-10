@@ -479,6 +479,7 @@ body.live-mode .hide-live { display: none !important; }
     <button id="cust-view-hascold" onclick="setCustViewFilter(window.G.custViewFilter==='hasCold'?'all':'hasCold')" style="flex:1;min-width:0;padding:7px 2px;border-radius:10px;font-size:10.5px;font-weight:700;border:1px solid #BEE0F5;background:#EAF4FB;color:#1E5F8C;cursor:pointer;text-align:center">🧊 有冷藏</button>
     <button onclick="openBatchOrder()" style="flex:1;min-width:0;padding:7px 2px;border-radius:10px;font-size:10.5px;font-weight:700;border:1px solid #F8BBD0;background:#FCE4EC;color:#AD1457;cursor:pointer;text-align:center">📋 喊單文字</button>
     <button onclick="showTripOrphanScan()" style="flex:1;min-width:0;padding:7px 2px;border-radius:10px;font-size:10.5px;font-weight:700;border:1px solid #FCD34D;background:#FFFBEB;color:#92400E;cursor:pointer;text-align:center">✈️ 趟次異常</button>
+    <button id="cust-view-archived" onclick="window.G.showArchivedCust=!window.G.showArchivedCust;renderCustomers();this.style.background=window.G.showArchivedCust?'#8B6F47':'#F5F0E8';this.style.color=window.G.showArchivedCust?'white':'#8B6F47';this.textContent=window.G.showArchivedCust?'📦 顯示中':'📦 已封存';" style="flex:1;min-width:0;padding:7px 2px;border-radius:10px;font-size:10.5px;font-weight:700;border:1px solid #D9C9AD;background:#F5F0E8;color:#8B6F47;cursor:pointer;text-align:center">📦 已封存</button>
   </div>
   <button onclick="showTotalsCrossCheck()" style="width:100%;margin-bottom:8px;padding:8px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #A7D8C5;background:#EAFAF3;color:#166534;cursor:pointer">🔍 客戶／對帳單／統計 三頁金額交叉核對</button>
   <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#9C7A5A;margin-bottom:8px;cursor:pointer">
@@ -6632,6 +6633,15 @@ window.saveCustomer=async function(){
   await fbSet("customers",id,{communityName,lineName,phone,address,note,createdAt:createdAt||Date.now()});
   closeModal("modal-cust");showToast("客戶資料已儲存");
 };
+// 封存客戶：只是把這個人從日常客戶清單藏起來，不是刪除——
+// 訂單資料、對帳單、統計頁的營收金額完全不受影響，只是不想每次滑清單都看到他
+window.toggleArchiveCustomer=async function(id){
+  const c=window.G.customers.find(x=>x.id===id);
+  if(!c)return;
+  const newState=!c.archived;
+  await fbUpd("customers",id,{archived:newState});
+  showToast(newState?"已封存，不會再出現在清單裡了":"已取消封存","success");
+};
 window.deleteCustomer=async function(id){
   if(!confirm("確定刪除此客戶？相關訂單也會一併刪除。"))return;
   const c=window.G.customers.find(x=>x.id===id);
@@ -11577,6 +11587,9 @@ window.renderCustomers=function(){
       return match&&((o.productName||"").toLowerCase().includes(s)||(o.spec||"").toLowerCase().includes(s));
     });
   }):customers;
+  // 已封存的客戶預設隱藏，不佔清單版面；資料本身完全不動，對帳單/統計金額不受影響，
+  // 只是不想每次滑清單都看到這個人。開關開著的時候，反過來只顯示已封存的
+  filtered=filtered.filter(c=>window.G.showArchivedCust?!!c.archived:!c.archived);
   // 篩選有未購入代買單／待報價的客戶
   if(custViewFilter==="unpurchased"||custViewFilter==="quote"){
     const allOrders=window.G.orders;
@@ -11791,6 +11804,7 @@ window.renderCustomers=function(){
           <button data-cid="${c.id}" onclick="openCustHistory(this.dataset.cid)" style="font-size:11px;color:#9C7A5A;background:#FAF8F5;border:1px solid #E8D5B0;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600">歷史</button>
           <button data-cid="${c.id}" data-cname="${c.communityName||c.lineName||''}" onclick="openEditCustOrOrder(this.dataset.cid,this.dataset.cname)" style="font-size:11px;color:#C5A880;background:#FDF6EC;border:1px solid #E8D5B0;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600">修改</button>
           <button data-cid="${c.id}" onclick="openLineNotify(this.dataset.cid)" style="font-size:11px;color:#06C755;background:#F0FFF4;border:1px solid #86EFAC;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600">出貨</button>
+          <button data-cid="${c.id}" onclick="toggleArchiveCustomer(this.dataset.cid)" style="font-size:11px;color:#8B6F47;background:#F5F0E8;border:1px solid #D9C9AD;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600">${c.archived?"↩️ 取消封存":"📦 封存"}</button>
           <button onclick="deleteCustomer('${c.id}')" style="font-size:11px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600">刪除</button>
         </div>
       </div>
