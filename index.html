@@ -491,7 +491,7 @@ body.live-mode .hide-live { display: none !important; }
 <!-- ═══ 對帳單 ═══ -->
 <div id="tab-invoice" class="tab-page" style="padding:16px 16px 80px">
   <div style="position:relative;margin-bottom:8px">
-    <input type="text" id="inv-search" oninput="window.G.invSearch=this.value;renderInvoice()" placeholder="🔍 搜尋買家姓名、商品名稱或編號..." style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:10px 34px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
+    <input type="text" id="inv-search" oninput="window.G.invSearch=this.value;clearTimeout(window._invSearchTimer);window._invSearchTimer=setTimeout(renderInvoice,300)" placeholder="🔍 搜尋買家姓名、商品名稱或編號..." style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:10px 34px 10px 14px;font-size:14px;outline:none;box-sizing:border-box"/>
     <button onclick="const i=document.getElementById('inv-search');i.value='';window.G.invSearch='';renderInvoice();" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
   </div>
   <select id="inv-trip-bar" onchange="setTripFilter(this.value)" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;color:#3D2010;outline:none;margin-bottom:8px;cursor:pointer"></select>
@@ -2171,8 +2171,32 @@ body.live-mode .hide-live { display: none !important; }
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, updateDoc, addDoc, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
 const app=initializeApp({apiKey:"AIzaSyAt6Te8T9DggqFmhBzZz5iEKIXlPH11DpE",authDomain:"thebutter-2eb30.firebaseapp.com",projectId:"thebutter-2eb30",storageBucket:"thebutter-2eb30.firebasestorage.app",messagingSenderId:"149175450461",appId:"1:149175450461:web:c7c09a1d510994d6a0c6b4"});
+const storage=getStorage(app);
+// 照片上傳到 Firebase Storage、換成網址字串再存進 Firestore 商品資料——
+// 這是解決「韓國連線會LAG」最根本的做法：資料庫本身只存一個網址（幾十個字），
+// 不管商品有幾張照片，同步商品清單的時候都只需要傳網址過去，瀏覽器再各自去下載對應圖片，
+// 不會每次任何一個商品有變動，就要把「所有商品的完整照片」整包重新下載一次。
+// 只在「真正存檔」的這一刻才轉換，裁切/加文字/貼上等編輯功能維持原本用 base64 在畫面上運作，不受影響。
+window.uploadPhotoToStorage=async function(base64DataUrl,pathPrefix){
+  if(!base64DataUrl||typeof base64DataUrl!=="string")return base64DataUrl||"";
+  if(!base64DataUrl.startsWith("data:"))return base64DataUrl; // 已經是網址（之前上傳過、沒改過），不用重複上傳
+  try{
+    const path=`product_photos/${pathPrefix}_${Date.now()}_${Math.random().toString(36).slice(2,8)}.jpg`;
+    const ref=storageRef(storage,path);
+    await uploadString(ref,base64DataUrl,"data_url");
+    return await getDownloadURL(ref);
+  }catch(e){
+    console.error("圖片上傳到 Storage 失敗，暫時退回原本存法（base64），不影響這次存檔：",e);
+    return base64DataUrl; // 上傳失敗就退回原本做法，至少功能還能用，不會整個卡死存不了檔
+  }
+};
+window.uploadPhotosToStorage=async function(base64Array,pathPrefix){
+  if(!base64Array||!base64Array.length)return base64Array||[];
+  return Promise.all(base64Array.map((b64,i)=>window.uploadPhotoToStorage(b64,`${pathPrefix}_spec${i}`)));
+};
 // 開啟本機持久化快取：第二次以後打開 App，先用手機本地存的資料立刻顯示，
 // 背景再跟資料庫同步「有變動的部分」，不用每次都整包重新下載所有商品（含照片）
 let db;
@@ -6059,7 +6083,13 @@ window.saveProduct=async function(){
   // 先清空重量輸入框，再送出存檔，不要等非同步存檔完成才清——
   // 避免存檔還在跑的時候使用者已經開始打下一個商品，或萬一存檔中途出錯，導致這欄位一直殘留上一次的數字
   const cWeightEl=document.getElementById("c-weight");if(cWeightEl)cWeightEl.value="";
-  await fbSet("products",id,{name:name.trim(),catKey:cat,category:catObj?.label||"其他",emoji:catObj?.emoji||"📦",currency:cur,currencySymbol:CURR[cur]?.symbol||"₩",foreignAmount:amt,originalAmount:window.G.calcPromoOriginal||amt,paymentMethod:window.G.calcPaymentMethod||"card",beforeTax,afterTax,suggested:sugg,finalPrice:final,profit,margin,twPrice,rivalPrice,rivalPrices,url,specs,photo,photoPos:photoPosCss,flags,channel:window.G.calcChannel||"",weight,createdAt:Date.now()});
+  const saveBtn=document.getElementById("btn-save");
+  const origBtnHtml=saveBtn?.innerHTML;
+  if(saveBtn){saveBtn.disabled=true;saveBtn.innerHTML="📤 上傳照片中…";}
+  const uploadedPhoto=await window.uploadPhotoToStorage(photo,id);
+  if(saveBtn){saveBtn.innerHTML="💾 儲存中…";}
+  await fbSet("products",id,{name:name.trim(),catKey:cat,category:catObj?.label||"其他",emoji:catObj?.emoji||"📦",currency:cur,currencySymbol:CURR[cur]?.symbol||"₩",foreignAmount:amt,originalAmount:window.G.calcPromoOriginal||amt,paymentMethod:window.G.calcPaymentMethod||"card",beforeTax,afterTax,suggested:sugg,finalPrice:final,profit,margin,twPrice,rivalPrice,rivalPrices,url,specs,photo:uploadedPhoto,photoPos:photoPosCss,flags,channel:window.G.calcChannel||"",weight,createdAt:Date.now()});
+  if(saveBtn){saveBtn.disabled=false;saveBtn.innerHTML=origBtnHtml;}
   ["c-name","c-amt","c-custom","c-twprice","c-specs","c-url"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});document.querySelectorAll(".c-url-extra").forEach(el=>el.parentElement.remove());
   window.G.calcRivalList=[];window.calcRenderRivals();
   ["flag-cold","flag-coldHigh","flag-heavy","flag-large","flag-limited"].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=false;});
@@ -6498,14 +6528,20 @@ window.saveEditProd=async function(){
   const promoPct=window.G.epPromoPct||null;
   const promoGroup=document.getElementById("ep-promo-group")?.value.trim()||"";
   const weight=parseFloat(document.getElementById("ep-weight")?.value)||0;
-  const upd={name,currency:editCur,currencySymbol:CURR[editCur]?.symbol||"₩",paymentMethod:editPm,foreignAmount:fa,originalAmount:originalAmt,promoDivisor,promoPct,promoGroup,beforeTax,afterTax,finalPrice:price,profit,margin,twPrice,rivalPrice,rivalPrices,url,specs:newSpecs,specImages:newSpecImages,aliases:newAliases,note:newNote,catKey:newCatKey,category:newCatObj.label,emoji:newCatObj.emoji,flags:newFlags,channel:window.G.editChannel||"",weight};
+  const upd={name,currency:editCur,currencySymbol:CURR[editCur]?.symbol||"₩",paymentMethod:editPm,foreignAmount:fa,originalAmount:originalAmt,promoDivisor,promoPct,promoGroup,beforeTax,afterTax,finalPrice:price,profit,margin,twPrice,rivalPrice,rivalPrices,url,specs:newSpecs,aliases:newAliases,note:newNote,catKey:newCatKey,category:newCatObj.label,emoji:newCatObj.emoji,flags:newFlags,channel:window.G.editChannel||"",weight};
+  const saveBtn2=document.querySelector('button[onclick="saveEditProd()"]');
+  const origBtnHtml2=saveBtn2?.innerHTML;
+  if(saveBtn2){saveBtn2.disabled=true;saveBtn2.innerHTML="📤 上傳照片中…";}
+  // 規格圖片、主照片都先上傳到 Storage 換成網址，已經是網址的（沒改過的舊圖）會直接跳過不重傳
+  upd.specImages=await window.uploadPhotosToStorage(newSpecImages,oldId);
   if(window.G.editPhoto===null){/* 不動圖片 */}
   else if(window.G.editPhoto===""){upd.photo="";upd.photoPos="50% 50%";}
   else{
-    upd.photo=window.G.editPhoto;
+    upd.photo=await window.uploadPhotoToStorage(window.G.editPhoto,oldId);
     const pp=window.G.editPhotoPos||{x:50,y:50};
     upd.photoPos=`${pp.x}% ${pp.y}%`;
   }
+  if(saveBtn2){saveBtn2.innerHTML="💾 儲存中…";}
   // 類別改變 或 手動調整編號時，更新料號
   const oldId=m.id;
   let newId=oldId;
@@ -6532,6 +6568,7 @@ window.saveEditProd=async function(){
     }catch(err){
       const msg=(err&&err.message)||String(err);
       if(!/exceeds the maximum allowed size|bytes/i.test(msg)){
+        if(saveBtn2){saveBtn2.disabled=false;saveBtn2.innerHTML=origBtnHtml2;}
         alert("儲存失敗，請把這段錯誤訊息截圖給開發者：\n\n"+msg);
         return;
       }
@@ -6540,6 +6577,7 @@ window.saveEditProd=async function(){
       showToast(epOverCapacityMsg(addedCount,totalNew),"warning");
     }
     await fbDel("products",oldId);
+    if(saveBtn2){saveBtn2.disabled=false;saveBtn2.innerHTML=origBtnHtml2;}
     closeModal("modal-eprod");showToast("商品已更新，料號已更新為 "+newId);renderCustomers();renderInvoice();
     return;
   }
@@ -6548,6 +6586,7 @@ window.saveEditProd=async function(){
   }catch(err){
     const msg=(err&&err.message)||String(err);
     if(!/exceeds the maximum allowed size|bytes/i.test(msg)){
+      if(saveBtn2){saveBtn2.disabled=false;saveBtn2.innerHTML=origBtnHtml2;}
       alert("儲存失敗，請把這段錯誤訊息截圖給開發者：\n\n"+msg);
       return;
     }
@@ -6566,6 +6605,7 @@ window.saveEditProd=async function(){
     await fbUpd("products",m.id,{priceHistory:newHist});
   }
   closeModal("modal-eprod");showToast("商品已更新");renderCustomers();renderInvoice();
+  if(saveBtn2){saveBtn2.disabled=false;saveBtn2.innerHTML=origBtnHtml2;}
 };
 
 window.copyLineFormat=function(id){
@@ -7050,6 +7090,18 @@ window.moClearCustomSpecPhoto=function(){
 };
 
 window.addOrder=async function(){
+  // 防止連續點擊：按鈕感覺卡住的時候，使用者很容易連點好幾下，
+  // 如果沒有這層保護，每點一次就會真的送出一筆重複訂單
+  const btn=document.querySelector('button[onclick="addOrder()"]');
+  if(btn){
+    if(btn.dataset.submitting==="1")return; // 已經在送出中，忽略這次點擊
+    btn.dataset.submitting="1";
+    btn.disabled=true;
+    btn.style.opacity="0.6";
+    btn.dataset.origText=btn.textContent;
+    btn.textContent="登記中…";
+  }
+  try{
   const productId=document.getElementById("mo-pid")?.textContent;if(!productId)return;
   const buyerInput=document.getElementById("mo-buyer")?.value.trim();
   const custSelect=document.getElementById("mo-cust")?.value;
@@ -7139,6 +7191,19 @@ window.addOrder=async function(){
   closeModal("modal-order");showToast(`${orderTypeLabel} 已為 ${communityName||lineName} 登記${totalKinds>1?`（共 ${totalKinds} 筆 ${lastSpecLabel}）`:lastSpecLabel}`);
   // 強制刷新避免 Firebase onSnapshot 延遲導致畫面未更新
   setTimeout(()=>{renderList();renderCustomers();renderInvoice();},600);
+  } catch(e){
+    console.error("addOrder failed:",e);
+    showToast("登記失敗，請再試一次","error");
+  } finally {
+    // 不管成功、失敗、還是中途因為驗證沒過而提早return，最後都要把按鈕解鎖還原，
+    // 不然按鈕會一直卡在「登記中…」，使用者只能重新整理頁面才能再操作
+    if(btn){
+      btn.dataset.submitting="";
+      btn.disabled=false;
+      btn.style.opacity="1";
+      btn.textContent=btn.dataset.origText||"確認登記";
+    }
+  }
 };
 // ── 數量 ± 按鈕 ───────────────────────────────────────────────────────
 window.moQtyAdj=function(delta){
@@ -12518,7 +12583,7 @@ window.addSpecToProductIfNew=async function(productId,spec,photoB64){
   }
   while(images.length<specs.length)images.push("");
   if(photoB64&&!images[idx]){
-    images[idx]=photoB64;
+    images[idx]=await window.uploadPhotoToStorage(photoB64,productId);
     changed=true;
   }
   if(!changed)return;
@@ -14749,14 +14814,20 @@ window.qaLiveSave=async function(){
     margin:Math.round((finalPrice-costRounded)/finalPrice*100),
     catKey:"food",category:"超商/超市食品",emoji:"🍿",
     channel:"",paymentMethod,flags:{noTaxRefund:noRefund},specs:"",
-    photo:window.G.qaLivePhoto||"",photoPos:"50% 50%",
+    photo:"",photoPos:"50% 50%",
     weight,tripId,createdAt:Date.now()};
+  const liveSaveBtn=document.querySelector('button[onclick="qaLiveSave()"]');
+  const origLiveBtnHtml=liveSaveBtn?.textContent;
+  if(liveSaveBtn){liveSaveBtn.disabled=true;liveSaveBtn.textContent="📤 上傳中…";}
+  if(window.G.qaLivePhoto)prod.photo=await window.uploadPhotoToStorage(window.G.qaLivePhoto,id);
   try{
     await fbSet("products",id,prod);
   } catch(e){
     showToast("上架失敗："+(e.message||"請稍後再試一次")+"（如果剛剛有選照片，可能是照片太大，可以先移除照片再試一次）","error");
+    if(liveSaveBtn){liveSaveBtn.disabled=false;liveSaveBtn.textContent=origLiveBtnHtml;}
     return;
   }
+  if(liveSaveBtn){liveSaveBtn.disabled=false;liveSaveBtn.textContent=origLiveBtnHtml;}
   // 如果勾了「同時登記喊單」，用剛剛建立的這個商品，順便幫客人登記一筆訂單，不用上架完再跑一次登記喊單流程
   const orderToggle=document.getElementById("qa-live-order-toggle");
   if(orderToggle?.checked){
@@ -14966,21 +15037,29 @@ window.saveQuickAdd=async function(){
   const qaRivalPrice=qaRivalListSave.length?Math.min(...qaRivalListSave.map(r=>r.price)):0;
   const qaRivalPrices=qaRivalListSave;
   const qaWeight=parseFloat(document.getElementById("qa-prod-weight")?.value)||0;
+  const quickSaveBtn=document.querySelector('button[onclick="saveQuickAdd()"]');
+  const origQuickBtnHtml=quickSaveBtn?.textContent;
+  if(quickSaveBtn){quickSaveBtn.disabled=true;quickSaveBtn.textContent="📤 上傳照片中…";}
+  const uploadedPhoto2=photo?await window.uploadPhotoToStorage(photo,id):"";
+  const uploadedSpecImages2=await window.uploadPhotosToStorage(qaSpecImages,id);
+  if(quickSaveBtn){quickSaveBtn.textContent="💾 儲存中…";}
   try{
     await fbSet("products",id,{
       id,name,catKey:cat,category:catObj?.label||"其他",emoji:catObj?.emoji||"📦",
       currency:qaCur,currencySymbol:CURR[qaCur]?.symbol||"₩",paymentMethod:window.G.qaPaymentMethod||"card",foreignAmount:amt,
       originalAmount:qaOriginalAmt,promoDivisor:qaPromoDivisor,promoPct:qaPromoPct,promoGroup:qaPromoGroup,
       beforeTax,afterTax,suggested:sugg2,finalPrice,profit,margin,
-      flags:qaFlags,twPrice:qaTwPrice,rivalPrice:qaRivalPrice,rivalPrices:qaRivalPrices,url:qaGetAllUrls(),specs:qaSpecs,specImages:qaSpecImages,
+      flags:qaFlags,twPrice:qaTwPrice,rivalPrice:qaRivalPrice,rivalPrices:qaRivalPrices,url:qaGetAllUrls(),specs:qaSpecs,specImages:uploadedSpecImages2,
       channel:window.G.qaChannel||"",note:qaNote,
-      photo,photoPos,weight:qaWeight,
+      photo:uploadedPhoto2,photoPos,weight:qaWeight,
       createdAt:Date.now()
     });
   } catch(e){
     showToast("上架失敗："+(e.message||"請稍後再試一次")+"（如果有選很多張規格照片，可能是照片太多太大，可以先減少幾張再試）","error");
+    if(quickSaveBtn){quickSaveBtn.disabled=false;quickSaveBtn.textContent=origQuickBtnHtml;}
     return;
   }
+  if(quickSaveBtn){quickSaveBtn.disabled=false;quickSaveBtn.textContent=origQuickBtnHtml;}
 
   // 如果勾了「同時登記喊單」，用剛剛建立的這個商品，順便幫客人登記一筆訂單，不用上架完再跑一次登記喊單流程
   const orderToggle=document.getElementById("qa-order-toggle");
