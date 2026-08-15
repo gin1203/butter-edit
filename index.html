@@ -383,7 +383,7 @@ body.live-mode .hide-live { display: none !important; }
       <div id="c-img-preview" style="display:none;margin-top:8px">
         <div style="font-size:10px;color:#9C7A5A;margin-bottom:5px;text-align:center">👆 拖曳圖片調整焦點位置</div>
         <div id="c-crop-box" style="width:100%;aspect-ratio:1/1;border-radius:12px;overflow:hidden;background:#FAF8F5;position:relative;cursor:grab;touch-action:none;border:2px solid #C5A880">
-          <img id="c-img-thumb" style="position:absolute;width:100%;height:100%;object-fit:cover;object-position:50% 50%;display:block;pointer-events:none" draggable="false"/>
+          <img loading="lazy" decoding="async" id="c-img-thumb" style="position:absolute;width:100%;height:100%;object-fit:cover;object-position:50% 50%;display:block;pointer-events:none" draggable="false"/>
         </div>
         <div style="display:flex;gap:8px;margin-top:8px">
           <label for="c-img-input" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:8px;border:1px solid #E8D5B0;border-radius:8px;cursor:pointer;font-size:11px;font-weight:700;color:#9C7A5A;background:#FAF8F5">📷 重新選擇</label>
@@ -834,7 +834,7 @@ body.live-mode .hide-live { display: none !important; }
       </div>
       <div id="mo-custom-spec-photo-preview" style="display:none;margin-top:6px;align-items:center;gap:8px">
         <span style="position:relative;display:inline-block;width:40px;height:40px">
-          <img id="mo-custom-spec-photo-img" style="width:100%;height:100%;object-fit:cover;border-radius:8px"/>
+          <img loading="lazy" decoding="async" id="mo-custom-spec-photo-img" style="width:100%;height:100%;object-fit:cover;border-radius:8px"/>
           <button type="button" onclick="moClearCustomSpecPhoto()" style="position:absolute;top:-6px;right:-6px;width:16px;height:16px;border-radius:50%;background:#C0392B;color:white;border:none;font-size:9px;cursor:pointer;padding:0;line-height:1">×</button>
         </span>
         <span style="font-size:10px;color:#9C7A5A">這張照片會跟著新規格一起存起來</span>
@@ -969,7 +969,7 @@ body.live-mode .hide-live { display: none !important; }
       <div id="ep-img-preview" style="display:none;margin-bottom:8px">
         <div style="font-size:10px;color:#9C7A5A;margin-bottom:5px;text-align:center">📷 商品圖片預覽</div>
         <div id="ep-crop-box" style="width:100%;border-radius:10px;overflow:hidden;background:#FAF8F5;border:2px solid #C5A880;text-align:center">
-          <img id="ep-img-thumb" style="width:100%;height:auto;display:block;object-fit:contain" draggable="false"/>
+          <img loading="lazy" decoding="async" id="ep-img-thumb" style="width:100%;height:auto;display:block;object-fit:contain" draggable="false"/>
         </div>
         <div style="display:flex;gap:8px;margin-top:8px">
           <label for="ep-img-input" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:8px;border:1px solid #E8D5B0;border-radius:8px;cursor:pointer;font-size:11px;font-weight:700;color:#9C7A5A;background:#FAF8F5">📷 重新選擇</label>
@@ -1339,7 +1339,7 @@ body.live-mode .hide-live { display: none !important; }
 
 <!-- 圖片放大 Lightbox -->
 <div id="lightbox" onclick="closeLightbox()" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.92);align-items:center;justify-content:center">
-  <img id="lightbox-img" style="max-width:96vw;max-height:92vh;object-fit:contain;border-radius:8px;pointer-events:none"/>
+  <img loading="lazy" decoding="async" id="lightbox-img" style="max-width:96vw;max-height:92vh;object-fit:contain;border-radius:8px;pointer-events:none"/>
   <button onclick="closeLightbox()" style="position:fixed;top:16px;right:16px;background:rgba(255,255,255,0.15);color:white;border:none;border-radius:99px;width:36px;height:36px;font-size:20px;cursor:pointer;line-height:1">×</button>
 </div>
 
@@ -1352,7 +1352,7 @@ body.live-mode .hide-live { display: none !important; }
     </div>
     <div style="font-size:10px;color:#9C7A5A;margin-bottom:6px;text-align:center">👆 拖曳文字調整位置・點其他文字可切換編輯</div>
     <div id="to-preview-box" style="width:100%;aspect-ratio:1/1;border-radius:10px;overflow:hidden;background:#2b2b2b;position:relative;border:2px solid #C5A880;touch-action:none;display:flex;align-items:center;justify-content:center">
-      <img id="to-preview-img" style="max-width:100%;max-height:100%;display:block;pointer-events:none" draggable="false"/>
+      <img loading="lazy" decoding="async" id="to-preview-img" style="max-width:100%;max-height:100%;display:block;pointer-events:none" draggable="false"/>
     </div>
     <div style="display:flex;gap:8px;margin-top:10px">
       <button onclick="toAddLabel()" style="flex:1;background:#EAF4FD;color:#0277BD;border:1px solid #90D7FF;border-radius:10px;padding:9px;font-size:12px;font-weight:700;cursor:pointer">➕ 新增一個文字</button>
@@ -1644,7 +1644,7 @@ body.live-mode .hide-live { display: none !important; }
           </label>
           <input type="file" id="qa-live-img" accept="image/*" style="display:none" onchange="qaLiveImgPick(this)"/>
           <div id="qa-live-img-preview" style="display:none;margin-top:6px;border-radius:8px;overflow:hidden;text-align:center">
-            <img id="qa-live-img-thumb" style="max-width:100%;max-height:140px;object-fit:contain;border-radius:8px"/>
+            <img loading="lazy" decoding="async" id="qa-live-img-thumb" style="max-width:100%;max-height:140px;object-fit:contain;border-radius:8px"/>
             <button onclick="qaLiveImgClear()" style="display:block;width:100%;margin-top:4px;background:#FDEDEC;color:#C0392B;border:1px solid #F1948A;border-radius:8px;padding:6px;font-size:12px;font-weight:700;cursor:pointer">✕ 移除圖片</button>
           </div>
         </div>
@@ -1848,7 +1848,7 @@ body.live-mode .hide-live { display: none !important; }
         <div id="qa-prod-img-preview" style="display:none;margin-top:8px">
           <div style="font-size:10px;color:#9C7A5A;margin-bottom:5px;text-align:center">👆 拖曳調整焦點位置</div>
           <div id="qa-prod-crop-box" style="width:100%;aspect-ratio:1/1;border-radius:10px;overflow:hidden;background:#FAF8F5;position:relative;cursor:grab;touch-action:none;border:2px solid #C5A880">
-            <img id="qa-prod-img-thumb" style="position:absolute;width:100%;height:100%;object-fit:cover;object-position:50% 50%;display:block;pointer-events:none" draggable="false"/>
+            <img loading="lazy" decoding="async" id="qa-prod-img-thumb" style="position:absolute;width:100%;height:100%;object-fit:cover;object-position:50% 50%;display:block;pointer-events:none" draggable="false"/>
           </div>
           <div style="display:flex;gap:8px;margin-top:8px">
             <label for="qa-prod-img-input" style="flex:1;text-align:center;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:6px;font-size:11px;color:#9C7A5A;cursor:pointer;font-weight:700">📷 重新選擇</label>
@@ -2171,31 +2171,17 @@ body.live-mode .hide-live { display: none !important; }
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, updateDoc, addDoc, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
 const app=initializeApp({apiKey:"AIzaSyAt6Te8T9DggqFmhBzZz5iEKIXlPH11DpE",authDomain:"thebutter-2eb30.firebaseapp.com",projectId:"thebutter-2eb30",storageBucket:"thebutter-2eb30.firebasestorage.app",messagingSenderId:"149175450461",appId:"1:149175450461:web:c7c09a1d510994d6a0c6b4"});
-const storage=getStorage(app);
-// 照片上傳到 Firebase Storage、換成網址字串再存進 Firestore 商品資料——
-// 這是解決「韓國連線會LAG」最根本的做法：資料庫本身只存一個網址（幾十個字），
-// 不管商品有幾張照片，同步商品清單的時候都只需要傳網址過去，瀏覽器再各自去下載對應圖片，
-// 不會每次任何一個商品有變動，就要把「所有商品的完整照片」整包重新下載一次。
-// 只在「真正存檔」的這一刻才轉換，裁切/加文字/貼上等編輯功能維持原本用 base64 在畫面上運作，不受影響。
+// 照片改回原本的做法：直接存 base64 到 Firestore，不上傳到 Firebase Storage——
+// 因為 Storage 一定要升級付費方案（Blaze）才能用，考量到這條連線本身沒有額外賺錢，
+// 選擇維持完全免費的做法。這兩個函式保留著（讓存檔流程呼叫起來不用改），
+// 但直接把原本的內容原封不動傳回去，等於「不做任何上傳」，行為跟遷移之前完全一樣。
 window.uploadPhotoToStorage=async function(base64DataUrl,pathPrefix){
-  if(!base64DataUrl||typeof base64DataUrl!=="string")return base64DataUrl||"";
-  if(!base64DataUrl.startsWith("data:"))return base64DataUrl; // 已經是網址（之前上傳過、沒改過），不用重複上傳
-  try{
-    const path=`product_photos/${pathPrefix}_${Date.now()}_${Math.random().toString(36).slice(2,8)}.jpg`;
-    const ref=storageRef(storage,path);
-    await uploadString(ref,base64DataUrl,"data_url");
-    return await getDownloadURL(ref);
-  }catch(e){
-    console.error("圖片上傳到 Storage 失敗，暫時退回原本存法（base64），不影響這次存檔：",e);
-    return base64DataUrl; // 上傳失敗就退回原本做法，至少功能還能用，不會整個卡死存不了檔
-  }
+  return base64DataUrl||"";
 };
 window.uploadPhotosToStorage=async function(base64Array,pathPrefix){
-  if(!base64Array||!base64Array.length)return base64Array||[];
-  return Promise.all(base64Array.map((b64,i)=>window.uploadPhotoToStorage(b64,`${pathPrefix}_spec${i}`)));
+  return base64Array||[];
 };
 // 開啟本機持久化快取：第二次以後打開 App，先用手機本地存的資料立刻顯示，
 // 背景再跟資料庫同步「有變動的部分」，不用每次都整包重新下載所有商品（含照片）
@@ -2534,7 +2520,9 @@ window.G.calcPhotoPos={x:50,y:50};
 window.cImgPick=async function(input){
   const file=input.files[0];if(!file)return;
   showToast("壓縮圖片中…","success");
-  const b64=await compressImg(file,640,0.75);
+  // 主照片在畫面上只會顯示成小卡片縮圖，480px/0.7的畫質已經很夠用，
+  // 縮小一點檔案大小，同步商品清單時要傳輸的資料量也會跟著變小，滑動列表比較不會頓
+  const b64=await compressImg(file,480,0.7);
   window.G.calcPhoto=b64;
   window.G.calcPhotoOriginal=b64;
   window.G.calcPhotoPos={x:50,y:50};
@@ -2569,7 +2557,8 @@ window.G.editPhotoPos=null;
 window.epImgPick=async function(input){
   const file=input.files[0];if(!file)return;
   showToast("壓縮圖片中…","success");
-  const b64=await compressImg(file,640,0.75);
+  // 同上，主照片縮小一點，減少資料量
+  const b64=await compressImg(file,480,0.7);
   window.G.editPhoto=b64;
   window.G.editPhotoOriginal=b64;
   window.G.editPhotoPos={x:50,y:50};
@@ -4209,7 +4198,7 @@ window.openModal=function(id,data){
             const img=(p?.specImages||[])[i]||"";
             const esc=s.replace(/"/g,"&quot;");
             const thumbInner=img
-              ?`<span onclick="event.stopPropagation();lbOpen('${img}')" style="position:absolute;inset:0;cursor:zoom-in"><img src="${img}" draggable="false" style="width:100%;height:100%;object-fit:cover;display:block;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent"/><span style="position:absolute;bottom:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,0.55);color:white;font-size:10px;display:flex;align-items:center;justify-content:center;pointer-events:none">🔍</span></span>`
+              ?`<span onclick="event.stopPropagation();lbOpen('${img}')" style="position:absolute;inset:0;cursor:zoom-in"><img loading="lazy" decoding="async" src="${img}" draggable="false" style="width:100%;height:100%;object-fit:cover;display:block;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent"/><span style="position:absolute;bottom:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,0.55);color:white;font-size:10px;display:flex;align-items:center;justify-content:center;pointer-events:none">🔍</span></span>`
               :`<span style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:24px;color:#DCC9A8">🍡</span>`;
             return `<div class="mo-spec-card" data-spec="${esc}" style="display:flex;flex-direction:column;align-items:stretch;border-radius:12px;font-size:12px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;width:84px;overflow:hidden">
               <span style="width:100%;height:68px;background:#FAF8F5;flex-shrink:0;position:relative;display:block">${thumbInner}</span>
@@ -4639,7 +4628,7 @@ window.epRenderSpecs=function(){
     const ringStyle=isArmed?"outline:2px solid #7C3AED;outline-offset:1px":"";
     const thumb=img
       ? `<span style="width:22px;height:22px;border-radius:6px;flex-shrink:0;position:relative;display:inline-block;${ringStyle}">
-          <img onclick="event.stopPropagation();epSpecImgArm(${i})" src="${img}" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:6px;cursor:pointer"/>
+          <img loading="lazy" decoding="async" onclick="event.stopPropagation();epSpecImgArm(${i})" src="${img}" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:6px;cursor:pointer"/>
           <button onclick="event.stopPropagation();epSpecImgClear(${i})" title="移除照片" style="position:absolute;top:-6px;right:-6px;width:14px;height:14px;border-radius:50%;background:#C0392B;color:white;border:none;font-size:9px;line-height:1;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center">×</button>
         </span>`
       : `<span onclick="event.stopPropagation();epSpecImgArm(${i})" title="點一下，然後 Ctrl+V 貼上剪貼簿圖片" style="width:22px;height:22px;border-radius:6px;background:${isArmed?"#EDE4FB":"#F5EDE0"};flex-shrink:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:12px;${ringStyle}">📷</span>`;
@@ -4738,7 +4727,7 @@ window.epRenderTierColorPhotoSlots=function(){
       const esc=c.replace(/'/g,"\\'").replace(/"/g,"&quot;");
       const thumb=img
         ?`<span style="width:44px;height:44px;border-radius:8px;position:relative;display:inline-block">
-            <img onclick="event.stopPropagation();lbOpen('${img}')" src="${img}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;cursor:zoom-in"/>
+            <img loading="lazy" decoding="async" onclick="event.stopPropagation();lbOpen('${img}')" src="${img}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;cursor:zoom-in"/>
             <button onclick="event.stopPropagation();delete window.G.epTierColorImages['${esc}'];epRenderTierColorPhotoSlots()" style="position:absolute;top:-6px;right:-6px;width:16px;height:16px;border-radius:50%;background:#C0392B;color:white;border:none;font-size:9px;cursor:pointer;padding:0;line-height:1">×</button>
           </span>`
         :`<span onclick="epTierColorPhotoBrowse('${esc}')" style="width:44px;height:44px;border-radius:8px;background:#F5EDE0;display:flex;align-items:center;justify-content:center;font-size:16px;color:#B0906A;cursor:pointer">📷</span>`;
@@ -4962,7 +4951,7 @@ window.qaRenderSpecs=function(){
     const ringStyle=isArmed?"outline:2px solid #7C3AED;outline-offset:1px":"";
     const thumb=img
       ? `<span style="width:22px;height:22px;border-radius:6px;flex-shrink:0;position:relative;display:inline-block;${ringStyle}">
-          <img onclick="event.stopPropagation();qaSpecImgArm(${i})" src="${img}" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:6px;cursor:pointer"/>
+          <img loading="lazy" decoding="async" onclick="event.stopPropagation();qaSpecImgArm(${i})" src="${img}" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:6px;cursor:pointer"/>
           <button onclick="event.stopPropagation();qaSpecImgClear(${i})" title="移除照片" style="position:absolute;top:-6px;right:-6px;width:14px;height:14px;border-radius:50%;background:#C0392B;color:white;border:none;font-size:9px;line-height:1;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center">×</button>
         </span>`
       : `<span onclick="event.stopPropagation();qaSpecImgArm(${i})" title="點一下，然後 Ctrl+V 貼上剪貼簿圖片" style="width:22px;height:22px;border-radius:6px;background:${isArmed?"#EDE4FB":"#F5EDE0"};flex-shrink:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:12px;${ringStyle}">📷</span>`;
@@ -5038,7 +5027,7 @@ window.qaRenderTierColorPhotoSlots=function(){
       const esc=c.replace(/'/g,"\\'").replace(/"/g,"&quot;");
       const thumb=img
         ?`<span style="width:44px;height:44px;border-radius:8px;position:relative;display:inline-block">
-            <img onclick="event.stopPropagation();lbOpen('${img}')" src="${img}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;cursor:zoom-in"/>
+            <img loading="lazy" decoding="async" onclick="event.stopPropagation();lbOpen('${img}')" src="${img}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;cursor:zoom-in"/>
             <button onclick="event.stopPropagation();delete window.G.qaTierColorImages['${esc}'];qaRenderTierColorPhotoSlots()" style="position:absolute;top:-6px;right:-6px;width:16px;height:16px;border-radius:50%;background:#C0392B;color:white;border:none;font-size:9px;cursor:pointer;padding:0;line-height:1">×</button>
           </span>`
         :`<span onclick="qaTierColorPhotoBrowse('${esc}')" style="width:44px;height:44px;border-radius:8px;background:#F5EDE0;display:flex;align-items:center;justify-content:center;font-size:16px;color:#B0906A;cursor:pointer">📷</span>`;
@@ -5389,14 +5378,12 @@ window.renderTotalsCrossCheck=function(){
       custGroupMap[key].push(o);
     });
     let custPageTotal=0;
-    // 折扣一律從「全部訂單」裡找，不要被目前的趟次篩選限制住，避免這個核對工具本身也踩到同樣的bug
-    const findDiscByKey=(key)=>{
-      const o=(window.G.orders||[]).find(x=>x.sharedDiscount>0&&(x.customerId||x.communityName||x.buyerName||"未知")===key);
-      return o?.sharedDiscount||0;
-    };
+    // 折扣要跟著趟次篩選走：只在這個客戶「目前這批」(list)裡面找並加總，不要搜尋全部訂單，
+    // 不然舊趟次的折扣會一直錯誤地影響到之後每一趟的總額，這個核對工具本身也要遵守同一套規則
+    const findDiscByList=(list)=>list.filter(o=>o.sharedDiscount>0).reduce((s,o)=>s+o.sharedDiscount,0);
     Object.keys(custGroupMap).forEach(key=>{
       const list=custGroupMap[key];
-      const disc=findDiscByKey(key);
+      const disc=findDiscByList(list);
       custPageTotal+=list.reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0)-disc;
     });
     // 統計頁：用另一個獨立的 statsTripFilter 篩選
@@ -5425,7 +5412,7 @@ window.renderTotalsCrossCheck=function(){
       const perCustomerDiffs=[];
       custKeys.forEach(key=>{
         const custList=custGroupMap[key]||[];
-        const custDisc=findDiscByKey(key);
+        const custDisc=findDiscByList(custList);
         const custAmt=custList.reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0)-custDisc;
         const statsList=statsOrders.filter(o=>(o.customerId||o.communityName||o.buyerName||"未知")===key);
         const statsDisc=statsDiscMap[key]||0;
@@ -6529,6 +6516,7 @@ window.saveEditProd=async function(){
   const promoGroup=document.getElementById("ep-promo-group")?.value.trim()||"";
   const weight=parseFloat(document.getElementById("ep-weight")?.value)||0;
   const upd={name,currency:editCur,currencySymbol:CURR[editCur]?.symbol||"₩",paymentMethod:editPm,foreignAmount:fa,originalAmount:originalAmt,promoDivisor,promoPct,promoGroup,beforeTax,afterTax,finalPrice:price,profit,margin,twPrice,rivalPrice,rivalPrices,url,specs:newSpecs,aliases:newAliases,note:newNote,catKey:newCatKey,category:newCatObj.label,emoji:newCatObj.emoji,flags:newFlags,channel:window.G.editChannel||"",weight};
+  const oldId=m.id; // 一定要在下面用到 oldId 之前先宣告好，不然會直接丟出錯誤、卡在上傳中出不來
   const saveBtn2=document.querySelector('button[onclick="saveEditProd()"]');
   const origBtnHtml2=saveBtn2?.innerHTML;
   if(saveBtn2){saveBtn2.disabled=true;saveBtn2.innerHTML="📤 上傳照片中…";}
@@ -6543,7 +6531,6 @@ window.saveEditProd=async function(){
   }
   if(saveBtn2){saveBtn2.innerHTML="💾 儲存中…";}
   // 類別改變 或 手動調整編號時，更新料號
-  const oldId=m.id;
   let newId=oldId;
   const manualCode=(document.getElementById("ep-code")?.value||"").trim().toUpperCase();
   if(newCatKey!==(m.catKey||"food")){
@@ -6789,7 +6776,7 @@ window.moRenderSpecTierColors=function(){
     colors.map(color=>{
       const img=colorImg[color];
       const imgHtml=img
-        ?`<img src="${img}" draggable="false" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:8px"/>`
+        ?`<img loading="lazy" decoding="async" src="${img}" draggable="false" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:8px"/>`
         :`<span style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:20px;color:#C5A880">🎨</span>`;
       const colorEsc=color.replace(/'/g,"\\'");
       return `<div onclick="window.moSelectSpecTierColor('${colorEsc}')" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px;border-radius:12px;font-size:13px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer;width:84px">
@@ -6810,7 +6797,7 @@ window.moSelectSpecTierColor=function(color){
     </div>`+
     matches.map(t=>{
       const size=t.spec.split(" / ").slice(1).join(" / ");
-      const zoomBtn=t.img?`<span onclick="event.stopPropagation();lbOpen('${t.img}')" style="position:absolute;inset:0;cursor:zoom-in"><img src="${t.img}" draggable="false" style="width:100%;height:100%;object-fit:cover;display:block"/><span style="position:absolute;bottom:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,0.55);color:white;font-size:10px;display:flex;align-items:center;justify-content:center;pointer-events:none">🔍</span></span>`
+      const zoomBtn=t.img?`<span onclick="event.stopPropagation();lbOpen('${t.img}')" style="position:absolute;inset:0;cursor:zoom-in"><img loading="lazy" decoding="async" src="${t.img}" draggable="false" style="width:100%;height:100%;object-fit:cover;display:block"/><span style="position:absolute;bottom:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,0.55);color:white;font-size:10px;display:flex;align-items:center;justify-content:center;pointer-events:none">🔍</span></span>`
         :`<span style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:20px;color:#C5A880">📐</span>`;
       return `<div class="mo-spec-card" data-spec="${t.spec.replace(/"/g,"&quot;")}" style="display:flex;flex-direction:column;align-items:stretch;border-radius:12px;font-size:12px;font-weight:700;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;width:84px;overflow:hidden">
         <span style="width:100%;height:68px;background:#FAF8F5;flex-shrink:0;position:relative;display:block">${zoomBtn}</span>
@@ -7890,7 +7877,19 @@ window.eoRenderSuggestions=function(){
   const hasDiscount=(parseFloat(discEl?.value)||0)>0;
   const hasFreeShip=fsEl?.checked;
   const suggestions=[];
-  if(rawTotal>=800&&!hasDiscount)suggestions.push({label:"這筆滿 $800 了，要套用「新客滿800折50」的折扣嗎？",action:"eoApplySuggestedDiscount()"});
+  // 「新客滿800折50」是給第一次上門的新客人用的優惠，如果這個客戶之前已經用過一次了，
+  // 之後再滿800也不用一直跳出來提示套用，不然變成常客每次都在提醒一個只給新客的折扣
+  const custId=window.G.activeEordCustId;
+  const custName=window.G.activeEordCustName||"";
+  const custLine=window.G.activeEordCustLine||"";
+  const usedNewCustomerDiscount=(window.G.orders||[]).some(o=>{
+    if(!(o.sharedDiscountReason||"").includes("新客滿800折50"))return false;
+    if(custId&&o.customerId)return o.customerId===custId;
+    const on=(o.communityName||o.buyerName||"").trim().toLowerCase();
+    const ol=(o.lineName||"").trim().toLowerCase();
+    return (custName&&on===custName)||(custLine&&ol===custLine&&custLine!=="");
+  });
+  if(rawTotal>=800&&!hasDiscount&&!usedNewCustomerDiscount)suggestions.push({label:"這筆滿 $800 了，要套用「新客滿800折50」的折扣嗎？",action:"eoApplySuggestedDiscount()"});
   if(rawTotal>=3500&&!hasFreeShip)suggestions.push({label:"這筆滿 $3500 了，要套用免運嗎？",action:"eoApplySuggestedFreeShipping()"});
   if(!suggestions.length){banner.style.display="none";banner.innerHTML="";return;}
   banner.style.display="block";
@@ -8595,7 +8594,7 @@ window.renderPromoGroups=function(){
         <div style="flex-shrink:0">
           ${groupImg
             ?`<div style="position:relative;display:inline-block">
-                <img src="${groupImg}" onclick="lbOpen(this.src)" style="width:110px;height:auto;border-radius:10px;border:1px solid #E8D5B0;display:block;cursor:zoom-in"/>
+                <img loading="lazy" decoding="async" src="${groupImg}" onclick="lbOpen(this.src)" style="width:110px;height:auto;border-radius:10px;border:1px solid #E8D5B0;display:block;cursor:zoom-in"/>
                 <div style="position:absolute;top:4px;right:4px;display:flex;gap:3px">
                   <label onclick="event.stopPropagation()" title="更換圖片" style="width:20px;height:20px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.92);border-radius:50%;cursor:pointer;font-size:9px;box-shadow:0 1px 4px rgba(0,0,0,0.25)">✏️<input type="file" accept="image/*" style="display:none" onchange="pgUploadImage(this,'${gDocId}')"/></label>
                   <button onclick="event.stopPropagation();pgRemoveImage('${gDocId}')" title="移除圖片" style="width:20px;height:20px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.92);border:none;border-radius:50%;cursor:pointer;color:#C0392B;font-size:11px;font-weight:900;padding:0;box-shadow:0 1px 4px rgba(0,0,0,0.25)">×</button>
@@ -9871,7 +9870,7 @@ function renderSavedReceiptList(list){
       (r.refundAmount&&!r.immediateRefund)?'<span style="font-size:9px;font-weight:700;color:#9C6B2E;background:#FDF3E0;border:1px solid #F0D9A8;border-radius:6px;padding:1px 5px">事後退稅單</span>':"",
     ].filter(Boolean).join(" ");
     return `<div onclick="receiptViewSaved('${r.id}')" style="display:flex;gap:10px;align-items:center;border:1px solid #E8D5B0;border-radius:10px;padding:8px 10px;margin-bottom:8px;cursor:pointer;background:white">
-      <img src="${thumb}" style="width:44px;height:44px;object-fit:cover;border-radius:6px;flex-shrink:0;background:#FAF8F5"/>
+      <img loading="lazy" decoding="async" src="${thumb}" style="width:44px;height:44px;object-fit:cover;border-radius:6px;flex-shrink:0;background:#FAF8F5"/>
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:700;color:#3D2010">${(r.store||"未命名店家").replace(/</g,"&lt;")}</div>
         <div style="font-size:10px;color:#9C7A5A">${r.date||"未填日期"}・${itemCount}項${pageCount>1?`・${pageCount}頁`:""}${badges?"　"+badges:""}</div>
@@ -10037,7 +10036,7 @@ function receiptRenderDraftImages(){
   if(!el)return;
   const images=window.G.receiptDraftImages||[];
   el.innerHTML=images.map((img,i)=>
-    `<img src="${img}" style="width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid #E8D5B0;flex-shrink:0" title="第${i+1}頁"/>`
+    `<img loading="lazy" decoding="async" src="${img}" style="width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid #E8D5B0;flex-shrink:0" title="第${i+1}頁"/>`
   ).join("");
 }
 
@@ -10244,8 +10243,8 @@ window.receiptViewSaved=function(id){
   const images=(r.images&&r.images.length)?r.images:(r.imgB64?[r.imgB64]:[]);
   const imagesHtml=images.length
     ?(images.length===1
-        ?`<img src="${images[0]}" style="width:100%;border-radius:10px;margin-bottom:12px;max-height:280px;object-fit:contain;background:#FAF8F5"/>`
-        :`<div style="display:flex;gap:8px;overflow-x:auto;margin-bottom:12px;padding-bottom:4px">${images.map((img,i)=>`<img src="${img}" style="height:140px;border-radius:10px;object-fit:contain;background:#FAF8F5;flex-shrink:0" title="第${i+1}頁"/>`).join("")}</div>`
+        ?`<img loading="lazy" decoding="async" src="${images[0]}" style="width:100%;border-radius:10px;margin-bottom:12px;max-height:280px;object-fit:contain;background:#FAF8F5"/>`
+        :`<div style="display:flex;gap:8px;overflow-x:auto;margin-bottom:12px;padding-bottom:4px">${images.map((img,i)=>`<img loading="lazy" decoding="async" src="${img}" style="height:140px;border-radius:10px;object-fit:contain;background:#FAF8F5;flex-shrink:0" title="第${i+1}頁"/>`).join("")}</div>`
       )
     :"";
   body.innerHTML=`
@@ -11102,6 +11101,10 @@ window.openEditOrd=function(oid){
   if(activeTabPage){window.G._scrollBeforeModal=window.scrollY;window.G._eoHiddenTab=activeTabPage;activeTabPage.classList.remove("active");}
   const cid=o.customerId||"";
   window.G.activeEordCustId=cid;
+  const cname=(o.communityName||o.buyerName||"").trim().toLowerCase();
+  const cline=(o.lineName||"").trim().toLowerCase();
+  window.G.activeEordCustName=cname;
+  window.G.activeEordCustLine=cline;
   window.G.eoPendingAdd=[];
   window.G.eoSessionPaymentMethod=null;
   window.G.moSelectedTripId=null;
@@ -11109,8 +11112,6 @@ window.openEditOrd=function(oid){
   if(typeof eoSetType==="function")eoSetType("onsite");
   const sr=document.getElementById("eo-prod-search");if(sr)sr.value="";
   const rr=document.getElementById("eo-prod-results");if(rr)rr.style.display="none";
-  const cname=(o.communityName||o.buyerName||"").trim().toLowerCase();
-  const cline=(o.lineName||"").trim().toLowerCase();
   const cOrders=getTripOrders().filter(x=>{
     if(cid&&x.customerId===cid)return true;
     if(!cid){
@@ -11735,19 +11736,14 @@ window.renderCustomers=function(){
       if(cLine&&oLine&&cLine===oLine)return true;
       return false;
     }).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
-    // 折扣要從這個客戶「全部」訂單裡找，不能只在目前趟次篩選出來的這批裡面找，
-    // 而且要「加總」所有不同批次的折扣紀錄，不是只抓第一筆——因為同一個客戶完全可能
-    // 在不同趟次各自拿過折扣（例如六月一次、八月一次），每一筆都是真實發生過的，都該算進去
-    const cDiscOrders=(window.G.orders||[]).filter(o=>{
-      if(!(o.sharedDiscount>0))return false;
-      if(o.customerId)return o.customerId===c.id;
-      const oName=(o.communityName||o.buyerName||"").trim().toLowerCase();
-      const oLine=(o.lineName||"").trim().toLowerCase();
-      return (cName&&oName&&cName===oName)||(cLine&&oLine&&cLine===oLine);
-    });
+    // 折扣要跟著趟次篩選走：只在「目前篩選出來的這批訂單」(cO)裡面找，不要去搜尋這個客戶
+    // 從古至今全部趟次的訂單——不然舊趟次的折扣會一直錯誤地影響到之後每一趟的總額。
+    // 但同一個篩選範圍內，如果有多筆不同批次的折扣紀錄（例如切到「全部趟次」時，
+    // 六月一筆、八月一筆），還是要「加總」，不能只抓第一筆
+    const cDiscOrders=cO.filter(o=>o.sharedDiscount>0);
     const cDisc=cDiscOrders.reduce((s,o)=>s+o.sharedDiscount,0);
     // 打幾折：跟折扣(NT$)不同，百分比沒辦法簡單加總多筆，抓最近一次設定的折數套用到這個客戶的總額上
-    const cPctOrder=(window.G.orders||[]).find(o=>{
+    const cPctOrder=cO.find(o=>{
       if(!(o.sharedDiscountPercent>0&&o.sharedDiscountPercent<10))return false;
       if(o.customerId)return o.customerId===c.id;
       const oName=(o.communityName||o.buyerName||"").trim().toLowerCase();
@@ -12126,20 +12122,12 @@ window.renderInvoice=function(){
     const statusColor={pending:"#F59E0B",deposit:"#9333EA",settled:"#10B981",shipped:"#3B82F6",mixed:"#9C7A5A",none:"#0277BD"};
     const statusLabel={pending:"待訂金",deposit:"已付訂金",settled:"已付尾款",shipped:"已寄出",mixed:"狀態不一",none:"僅待報價"};
     const totalDeposit=b.orders.reduce((s,o)=>s+(o.depositAmt||0),0);
-    // 折扣要從這個買家「全部」訂單裡找、而且要加總所有不同批次的折扣紀錄，
-    // 理由跟客戶頁那邊完全一樣：同一個買家可能在不同趟次各自拿過折扣，每一筆都該算
-    const bDiscOrders=(window.G.orders||[]).filter(o=>{
-      if(!(o.sharedDiscount>0))return false;
-      const key=o.customerId||o.communityName||o.buyerName||"未知";
-      return key===b.key;
-    });
+    // 折扣要跟著趟次篩選走：只在「目前這批」(b.orders)裡面找，不要搜尋這個買家從古至今全部訂單，
+    // 不然舊趟次的折扣會一直錯誤地影響到之後每一趟的總額。同一批範圍內有多筆不同折扣紀錄還是要加總
+    const bDiscOrders=b.orders.filter(o=>o.sharedDiscount>0);
     const bDisc=bDiscOrders.reduce((s,o)=>s+o.sharedDiscount,0);
-    // 打幾折：抓這個買家身上設定過的折數，套用到總額上
-    const bPctOrder=(window.G.orders||[]).find(o=>{
-      if(!(o.sharedDiscountPercent>0&&o.sharedDiscountPercent<10))return false;
-      const key=o.customerId||o.communityName||o.buyerName||"未知";
-      return key===b.key;
-    });
+    // 打幾折：抓這個買家在目前這批裡設定過的折數，套用到總額上
+    const bPctOrder=b.orders.find(o=>o.sharedDiscountPercent>0&&o.sharedDiscountPercent<10);
     const bShipping=b.orders.find(o=>o.freeShipping)?.shippingCost||0;
     const totalAmt=(bPctOrder?Math.round(b.total*bPctOrder.sharedDiscountPercent/10):b.total)-bDisc;
     const remaining=totalAmt-totalDeposit;
@@ -12602,7 +12590,7 @@ window.bindCustomerLineUser=function(custId,userId,pictureUrl){
 // 小頭像縮圖，讓「已綁定／已比對到」的狀態文字旁邊也能顯示大頭貼，多一層視覺確認
 window.lineAvatarSmallHtml=function(pictureUrl){
   return pictureUrl
-    ?`<img src="${pictureUrl}" onclick="event.stopPropagation();lbOpen('${pictureUrl}')" style="width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:5px;cursor:zoom-in"/>`
+    ?`<img loading="lazy" decoding="async" src="${pictureUrl}" onclick="event.stopPropagation();lbOpen('${pictureUrl}')" style="width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:5px;cursor:zoom-in"/>`
     :"";
 };
 // 萬一之前綁錯人，可以取消綁定，下次傳送時會重新讓你選一次
@@ -12669,7 +12657,7 @@ window.openSendDepositLine=async function(){
       pickerEl.innerHTML=`<div style="font-size:11px;font-weight:700;color:#92400E;margin-bottom:8px">👇 請選擇正確的LINE帳號</div>`+
         matches.map(u=>{
           const uidShort=(u.userId||"").slice(0,6)+"..."+(u.userId||"").slice(-4);
-          const avatar=u.pictureUrl?`<img src="${u.pictureUrl}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0"/>`:`<div style="width:32px;height:32px;border-radius:50%;background:#E8D5B0;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px">👤</div>`;
+          const avatar=u.pictureUrl?`<img loading="lazy" decoding="async" src="${u.pictureUrl}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0"/>`:`<div style="width:32px;height:32px;border-radius:50%;background:#E8D5B0;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px">👤</div>`;
           const status=u.statusMessage?`<div style="font-size:10px;color:#9C7A5A">${u.statusMessage}</div>`:"";
           const extra=[];
           if(u.followedAt||u.createdAt||u.firstFollowedAt){
@@ -12851,27 +12839,11 @@ window.copyCustOrder=function(cid){
   });
   if(!cO.length){showToast("此客戶沒有訂單","warning");return;}
   const name=c.communityName||c.lineName||"客戶";
-  // 折扣要從這個客戶「全部」訂單裡找，不能只在目前趟次篩選出來的這批裡面找
-  const discOrder=(window.G.orders||[]).find(o=>{
-    if(!(o.sharedDiscount>0))return false;
-    if(o.customerId)return o.customerId===cid;
-    const nm=(c.communityName||"").trim().toLowerCase();
-    const ln=(c.lineName||"").trim().toLowerCase();
-    const on=(o.communityName||o.buyerName||"").trim().toLowerCase();
-    const ol=(o.lineName||"").trim().toLowerCase();
-    return (nm&&nm===on)||(ln&&ln===ol);
-  });
-  const sharedDiscount=discOrder?.sharedDiscount||0;
-  const sharedDiscountReason=discOrder?.sharedDiscountReason||"";
-  const pctOrder=(window.G.orders||[]).find(o=>{
-    if(!(o.sharedDiscountPercent>0&&o.sharedDiscountPercent<10))return false;
-    if(o.customerId)return o.customerId===cid;
-    const nm=(c.communityName||"").trim().toLowerCase();
-    const ln=(c.lineName||"").trim().toLowerCase();
-    const on=(o.communityName||o.buyerName||"").trim().toLowerCase();
-    const ol=(o.lineName||"").trim().toLowerCase();
-    return (nm&&nm===on)||(ln&&ln===ol);
-  });
+  // 折扣要跟著趟次篩選走：只在cO（目前篩選出來的這批）裡面找，同一批裡有多筆不同折扣紀錄要加總
+  const discOrders=cO.filter(o=>o.sharedDiscount>0);
+  const sharedDiscount=discOrders.reduce((s,o)=>s+o.sharedDiscount,0);
+  const sharedDiscountReason=discOrders.map(o=>o.sharedDiscountReason).filter(Boolean).join("、");
+  const pctOrder=cO.find(o=>o.sharedDiscountPercent>0&&o.sharedDiscountPercent<10);
   const grouped=window.buildGroupedOrderLines(cO);
   const lines=grouped.lines;
   const total=grouped.total;
@@ -12913,19 +12885,11 @@ window.copyBuyerOrder=function(buyerKey){
   const buyerOrders=allBuyerOrders.filter(o=>o.status!=="shipped");
   if(!buyerOrders.length){showToast("這位客人的品項都已經出貨、結清了，沒有還需要收款的部分","warning");return;}
   const name=buyerOrders[0].communityName||buyerOrders[0].buyerName||"買家";
-  // 折扣要從這個買家「全部」訂單裡找，不能只在目前趟次篩選出來的這批裡面找
-  const discOrder=(window.G.orders||[]).find(o=>{
-    if(!(o.sharedDiscount>0))return false;
-    const key=o.customerId||o.communityName||o.buyerName||"未知";
-    return key===buyerKey;
-  });
-  const sharedDisc=discOrder?.sharedDiscount||0;
-  const sharedDiscReason=discOrder?.sharedDiscountReason||"";
-  const pctOrder=(window.G.orders||[]).find(o=>{
-    if(!(o.sharedDiscountPercent>0&&o.sharedDiscountPercent<10))return false;
-    const key=o.customerId||o.communityName||o.buyerName||"未知";
-    return key===buyerKey;
-  });
+  // 折扣要跟著趟次篩選走：只在allBuyerOrders（目前這批）裡面找，同一批裡有多筆不同折扣紀錄要加總
+  const discOrders=allBuyerOrders.filter(o=>o.sharedDiscount>0);
+  const sharedDisc=discOrders.reduce((s,o)=>s+o.sharedDiscount,0);
+  const sharedDiscReason=discOrders.map(o=>o.sharedDiscountReason).filter(Boolean).join("、");
+  const pctOrder=allBuyerOrders.find(o=>o.sharedDiscountPercent>0&&o.sharedDiscountPercent<10);
   const hasFreeShipping=allBuyerOrders.some(o=>o.freeShipping);
   const shipReason=allBuyerOrders.find(o=>o.freeShipping)?.freeShippingReason||"";
   const grouped=window.buildGroupedOrderLines(buyerOrders);
@@ -12978,20 +12942,11 @@ window.openSendSettlement=async function(buyerKey){
   const first=buyerOrders[0];
   const c=window.G.customers.find(x=>x.id===first.customerId);
   const custName=c?(c.communityName||c.lineName||"客人"):(first.communityName||first.buyerName||"客人");
-  // 折扣/免運是「整批共用」的設定，不能只在目前趟次篩選出來的這批裡面找，
-  // 一定要從這個買家「全部」訂單裡找，才不會因為篩選範圍改變而忽有忽無
-  const discOrder2=(window.G.orders||[]).find(o=>{
-    if(!(o.sharedDiscount>0))return false;
-    const key=o.customerId||o.communityName||o.buyerName||"未知";
-    return key===buyerKey;
-  });
-  const sharedDisc=discOrder2?.sharedDiscount||0;
-  const sharedDiscReason=discOrder2?.sharedDiscountReason||"";
-  const pctOrder=(window.G.orders||[]).find(o=>{
-    if(!(o.sharedDiscountPercent>0&&o.sharedDiscountPercent<10))return false;
-    const key=o.customerId||o.communityName||o.buyerName||"未知";
-    return key===buyerKey;
-  });
+  // 折扣要跟著趟次篩選走：只在allBuyerOrders（目前這批）裡面找，同一批裡有多筆不同折扣紀錄要加總
+  const discOrders2=allBuyerOrders.filter(o=>o.sharedDiscount>0);
+  const sharedDisc=discOrders2.reduce((s,o)=>s+o.sharedDiscount,0);
+  const sharedDiscReason=discOrders2.map(o=>o.sharedDiscountReason).filter(Boolean).join("、");
+  const pctOrder=allBuyerOrders.find(o=>o.sharedDiscountPercent>0&&o.sharedDiscountPercent<10);
   const hasFreeShipping=allBuyerOrders.some(o=>o.freeShipping);
   const shipReason=buyerOrders.find(o=>o.freeShipping)?.freeShippingReason||"";
   const grouped2=window.buildGroupedOrderLines(buyerOrders);
@@ -13058,7 +13013,7 @@ window.openSendSettlement=async function(buyerKey){
       pickerEl.innerHTML=`<div style="font-size:11px;font-weight:700;color:#92400E;margin-bottom:8px">👇 請選擇正確的LINE帳號</div>`+
         matches.map(u=>{
           const uidShort=(u.userId||"").slice(0,6)+"..."+(u.userId||"").slice(-4);
-          const avatar=u.pictureUrl?`<img src="${u.pictureUrl}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0"/>`:`<div style="width:32px;height:32px;border-radius:50%;background:#E8D5B0;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px">👤</div>`;
+          const avatar=u.pictureUrl?`<img loading="lazy" decoding="async" src="${u.pictureUrl}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0"/>`:`<div style="width:32px;height:32px;border-radius:50%;background:#E8D5B0;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px">👤</div>`;
           const status=u.statusMessage?`<div style="font-size:10px;color:#9C7A5A">${u.statusMessage}</div>`:"";
           return `<div data-uid="${u.userId}" data-uname="${(u.displayName||"").replace(/"/g,"&quot;")}" data-upic="${(u.pictureUrl||"").replace(/"/g,"&quot;")}" onclick="window.ssSelectLineUser(this.dataset.uid,this.dataset.uname,this.dataset.upic)" ontouchend="event.preventDefault();window.ssSelectLineUser(this.dataset.uid,this.dataset.uname,this.dataset.upic)" style="display:flex;align-items:center;gap:8px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer">
             ${avatar}
@@ -13587,6 +13542,9 @@ window.doQuickAddOrder=function(custId, custName){
   const activeTabPage=document.querySelector(".tab-page.active");
   if(activeTabPage){window.G._scrollBeforeModal=window.scrollY;window.G._eoHiddenTab=activeTabPage;activeTabPage.classList.remove("active");}
   window.G.activeEordCustId=custId;
+  const custRec=window.G.customers.find(x=>x.id===custId);
+  window.G.activeEordCustName=(custRec?.communityName||"").trim().toLowerCase();
+  window.G.activeEordCustLine=(custRec?.lineName||"").trim().toLowerCase();
   window.G.eoPendingAdd=[];
   window.G.eoSessionPaymentMethod=null;
   window.G.moSelectedTripId=null;
@@ -13920,7 +13878,7 @@ window.openLineNotify=async function(custId){
         pickerEl.innerHTML=`<div style="font-size:11px;font-weight:700;color:#92400E;margin-bottom:8px">👇 請選擇正確的LINE帳號</div>`+
           matches.map((u,i)=>{
             const uidShort=(u.userId||"").slice(0,6)+"..."+(u.userId||"").slice(-4);
-            const avatar=u.pictureUrl?`<img src="${u.pictureUrl}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0"/>`:`<div style="width:32px;height:32px;border-radius:50%;background:#E8D5B0;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px">👤</div>`;
+            const avatar=u.pictureUrl?`<img loading="lazy" decoding="async" src="${u.pictureUrl}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0"/>`:`<div style="width:32px;height:32px;border-radius:50%;background:#E8D5B0;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px">👤</div>`;
             const status=u.statusMessage?`<div style="font-size:10px;color:#9C7A5A">${u.statusMessage}</div>`:"";
             return `<div data-uid="${u.userId}" data-uname="${(u.displayName||"").replace(/"/g,"&quot;")}" data-upic="${(u.pictureUrl||"").replace(/"/g,"&quot;")}" onclick="window.lnSelectLineUser(this.dataset.uid,this.dataset.uname,this.dataset.upic)" style="display:flex;align-items:center;gap:8px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer">
               ${avatar}
@@ -13996,7 +13954,7 @@ window.lnManualSearch=function(keyword){
   if(!matches.length){resultsEl.innerHTML=`<div style="font-size:11px;color:#9C7A5A;padding:6px 2px">找不到符合的LINE用戶</div>`;return;}
   resultsEl.innerHTML=matches.map(u=>{
     const uidShort=(u.userId||"").slice(0,6)+"..."+(u.userId||"").slice(-4);
-    const avatar=u.pictureUrl?`<img src="${u.pictureUrl}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0"/>`:`<div style="width:32px;height:32px;border-radius:50%;background:#E8D5B0;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px">👤</div>`;
+    const avatar=u.pictureUrl?`<img loading="lazy" decoding="async" src="${u.pictureUrl}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0"/>`:`<div style="width:32px;height:32px;border-radius:50%;background:#E8D5B0;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px">👤</div>`;
     const status=u.statusMessage?`<div style="font-size:10px;color:#9C7A5A">${u.statusMessage}</div>`:"";
     return `<div data-uid="${u.userId}" data-uname="${(u.displayName||"").replace(/"/g,"&quot;")}" data-upic="${(u.pictureUrl||"").replace(/"/g,"&quot;")}" onclick="window.lnSelectLineUser(this.dataset.uid,this.dataset.uname,this.dataset.upic)" style="display:flex;align-items:center;gap:8px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer">
       ${avatar}
@@ -14115,7 +14073,7 @@ window.openSendQuote=async function(oid){
       pickerEl.innerHTML=`<div style="font-size:11px;font-weight:700;color:#92400E;margin-bottom:8px">👇 請選擇正確的LINE帳號</div>`+
         matches.map(u=>{
           const uidShort=(u.userId||"").slice(0,6)+"..."+(u.userId||"").slice(-4);
-          const avatar=u.pictureUrl?`<img src="${u.pictureUrl}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0"/>`:`<div style="width:32px;height:32px;border-radius:50%;background:#E8D5B0;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px">👤</div>`;
+          const avatar=u.pictureUrl?`<img loading="lazy" decoding="async" src="${u.pictureUrl}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0"/>`:`<div style="width:32px;height:32px;border-radius:50%;background:#E8D5B0;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px">👤</div>`;
           const status=u.statusMessage?`<div style="font-size:10px;color:#9C7A5A">${u.statusMessage}</div>`:"";
           return `<div data-uid="${u.userId}" data-uname="${(u.displayName||"").replace(/"/g,"&quot;")}" data-upic="${(u.pictureUrl||"").replace(/"/g,"&quot;")}" onclick="window.sqSelectLineUser(this.dataset.uid,this.dataset.uname,this.dataset.upic)" style="display:flex;align-items:center;gap:8px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer">
             ${avatar}
@@ -15336,7 +15294,7 @@ window.swUpdate = function(){
 
 <!-- 圖片放大檢視 Modal -->
 <div id="modal-img-lightbox" class="modal-overlay" onclick="lbBgClick(event)" style="display:none;position:fixed;inset:0;z-index:99;background:rgba(0,0,0,0.8);align-items:center;justify-content:center;padding:20px;overflow:hidden">
-  <img id="img-lightbox-content" src="" style="max-width:100%;max-height:100%;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,0.5);touch-action:none;will-change:transform" ontouchstart="lbTouchStart(event)" ontouchmove="lbTouchMove(event)" ontouchend="lbTouchEnd(event)"/>
+  <img loading="lazy" decoding="async" id="img-lightbox-content" src="" style="max-width:100%;max-height:100%;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,0.5);touch-action:none;will-change:transform" ontouchstart="lbTouchStart(event)" ontouchmove="lbTouchMove(event)" ontouchend="lbTouchEnd(event)"/>
   <button onclick="event.stopPropagation();lbClose()" style="position:fixed;top:20px;right:20px;font-size:28px;color:white;background:rgba(0,0,0,0.4);border:none;border-radius:50%;width:40px;height:40px;cursor:pointer;z-index:2">×</button>
 </div>
 <script>
