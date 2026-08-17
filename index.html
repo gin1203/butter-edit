@@ -1637,21 +1637,21 @@ body.live-mode .hide-live { display: none !important; }
     <div id="qa-live-section" style="display:none">
       <div style="background:#FFF9E6;border:2px solid #F59E0B;border-radius:14px;padding:16px;margin-bottom:14px">
         <div style="font-size:12px;font-weight:900;color:#B45309;margin-bottom:12px">⚡ 連線極速模式</div>
-        <!-- 商品圖（簡化版） -->
-        <div style="margin-bottom:12px">
-          <label for="qa-live-img" style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;height:70px;border:2px dashed #F59E0B;border-radius:10px;cursor:pointer;background:white;color:#B45309;font-size:12px;font-weight:700" id="qa-live-img-label">
-            <span style="font-size:24px">📷</span>商品圖（選填）
+        <!-- 商品圖（縮小，當計算機用的時候不是重點） -->
+        <div style="margin-bottom:8px">
+          <label for="qa-live-img" style="display:flex;align-items:center;justify-content:center;gap:5px;width:100%;height:32px;border:1.5px dashed #F0D9A8;border-radius:8px;cursor:pointer;background:white;color:#C9A876;font-size:11px;font-weight:600" id="qa-live-img-label">
+            <span style="font-size:13px">📷</span>商品圖（選填）
           </label>
           <input type="file" id="qa-live-img" accept="image/*" style="display:none" onchange="qaLiveImgPick(this)"/>
           <div id="qa-live-img-preview" style="display:none;margin-top:6px;border-radius:8px;overflow:hidden;text-align:center">
-            <img loading="lazy" decoding="async" id="qa-live-img-thumb" style="max-width:100%;max-height:140px;object-fit:contain;border-radius:8px"/>
+            <img loading="lazy" decoding="async" id="qa-live-img-thumb" style="max-width:100%;max-height:90px;object-fit:contain;border-radius:8px"/>
             <button onclick="qaLiveImgClear()" style="display:block;width:100%;margin-top:4px;background:#FDEDEC;color:#C0392B;border:1px solid #F1948A;border-radius:8px;padding:6px;font-size:12px;font-weight:700;cursor:pointer">✕ 移除圖片</button>
           </div>
         </div>
-        <!-- 品名 -->
-        <div style="position:relative;margin-bottom:10px">
-          <input type="text" id="qa-live-name" placeholder="品名（例如：農心 쫄병 안성탕면）" oninput="qaLiveCalc()" style="width:100%;background:white;border:1.5px solid #F59E0B;border-radius:10px;padding:12px 40px 12px 14px;font-size:15px;font-weight:700;outline:none;box-sizing:border-box"/>
-          <button onclick="document.getElementById('qa-live-name').value='';qaLiveCalc();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#F59E0B;font-size:18px;line-height:1;padding:0">✕</button>
+        <!-- 品名（縮小，計算機模式下不是重點，選填即可） -->
+        <div style="position:relative;margin-bottom:8px">
+          <input type="text" id="qa-live-name" placeholder="品名（選填）" oninput="qaLiveCalc()" style="width:100%;background:white;border:1px solid #F0D9A8;border-radius:8px;padding:7px 32px 7px 10px;font-size:12px;font-weight:600;outline:none;box-sizing:border-box;color:#B8926A"/>
+          <button onclick="document.getElementById('qa-live-name').value='';qaLiveCalc();" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#D9BE8F;font-size:14px;line-height:1;padding:0">✕</button>
           <div id="qa-live-brand-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;z-index:99999;background:white;border:1.5px solid #C5A880;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,0.2);max-height:280px;overflow-y:auto"></div>
         </div>
         <!-- 幣別切換 -->
@@ -1676,14 +1676,14 @@ body.live-mode .hide-live { display: none !important; }
           <span id="qa-live-promo-badge" style="font-size:10px;font-weight:700;color:#166534;background:#DCFCE7;border-radius:6px;padding:2px 6px"></span>
           <button type="button" onclick="window.qaLiveCancelPromo()" style="font-size:10px;font-weight:700;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;border-radius:6px;padding:2px 8px;cursor:pointer">✕ 取消折扣，還原原價</button>
         </div>
-        <!-- 韓幣 -->
+        <!-- 韓幣（放大，這是計算機模式的主輸入欄） -->
         <div style="position:relative;margin-bottom:10px">
-          <input type="text" inputmode="decimal" id="qa-live-amt" placeholder="韓幣金額 ₩" oninput="if(!this.value){window.G.qaLiveCustomPrice=null;const qlc0=document.getElementById('qa-live-custom');if(qlc0)qlc0.value='';}qaLiveCalc()" style="width:100%;background:white;border:1.5px solid #F59E0B;border-radius:10px;padding:12px 150px 12px 14px;font-size:20px;font-weight:900;outline:none;box-sizing:border-box"/>
-          <div style="position:absolute;right:8px;top:50%;transform:translateY(-50%);display:flex;gap:3px;align-items:center">
-            <button onclick="qaLiveApplyPromo(2)" style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:6px;padding:3px 6px;font-size:10px;font-weight:700;color:#92400E;cursor:pointer">1+1</button>
-            <button onclick="qaLiveApplyPromo(3)" style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:6px;padding:3px 6px;font-size:10px;font-weight:700;color:#166534;cursor:pointer">2+1</button>
-            <button onclick="qaLiveApplyPromo(4)" style="background:#EDE9FE;border:1px solid #C4B5FD;border-radius:6px;padding:3px 6px;font-size:10px;font-weight:700;color:#5B21B6;cursor:pointer">3+1</button>
-            <button onclick="document.getElementById('qa-live-amt').value='';window.G.qaLiveCustomPrice=null;const qlc=document.getElementById('qa-live-custom');if(qlc)qlc.value='';qaLiveCalc();" style="background:none;border:none;cursor:pointer;color:#F59E0B;font-size:18px;line-height:1;padding:0 2px">✕</button>
+          <input type="text" inputmode="decimal" id="qa-live-amt" placeholder="韓幣金額 ₩" oninput="if(!this.value){window.G.qaLiveCustomPrice=null;const qlc0=document.getElementById('qa-live-custom');if(qlc0)qlc0.value='';}qaLiveCalc()" style="width:100%;background:white;border:2.5px solid #F59E0B;border-radius:12px;padding:18px 162px 18px 16px;font-size:28px;font-weight:900;outline:none;box-sizing:border-box"/>
+          <div style="position:absolute;right:10px;top:50%;transform:translateY(-50%);display:flex;gap:4px;align-items:center">
+            <button onclick="qaLiveApplyPromo(2)" style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:6px;padding:4px 7px;font-size:11px;font-weight:700;color:#92400E;cursor:pointer">1+1</button>
+            <button onclick="qaLiveApplyPromo(3)" style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:6px;padding:4px 7px;font-size:11px;font-weight:700;color:#166534;cursor:pointer">2+1</button>
+            <button onclick="qaLiveApplyPromo(4)" style="background:#EDE9FE;border:1px solid #C4B5FD;border-radius:6px;padding:4px 7px;font-size:11px;font-weight:700;color:#5B21B6;cursor:pointer;margin-right:10px">3+1</button>
+            <button onclick="document.getElementById('qa-live-amt').value='';window.G.qaLiveCustomPrice=null;const qlc=document.getElementById('qa-live-custom');if(qlc)qlc.value='';qaLiveCalc();" style="background:none;border:none;cursor:pointer;color:#F59E0B;font-size:20px;line-height:1;padding:0 4px">✕</button>
           </div>
         </div>
         <!-- 或輸入折數 -->
@@ -1692,59 +1692,59 @@ body.live-mode .hide-live { display: none !important; }
           <input type="text" inputmode="decimal" id="qa-live-discount-pct" placeholder="例如7＝7折" style="width:70px;background:white;border:1.5px solid #F59E0B;border-radius:8px;padding:4px 8px;font-size:12px;outline:none"/>
           <button onclick="window.qaLiveApplyDiscount()" style="background:#FFE0B2;border:1px solid #FFB74D;border-radius:8px;padding:3px 10px;font-size:11px;font-weight:700;color:#E65100;cursor:pointer;white-space:nowrap;flex-shrink:0">套用折扣</button>
         </div>
-        <!-- 成本/售價顯示 -->
+        <!-- 成本/售價顯示（放大，這是計算機的主要輸出） -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
-          <div style="background:#DBEAFE;border:1px solid #BFDBFE;border-radius:10px;padding:8px;text-align:center">
-            <div style="font-size:9px;color:#1E40AF;font-weight:700">退稅後成本</div>
-            <div id="qa-live-cost" style="font-size:14px;font-weight:900;color:#1E40AF">-</div>
+          <div style="background:#DBEAFE;border:1px solid #BFDBFE;border-radius:10px;padding:10px 8px;text-align:center">
+            <div style="font-size:10px;color:#1E40AF;font-weight:700">退稅後成本</div>
+            <div id="qa-live-cost" style="font-size:20px;font-weight:900;color:#1E40AF">-</div>
           </div>
-          <div style="background:#EDE9FE;border:1px solid #C4B5FD;border-radius:10px;padding:8px;text-align:center">
-            <div style="font-size:9px;color:#5B21B6;font-weight:700">建議售價</div>
-            <div id="qa-live-sugg" style="font-size:14px;font-weight:900;color:#5B21B6">-</div>
+          <div style="background:#EDE9FE;border:1px solid #C4B5FD;border-radius:10px;padding:10px 8px;text-align:center">
+            <div style="font-size:10px;color:#5B21B6;font-weight:700">建議售價</div>
+            <div id="qa-live-sugg" style="font-size:20px;font-weight:900;color:#5B21B6">-</div>
           </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
-          <div style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:10px;padding:8px;text-align:center">
-            <div style="font-size:9px;color:#166534;font-weight:700">利潤</div>
-            <div id="qa-live-profit" style="font-size:14px;font-weight:900;color:#166534">-</div>
+          <div style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:10px;padding:10px 8px;text-align:center">
+            <div style="font-size:10px;color:#166534;font-weight:700">利潤</div>
+            <div id="qa-live-profit" style="font-size:20px;font-weight:900;color:#166534">-</div>
           </div>
-          <div style="background:#FFE4E6;border:1px solid #FECDD3;border-radius:10px;padding:8px;text-align:center">
-            <div style="font-size:9px;color:#9F1239;font-weight:700">最終售價</div>
-            <div id="qa-live-final" style="font-size:14px;font-weight:900;color:#9F1239">-</div>
+          <div style="background:#FFE4E6;border:1px solid #FECDD3;border-radius:10px;padding:10px 8px;text-align:center">
+            <div style="font-size:10px;color:#9F1239;font-weight:700">最終售價</div>
+            <div id="qa-live-final" style="font-size:20px;font-weight:900;color:#9F1239">-</div>
           </div>
         </div>
-        <!-- 重量（選填） -->
+        <!-- 重量（選填，放大） -->
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-          <label style="font-size:11px;font-weight:700;color:#B45309;white-space:nowrap">⚖️ 重量(克)</label>
-          <input type="text" inputmode="decimal" id="qa-live-weight" oninput="qaLiveCalc()" placeholder="選填，例：620" style="flex:1;background:white;border:1.5px solid #F59E0B;border-radius:8px;padding:6px 10px;font-size:13px;outline:none;box-sizing:border-box"/>
+          <label style="font-size:13px;font-weight:700;color:#B45309;white-space:nowrap">⚖️ 重量(克)</label>
+          <input type="text" inputmode="decimal" id="qa-live-weight" oninput="qaLiveCalc()" placeholder="選填，例：620" style="flex:1;background:white;border:2px solid #F59E0B;border-radius:10px;padding:11px 14px;font-size:18px;font-weight:700;outline:none;box-sizing:border-box"/>
         </div>
-        <!-- 含運費即時參考（有填重量才顯示） -->
+        <!-- 含運費即時參考（有填重量才顯示，放大） -->
         <div id="qa-live-ship-row" style="display:none;margin-bottom:10px">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
-            <div style="background:#F3F4F6;border:1px solid #E5E7EB;border-radius:10px;padding:7px;text-align:center">
-              <div style="font-size:8px;color:#6B7280;font-weight:700">⚖️ 運費</div>
-              <div id="qa-live-ship-cost" style="font-size:12px;font-weight:900;color:#374151">-</div>
+            <div style="background:#F3F4F6;border:1px solid #E5E7EB;border-radius:10px;padding:9px;text-align:center">
+              <div style="font-size:10px;color:#6B7280;font-weight:700">⚖️ 運費</div>
+              <div id="qa-live-ship-cost" style="font-size:16px;font-weight:900;color:#374151">-</div>
             </div>
-            <div style="background:#DBEAFE;border:1px solid #BFDBFE;border-radius:10px;padding:7px;text-align:center">
-              <div style="font-size:8px;color:#1E40AF;font-weight:700">含運費成本</div>
-              <div id="qa-live-ship-total-cost" style="font-size:12px;font-weight:900;color:#1E40AF">-</div>
+            <div style="background:#DBEAFE;border:1px solid #BFDBFE;border-radius:10px;padding:9px;text-align:center">
+              <div style="font-size:10px;color:#1E40AF;font-weight:700">含運費成本</div>
+              <div id="qa-live-ship-total-cost" style="font-size:16px;font-weight:900;color:#1E40AF">-</div>
             </div>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-            <div style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:10px;padding:7px;text-align:center">
-              <div style="font-size:8px;color:#166534;font-weight:700">含運費利潤</div>
-              <div id="qa-live-ship-profit" style="font-size:12px;font-weight:900;color:#166534">-</div>
+            <div style="background:#DCFCE7;border:2px solid #86EFAC;border-radius:10px;padding:10px;text-align:center">
+              <div style="font-size:10px;color:#166534;font-weight:700">含運費利潤</div>
+              <div id="qa-live-ship-profit" style="font-size:22px;font-weight:900;color:#166534">-</div>
             </div>
-            <div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:10px;padding:7px;text-align:center">
-              <div style="font-size:8px;color:#92400E;font-weight:700">含運費毛利率</div>
-              <div id="qa-live-ship-margin-label" style="font-size:12px;font-weight:900;color:#92400E">-</div>
+            <div style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:10px;padding:9px;text-align:center">
+              <div style="font-size:10px;color:#92400E;font-weight:700">含運費毛利率</div>
+              <div id="qa-live-ship-margin-label" style="font-size:16px;font-weight:900;color:#92400E">-</div>
             </div>
           </div>
         </div>
-        <!-- 自訂售價 -->
+        <!-- 自訂售價（放大） -->
         <div style="position:relative;margin-bottom:12px">
-          <input type="text" inputmode="decimal" id="qa-live-custom" placeholder="✏️ 自訂售價" oninput="window.G.qaLiveCustomPrice=parseFloat(this.value)||null;qaLiveCalc();" style="width:100%;background:white;border:1.5px solid #F1948A;border-radius:10px;padding:10px 36px 10px 14px;font-size:15px;font-weight:700;color:#3D2010;outline:none;box-sizing:border-box"/>
-          <button onclick="document.getElementById('qa-live-custom').value='';window.G.qaLiveCustomPrice=null;qaLiveCalc();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#F1948A;font-size:16px">✕</button>
+          <input type="text" inputmode="decimal" id="qa-live-custom" placeholder="✏️ 自訂售價" oninput="window.G.qaLiveCustomPrice=parseFloat(this.value)||null;qaLiveCalc();" style="width:100%;background:white;border:2px solid #F1948A;border-radius:12px;padding:14px 40px 14px 16px;font-size:20px;font-weight:900;color:#3D2010;outline:none;box-sizing:border-box"/>
+          <button onclick="document.getElementById('qa-live-custom').value='';window.G.qaLiveCustomPrice=null;qaLiveCalc();" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#F1948A;font-size:18px">✕</button>
         </div>
         <!-- 上架按鈕 -->
         <button onclick="qaLiveSave()" style="width:100%;background:#F59E0B;color:white;border:none;border-radius:12px;padding:14px;font-size:16px;font-weight:900;cursor:pointer">⚡ 立即上架</button>
@@ -11764,8 +11764,13 @@ window.renderCustomers=function(){
     // 依「同商品＋同規格」分組合併顯示，避免同一位客人多次追加喊同個商品時被拆成一堆重複的行；
     // 資料本身仍然各自獨立存放在 orders，只是「顯示」用分組，點開群組才會看到底下個別訂單，
     // 每筆訂單原本的已購買切換／刪除／移趟功能完全不受影響
+    // 已結案的訂單跟進行中的分開處理：主要清單只顯示「還沒結案」的商品，
+    // 已結案的移到獨立、預設收合的區塊——這樣客人有新的追加訂單時，
+    // 不會被一大堆舊的、已經處理完的商品洗版，一打開卡片先看到的都是還在進行中的
+    const closedDisplay=cODisplay.filter(o=>o.batchClosed);
+    const activeDisplay=cODisplay.filter(o=>!o.batchClosed);
     const groupMap={};const groupKeys=[];
-    cODisplay.forEach(o=>{
+    activeDisplay.forEach(o=>{
       const gk=(o.productId||o.productName||"?")+"::"+(o.spec||"");
       if(!groupMap[gk]){groupMap[gk]=[];groupKeys.push(gk);}
       groupMap[gk].push(o);
@@ -11865,6 +11870,7 @@ window.renderCustomers=function(){
           <button data-cid="${c.id}" onclick="openCustHistory(this.dataset.cid)" style="font-size:11px;color:#9C7A5A;background:#FAF8F5;border:1px solid #E8D5B0;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600">歷史</button>
           <button data-cid="${c.id}" data-cname="${c.communityName||c.lineName||''}" onclick="openEditCustOrOrder(this.dataset.cid,this.dataset.cname)" style="font-size:11px;color:#C5A880;background:#FDF6EC;border:1px solid #E8D5B0;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600">修改</button>
           <button data-cid="${c.id}" onclick="openLineNotify(this.dataset.cid)" style="font-size:11px;color:#06C755;background:#F0FFF4;border:1px solid #86EFAC;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600">出貨</button>
+          <button data-cid="${c.id}" onclick="${cO.length>0&&cO.every(o=>o.batchClosed)?"reopenBatch":"closeBatch"}(this.dataset.cid)" style="font-size:11px;color:#1E5F8C;background:#EAF4FB;border:1px solid #BEE0F5;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600">${cO.length>0&&cO.every(o=>o.batchClosed)?"🔓 重新開啟":"🔒 結案"}</button>
           <button data-cid="${c.id}" onclick="toggleArchiveCustomer(this.dataset.cid)" style="font-size:11px;color:#8B6F47;background:#F5F0E8;border:1px solid #D9C9AD;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600">${c.archived?"↩️ 取消封存":"📦 封存"}</button>
           <button onclick="deleteCustomer('${c.id}')" style="font-size:11px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600">刪除</button>
         </div>
@@ -11876,6 +11882,7 @@ window.renderCustomers=function(){
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${cO.length?"8px":"0"}">
           <div style="display:flex;gap:8px;font-size:11px;align-items:center">
             <span style="font-weight:700;color:#3D2010">訂單 ${cO.length} 筆</span>
+            ${cO.length>0&&cO.every(o=>o.batchClosed)?`<span style="background:#EAF4FB;color:#1E5F8C;font-size:9px;font-weight:700;padding:1px 6px;border-radius:99px">🔒 已結案</span>`:""}
             ${cQty>0?`<span style="color:#9C7A5A">（共${cQty}件${cShippedQty>0?`・已出貨${cShippedQty}・未出貨${cUnshippedQty}`:""}）</span>`:""}
             ${cP>0?`<span style="font-weight:700;color:#E07B39">待對帳 ${cP}</span>`:""}
             ${cQuoteCount>0?`<span style="font-weight:700;color:#0277BD">📋待報價 ${cQuoteCount}</span>`:""}
@@ -11895,6 +11902,23 @@ window.renderCustomers=function(){
         })()}
         ${rowsHtml?`<div style="display:flex;flex-direction:column;gap:4px">${rowsHtml}</div>`:""}
         ${!showAllOrders?`<button data-cid="${c.id}" onclick="expandCustOrders(this.dataset.cid)" style="width:100%;margin-top:6px;background:#FDF6EC;color:#B08968;border:1px dashed #E8D5B0;border-radius:8px;padding:6px;font-size:11px;font-weight:700;cursor:pointer">▼ 展開查看全部 ${groupKeys.length} 項</button>`:""}
+        ${(()=>{
+          if(!closedDisplay.length)return "";
+          window.G.custClosedExpandedSet=window.G.custClosedExpandedSet||new Set();
+          const closedExpanded=window.G.custClosedExpandedSet.has(c.id);
+          const closedQty=closedDisplay.reduce((s,o)=>s+(o.qty||1),0);
+          const closedAmt=closedDisplay.reduce((s,o)=>{
+            const isQ=o.orderType==="quote";
+            const p=isQ?(window.G.products.find(x=>x.id===o.productId)?.finalPrice??(o.discountPrice||o.unitPrice||0)):(o.discountPrice||o.unitPrice||0);
+            return s+p*o.qty;
+          },0);
+          const toggleBtn=`<div style="display:flex;gap:6px;margin-top:8px">
+            <button data-cid="${c.id}" onclick="window.toggleCustClosedSection(this.dataset.cid)" style="flex:1;background:#EAF4FB;color:#1E5F8C;border:1px solid #BEE0F5;border-radius:8px;padding:7px;font-size:11px;font-weight:700;cursor:pointer">${closedExpanded?"▾":"▸"} 🔒 已結案 ${closedDisplay.length}筆（共${closedQty}件・NT$${closedAmt.toLocaleString()}）</button>
+            <button data-cid="${c.id}" onclick="copyCustOrder(this.dataset.cid,'all')" title="複製全部商品，不分結案狀態" style="flex-shrink:0;background:#FDF6EC;color:#B08968;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer">複製全部</button>
+          </div>`;
+          const closedRows=closedExpanded?`<div style="display:flex;flex-direction:column;gap:4px;margin-top:6px">${closedDisplay.map(renderOrderRow).join("")}<button data-cid="${c.id}" onclick="copyCustOrder(this.dataset.cid,'closed')" style="width:100%;margin-top:4px;background:#FDF6EC;color:#B08968;border:1px dashed #E8D5B0;border-radius:8px;padding:6px;font-size:11px;font-weight:700;cursor:pointer">📋 只複製這批已結案的</button></div>`:"";
+          return toggleBtn+closedRows;
+        })()}
       </div>
     </div>`;
   });
@@ -11909,6 +11933,18 @@ window.expandCustOrders=function(cid){
   window.G.custExpandedSet=window.G.custExpandedSet||new Set();
   window.G.custExpandedSet.add(cid);
   renderCustomers();
+};
+window.toggleCustClosedSection=function(cid){
+  window.G.custClosedExpandedSet=window.G.custClosedExpandedSet||new Set();
+  if(window.G.custClosedExpandedSet.has(cid))window.G.custClosedExpandedSet.delete(cid);
+  else window.G.custClosedExpandedSet.add(cid);
+  renderCustomers();
+};
+window.toggleInvClosedSection=function(bkey){
+  window.G.invClosedExpandedSet=window.G.invClosedExpandedSet||new Set();
+  if(window.G.invClosedExpandedSet.has(bkey))window.G.invClosedExpandedSet.delete(bkey);
+  else window.G.invClosedExpandedSet.add(bkey);
+  renderInvoice();
 };
 window.toggleCustOrderGroup=function(cid,gk){
   window.G.custOrderGroupExpandedSet=window.G.custOrderGroupExpandedSet||new Set();
@@ -12121,13 +12157,13 @@ window.renderInvoice=function(){
     const allStatus=isQuoteOnly?"none":(b.orders.every(o=>o.status===b.orders[0].status)?b.orders[0].status:"mixed");
     const statusColor={pending:"#F59E0B",deposit:"#9333EA",settled:"#10B981",shipped:"#3B82F6",mixed:"#9C7A5A",none:"#0277BD"};
     const statusLabel={pending:"待訂金",deposit:"已付訂金",settled:"已付尾款",shipped:"已寄出",mixed:"狀態不一",none:"僅待報價"};
-    const totalDeposit=b.orders.reduce((s,o)=>s+(o.depositAmt||0),0);
-    // 折扣要跟著趟次篩選走：只在「目前這批」(b.orders)裡面找，不要搜尋這個買家從古至今全部訂單，
-    // 不然舊趟次的折扣會一直錯誤地影響到之後每一趟的總額。同一批範圍內有多筆不同折扣紀錄還是要加總
-    const bDiscOrders=b.orders.filter(o=>o.sharedDiscount>0);
+    const unshippedOrders=b.orders.filter(o=>o.status!=="shipped");
+    const totalDeposit=unshippedOrders.reduce((s,o)=>s+(o.depositAmt||0),0);
+    // 折扣、打幾折都改成只在「還沒出貨」的部分裡面找——已經出貨結清的訂單代表那筆交易已經處理完了，
+    // 不該讓它的折扣/訂金繼續影響同一個買家之後新追加的訂單
+    const bDiscOrders=unshippedOrders.filter(o=>o.sharedDiscount>0);
     const bDisc=bDiscOrders.reduce((s,o)=>s+o.sharedDiscount,0);
-    // 打幾折：抓這個買家在目前這批裡設定過的折數，套用到總額上
-    const bPctOrder=b.orders.find(o=>o.sharedDiscountPercent>0&&o.sharedDiscountPercent<10);
+    const bPctOrder=unshippedOrders.find(o=>o.sharedDiscountPercent>0&&o.sharedDiscountPercent<10);
     const bShipping=b.orders.find(o=>o.freeShipping)?.shippingCost||0;
     const totalAmt=(bPctOrder?Math.round(b.total*bPctOrder.sharedDiscountPercent/10):b.total)-bDisc;
     const remaining=totalAmt-totalDeposit;
@@ -12141,6 +12177,7 @@ window.renderInvoice=function(){
             ${b.lineName?`<span style="font-size:11px;color:#9C7A5A;margin-left:6px">LINE：${b.lineName}</span>`:""}
           </div>
           <span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:${statusColor[allStatus]}22;color:${statusColor[allStatus]};border:1px solid ${statusColor[allStatus]}44;flex-shrink:0">${statusLabel[allStatus]||""}</span>
+          ${b.orders.length>0&&b.orders.every(o=>o.batchClosed)?`<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:#EAF4FB;color:#1E5F8C;border:1px solid #BEE0F5;flex-shrink:0">🔒 已結案</span>`:""}
         </div>
         ${isQuoteOnly?"":`
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:8px">
@@ -12158,37 +12195,56 @@ window.renderInvoice=function(){
           <button data-bkey="${encodeURIComponent(b.key)}" onclick="copyDepositOrder(null,decodeURIComponent(this.dataset.bkey))" style="font-size:10px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:700">💰 收訂金</button>
           <button data-bkey="${encodeURIComponent(b.key)}" onclick="openAskSettlement(decodeURIComponent(this.dataset.bkey))" style="font-size:10px;background:#EAF4FD;color:#0277BD;border:1px solid #90D7FF;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700">複製結清</button>
           <button data-cid="${b.orders[0]?.customerId||""}" onclick="this.dataset.cid?openLineNotify(this.dataset.cid):showToast('這位客人還沒建立客戶資料，沒辦法發出貨通知','warning')" style="font-size:10px;background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700">🚚 出貨</button>
+          <button data-bkey="${encodeURIComponent(b.key)}" onclick="${b.orders.length>0&&b.orders.every(o=>o.batchClosed)?"reopenBatch":"closeBatch"}(decodeURIComponent(this.dataset.bkey))" style="font-size:10px;background:#EAF4FB;color:#1E5F8C;border:1px solid #BEE0F5;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700">${b.orders.length>0&&b.orders.every(o=>o.batchClosed)?"🔓 重新開啟":"🔒 結案"}</button>
           <button data-cid="${b.orders[0]?.customerId||""}" onclick="this.dataset.cid?openShopModal(this.dataset.cid):showToast('這位客人還沒建立客戶資料，沒辦法開賣場','warning')" style="font-size:10px;background:#FFF3E0;color:#E65100;border:1px solid #FFCC80;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700">🏪 開賣場</button>
           <button data-oid="${b.orders[0]?.id}" onclick="openEditOrd(this.dataset.oid)" style="font-size:10px;padding:4px 10px;border-radius:6px;font-weight:700;border:1px solid #E8D5B0;background:#FDF6EC;color:#C5A880;cursor:pointer">✏️ 修改</button>
         </div>`}
       </div>
       <!-- 商品明細 -->
       <div style="padding:8px 14px">
-        ${[...b.orders].sort((x,y)=>{
-          const xDone=x.orderType!=="preorder"||x.purchased===true;
-          const yDone=y.orderType!=="preorder"||y.purchased===true;
-          return xDone===yDone?0:xDone?1:-1;
-        }).map(o=>{
-          const dp=o.discountPrice||o.unitPrice||0;
-          const checked2=selectedOrders.has(o.id);
-          const isPreorder=o.orderType==="preorder";
-          const isPurchased=o.purchased===true;
-          const rowBg=isPreorder&&!isPurchased?"#F3F0FF":"transparent";
-          const purchasedBtn=isPreorder?`<button data-oid="${o.id}" onclick="togglePurchased(this.dataset.oid)" title="點擊切換購買狀態" style="font-size:9px;font-weight:700;padding:2px 0;border-radius:5px;cursor:pointer;width:58px;text-align:center;border:1.5px solid ${isPurchased?"#6EE7B7":"#FCD34D"};background:${isPurchased?"#D1FAE5":"#FEF3C7"};color:${isPurchased?"#065F46":"#92400E"}">${isPurchased?"✅ 已買到":"🛒 待購入"}</button>`:"";
-          return `<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:4px 8px;padding:6px 4px;border-bottom:1px solid #F5EDE0;background:${rowBg};border-radius:4px;margin:1px 0">
-            <div style="display:flex;align-items:center;gap:6px;min-width:140px;flex:1 1 auto">
-              <input type="checkbox" ${checked2?"checked":""} onchange="toggleSelectItem('order','${o.id}')" style="width:14px;height:14px;accent-color:#C5A880;flex-shrink:0"/>
-              <span style="font-size:12px;color:#3D2010;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${(window.G.products.find(x=>x.id===o.productId)?.flags?.isCold)?"🧊 ":""}${cleanProductName((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品")}${o.spec?" ("+o.spec+")":""} ×${o.qty}</span>
-              ${o.discountNote?`<span style="font-size:9px;background:#FDF6EC;color:#A08060;padding:1px 5px;border-radius:4px;flex-shrink:0">${o.discountNote}</span>`:""}
-            </div>
-            <div style="display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;gap:5px;flex:1 1 auto;min-width:0">
-              ${purchasedBtn}
-              <span style="font-size:12px;font-weight:700;color:#3D2010">NT$${(dp*o.qty).toLocaleString()}</span>
-              ${(()=>{const prod=window.G.products.find(x=>x.id===o.productId)||window.G.products.find(x=>cleanProductName(x.name)===cleanProductName(o.productName||""));if(!prod)return"";const lineProfit=(dp-getOrderUnitCost(o,prod))*o.qty;const lineRevenue=dp*o.qty;const margin=lineRevenue>0?Math.round((lineProfit/lineRevenue)*100):0;return `<span class="hide-staff" style="font-size:10px;font-weight:700;color:${lineProfit>=0?"#2E7D32":"#C0392B"}">利潤 NT$${Math.round(lineProfit).toLocaleString()}（毛利${margin}%）</span>`;})()}
-              ${o.status==="shipped"?`<button data-oid="${o.id}" onclick="event.stopPropagation();revertOrderShipped(this.dataset.oid)" title="這筆單獨改回還沒出貨，不影響同一位客人其他訂單" style="font-size:10px;color:#1E40AF;background:#DBEAFE;border:1px solid #93C5FD;padding:2px 5px;border-radius:5px;cursor:pointer">↩️ 取消已出貨</button>`:""}
-                  <button data-oid="${o.id}" onclick="event.stopPropagation();deleteOrder(this.dataset.oid)" style="font-size:10px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:2px 5px;border-radius:5px;cursor:pointer">🗑️</button>
-            </div>
-          </div>`;}).join("")}
+        ${(()=>{
+          const renderInvRow=(o)=>{
+            const dp=o.discountPrice||o.unitPrice||0;
+            const checked2=selectedOrders.has(o.id);
+            const isPreorder=o.orderType==="preorder";
+            const isPurchased=o.purchased===true;
+            const rowBg=isPreorder&&!isPurchased?"#F3F0FF":"transparent";
+            const purchasedBtn=isPreorder?`<button data-oid="${o.id}" onclick="togglePurchased(this.dataset.oid)" title="點擊切換購買狀態" style="font-size:9px;font-weight:700;padding:2px 0;border-radius:5px;cursor:pointer;width:58px;text-align:center;border:1.5px solid ${isPurchased?"#6EE7B7":"#FCD34D"};background:${isPurchased?"#D1FAE5":"#FEF3C7"};color:${isPurchased?"#065F46":"#92400E"}">${isPurchased?"✅ 已買到":"🛒 待購入"}</button>`:"";
+            return `<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:4px 8px;padding:6px 4px;border-bottom:1px solid #F5EDE0;background:${rowBg};border-radius:4px;margin:1px 0">
+              <div style="display:flex;align-items:center;gap:6px;min-width:140px;flex:1 1 auto">
+                <input type="checkbox" ${checked2?"checked":""} onchange="toggleSelectItem('order','${o.id}')" style="width:14px;height:14px;accent-color:#C5A880;flex-shrink:0"/>
+                <span style="font-size:12px;color:#3D2010;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${(window.G.products.find(x=>x.id===o.productId)?.flags?.isCold)?"🧊 ":""}${cleanProductName((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品")}${o.spec?" ("+o.spec+")":""} ×${o.qty}</span>
+                ${o.discountNote?`<span style="font-size:9px;background:#FDF6EC;color:#A08060;padding:1px 5px;border-radius:4px;flex-shrink:0">${o.discountNote}</span>`:""}
+              </div>
+              <div style="display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;gap:5px;flex:1 1 auto;min-width:0">
+                ${purchasedBtn}
+                <span style="font-size:12px;font-weight:700;color:#3D2010">NT$${(dp*o.qty).toLocaleString()}</span>
+                ${(()=>{const prod=window.G.products.find(x=>x.id===o.productId)||window.G.products.find(x=>cleanProductName(x.name)===cleanProductName(o.productName||""));if(!prod)return"";const lineProfit=(dp-getOrderUnitCost(o,prod))*o.qty;const lineRevenue=dp*o.qty;const margin=lineRevenue>0?Math.round((lineProfit/lineRevenue)*100):0;return `<span class="hide-staff" style="font-size:10px;font-weight:700;color:${lineProfit>=0?"#2E7D32":"#C0392B"}">利潤 NT$${Math.round(lineProfit).toLocaleString()}（毛利${margin}%）</span>`;})()}
+                ${o.status==="shipped"?`<button data-oid="${o.id}" onclick="event.stopPropagation();revertOrderShipped(this.dataset.oid)" title="這筆單獨改回還沒出貨，不影響同一位客人其他訂單" style="font-size:10px;color:#1E40AF;background:#DBEAFE;border:1px solid #93C5FD;padding:2px 5px;border-radius:5px;cursor:pointer">↩️ 取消已出貨</button>`:""}
+                    <button data-oid="${o.id}" onclick="event.stopPropagation();deleteOrder(this.dataset.oid)" style="font-size:10px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:2px 5px;border-radius:5px;cursor:pointer">🗑️</button>
+              </div>
+            </div>`;
+          };
+          // 已結案的商品明細跟進行中的分開，已結案的收合成獨立區塊，理由跟客戶頁一樣：
+          // 避免舊的、已經處理完的商品洗版，一打開卡片先看到的都是還在進行中的品項
+          const activeInvOrders=b.orders.filter(o=>!o.batchClosed);
+          const closedInvOrders=b.orders.filter(o=>o.batchClosed);
+          const activeRows=[...activeInvOrders].sort((x,y)=>{
+            const xDone=x.orderType!=="preorder"||x.purchased===true;
+            const yDone=y.orderType!=="preorder"||y.purchased===true;
+            return xDone===yDone?0:xDone?1:-1;
+          }).map(renderInvRow).join("");
+          let closedBlock="";
+          if(closedInvOrders.length){
+            window.G.invClosedExpandedSet=window.G.invClosedExpandedSet||new Set();
+            const closedExpanded=window.G.invClosedExpandedSet.has(b.key);
+            const closedQty=closedInvOrders.reduce((s,o)=>s+(o.qty||1),0);
+            const closedAmt=closedInvOrders.reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0);
+            closedBlock=`<button data-bkey="${encodeURIComponent(b.key)}" onclick="window.toggleInvClosedSection(decodeURIComponent(this.dataset.bkey))" style="width:100%;margin-top:8px;background:#EAF4FB;color:#1E5F8C;border:1px solid #BEE0F5;border-radius:8px;padding:7px;font-size:11px;font-weight:700;cursor:pointer">${closedExpanded?"▾":"▸"} 🔒 已結案 ${closedInvOrders.length}筆商品（共${closedQty}件・NT$${closedAmt.toLocaleString()}）${closedExpanded?"":"　點擊展開查看"}</button>`;
+            if(closedExpanded)closedBlock+=closedInvOrders.map(renderInvRow).join("");
+          }
+          return activeRows+closedBlock;
+        })()}
         ${(b.quotes&&b.quotes.length)?`
         <div style="margin-top:${b.orders.length?"6px":"0"};padding-top:${b.orders.length?"6px":"0"};${b.orders.length?"border-top:1px dashed #BBDEFB":""}">
           ${b.orders.length?`<div style="font-size:10px;font-weight:700;color:#0277BD;margin-bottom:4px">📋 待報價（尚未確定，不列入對帳金額）</div>`:""}
@@ -12827,9 +12883,14 @@ window.buildGroupedOrderLines=function(orders){
   const totalQty=orders.reduce((s,o)=>s+(o.qty||1),0);
   return {lines:[...normalLines,...promoBlocks],total:normalTotal+promoTotal,totalQty};
 };
-window.copyCustOrder=function(cid){
+// scope 三種：
+// "active"（預設）＝只複製還沒結案、進行中的商品，這是最常用的情境——客人追加新東西，只想複製新的那幾樣
+// "all" ＝不分結案狀態，全部商品都複製
+// "closed" ＝只複製已經結案那一批（例如想回頭找舊訂單的明細發給客人核對）
+window.copyCustOrder=function(cid,scope){
+  scope=scope||"active";
   const c=window.G.customers.find(x=>x.id===cid);if(!c)return;
-  const cO=getTripOrders().filter(o=>{
+  const cOAll=getTripOrders().filter(o=>{
     if(o.customerId)return o.customerId===cid;
     const nm=(c.communityName||"").trim().toLowerCase();
     const ln=(c.lineName||"").trim().toLowerCase();
@@ -12837,9 +12898,15 @@ window.copyCustOrder=function(cid){
     const ol=(o.lineName||"").trim().toLowerCase();
     return (nm&&nm===on)||(ln&&ln===ol);
   });
-  if(!cO.length){showToast("此客戶沒有訂單","warning");return;}
+  const cO=scope==="active"?cOAll.filter(o=>!o.batchClosed)
+    :scope==="closed"?cOAll.filter(o=>o.batchClosed)
+    :cOAll;
+  if(!cO.length){
+    showToast(scope==="active"?"這位客戶目前沒有進行中的訂單（可能全部都已結案，試試「複製全部」）":"此客戶沒有訂單","warning");
+    return;
+  }
   const name=c.communityName||c.lineName||"客戶";
-  // 折扣要跟著趟次篩選走：只在cO（目前篩選出來的這批）裡面找，同一批裡有多筆不同折扣紀錄要加總
+  // 折扣要跟著複製範圍走：只在這次要複製的cO裡面找，同一批裡有多筆不同折扣紀錄要加總
   const discOrders=cO.filter(o=>o.sharedDiscount>0);
   const sharedDiscount=discOrders.reduce((s,o)=>s+o.sharedDiscount,0);
   const sharedDiscountReason=discOrders.map(o=>o.sharedDiscountReason).filter(Boolean).join("、");
@@ -12855,7 +12922,8 @@ window.copyCustOrder=function(cid){
   const totalBlock=(sharedDiscount>0||pctOrder)
     ?`\n\n商品小計 NT$${total.toLocaleString()}${pctLine}${sharedDiscount>0?`\n折扣  -NT$${sharedDiscount.toLocaleString()}${sharedDiscountReason?`（${sharedDiscountReason}）`:""}`:""}\n\n應付金額 NT$${discountedTotal.toLocaleString()}`
     :`\n\n總金額 NT$${total.toLocaleString()}`;
-  const text=`【訂單明細】\n${lines.join("\n")}\n\n共計 ${grouped.totalQty} 件商品${totalBlock}`;
+  const scopeLabel=scope==="closed"?"（已結案批次）":scope==="all"?"（全部訂單）":"";
+  const text=`【訂單明細】${scopeLabel}\n${lines.join("\n")}\n\n共計 ${grouped.totalQty} 件商品${totalBlock}`;
 
 
 
@@ -12881,23 +12949,25 @@ window.copyBuyerOrder=function(buyerKey){
   if(!allBuyerOrders.length){showToast("找不到訂單","warning");return;}
   // 已經出貨的品項代表款項已經收完、流程已經走完，不該再被算進「這次還要收多少錢」的結清單裡，
   // 不然客人會收到一份把已經付清的東西也一起列進待收金額的帳單，變成算錯錢
-  const shippedCount=allBuyerOrders.filter(o=>o.status==="shipped").length;
-  const buyerOrders=allBuyerOrders.filter(o=>o.status!=="shipped");
+  const shippedCount=allBuyerOrders.filter(o=>o.status==="shipped"||o.batchClosed).length;
+  const buyerOrders=allBuyerOrders.filter(o=>o.status!=="shipped"&&!o.batchClosed);
   if(!buyerOrders.length){showToast("這位客人的品項都已經出貨、結清了，沒有還需要收款的部分","warning");return;}
   const name=buyerOrders[0].communityName||buyerOrders[0].buyerName||"買家";
-  // 折扣要跟著趟次篩選走：只在allBuyerOrders（目前這批）裡面找，同一批裡有多筆不同折扣紀錄要加總
-  const discOrders=allBuyerOrders.filter(o=>o.sharedDiscount>0);
+  // 折扣、免運、訂金都改成只在「還沒出貨的buyerOrders」裡面找，不要用allBuyerOrders——
+  // 已經出貨結清的舊訂單，它身上記的折扣/訂金代表「那筆交易已經處理完了」，
+  // 不該被拿來影響一筆全新、獨立追加的訂單（例如客人事後又加購幾件，這是另一筆帳，不該套用舊折扣、也不該把舊訂金算進來）
+  const discOrders=buyerOrders.filter(o=>o.sharedDiscount>0);
   const sharedDisc=discOrders.reduce((s,o)=>s+o.sharedDiscount,0);
   const sharedDiscReason=discOrders.map(o=>o.sharedDiscountReason).filter(Boolean).join("、");
-  const pctOrder=allBuyerOrders.find(o=>o.sharedDiscountPercent>0&&o.sharedDiscountPercent<10);
-  const hasFreeShipping=allBuyerOrders.some(o=>o.freeShipping);
-  const shipReason=allBuyerOrders.find(o=>o.freeShipping)?.freeShippingReason||"";
+  const pctOrder=buyerOrders.find(o=>o.sharedDiscountPercent>0&&o.sharedDiscountPercent<10);
+  const hasFreeShipping=buyerOrders.some(o=>o.freeShipping);
+  const shipReason=buyerOrders.find(o=>o.freeShipping)?.freeShippingReason||"";
   const grouped=window.buildGroupedOrderLines(buyerOrders);
   const lines=grouped.lines;
   const rawTotal=grouped.total;
   const afterPct=pctOrder?Math.round(rawTotal*pctOrder.sharedDiscountPercent/10):rawTotal;
   const total=afterPct-sharedDisc;
-  const totalDeposit=allBuyerOrders.reduce((s,o)=>s+(o.depositAmt||0),0);
+  const totalDeposit=buyerOrders.reduce((s,o)=>s+(o.depositAmt||0),0);
   const codReserve=100; // 貨到付款服務費固定要留，跟有沒有免運無關（免運只是運費，是不同的錢）
   const payNow=Math.max(0,total-totalDeposit-codReserve);
   const pctLine=pctOrder?`\n打${pctOrder.sharedDiscountPercent}折後　NT$${afterPct.toLocaleString()}`:"";
@@ -12936,25 +13006,26 @@ window.openSendSettlement=async function(buyerKey){
   });
   if(!allBuyerOrders.length){showToast("找不到訂單","warning");return;}
   // 已經出貨的品項代表款項已經收完、流程已經走完，不該再被算進「這次還要收多少錢」的結清單裡
-  const shippedCountForSettlement=allBuyerOrders.filter(o=>o.status==="shipped").length;
-  const buyerOrders=allBuyerOrders.filter(o=>o.status!=="shipped");
+  const shippedCountForSettlement=allBuyerOrders.filter(o=>o.status==="shipped"||o.batchClosed).length;
+  const buyerOrders=allBuyerOrders.filter(o=>o.status!=="shipped"&&!o.batchClosed);
   if(!buyerOrders.length){showToast("這位客人的品項都已經出貨、結清了，沒有還需要收款的部分","warning");return;}
   const first=buyerOrders[0];
   const c=window.G.customers.find(x=>x.id===first.customerId);
   const custName=c?(c.communityName||c.lineName||"客人"):(first.communityName||first.buyerName||"客人");
-  // 折扣要跟著趟次篩選走：只在allBuyerOrders（目前這批）裡面找，同一批裡有多筆不同折扣紀錄要加總
-  const discOrders2=allBuyerOrders.filter(o=>o.sharedDiscount>0);
+  // 折扣、免運、訂金都改成只在「還沒出貨的buyerOrders」裡面找，理由跟複製結清那邊完全一樣：
+  // 已經出貨結清的舊訂單不該影響一筆全新、獨立追加的訂單
+  const discOrders2=buyerOrders.filter(o=>o.sharedDiscount>0);
   const sharedDisc=discOrders2.reduce((s,o)=>s+o.sharedDiscount,0);
   const sharedDiscReason=discOrders2.map(o=>o.sharedDiscountReason).filter(Boolean).join("、");
-  const pctOrder=allBuyerOrders.find(o=>o.sharedDiscountPercent>0&&o.sharedDiscountPercent<10);
-  const hasFreeShipping=allBuyerOrders.some(o=>o.freeShipping);
+  const pctOrder=buyerOrders.find(o=>o.sharedDiscountPercent>0&&o.sharedDiscountPercent<10);
+  const hasFreeShipping=buyerOrders.some(o=>o.freeShipping);
   const shipReason=buyerOrders.find(o=>o.freeShipping)?.freeShippingReason||"";
   const grouped2=window.buildGroupedOrderLines(buyerOrders);
   const lines=grouped2.lines;
   const rawTotal=grouped2.total;
   const afterPct=pctOrder?Math.round(rawTotal*pctOrder.sharedDiscountPercent/10):rawTotal;
   const total=afterPct-sharedDisc;
-  const totalDeposit=allBuyerOrders.reduce((s,o)=>s+(o.depositAmt||0),0);
+  const totalDeposit=buyerOrders.reduce((s,o)=>s+(o.depositAmt||0),0);
   const codReserve=100; // 貨到付款服務費固定要留，跟有沒有免運無關（免運只是運費，是不同的錢）
   const payNow=Math.max(0,total-totalDeposit-codReserve);
   const pctLine=pctOrder?`\n打${pctOrder.sharedDiscountPercent}折後　NT$${afterPct.toLocaleString()}`:"";
@@ -13090,6 +13161,38 @@ window.sendSettlementMessage=async function(){
 };
 
 // 整批更新同一買家的所有訂單狀態
+// 結案：把目前這批訂單標記成「已結案」，鎖住裡面的折扣/訂金/免運設定，
+// 之後不管是複製結清、對帳單、客戶頁的金額計算，都不會再把這批的折扣/訂金撈進去——
+// 但訂單本身完全不會消失，查歷史還是看得到完整明細，只是不會再被拿來影響「目前還要收多少錢」。
+// 之後這個客人如果又追加新訂單，因為新訂單沒有結案標記，系統會自動把它當成一批全新、獨立的進行中批次，
+// 不會跟已結案的舊批次混在一起算，兩批各自完整、各自能查。
+window.closeBatch=async function(buyerKey){
+  const buyerOrders=getTripOrders().filter(o=>{
+    const key=o.customerId||o.communityName||o.buyerName||"未知";
+    return key===buyerKey&&!o.batchClosed;
+  });
+  if(!buyerOrders.length){showToast("這位買家目前沒有可以結案的訂單","warning");return;}
+  const unshippedCount=buyerOrders.filter(o=>o.status!=="shipped").length;
+  if(unshippedCount>0){
+    if(!confirm(`這批裡還有 ${unshippedCount} 筆還沒標記「已寄出」，確定要結案嗎？結案之後這批的折扣/訂金就不會再被計算，之後也不會再提醒你這幾筆還沒出貨。`))return;
+  }
+  for(const o of buyerOrders){
+    await fbUpd("orders",o.id,{batchClosed:true});
+  }
+  showToast(`已結案 ${buyerOrders.length} 筆訂單，這批的折扣/訂金已鎖定，之後追加的訂單會是全新的一批`,"success");
+};
+// 結案後如果發現按錯，或需要補改資料，可以重新開啟這批（回到「進行中」狀態）
+window.reopenBatch=async function(buyerKey){
+  if(!confirm("確定要重新開啟這批已結案的訂單嗎？重新開啟後，它的折扣/訂金會再次被計算進去。"))return;
+  const buyerOrders=getTripOrders().filter(o=>{
+    const key=o.customerId||o.communityName||o.buyerName||"未知";
+    return key===buyerKey&&o.batchClosed===true;
+  });
+  for(const o of buyerOrders){
+    await fbUpd("orders",o.id,{batchClosed:false});
+  }
+  showToast(`已重新開啟 ${buyerOrders.length} 筆訂單`,"success");
+};
 window.updateBuyerStatus=async function(buyerKey,status){
   // 這裡原本直接抓 window.G.orders（這個客人從古至今全部趟次的訂單），
   // 完全沒有照目前畫面上選的趟次篩選——導致不管你在看哪個趟次，
