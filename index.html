@@ -506,6 +506,7 @@ body.live-mode .hide-live { display: none !important; }
   <div style="display:flex;gap:8px;margin-bottom:10px">
     <button id="inv-unpurchased-btn" data-invf="unpurchased" onclick="toggleInvUnpurchased()" style="flex:1;padding:9px 4px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #C4B5FD;background:#F3F0FF;color:#6D28D9;cursor:pointer">🛒 查看尚未購買的代買單</button>
     <button id="inv-cold-btn" onclick="toggleInvColdOnly()" style="flex:1;padding:9px 4px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #BEE0F5;background:#EAF4FB;color:#1E5F8C;cursor:pointer">🧊 只看冷藏商品</button>
+    <button id="inv-unclosed-btn" onclick="toggleInvUnclosedOnly()" style="flex:1;padding:9px 4px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #A7D8C5;background:#EAFAF3;color:#166534;cursor:pointer">🔓 只看未結案</button>
   </div>
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px">
     <div style="background:white;border:1px solid #E8D5B0;border-radius:10px;padding:8px;text-align:center"><div style="font-size:8px;color:#9C7A5A">待訂金</div><div id="inv-pending" style="font-size:16px;font-weight:900;color:#E07B39">0</div></div>
@@ -11890,6 +11891,10 @@ window.renderCustomers=function(){
             ${cT>0?`<span style="font-weight:700;color:#A08060">NT$${cT.toLocaleString()}</span>`:""}
           </div>
         </div>
+        ${activeDisplay.length>0&&activeDisplay.every(o=>o.status==="shipped")?`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:#EAF4FB;border:1px solid #BEE0F5;border-radius:8px;padding:6px 10px;margin-bottom:8px">
+          <span style="font-size:11px;color:#1E5F8C;font-weight:600">✅ 這批全部出貨了，要結案嗎？</span>
+          <button data-cid="${c.id}" onclick="closeBatch(this.dataset.cid)" style="flex-shrink:0;font-size:11px;font-weight:700;color:white;background:#1E5F8C;border:none;border-radius:6px;padding:4px 10px;cursor:pointer">🔒 結案</button>
+        </div>`:""}
         ${(()=>{
           const depositBtn=`<button data-cid="${c.id}" onclick="copyDepositOrder(this.dataset.cid)" style="font-size:11px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">💰 收訂金</button>`;
           const shopBtn=`<button data-cid="${c.id}" onclick="openShopModal(this.dataset.cid)" style="font-size:11px;background:#FFF3E0;color:#E65100;border:1px solid #FFCC80;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">🏪 開賣場</button>`;
@@ -12033,6 +12038,20 @@ window.toggleInvColdOnly=function(){
   }
   renderInvoice();
 };
+window.toggleInvUnclosedOnly=function(){
+  window.G.invUnclosedOnly=!window.G.invUnclosedOnly;
+  const btn=document.getElementById("inv-unclosed-btn");
+  if(btn){
+    if(window.G.invUnclosedOnly){
+      btn.style.background="#166534";btn.style.color="white";btn.style.borderColor="#166534";
+      btn.textContent="🔓 只看未結案（篩選中）";
+    } else {
+      btn.style.background="#EAFAF3";btn.style.color="#166534";btn.style.borderColor="#A7D8C5";
+      btn.textContent="🔓 只看未結案";
+    }
+  }
+  renderInvoice();
+};
 
 window.setInvFilter=function(f){
   window.G.orderFilter=f;
@@ -12093,6 +12112,15 @@ window.renderInvoice=function(){
       }).map(o=>o.customerId||o.communityName||o.buyerName||"未知")
     );
     filtered=filtered.filter(o=>coldBuyerKeys.has(o.customerId||o.communityName||o.buyerName||"未知"));
+  }
+  // 只看未結案——只保留「還有至少一筆進行中(未結案)訂單」的買家，
+  // 把整批都已經結案、不需要再天天看到的買家過濾掉，方便你聚焦在還要處理的客人身上
+  if(window.G.invUnclosedOnly){
+    const allOrdersForClosedCheck=getTripOrders();
+    const unclosedBuyerKeys=new Set(
+      allOrdersForClosedCheck.filter(o=>!o.batchClosed).map(o=>o.customerId||o.communityName||o.buyerName||"未知")
+    );
+    filtered=filtered.filter(o=>unclosedBuyerKeys.has(o.customerId||o.communityName||o.buyerName||"未知"));
   }
   filtered.sort((a,b)=>b.createdAt-a.createdAt);
   const ss={pending:"background:#FEF3C7;color:#92400E;border-color:#FCD34D",settled:"background:#D1FAE5;color:#065F46;border-color:#6EE7B7",shipped:"background:#DBEAFE;color:#1E40AF;border-color:#93C5FD"};
@@ -12179,6 +12207,10 @@ window.renderInvoice=function(){
           <span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:${statusColor[allStatus]}22;color:${statusColor[allStatus]};border:1px solid ${statusColor[allStatus]}44;flex-shrink:0">${statusLabel[allStatus]||""}</span>
           ${b.orders.length>0&&b.orders.every(o=>o.batchClosed)?`<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:#EAF4FB;color:#1E5F8C;border:1px solid #BEE0F5;flex-shrink:0">🔒 已結案</span>`:""}
         </div>
+        ${(()=>{const activeInv=b.orders.filter(o=>!o.batchClosed);return activeInv.length>0&&activeInv.every(o=>o.status==="shipped")?`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:#EAF4FB;border:1px solid #BEE0F5;border-radius:8px;padding:6px 10px;margin-bottom:8px">
+          <span style="font-size:11px;color:#1E5F8C;font-weight:600">✅ 這批全部出貨了，要結案嗎？</span>
+          <button data-bkey="${encodeURIComponent(b.key)}" onclick="closeBatch(decodeURIComponent(this.dataset.bkey))" style="flex-shrink:0;font-size:11px;font-weight:700;color:white;background:#1E5F8C;border:none;border-radius:6px;padding:4px 10px;cursor:pointer">🔒 結案</button>
+        </div>`:"";})()}
         ${isQuoteOnly?"":`
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:8px">
           ${["pending","deposit","settled","shipped"].map(k=>{
