@@ -1677,15 +1677,16 @@ body.live-mode .hide-live { display: none !important; }
           <span id="qa-live-promo-badge" style="font-size:10px;font-weight:700;color:#166534;background:#DCFCE7;border-radius:6px;padding:2px 6px"></span>
           <button type="button" onclick="window.qaLiveCancelPromo()" style="font-size:10px;font-weight:700;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;border-radius:6px;padding:2px 8px;cursor:pointer">✕ 取消折扣，還原原價</button>
         </div>
-        <!-- 韓幣（放大，這是計算機模式的主輸入欄） -->
+        <!-- 買幾送幾快捷按鈕（獨立一排，不擠在輸入框裡） -->
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <button onclick="qaLiveApplyPromo(2)" style="flex:1;background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;padding:7px 4px;font-size:12px;font-weight:700;color:#92400E;cursor:pointer">1+1</button>
+          <button onclick="qaLiveApplyPromo(3)" style="flex:1;background:#DCFCE7;border:1px solid #86EFAC;border-radius:8px;padding:7px 4px;font-size:12px;font-weight:700;color:#166534;cursor:pointer">2+1</button>
+          <button onclick="qaLiveApplyPromo(4)" style="flex:1;background:#EDE9FE;border:1px solid #C4B5FD;border-radius:8px;padding:7px 4px;font-size:12px;font-weight:700;color:#5B21B6;cursor:pointer">3+1</button>
+        </div>
+        <!-- 韓幣（放大，這是計算機模式的主輸入欄；只留一個小X清除鈕，不再跟促銷按鈕擠在一起） -->
         <div style="position:relative;margin-bottom:10px">
-          <input type="text" inputmode="decimal" id="qa-live-amt" placeholder="韓幣金額 ₩" oninput="if(!this.value){window.G.qaLiveCustomPrice=null;const qlc0=document.getElementById('qa-live-custom');if(qlc0)qlc0.value='';}qaLiveCalc()" style="width:100%;background:white;border:2.5px solid #F59E0B;border-radius:12px;padding:18px 162px 18px 16px;font-size:28px;font-weight:900;outline:none;box-sizing:border-box"/>
-          <div style="position:absolute;right:10px;top:50%;transform:translateY(-50%);display:flex;gap:4px;align-items:center">
-            <button onclick="qaLiveApplyPromo(2)" style="background:#FEF3C7;border:1px solid #FDE68A;border-radius:6px;padding:4px 7px;font-size:11px;font-weight:700;color:#92400E;cursor:pointer">1+1</button>
-            <button onclick="qaLiveApplyPromo(3)" style="background:#DCFCE7;border:1px solid #86EFAC;border-radius:6px;padding:4px 7px;font-size:11px;font-weight:700;color:#166534;cursor:pointer">2+1</button>
-            <button onclick="qaLiveApplyPromo(4)" style="background:#EDE9FE;border:1px solid #C4B5FD;border-radius:6px;padding:4px 7px;font-size:11px;font-weight:700;color:#5B21B6;cursor:pointer;margin-right:10px">3+1</button>
-            <button onclick="document.getElementById('qa-live-amt').value='';window.G.qaLiveCustomPrice=null;const qlc=document.getElementById('qa-live-custom');if(qlc)qlc.value='';qaLiveCalc();" style="background:none;border:none;cursor:pointer;color:#F59E0B;font-size:20px;line-height:1;padding:0 4px">✕</button>
-          </div>
+          <input type="text" inputmode="decimal" id="qa-live-amt" placeholder="₩ 韓幣金額" oninput="if(!this.value){window.G.qaLiveCustomPrice=null;const qlc0=document.getElementById('qa-live-custom');if(qlc0)qlc0.value='';}qaLiveCalc()" style="width:100%;background:white;border:2.5px solid #F59E0B;border-radius:12px;padding:16px 44px 16px 16px;font-size:24px;font-weight:900;outline:none;box-sizing:border-box"/>
+          <button onclick="document.getElementById('qa-live-amt').value='';window.G.qaLiveCustomPrice=null;const qlc=document.getElementById('qa-live-custom');if(qlc)qlc.value='';qaLiveCalc();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#F59E0B;font-size:20px;line-height:1;padding:6px">✕</button>
         </div>
         <!-- 或輸入折數 -->
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap">
@@ -7238,28 +7239,39 @@ window.batchMoveTripOrders=function(){
 };
 
 window.doBatchMoveTripOrders=async function(tripId,tripName){
-  const ids=[...window.G.selectedOrders];
+  const allIds=[...window.G.selectedOrders];
+  const closedIds=allIds.filter(id=>window.G.orders.find(o=>o.id===id)?.batchClosed);
+  const ids=allIds.filter(id=>!closedIds.includes(id));
+  if(!ids.length){showToast("勾選的訂單都已經結案，不能再更改所屬趟次","warning");return;}
   for(const id of ids){
     await fbUpd("orders",id,{tripId});
   }
-  showToast(`已將 ${ids.length} 筆訂單移到 ${tripName} ✅`);
+  showToast(closedIds.length>0?`已將 ${ids.length} 筆訂單移到 ${tripName} ✅（已排除 ${closedIds.length} 筆已結案的）`:`已將 ${ids.length} 筆訂單移到 ${tripName} ✅`);
   window.G.selectedOrders=new Set();
   setTimeout(()=>renderInvoice(),600);
 };
 
 window.batchOrderStatus=async function(status){
-  const ids=[...window.G.selectedOrders];
-  if(!ids.length){showToast("請先選擇訂單","warning");return;}
+  const allIds=[...window.G.selectedOrders];
+  if(!allIds.length){showToast("請先選擇訂單","warning");return;}
+  // 已結案的訂單要排除，不能被批次狀態按鈕誤改——結案就是要鎖住，不再被任何批次操作動到
+  const closedIds=allIds.filter(id=>window.G.orders.find(o=>o.id===id)?.batchClosed);
+  const ids=allIds.filter(id=>!closedIds.includes(id));
+  if(!ids.length){showToast("勾選的訂單都已經結案，沒有可以改狀態的部分","warning");return;}
   for(const id of ids)await fbUpd("orders",id,{status});
   const l={pending:"待對帳",settled:"已結單",shipped:"已寄出"};
-  showToast(`已將 ${ids.length} 筆更新為「${l[status]}」`);
+  showToast(closedIds.length>0?`已將 ${ids.length} 筆更新為「${l[status]}」（已排除 ${closedIds.length} 筆已結案的）`:`已將 ${ids.length} 筆更新為「${l[status]}」`);
 };
 window.batchDeleteOrders=async function(){
-  const ids=[...window.G.selectedOrders];
-  if(!ids.length){showToast("請先選擇訂單","warning");return;}
-  if(!confirm(`確定刪除 ${ids.length} 筆訂單？`))return;
-  for(const id of ids)await fbDel("orders",id);
-  window.G.selectedOrders.clear();showToast(`已刪除 ${ids.length} 筆訂單`);
+  const allIds=[...window.G.selectedOrders];
+  if(!allIds.length){showToast("請先選擇訂單","warning");return;}
+  const closedCount=allIds.filter(id=>window.G.orders.find(o=>o.id===id)?.batchClosed).length;
+  const confirmMsg=closedCount>0
+    ?`確定刪除 ${allIds.length} 筆訂單？（其中包含 ${closedCount} 筆已結案的訂單，刪除後歷史紀錄也會一併消失，請特別確認）`
+    :`確定刪除 ${allIds.length} 筆訂單？`;
+  if(!confirm(confirmMsg))return;
+  for(const id of allIds)await fbDel("orders",id);
+  window.G.selectedOrders.clear();showToast(`已刪除 ${allIds.length} 筆訂單`);
 };
 window.eoClearProdSearch=function(){
   const input=document.getElementById("eo-prod-search");if(input)input.value="";
@@ -11121,7 +11133,13 @@ window.openEditOrd=function(oid){
       return (cname&&xname===cname)||(cline&&xline===cline&&cline!=="");
     }
     return false;
-  });
+  }).filter(x=>!x.batchClosed); // 已結案的訂單要排除，不能被拉進「修改訂單」一起編輯，
+  // 不然整批設定（訂金/折扣/免運）存檔的時候，可能會蓋掉已結案訂單身上鎖定的資料
+  if(!cOrders.length){
+    if(activeTabPage)activeTabPage.classList.add("active");
+    showToast("這位客人目前的訂單都已經結案了，如果要修改，請先在客戶頁/對帳單頁點「重新開啟」","warning");
+    return;
+  }
   const custName=o.communityName||o.buyerName||"未知買家";
   const sharedDiscountAmt=cOrders.find(x=>x.sharedDiscount>0)?.sharedDiscount||0;
   const total=cOrders.reduce((s,x)=>s+(x.discountPrice||x.unitPrice||0)*x.qty,0)-sharedDiscountAmt;
@@ -12561,8 +12579,9 @@ window.copyDepositOrder=function(cid,buyerKey){
     });
     name=orders[0]?.communityName||orders[0]?.buyerName||"買家";
   }
-  // 只算「待處理中」的訂單（還沒付尾款/寄出的），已經結清的不需要再收訂金
-  orders=orders.filter(o=>o.orderType!=="quote"&&(o.status==="pending"||o.status==="deposit"));
+  // 只算「待處理中」的訂單（還沒付尾款/寄出的），已經結清的不需要再收訂金；
+  // 已結案的也要排除——結案代表這批已經處理完了，不該再跟已結案的訂單要訂金
+  orders=orders.filter(o=>o.orderType!=="quote"&&(o.status==="pending"||o.status==="deposit")&&!o.batchClosed);
   if(!orders.length){showToast("這位客人目前沒有待處理的訂單","warning");return;}
   const total=orders.reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0);
   window.G._depositContext={orders,name,total};
@@ -13230,10 +13249,13 @@ window.updateBuyerStatus=async function(buyerKey,status){
   // 完全沒有照目前畫面上選的趟次篩選——導致不管你在看哪個趟次，
   // 點下狀態按鈕都會連帶改到這個客人在「其他趟次」的訂單，非常危險。
   // 改成跟畫面顯示邏輯一致，只抓「目前趟次篩選下看得到」的訂單。
+  // 而且一定要排除已結案的訂單——結案的意義就是「鎖住、不再被動」，
+  // 沒排除的話點狀態按鈕會連已結案的舊訂單狀態都被誤改，結案就形同虛設
   const buyerOrders=getTripOrders().filter(o=>{
     const key=o.customerId||o.communityName||o.buyerName||"未知";
-    return key===buyerKey;
+    return key===buyerKey&&!o.batchClosed;
   });
+  if(!buyerOrders.length){showToast("這位買家目前沒有進行中(未結案)的訂單可以改狀態","warning");return;}
   for(const o of buyerOrders){
     const upd={status};
     // 改成「已寄出」的話，順便把代買且還沒標記買到的品項也一起標成已買到——
