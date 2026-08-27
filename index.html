@@ -428,6 +428,8 @@ body.live-mode .hide-live { display: none !important; }
     <div style="display:flex;gap:6px">
       <button onclick="batchEditProducts()" style="font-size:11px;background:#FDF6EC;color:#C5A880;border:1px solid #E8D5B0;padding:5px 10px;border-radius:8px;font-weight:700;cursor:pointer">✏️ 批次修改售價</button>
       <button onclick="batchArchiveProducts()" style="font-size:11px;background:#EFEBE9;color:#6D4C41;border:1px solid #BCAAA4;padding:5px 10px;border-radius:8px;font-weight:700;cursor:pointer">📦 批次封存</button>
+      <button onclick="batchSetShopVisible(true)" style="font-size:11px;background:#FFF3E0;color:#E65100;border:1px solid #FFCC80;padding:5px 10px;border-radius:8px;font-weight:700;cursor:pointer">🛒 上架商城</button>
+      <button onclick="batchSetShopVisible(false)" style="font-size:11px;background:#FAF8F5;color:#9C7A5A;border:1px solid #E8D5B0;padding:5px 10px;border-radius:8px;font-weight:700;cursor:pointer">⬇️ 商城下架</button>
       <button onclick="mergeSelectedProducts()" style="font-size:11px;background:#EDE9FE;color:#5B21B6;border:1px solid #C4B5FD;padding:5px 10px;border-radius:8px;font-weight:700;cursor:pointer">🔗 合併商品</button>
       <button onclick="batchDeleteProducts()" style="font-size:11px;background:#FDEDEC;color:#C0392B;border:1px solid #F1948A;padding:5px 10px;border-radius:8px;font-weight:700;cursor:pointer">🗑️ 批次刪除</button>
     </div>
@@ -1685,8 +1687,8 @@ body.live-mode .hide-live { display: none !important; }
         </div>
         <!-- 韓幣（放大，這是計算機模式的主輸入欄；只留一個小X清除鈕，不再跟促銷按鈕擠在一起） -->
         <div style="position:relative;margin-bottom:10px">
-          <input type="text" inputmode="decimal" id="qa-live-amt" placeholder="₩ 韓幣金額" oninput="if(!this.value){window.G.qaLiveCustomPrice=null;const qlc0=document.getElementById('qa-live-custom');if(qlc0)qlc0.value='';}qaLiveCalc()" style="width:100%;background:white;border:2.5px solid #F59E0B;border-radius:12px;padding:16px 44px 16px 16px;font-size:24px;font-weight:900;outline:none;box-sizing:border-box"/>
-          <button onclick="document.getElementById('qa-live-amt').value='';window.G.qaLiveCustomPrice=null;const qlc=document.getElementById('qa-live-custom');if(qlc)qlc.value='';qaLiveCalc();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#F59E0B;font-size:20px;line-height:1;padding:6px">✕</button>
+          <input type="text" inputmode="decimal" id="qa-live-amt" placeholder="₩ 韓幣金額" oninput="if(!this.value){window.G.qaLiveCustomPrice=null;const qlc0=document.getElementById('qa-live-custom');if(qlc0)qlc0.value='';const qlw0=document.getElementById('qa-live-weight');if(qlw0)qlw0.value='';const qlsr0=document.getElementById('qa-live-ship-row');if(qlsr0)qlsr0.style.display='none';}qaLiveCalc()" style="width:100%;background:white;border:2.5px solid #F59E0B;border-radius:12px;padding:16px 44px 16px 16px;font-size:24px;font-weight:900;outline:none;box-sizing:border-box"/>
+          <button onclick="document.getElementById('qa-live-amt').value='';window.G.qaLiveCustomPrice=null;const qlc=document.getElementById('qa-live-custom');if(qlc)qlc.value='';const qlw=document.getElementById('qa-live-weight');if(qlw)qlw.value='';const qlsr=document.getElementById('qa-live-ship-row');if(qlsr)qlsr.style.display='none';qaLiveCalc();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#F59E0B;font-size:20px;line-height:1;padding:6px">✕</button>
         </div>
         <!-- 或輸入折數 -->
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap">
@@ -1715,6 +1717,11 @@ body.live-mode .hide-live { display: none !important; }
             <div id="qa-live-final" style="font-size:20px;font-weight:900;color:#9F1239">-</div>
           </div>
         </div>
+        <!-- 自訂售價（加強，這是要拿去賣的最終決定，特別放大顯眼） -->
+        <div style="position:relative;margin-bottom:12px">
+          <input type="text" inputmode="decimal" id="qa-live-custom" placeholder="✏️ 自訂售價" oninput="window.G.qaLiveCustomPrice=parseFloat(this.value)||null;qaLiveCalc();" style="width:100%;background:#FFF1F2;border:2.5px solid #E11D48;border-radius:12px;padding:16px 44px 16px 16px;font-size:25px;font-weight:900;color:#9F1239;outline:none;box-sizing:border-box;box-shadow:0 2px 8px rgba(225,29,72,0.25)"/>
+          <button onclick="document.getElementById('qa-live-custom').value='';window.G.qaLiveCustomPrice=null;qaLiveCalc();" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#E11D48;font-size:18px">✕</button>
+        </div>
         <!-- 重量（選填，放大） -->
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
           <label style="font-size:13px;font-weight:700;color:#B45309;white-space:nowrap">⚖️ 重量(克)</label>
@@ -1742,11 +1749,6 @@ body.live-mode .hide-live { display: none !important; }
               <div id="qa-live-ship-margin-label" style="font-size:16px;font-weight:900;color:#92400E">-</div>
             </div>
           </div>
-        </div>
-        <!-- 自訂售價（放大） -->
-        <div style="position:relative;margin-bottom:12px">
-          <input type="text" inputmode="decimal" id="qa-live-custom" placeholder="✏️ 自訂售價" oninput="window.G.qaLiveCustomPrice=parseFloat(this.value)||null;qaLiveCalc();" style="width:100%;background:white;border:2px solid #F1948A;border-radius:12px;padding:14px 40px 14px 16px;font-size:20px;font-weight:900;color:#3D2010;outline:none;box-sizing:border-box"/>
-          <button onclick="document.getElementById('qa-live-custom').value='';window.G.qaLiveCustomPrice=null;qaLiveCalc();" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#F1948A;font-size:18px">✕</button>
         </div>
         <!-- 上架按鈕 -->
         <button onclick="qaLiveSave()" style="width:100%;background:#F59E0B;color:white;border:none;border-radius:12px;padding:14px;font-size:16px;font-weight:900;cursor:pointer">⚡ 立即上架</button>
@@ -6151,6 +6153,32 @@ window.batchArchiveProducts=async function(){
     showToast(`已封存 ${ok} 件商品`);
   } else {
     showToast(`封存完成：成功 ${ok} 件，失敗 ${fail} 件（可能是網路問題，請稍後重試失敗的部分）`,"error");
+  }
+};
+// 上架/下架到「客人商城」（shop.html 那個公開頁面）：只是切換 shopVisible 這個欄位，
+// 不影響其他資料，商城頁面只會抓 shopVisible===true 而且沒被封存的商品
+window.batchSetShopVisible=async function(visible){
+  const ids=[...window.G.selectedProducts];
+  if(!ids.length){showToast("請先選擇商品","warning");return;}
+  if(!confirm(visible?`確定把 ${ids.length} 件商品上架到商城頁面？`:`確定把 ${ids.length} 件商品從商城頁面下架？`))return;
+  let ok=0,fail=0;
+  for(const id of ids){
+    try{
+      await fbUpd("products",id,{shopVisible:visible});
+      const p=window.G.products.find(x=>x.id===id);
+      if(p)p.shopVisible=visible;
+      ok++;
+    }catch(e){
+      fail++;
+      console.error("切換商城上架狀態失敗：",id,e);
+    }
+  }
+  window.G.selectedProducts.clear();
+  renderList();
+  if(fail===0){
+    showToast(visible?`已上架 ${ok} 件到商城`:`已從商城下架 ${ok} 件`);
+  } else {
+    showToast(`操作完成：成功 ${ok} 件，失敗 ${fail} 件（可能是網路問題，請稍後重試）`,"error");
   }
 };
 window.batchDeleteProducts=async function(){
@@ -10921,7 +10949,8 @@ window.renderList=function(){
       const pTotal=pOrders.reduce((s,o)=>s+o.qty,0);
       const liveAfterTax=Math.round(calcCost(p.foreignAmount||0,p.currency||"KRW",window.isDutyFreeChannel(p.channel,p.flags?.noTaxRefund),p.paymentMethod||"card").afterTax*10)/10;
       const badgeHtml=pOrders.length>0?('<div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:5px">'+pOrders.map(o=>'<div style="display:inline-flex;align-items:center;gap:3px;background:#C5A880;color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px"><span>'+(o.communityName||o.lineName||"客人")+'</span><button data-oid="'+o.id+'" onclick="event.stopPropagation();deleteOrderFromGrid(this.dataset.oid)" style="background:none;border:none;color:white;font-size:13px;cursor:pointer;padding:0 0 0 2px;line-height:1;font-weight:900">×</button></div>').join("")+'</div>'):'' ;
-      return '<div onclick="openMoFromGrid(\''+p.id+'\')" style="background:white;border-radius:14px;border:1px solid #E8D5B0;overflow:hidden;cursor:pointer">'
+      return '<div onclick="openMoFromGrid(\''+p.id+'\')" style="background:white;border-radius:14px;border:1px solid #E8D5B0;overflow:hidden;cursor:pointer;position:relative">'
+        +(p.shopVisible?'<div style="position:absolute;top:6px;left:6px;z-index:1;font-size:9px;font-weight:900;background:#E65100;color:white;padding:2px 7px;border-radius:99px">🛒 商城中</div>':'')
         +'<div style="width:100%;aspect-ratio:1/1;background:#FAF8F5;display:flex;align-items:center;justify-content:center;overflow:hidden">'
         +(p.photo?'<img src="'+p.photo+'" style="width:100%;height:100%;object-fit:cover" loading="lazy"/>':('<div style="font-size:40px">'+(p.emoji||"📦")+'</div>'))
         +'</div>'
@@ -10958,6 +10987,7 @@ window.renderList=function(){
         <input type="checkbox" ${checked?"checked":""} onchange="toggleSelectItem('product','${p.id}')" style="width:16px;height:16px;accent-color:#C5A880;flex-shrink:0"/>
         <span style="font-size:10px;font-weight:900;background:#5C3A1E;color:#F5E6C8;padding:2px 8px;border-radius:4px;flex-shrink:0;white-space:nowrap">${p.id}</span>
         <span style="font-size:10px;background:#FAF8F5;border:1px solid #E8D5B0;color:#9C7A5A;padding:2px 8px;border-radius:99px;flex-shrink:0;white-space:nowrap">${p.category}</span>
+        ${p.shopVisible?'<span style="font-size:10px;font-weight:900;background:#FFF3E0;border:1px solid #FFCC80;color:#E65100;padding:2px 8px;border-radius:99px;flex-shrink:0;white-space:nowrap">🛒 商城中</span>':''}
         <span style="font-size:10px;background:#FDF6EC;border:1px solid #E8D5B0;color:#A08060;padding:2px 8px;border-radius:99px;flex-shrink:0;white-space:nowrap">${cur?.name||""}</span>
         ${p.channel?`<span style="font-size:10px;background:#E8F5E9;border:1px solid #A5D6A7;color:#2E7D32;padding:2px 8px;border-radius:99px;font-weight:700;flex-shrink:0;white-space:nowrap">${p.channel}</span>`:""}
         ${(()=>{const sc=window.getSubcat?.(p.name,p.catKey);return sc?`<span style="font-size:10px;background:#F3E8FF;border:1px solid #D8B4FE;color:#7B5EA7;padding:2px 8px;border-radius:99px;font-weight:700;flex-shrink:0;white-space:nowrap">${sc.label.replace(/^\S+\s*/,"")}</span>`:"";})()}
@@ -11885,13 +11915,13 @@ window.renderCustomers=function(){
             })()}
           </div>
         </div>
-        <div style="display:flex;gap:8px">
-          <button data-cid="${c.id}" onclick="openCustHistory(this.dataset.cid)" style="font-size:11px;color:#9C7A5A;background:#FAF8F5;border:1px solid #E8D5B0;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600">歷史</button>
-          <button data-cid="${c.id}" data-cname="${c.communityName||c.lineName||''}" onclick="openEditCustOrOrder(this.dataset.cid,this.dataset.cname)" style="font-size:11px;color:#C5A880;background:#FDF6EC;border:1px solid #E8D5B0;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600">修改</button>
-          <button data-cid="${c.id}" onclick="openLineNotify(this.dataset.cid)" style="font-size:11px;color:#06C755;background:#F0FFF4;border:1px solid #86EFAC;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600">出貨</button>
-          <button data-cid="${c.id}" onclick="${cO.length>0&&cO.every(o=>o.batchClosed)?"reopenBatch":"closeBatch"}(this.dataset.cid)" style="font-size:11px;color:#1E5F8C;background:#EAF4FB;border:1px solid #BEE0F5;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600">${cO.length>0&&cO.every(o=>o.batchClosed)?"🔓 重新開啟":"🔒 結案"}</button>
-          <button data-cid="${c.id}" onclick="toggleArchiveCustomer(this.dataset.cid)" style="font-size:11px;color:#8B6F47;background:#F5F0E8;border:1px solid #D9C9AD;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600">${c.archived?"↩️ 取消封存":"📦 封存"}</button>
-          <button onclick="deleteCustomer('${c.id}')" style="font-size:11px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600">刪除</button>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button data-cid="${c.id}" onclick="openCustHistory(this.dataset.cid)" style="font-size:11px;color:#9C7A5A;background:#FAF8F5;border:1px solid #E8D5B0;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600;white-space:nowrap;flex:0 0 auto">歷史</button>
+          <button data-cid="${c.id}" data-cname="${c.communityName||c.lineName||''}" onclick="openEditCustOrOrder(this.dataset.cid,this.dataset.cname)" style="font-size:11px;color:#C5A880;background:#FDF6EC;border:1px solid #E8D5B0;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600;white-space:nowrap;flex:0 0 auto">修改</button>
+          <button data-cid="${c.id}" onclick="openLineNotify(this.dataset.cid)" style="font-size:11px;color:#06C755;background:#F0FFF4;border:1px solid #86EFAC;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600;white-space:nowrap;flex:0 0 auto">出貨</button>
+          <button data-cid="${c.id}" onclick="${cO.length>0&&cO.every(o=>o.batchClosed)?"reopenBatch":"closeBatch"}(this.dataset.cid)" style="font-size:11px;color:#1E5F8C;background:#EAF4FB;border:1px solid #BEE0F5;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600;white-space:nowrap;flex:0 0 auto">${cO.length>0&&cO.every(o=>o.batchClosed)?"🔓 重新開啟":"🔒 結案"}</button>
+          <button data-cid="${c.id}" onclick="toggleArchiveCustomer(this.dataset.cid)" style="font-size:11px;color:#8B6F47;background:#F5F0E8;border:1px solid #D9C9AD;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600;white-space:nowrap;flex:0 0 auto">${c.archived?"↩️ 取消封存":"📦 封存"}</button>
+          <button onclick="deleteCustomer('${c.id}')" style="font-size:11px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600;white-space:nowrap;flex:0 0 auto">刪除</button>
         </div>
       </div>
       ${c.phone?`<div style="font-size:11px;color:#9C7A5A;margin-bottom:3px">📞 ${c.phone}</div>`:""}
@@ -12242,12 +12272,12 @@ window.renderInvoice=function(){
           }).join("")}
         </div>
         <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end">
-          <button data-bkey="${encodeURIComponent(b.key)}" onclick="copyDepositOrder(null,decodeURIComponent(this.dataset.bkey))" style="font-size:10px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:700">💰 收訂金</button>
-          <button data-bkey="${encodeURIComponent(b.key)}" onclick="openAskSettlement(decodeURIComponent(this.dataset.bkey))" style="font-size:10px;background:#EAF4FD;color:#0277BD;border:1px solid #90D7FF;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700">複製結清</button>
-          <button data-cid="${b.orders[0]?.customerId||""}" onclick="this.dataset.cid?openLineNotify(this.dataset.cid):showToast('這位客人還沒建立客戶資料，沒辦法發出貨通知','warning')" style="font-size:10px;background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700">🚚 出貨</button>
-          <button data-bkey="${encodeURIComponent(b.key)}" onclick="${b.orders.length>0&&b.orders.every(o=>o.batchClosed)?"reopenBatch":"closeBatch"}(decodeURIComponent(this.dataset.bkey))" style="font-size:10px;background:#EAF4FB;color:#1E5F8C;border:1px solid #BEE0F5;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700">${b.orders.length>0&&b.orders.every(o=>o.batchClosed)?"🔓 重新開啟":"🔒 結案"}</button>
-          <button data-cid="${b.orders[0]?.customerId||""}" onclick="this.dataset.cid?openShopModal(this.dataset.cid):showToast('這位客人還沒建立客戶資料，沒辦法開賣場','warning')" style="font-size:10px;background:#FFF3E0;color:#E65100;border:1px solid #FFCC80;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700">🏪 開賣場</button>
-          <button data-oid="${b.orders[0]?.id}" onclick="openEditOrd(this.dataset.oid)" style="font-size:10px;padding:4px 10px;border-radius:6px;font-weight:700;border:1px solid #E8D5B0;background:#FDF6EC;color:#C5A880;cursor:pointer">✏️ 修改</button>
+          <button data-bkey="${encodeURIComponent(b.key)}" onclick="copyDepositOrder(null,decodeURIComponent(this.dataset.bkey))" style="font-size:10px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:700;white-space:nowrap;flex:0 0 auto">💰 收訂金</button>
+          <button data-bkey="${encodeURIComponent(b.key)}" onclick="openAskSettlement(decodeURIComponent(this.dataset.bkey))" style="font-size:10px;background:#EAF4FD;color:#0277BD;border:1px solid #90D7FF;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700;white-space:nowrap;flex:0 0 auto">複製結清</button>
+          <button data-cid="${b.orders[0]?.customerId||""}" onclick="this.dataset.cid?openLineNotify(this.dataset.cid):showToast('這位客人還沒建立客戶資料，沒辦法發出貨通知','warning')" style="font-size:10px;background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700;white-space:nowrap;flex:0 0 auto">🚚 出貨</button>
+          <button data-bkey="${encodeURIComponent(b.key)}" onclick="${b.orders.length>0&&b.orders.every(o=>o.batchClosed)?"reopenBatch":"closeBatch"}(decodeURIComponent(this.dataset.bkey))" style="font-size:10px;background:#EAF4FB;color:#1E5F8C;border:1px solid #BEE0F5;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700;white-space:nowrap;flex:0 0 auto">${b.orders.length>0&&b.orders.every(o=>o.batchClosed)?"🔓 重新開啟":"🔒 結案"}</button>
+          <button data-cid="${b.orders[0]?.customerId||""}" onclick="this.dataset.cid?openShopModal(this.dataset.cid):showToast('這位客人還沒建立客戶資料，沒辦法開賣場','warning')" style="font-size:10px;background:#FFF3E0;color:#E65100;border:1px solid #FFCC80;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700;white-space:nowrap;flex:0 0 auto">🏪 開賣場</button>
+          <button data-oid="${b.orders[0]?.id}" onclick="openEditOrd(this.dataset.oid)" style="font-size:10px;padding:4px 10px;border-radius:6px;font-weight:700;border:1px solid #E8D5B0;background:#FDF6EC;color:#C5A880;cursor:pointer;white-space:nowrap;flex:0 0 auto">✏️ 修改</button>
         </div>`}
       </div>
       <!-- 商品明細 -->

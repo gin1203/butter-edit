@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1"/>
+<title>The Butter｜韓國選品</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Microsoft JhengHei",sans-serif;background:#FAF8F5;color:#3D2010}
+  button{font-family:inherit}
+  input,select,textarea{font-family:inherit}
+  ::-webkit-scrollbar{display:none}
+  .scrollbar-none{scrollbar-width:none}
+</style>
+</head>
+<body>
+
+<div id="app" style="max-width:600px;margin:0 auto;min-height:100vh;background:#FAF8F5;padding-bottom:90px">
+
+  <div style="position:sticky;top:0;z-index:20;background:#FAF8F5;padding:14px 16px 10px;border-bottom:1px solid #E8D5B0">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-size:19px;font-weight:900;color:#5C3A1E;letter-spacing:0.5px">🧈 THE BUTTER</div>
+      <div style="font-size:11px;color:#9C7A5A">韓國選品代購</div>
+    </div>
+    <div id="line-banner" style="margin-bottom:10px"></div>
+    <input id="search-input" type="text" placeholder="🔍 搜尋商品名稱或編號..." oninput="onSearchInput()" style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none;box-sizing:border-box;margin-bottom:8px"/>
+    <div id="cat-tabs" class="scrollbar-none" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:2px"></div>
+  </div>
+
+  <div id="catalog-view" style="padding:14px 16px">
+    <div id="product-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px"></div>
+  </div>
+
+  <div id="checkout-view" style="display:none;padding:16px"></div>
+
+  <div id="success-view" style="display:none;padding:16px"></div>
+
+</div>
+
+<div id="cart-bar" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:30;background:white;border-top:1px solid #E8D5B0;padding:12px 16px;box-shadow:0 -4px 16px rgba(0,0,0,0.06)">
+  <div style="max-width:600px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px">
+    <div>
+      <div id="cart-count-text" style="font-size:11px;color:#9C7A5A;font-weight:700">已選 0 件</div>
+      <div id="cart-total-text" style="font-size:18px;font-weight:900;color:#F4845F">NT$ 0</div>
+    </div>
+    <button id="cart-cta" onclick="goToCheckout()" style="background:#F4845F;color:white;border:none;border-radius:12px;padding:12px 24px;font-size:14px;font-weight:900;cursor:pointer;white-space:nowrap">前往結帳</button>
+  </div>
+</div>
+
+<div id="toast" style="display:none;position:fixed;bottom:100px;left:50%;transform:translateX(-50%);z-index:100;padding:10px 18px;border-radius:99px;background:#5C3A1E;color:white;font-size:12px;font-weight:700;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.25)"></div>
+
+<script>
+const FIREBASE_PROJECT="thebutter-2eb30";
+const FIREBASE_API_KEY="AIzaSyAt6Te8T9DggqFmhBzZz5iEKIXlPH11DpE";
+const BASE_URL=`https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT}/databases/(default)/documents`;
+const WORKER_URL="https://butter-ai.kueigin.workers.dev";
+const LINE_LOGIN_CHANNEL_ID="請填入你在LINE Developers Console建立的LINE Login頻道ID";
+
+const G={
+  products:[],
+  loaded:false,
+  search:"",
+  cat:"all",
+  cart:{},
+  lineUser:null,
+  form:{name:"",phone:"",lineId:"",address:"",sameAsBuyer:true,payment:"貨到付款",note:""},
+};
+
+function showToast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg;t.style.display="block";
+  clearTimeout(window._toastTimer);
+  window._toastTimer=setTimeout(()=>{t.style.display="none";},2200);
+}
+
+function fsValueToJs(v){
+  if(!v)return null;
+  if(v.stringValue!==undefined)return v.stringValue;
+  if(v.integerValue!==undefined)return parseInt(v.integerValue,10);
+  if(v.doubleValue!==undefined)return v.doubleValue;
+  if(v.booleanValue!==undefined)return v.booleanValue;
+  if(v.nullValue!==undefined)return null;
+  if(v.arrayValue!==undefined)return (v.arrayValue.values||[]).map(fsValueToJs);
+  if(v.mapValue!==undefined){
+    const o={};
+    for(const[k,vv]of Object.entries(v.mapValue.fields||{}))o[k]=fsValueToJs(vv);
+    return o;
+  }
+  return null;
+}
+function fsDocToObj(doc){
+  const obj={id:doc.name.split("/").pop()};
+  for(const[k,v]of Object.entries(doc.fields||{}))obj[k]=fsValueToJs(v);
+  return obj;
+}
+function jsToFsValue(v){
+  if(typeof v==="string")return{stringValue:v};
+  if(typeof v==="boolean")return{booleanValue:v};
+  if(typeof v==="number")return Number.isInteger(v)?{integerValue:v}:{doubleValue:v};
+  return{stringValue:String(v==null?"":v)};
+}
+async function fsCreate(collection,id,dataObj){
+  const fields={};
+  for(const[k,v]of Object.entries(dataObj))fields[k]=jsToFsValue(v);
+  const url=`${BASE_URL}/${collection}/${id}?key=${FIREBASE_API_KEY}`;
+  const resp=await fetch(url,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({fields})});
+  if(!resp.ok){
+    const err=await resp.json().catch(()=>({}));
+    throw new Error(err?.error?.message||"寫入資料庫失敗");
+  }
+  return resp.json();
+}
+async function fsQueryEquals(collection,field,value){
+  const url=`${BASE_URL}:runQuery?key=${FIREBASE_API_KEY}`;
+  const body={structuredQuery:{from:[{collectionId:collection}],where:{fieldFilter:{field:{fieldPath:field},op:"EQUAL",value:jsToFsValue(value)}},limit:20}};
+  const resp=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const data=await resp.json();
+  return (data||[]).filter(r=>r.document).map(r=>fsDocToObj(r.document));
+}
+async function fsGetDoc(collection,id){
+  const resp=await fetch(`${BASE_URL}/${collection}/${id}?key=${FIREBASE_API_KEY}`);
+  if(resp.status!==200)return null;
+  const data=await resp.json();
+  return fsDocToObj({name:id,fields:data.fields||{}});
+}
+async function fsListShopProducts(){
+  const url=`${BASE_URL}:runQuery?key=${FIREBASE_API_KEY}`;
+  const body={structuredQuery:{from:[{collectionId:"products"}],where:{fieldFilter:{field:{fieldPath:"shopVisible"},op:"EQUAL",value:{booleanValue:true}}},limit:1000}};
+  const resp=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const data=await resp.json();
+  return (data||[]).filter(r=>r.document).map(r=>fsDocToObj(r.document)).filter(p=>p.archived!==true);
+}
+
+async function loadProducts(){
+  try{
+    G.products=await fsListShopProducts();
+  }catch(e){
+    console.error(e);
+    showToast("商品載入失敗，請重新整理頁面");
+  }
+  G.loaded=true;
+  renderCatTabs();
+  renderGrid();
+}
+
+function onSearchInput(){
+  G.search=document.getElementById("search-input").value.trim().toLowerCase();
+  renderGrid();
+}
+
+function renderCatTabs(){
+  const el=document.getElementById("cat-tabs");
+  const cats=[...new Set(G.products.map(p=>p.category).filter(Boolean))];
+  const tabs=[["all","全部"],...cats.map(c=>[c,c])];
+  el.innerHTML=tabs.map(([key,label])=>{
+    const active=G.cat===key;
+    return `<button onclick="setCat('${key.replace(/'/g,"\\'")}')" style="flex-shrink:0;padding:7px 14px;border-radius:99px;font-size:12px;font-weight:700;border:1px solid ${active?"#5C3A1E":"#E8D5B0"};background:${active?"#5C3A1E":"white"};color:${active?"#F5E6C8":"#9C7A5A"};cursor:pointer">${label}</button>`;
+  }).join("");
+}
+function setCat(key){G.cat=key;renderCatTabs();renderGrid();}
+
+function renderGrid(){
+  const grid=document.getElementById("product-grid");
+  if(!G.loaded){
+    grid.style.display="block";
+    grid.innerHTML=`<div style="grid-column:1/-1;background:white;border-radius:14px;padding:48px 20px;text-align:center;border:1px solid #E8D5B0"><div style="font-size:28px;margin-bottom:8px">⏳</div><div style="font-weight:700">商品載入中…</div></div>`;
+    return;
+  }
+  const q=G.search;
+  const filtered=G.products.filter(p=>{
+    const mCat=G.cat==="all"||p.category===G.cat;
+    const mQ=!q||(p.name||"").toLowerCase().includes(q)||(p.id||"").toLowerCase().includes(q);
+    return mCat&&mQ;
+  });
+  if(!filtered.length){
+    grid.style.display="block";
+    grid.innerHTML=`<div style="grid-column:1/-1;background:white;border-radius:14px;padding:48px 20px;text-align:center;border:1px solid #E8D5B0"><div style="font-size:28px;margin-bottom:8px">🛒</div><div style="font-weight:700">${G.products.length===0?"目前還沒有上架商品":"找不到符合的商品"}</div></div>`;
+    return;
+  }
+  grid.style.display="grid";
+  grid.innerHTML=filtered.map(p=>{
+    const qty=G.cart[p.id]?.qty||0;
+    const price=p.finalPrice||0;
+    return `<div style="background:white;border-radius:14px;border:1px solid #E8D5B0;overflow:hidden;display:flex;flex-direction:column">
+      <div style="width:100%;aspect-ratio:1/1;background:#FAF8F5;display:flex;align-items:center;justify-content:center;overflow:hidden">
+        ${p.photo?`<img src="${p.photo}" style="width:100%;height:100%;object-fit:cover" loading="lazy"/>`:`<div style="font-size:36px">${p.emoji||"📦"}</div>`}
+      </div>
+      <div style="padding:10px 10px 12px;display:flex;flex-direction:column;flex:1">
+        <div style="font-size:10px;color:#9C7A5A;font-weight:700;margin-bottom:2px">${p.id}</div>
+        <div style="font-size:13px;font-weight:700;color:#3D2010;line-height:1.35;margin-bottom:6px;min-height:35px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${p.name||""}</div>
+        <div style="font-size:16px;font-weight:900;color:#F4845F;margin-bottom:8px">NT$ ${price.toLocaleString()}</div>
+        <div style="margin-top:auto">
+          ${qty>0?`
+            <div style="display:flex;align-items:center;justify-content:space-between;background:#FDF6EC;border:1px solid #E8D5B0;border-radius:10px;padding:4px">
+              <button onclick="changeQty('${p.id}',-1)" style="width:28px;height:28px;border:none;background:white;border-radius:8px;font-size:15px;font-weight:900;color:#5C3A1E;cursor:pointer">−</button>
+              <span style="font-size:14px;font-weight:900;color:#3D2010">${qty}</span>
+              <button onclick="changeQty('${p.id}',1)" style="width:28px;height:28px;border:none;background:#5C3A1E;color:white;border-radius:8px;font-size:15px;font-weight:900;cursor:pointer">+</button>
+            </div>`:`
+            <button onclick="changeQty('${p.id}',1)" style="width:100%;background:#F4845F;color:white;border:none;border-radius:10px;padding:9px;font-size:13px;font-weight:900;cursor:pointer">立即搶購</button>`}
+        </div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function changeQty(pid,delta){
+  const p=G.products.find(x=>x.id===pid);
+  if(!p)return;
+  const cur=G.cart[pid]?.qty||0;
+  const next=Math.max(0,cur+delta);
+  if(next===0){delete G.cart[pid];}
+  else{G.cart[pid]={qty:next,product:p};}
+  renderGrid();
+  renderCartBar();
+}
+
+function renderCartBar(){
+  const items=Object.values(G.cart);
+  const bar=document.getElementById("cart-bar");
+  if(!items.length){bar.style.display="none";return;}
+  bar.style.display="block";
+  const totalQty=items.reduce((s,i)=>s+i.qty,0);
+  const totalPrice=items.reduce((s,i)=>s+i.qty*(i.product.finalPrice||0),0);
+  document.getElementById("cart-count-text").textContent=`已選 ${totalQty} 件`;
+  document.getElementById("cart-total-text").textContent=`NT$ ${totalPrice.toLocaleString()}`;
+}
+
+function goToCheckout(){
+  document.getElementById("catalog-view").style.display="none";
+  document.getElementById("cart-bar").style.display="none";
+  document.getElementById("checkout-view").style.display="block";
+  renderCheckout();
+  window.scrollTo(0,0);
+}
+function backToCatalog(){
+  document.getElementById("checkout-view").style.display="none";
+  document.getElementById("catalog-view").style.display="block";
+  renderCartBar();
+  window.scrollTo(0,0);
+}
+
+function renderCheckout(){
+  const el=document.getElementById("checkout-view");
+  const items=Object.values(G.cart);
+  const total=items.reduce((s,i)=>s+i.qty*(i.product.finalPrice||0),0);
+  const f=G.form;
+  el.innerHTML=`
+    <button onclick="backToCatalog()" style="background:none;border:none;color:#9C7A5A;font-size:14px;font-weight:700;cursor:pointer;padding:0 0 14px;display:flex;align-items:center;gap:4px">← 返回商品頁</button>
+    <div style="font-size:16px;font-weight:900;margin-bottom:10px">📦 訂單內容</div>
+    <div style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:12px 14px;margin-bottom:16px">
+      ${items.map(i=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #FAF8F5;font-size:13px">
+        <div style="flex:1;padding-right:8px">${i.product.name||""} <span style="color:#9C7A5A">×${i.qty}</span></div>
+        <div style="font-weight:700;white-space:nowrap">NT$ ${(i.qty*(i.product.finalPrice||0)).toLocaleString()}</div>
+      </div>`).join("")}
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;margin-top:4px">
+        <div style="font-size:13px;font-weight:700;color:#9C7A5A">總計</div>
+        <div style="font-size:18px;font-weight:900;color:#F4845F">NT$ ${total.toLocaleString()}</div>
+      </div>
+    </div>
+
+    <div style="font-size:16px;font-weight:900;margin-bottom:10px">🧾 訂購人資料</div>
+    <div style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:14px;margin-bottom:16px;display:flex;flex-direction:column;gap:12px">
+      <div>
+        <label style="font-size:12px;font-weight:700;color:#5C3A1E">訂購人姓名 *</label>
+        <input id="f-name" type="text" value="${f.name}" placeholder="請輸入訂購人姓名" oninput="G.form.name=this.value" style="width:100%;margin-top:4px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;font-size:14px;outline:none;box-sizing:border-box"/>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:700;color:#5C3A1E">訂購人電話 *</label>
+        <input id="f-phone" type="tel" value="${f.phone}" placeholder="請輸入手機號碼" oninput="G.form.phone=this.value" style="width:100%;margin-top:4px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;font-size:14px;outline:none;box-sizing:border-box"/>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:700;color:#5C3A1E">LINE ID（供聯繫用，選填）</label>
+        <input id="f-line" type="text" value="${f.lineId}" placeholder="方便的話留一下，出貨會更快通知您" oninput="G.form.lineId=this.value" style="width:100%;margin-top:4px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;font-size:14px;outline:none;box-sizing:border-box"/>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:700;color:#5C3A1E">收件地址 *</label>
+        <textarea id="f-address" rows="2" placeholder="請輸入收件地址（超商取貨可填門市名稱）" oninput="G.form.address=this.value" style="width:100%;margin-top:4px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;font-size:14px;outline:none;box-sizing:border-box;resize:vertical">${f.address}</textarea>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:700;color:#5C3A1E">付款方式 *</label>
+        <select id="f-payment" onchange="G.form.payment=this.value" style="width:100%;margin-top:4px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;font-size:14px;outline:none;box-sizing:border-box">
+          ${["貨到付款","超商取貨付款","匯款轉帳"].map(o=>`<option value="${o}" ${f.payment===o?"selected":""}>${o}</option>`).join("")}
+        </select>
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:700;color:#5C3A1E">備註（選填）</label>
+        <textarea id="f-note" rows="2" placeholder="有其他想告訴我們的都可以寫在這裡" oninput="G.form.note=this.value" style="width:100%;margin-top:4px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;font-size:14px;outline:none;box-sizing:border-box;resize:vertical">${f.note}</textarea>
+      </div>
+    </div>
+    <div id="checkout-error" style="display:none;color:#C0392B;font-size:12px;font-weight:700;margin-bottom:10px"></div>
+    <button onclick="submitOrder()" id="submit-btn" style="width:100%;background:#F4845F;color:white;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:900;cursor:pointer">送出訂單・NT$ ${total.toLocaleString()}</button>
+  `;
+}
+
+function showCheckoutError(msg){
+  const el=document.getElementById("checkout-error");
+  el.textContent=msg;el.style.display="block";
+}
+
+async function submitOrder(){
+  const f=G.form;
+  if(!f.name.trim()){showCheckoutError("請填寫訂購人姓名");return;}
+  if(!f.phone.trim()){showCheckoutError("請填寫訂購人電話");return;}
+  if(!f.address.trim()){showCheckoutError("請填寫收件地址");return;}
+  const items=Object.values(G.cart);
+  if(!items.length){showCheckoutError("購物車是空的，請先選擇商品");return;}
+
+  const btn=document.getElementById("submit-btn");
+  btn.disabled=true;btn.textContent="送出中…";
+  document.getElementById("checkout-error").style.display="none";
+
+  try{
+    const phoneDigits=f.phone.replace(/\D/g,"").slice(-10)||Date.now().toString();
+    let customerId="web_"+phoneDigits;
+
+    if(G.lineUser&&G.lineUser.userId){
+      customerId="line_"+G.lineUser.userId.slice(0,16);
+      const existingDoc=await fsGetDoc("customers",customerId);
+      if(existingDoc){
+        const merged={...existingDoc};
+        if(!merged.phone)merged.phone=f.phone.trim();
+        if(!merged.address)merged.address=f.address.trim();
+        if(!merged.communityName)merged.communityName=f.name.trim();
+        delete merged.id;
+        await fsCreate("customers",customerId,merged);
+      } else {
+        await fsCreate("customers",customerId,{
+          communityName:f.name.trim(),
+          lineName:G.lineUser.displayName||"",
+          lineUserId:G.lineUser.userId,
+          phone:f.phone.trim(),
+          address:f.address.trim(),
+          note:"（官網下單自動建立）",
+          createdAt:Date.now(),
+        });
+      }
+    } else {
+      const existing=await fsQueryEquals("customers","phone",f.phone.trim());
+      if(existing.length){
+        customerId=existing[0].id;
+      } else {
+        await fsCreate("customers",customerId,{
+          communityName:f.name.trim(),
+          lineName:f.lineId.trim(),
+          phone:f.phone.trim(),
+          address:f.address.trim(),
+          note:"（官網下單自動建立）",
+          createdAt:Date.now(),
+        });
+      }
+    }
+
+    const groupTs=Date.now();
+    let i=0;
+    for(const item of items){
+      const p=item.product;
+      const orderId=`web_${groupTs}_${i}`;
+      await fsCreate("orders",orderId,{
+        productId:p.id,
+        productName:p.name||"",
+        productEmoji:p.emoji||"📦",
+        customerId,
+        communityName:f.name.trim(),
+        buyerName:f.name.trim(),
+        qty:item.qty,
+        unitPrice:p.finalPrice||0,
+        total:(p.finalPrice||0)*item.qty,
+        status:"pending",
+        orderType:"shop_web",
+        paymentMethod:f.payment,
+        address:f.address.trim(),
+        phone:f.phone.trim(),
+        lineId:f.lineId.trim(),
+        note:f.note.trim(),
+        purchased:false,
+        lineUserId:(G.lineUser&&G.lineUser.userId)||"",
+        createdAt:groupTs,
+      });
+      i++;
+    }
+
+    showSuccess(items,items.reduce((s,i2)=>s+i2.qty*(i2.product.finalPrice||0),0));
+  }catch(e){
+    console.error(e);
+    showCheckoutError("送出訂單失敗，請檢查網路後再試一次（"+(e.message||"")+"）");
+    btn.disabled=false;btn.textContent="送出訂單";
+  }
+}
+
+function showSuccess(items,total){
+  document.getElementById("checkout-view").style.display="none";
+  const el=document.getElementById("success-view");
+  el.style.display="block";
+  el.innerHTML=`
+    <div style="text-align:center;padding:40px 16px">
+      <div style="font-size:48px;margin-bottom:12px">🎉</div>
+      <div style="font-size:18px;font-weight:900;margin-bottom:6px">訂單已送出！</div>
+      <div style="font-size:13px;color:#9C7A5A;margin-bottom:20px">我們會盡快與您確認訂單內容，謝謝您的訂購</div>
+      <div style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:16px;text-align:left;margin-bottom:20px">
+        ${items.map(i=>`<div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0">
+          <div>${i.product.name||""} ×${i.qty}</div>
+          <div style="font-weight:700">NT$ ${(i.qty*(i.product.finalPrice||0)).toLocaleString()}</div>
+        </div>`).join("")}
+        <div style="display:flex;justify-content:space-between;padding-top:10px;margin-top:6px;border-top:1px solid #FAF8F5">
+          <div style="font-weight:700;color:#9C7A5A">總計</div>
+          <div style="font-weight:900;color:#F4845F">NT$ ${total.toLocaleString()}</div>
+        </div>
+      </div>
+      <button onclick="location.reload()" style="background:#5C3A1E;color:white;border:none;border-radius:12px;padding:12px 28px;font-size:14px;font-weight:900;cursor:pointer">回到商品頁</button>
+    </div>
+  `;
+  window.scrollTo(0,0);
+}
+
+function lineLoginRedirectUri(){
+  return location.origin+location.pathname;
+}
+function lineLogin(){
+  const state=Math.random().toString(36).slice(2)+Date.now();
+  localStorage.setItem("butter_line_state",state);
+  const params=new URLSearchParams({
+    response_type:"code",
+    client_id:LINE_LOGIN_CHANNEL_ID,
+    redirect_uri:lineLoginRedirectUri(),
+    state,
+    scope:"profile openid",
+  });
+  location.href="https://access.line.me/oauth2/v2.1/authorize?"+params.toString();
+}
+function logoutLine(){
+  localStorage.removeItem("butter_line_user");
+  G.lineUser=null;
+  G.form.name="";G.form.lineId="";
+  renderLineBanner();
+}
+function restoreLineUser(){
+  try{
+    const raw=localStorage.getItem("butter_line_user");
+    if(!raw)return;
+    const u=JSON.parse(raw);
+    if(u&&u.userId){
+      G.lineUser=u;
+      if(!G.form.name)G.form.name=u.displayName||"";
+      if(!G.form.lineId)G.form.lineId=u.displayName||"";
+    }
+  }catch(e){}
+}
+async function handleLineLoginCallback(){
+  const params=new URLSearchParams(location.search);
+  const code=params.get("code");
+  const state=params.get("state");
+  if(!code)return;
+  const savedState=localStorage.getItem("butter_line_state");
+  history.replaceState({},"",location.pathname);
+  if(!state||state!==savedState){
+    showToast("LINE登入驗證失敗，請重新登入");
+    return;
+  }
+  try{
+    const resp=await fetch(WORKER_URL,{
+      method:"POST",
+      headers:{"Content-Type":"application/json","X-Service":"line-login-exchange"},
+      body:JSON.stringify({code,redirectUri:lineLoginRedirectUri()}),
+    });
+    const data=await resp.json();
+    if(!resp.ok||!data.userId)throw new Error(data.error||"登入失敗");
+    G.lineUser=data;
+    localStorage.setItem("butter_line_user",JSON.stringify(data));
+    if(!G.form.name)G.form.name=data.displayName||"";
+    if(!G.form.lineId)G.form.lineId=data.displayName||"";
+    showToast("LINE登入成功！");
+  }catch(e){
+    console.error(e);
+    showToast("LINE登入失敗："+(e.message||""));
+  }
+  renderLineBanner();
+}
+function renderLineBanner(){
+  const el=document.getElementById("line-banner");
+  if(!el)return;
+  if(G.lineUser){
+    el.innerHTML=`<div style="display:flex;align-items:center;gap:8px;background:#E8F5E9;border:1px solid #A5D6A7;border-radius:10px;padding:8px 12px">
+      ${G.lineUser.pictureUrl?`<img src="${G.lineUser.pictureUrl}" style="width:28px;height:28px;border-radius:50%;object-fit:cover"/>`:`<div style="width:28px;height:28px;border-radius:50%;background:#C5A880"></div>`}
+      <div style="flex:1;font-size:12px;font-weight:700;color:#2E7D32">已用 LINE 登入：${G.lineUser.displayName||""}</div>
+      <button onclick="logoutLine()" style="background:none;border:none;color:#2E7D32;font-size:11px;font-weight:700;cursor:pointer;text-decoration:underline">登出</button>
+    </div>`;
+  } else {
+    el.innerHTML=`<button onclick="lineLogin()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;background:#06C755;color:white;border:none;border-radius:10px;padding:9px;font-size:13px;font-weight:700;cursor:pointer">💬 使用 LINE 登入，訂購資料自動幫你填好</button>`;
+  }
+}
+
+async function init(){
+  restoreLineUser();
+  renderLineBanner();
+  await handleLineLoginCallback();
+  loadProducts();
+}
+init();
+</script>
+</body>
+</html>
