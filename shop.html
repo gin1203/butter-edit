@@ -20,7 +20,16 @@
   <div style="position:sticky;top:0;z-index:20;background:#FAF8F5;padding:14px 16px 10px;border-bottom:1px solid #E8D5B0">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <div style="font-size:19px;font-weight:900;color:#5C3A1E;letter-spacing:0.5px">🧈 THE BUTTER</div>
-      <div style="font-size:11px;color:#9C7A5A">韓國選品代購</div>
+      <div style="display:flex;align-items:center;gap:4px">
+        <div style="font-size:11px;color:#9C7A5A;margin-right:6px">韓國選品代購</div>
+        <button id="header-member-btn" onclick="headerMemberClick()" style="background:none;border:none;cursor:pointer;padding:4px;color:#5C3A1E;position:relative">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </button>
+        <button onclick="headerCartClick()" style="background:none;border:none;cursor:pointer;padding:4px;color:#5C3A1E;position:relative">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+          <div id="header-cart-badge" style="display:none;position:absolute;top:0;right:0;background:#F4845F;color:white;font-size:9px;font-weight:900;border-radius:99px;min-width:16px;height:16px;align-items:center;justify-content:center;padding:0 3px"></div>
+        </button>
+      </div>
     </div>
     <div id="line-banner" style="margin-bottom:10px"></div>
     <input id="search-input" type="text" placeholder="🔍 搜尋商品名稱或編號..." oninput="onSearchInput()" style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;font-size:14px;outline:none;box-sizing:border-box;margin-bottom:8px"/>
@@ -30,6 +39,8 @@
   <div id="catalog-view" style="padding:14px 16px">
     <div id="product-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px"></div>
   </div>
+
+  <div id="detail-view" style="display:none"></div>
 
   <div id="checkout-view" style="display:none;padding:16px"></div>
 
@@ -54,7 +65,7 @@ const FIREBASE_PROJECT="thebutter-2eb30";
 const FIREBASE_API_KEY="AIzaSyAt6Te8T9DggqFmhBzZz5iEKIXlPH11DpE";
 const BASE_URL=`https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT}/databases/(default)/documents`;
 const WORKER_URL="https://butter-ai.kueigin.workers.dev";
-const LINE_LOGIN_CHANNEL_ID="2011286886";
+const LINE_LOGIN_CHANNEL_ID="請填入你在LINE Developers Console建立的LINE Login頻道ID";
 
 const G={
   products:[],
@@ -63,7 +74,10 @@ const G={
   cat:"all",
   cart:{},
   lineUser:null,
-  form:{name:"",phone:"",lineId:"",address:"",sameAsBuyer:true,payment:"貨到付款",note:""},
+  detailProduct:null,
+  detailQty:1,
+  selectedSpec:{},
+  form:{name:"",phone:"",lineId:"",communityName:"",address:"",sameAsBuyer:true,payment:"匯款轉帳",note:""},
 };
 
 function showToast(msg){
@@ -80,7 +94,10 @@ function fsValueToJs(v){
   if(v.doubleValue!==undefined)return v.doubleValue;
   if(v.booleanValue!==undefined)return v.booleanValue;
   if(v.nullValue!==undefined)return null;
-  if(v.arrayValue!==undefined)return (v.arrayValue.values||[]).map(fsValueToJs);
+  if(v.arrayValue!==undefined){
+    if(!v.arrayValue||!v.arrayValue.values||!v.arrayValue.values.length)return[];
+    return v.arrayValue.values.map(fsValueToJs);
+  }
   if(v.mapValue!==undefined){
     const o={};
     for(const[k,vv]of Object.entries(v.mapValue.fields||{}))o[k]=fsValueToJs(vv);
@@ -94,10 +111,13 @@ function fsDocToObj(doc){
   return obj;
 }
 function jsToFsValue(v){
+  if(v===null||v===undefined)return{nullValue:null};
   if(typeof v==="string")return{stringValue:v};
   if(typeof v==="boolean")return{booleanValue:v};
   if(typeof v==="number")return Number.isInteger(v)?{integerValue:v}:{doubleValue:v};
-  return{stringValue:String(v==null?"":v)};
+  if(Array.isArray(v))return{arrayValue:{values:v.map(jsToFsValue)}};
+  if(typeof v==="object")return{mapValue:{fields:Object.fromEntries(Object.entries(v).map(([k,vv])=>[k,jsToFsValue(vv)]))}};
+  return{stringValue:String(v)};
 }
 async function fsCreate(collection,id,dataObj){
   const fields={};
@@ -128,6 +148,10 @@ async function fsListShopProducts(){
   const body={structuredQuery:{from:[{collectionId:"products"}],where:{fieldFilter:{field:{fieldPath:"shopVisible"},op:"EQUAL",value:{booleanValue:true}}},limit:1000}};
   const resp=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
   const data=await resp.json();
+  const errEntry=Array.isArray(data)?data.find(r=>r.error):null;
+  if(errEntry){
+    throw new Error(errEntry.error.message||"讀取商品失敗，可能是 Firestore 權限規則擋住了公開讀取");
+  }
   return (data||[]).filter(r=>r.document).map(r=>fsDocToObj(r.document)).filter(p=>p.archived!==true);
 }
 
@@ -136,7 +160,7 @@ async function loadProducts(){
     G.products=await fsListShopProducts();
   }catch(e){
     console.error(e);
-    showToast("商品載入失敗，請重新整理頁面");
+    showToast("商品載入失敗："+(e.message||"")+"（很可能是 Firestore 規則沒開放公開讀取）");
   }
   G.loaded=true;
   renderCatTabs();
@@ -179,50 +203,324 @@ function renderGrid(){
   }
   grid.style.display="grid";
   grid.innerHTML=filtered.map(p=>{
-    const qty=G.cart[p.id]?.qty||0;
+    const hasSpecs=Array.isArray(p.specs)&&p.specs.length>0;
+    const specsArr=hasSpecs?p.specs.filter(s=>s!=null&&String(s).trim()!==""):[];
+    // 計算這個商品在購物車裡的總件數（可能有多個規格各自加了）
+    const totalInCart=Object.entries(G.cart)
+      .filter(([k])=>k===p.id||k.startsWith(p.id+"::"))
+      .reduce((s,[,v])=>s+v.qty,0);
     const price=p.finalPrice||0;
-    return `<div style="background:white;border-radius:14px;border:1px solid #E8D5B0;overflow:hidden;display:flex;flex-direction:column">
+    // 判斷是否全部規格都售完
+    const allSoldOut=hasSpecs&&specsArr.length>0&&specsArr.every((_,i)=>{
+      const st=(p.specStock||[])[i];
+      const stNum=(st===null||st===undefined||st==="")?null:Number(st);
+      return stNum!=null&&stNum<=0;
+    });
+    return `<div onclick="openDetail('${p.id}')" style="background:white;border-radius:14px;border:1px solid #E8D5B0;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;position:relative">
+      ${totalInCart>0?`<div style="position:absolute;top:8px;right:8px;z-index:2;background:#F4845F;color:white;font-size:10px;font-weight:900;border-radius:99px;width:20px;height:20px;display:flex;align-items:center;justify-content:center">${totalInCart}</div>`:""}
+      ${allSoldOut?`<div style="position:absolute;top:8px;left:8px;z-index:2;background:rgba(0,0,0,0.45);color:white;font-size:10px;font-weight:700;border-radius:6px;padding:2px 7px">售完</div>`:""}
       <div style="width:100%;aspect-ratio:1/1;background:#FAF8F5;display:flex;align-items:center;justify-content:center;overflow:hidden">
         ${p.photo?`<img src="${p.photo}" style="width:100%;height:100%;object-fit:cover" loading="lazy"/>`:`<div style="font-size:36px">${p.emoji||"📦"}</div>`}
       </div>
-      <div style="padding:10px 10px 12px;display:flex;flex-direction:column;flex:1">
+      <div style="padding:8px 10px 12px;display:flex;flex-direction:column;flex:1">
         <div style="font-size:10px;color:#9C7A5A;font-weight:700;margin-bottom:2px">${p.id}</div>
-        <div style="font-size:13px;font-weight:700;color:#3D2010;line-height:1.35;margin-bottom:6px;min-height:35px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${p.name||""}</div>
-        <div style="font-size:16px;font-weight:900;color:#F4845F;margin-bottom:8px">NT$ ${price.toLocaleString()}</div>
-        <div style="margin-top:auto">
-          ${qty>0?`
-            <div style="display:flex;align-items:center;justify-content:space-between;background:#FDF6EC;border:1px solid #E8D5B0;border-radius:10px;padding:4px">
-              <button onclick="changeQty('${p.id}',-1)" style="width:28px;height:28px;border:none;background:white;border-radius:8px;font-size:15px;font-weight:900;color:#5C3A1E;cursor:pointer">−</button>
-              <span style="font-size:14px;font-weight:900;color:#3D2010">${qty}</span>
-              <button onclick="changeQty('${p.id}',1)" style="width:28px;height:28px;border:none;background:#5C3A1E;color:white;border-radius:8px;font-size:15px;font-weight:900;cursor:pointer">+</button>
-            </div>`:`
-            <button onclick="changeQty('${p.id}',1)" style="width:100%;background:#F4845F;color:white;border:none;border-radius:10px;padding:9px;font-size:13px;font-weight:900;cursor:pointer">立即搶購</button>`}
-        </div>
+        <div style="font-size:12px;font-weight:700;color:#3D2010;line-height:1.35;margin-bottom:6px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${p.name||""}</div>
+        <div style="font-size:15px;font-weight:900;color:#F4845F;margin-top:auto">NT$ ${price.toLocaleString()}</div>
+        ${hasSpecs?`<div style="font-size:10px;color:#9C7A5A;margin-top:2px">${specsArr.length} 種顏色/款式</div>`:""}
       </div>
     </div>`;
   }).join("");
 }
 
-function changeQty(pid,delta){
+function openDetail(pid){
   const p=G.products.find(x=>x.id===pid);
   if(!p)return;
-  const cur=G.cart[pid]?.qty||0;
-  const next=Math.max(0,cur+delta);
-  if(next===0){delete G.cart[pid];}
-  else{G.cart[pid]={qty:next,product:p};}
+  G.detailProduct=pid;
+  G.selectedSpec=G.selectedSpec||{};
+  if(G.selectedSpec[pid]==null)G.selectedSpec[pid]=0;
+  G.detailQty=1;
+  document.getElementById("catalog-view").style.display="none";
+  document.getElementById("detail-view").style.display="block";
+  document.querySelector("#app > div:first-child").style.display="none";
+  renderDetail();
+  window.scrollTo(0,0);
+}
+function closeDetail(){
+  document.getElementById("detail-view").style.display="none";
+  document.getElementById("catalog-view").style.display="block";
+  document.querySelector("#app > div:first-child").style.display="block";
+  G.detailProduct=null;
   renderGrid();
   renderCartBar();
+  window.scrollTo(0,0);
+}
+function renderDetail(){
+  const pid=G.detailProduct;
+  const p=G.products.find(x=>x.id===pid);
+  if(!p){closeDetail();return;}
+  const el=document.getElementById("detail-view");
+  const hasSpecs=Array.isArray(p.specs)&&p.specs.length>0;
+  const specsArr=hasSpecs?p.specs.filter(s=>s!=null&&String(s).trim()!==""):[];
+  const selIdx=G.selectedSpec[pid]??0;
+  // 顯示圖片：優先用選中規格的 specImage，fallback 到主圖
+  const specImg=(p.specImages||[])[selIdx]||"";
+  const mainImg=specImg||p.photo||"";
+  const stockRaw=hasSpecs?(p.specStock||[])[selIdx]:null;
+  const stock=(stockRaw===null||stockRaw===undefined||stockRaw==="")?null:Number(stockRaw);
+  const soldOut=stock!=null&&stock<=0;
+  const price=p.finalPrice||0;
+  const dqty=G.detailQty||1;
+
+  const specBtns=hasSpecs?`
+    <div style="margin-bottom:16px">
+      <div style="font-size:12px;font-weight:700;color:#9C7A5A;margin-bottom:8px">選擇款式</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${specsArr.map((s,i)=>{
+          const st=(p.specStock||[])[i];
+          const stNum=(st===null||st===undefined||st==="")?null:Number(st);
+          const isSoldOut=stNum!=null&&stNum<=0;
+          const isSelected=i===selIdx;
+          const specImg2=(p.specImages||[])[i]||"";
+          return `<button onclick="detailSelectSpec('${pid}',${i})" style="display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:99px;font-size:12px;font-weight:700;cursor:${isSoldOut?"not-allowed":"pointer"};border:2px solid ${isSelected?"#5C3A1E":"#E8D5B0"};background:${isSelected?"#5C3A1E":isSoldOut?"#F5F5F5":"white"};color:${isSelected?"white":isSoldOut?"#BDBDBD":"#3D2010"};opacity:${isSoldOut?0.5:1}" ${isSoldOut?"disabled":""}>
+            ${specImg2?`<img src="${specImg2}" style="width:18px;height:18px;border-radius:50%;object-fit:cover;flex-shrink:0"/>`:""}<span>${s}${isSoldOut?" (售完)":stNum!=null?` (剩${stNum})`:""}</span>
+          </button>`;
+        }).join("")}
+      </div>
+    </div>`:"";
+
+  el.innerHTML=`
+    <div style="position:fixed;top:0;left:0;right:0;z-index:50;background:#FAF8F5;padding:10px 16px;border-bottom:1px solid #E8D5B0;display:flex;align-items:center;gap:10px;max-width:600px;margin:0 auto">
+      <button onclick="closeDetail()" style="background:none;border:none;font-size:20px;cursor:pointer;padding:0;color:#5C3A1E;display:flex;align-items:center;gap:4px">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12L12 3l9 9"/><path d="M3 12h18"/><path d="M5 10v9a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1v-9"/></svg>
+        <span style="font-size:13px;font-weight:700">首頁</span>
+      </button>
+      <div style="flex:1"></div>
+      <button onclick="${G.lineUser?'logoutLine()':'lineLogin()'}" style="background:none;border:none;cursor:pointer;padding:4px;position:relative;color:#5C3A1E">
+        ${G.lineUser&&G.lineUser.pictureUrl
+          ?`<img src="${G.lineUser.pictureUrl}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;border:2px solid #06C755"/>`
+          :`<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`}
+      </button>
+      <button onclick="goToCheckout()" style="background:none;border:none;cursor:pointer;padding:4px;position:relative;color:#5C3A1E">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+        ${Object.values(G.cart).reduce((s,i)=>s+i.qty,0)>0?`<div style="position:absolute;top:0;right:0;background:#F4845F;color:white;font-size:9px;font-weight:900;border-radius:99px;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 3px">${Object.values(G.cart).reduce((s,i)=>s+i.qty,0)}</div>`:""}
+      </button>
+    </div>
+    <div style="height:50px"></div>
+    <div style="width:100%;aspect-ratio:1/1;background:#FAF8F5;overflow:hidden;position:relative" id="detail-img-wrap">
+      ${mainImg?`<img id="detail-main-img" src="${mainImg}" style="width:100%;height:100%;object-fit:cover"/>`:`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:60px">${p.emoji||"📦"}</div>`}
+    </div>
+    <div style="padding:16px 16px 120px">
+      <div style="font-size:10px;color:#9C7A5A;font-weight:700;margin-bottom:4px">${p.id}・${p.category||""}</div>
+      <div style="font-size:18px;font-weight:900;color:#3D2010;line-height:1.3;margin-bottom:8px">${p.name||""}</div>
+      <div style="font-size:22px;font-weight:900;color:#F4845F;margin-bottom:20px">NT$ ${price.toLocaleString()}</div>
+      ${specBtns}
+      ${!soldOut?`
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+        <div style="font-size:12px;font-weight:700;color:#9C7A5A">數量</div>
+        <div style="display:flex;align-items:center;gap:0;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;overflow:hidden">
+          <button onclick="changeDetailQty(-1)" style="width:36px;height:36px;border:none;background:none;font-size:18px;font-weight:900;color:#5C3A1E;cursor:pointer">−</button>
+          <span style="font-size:15px;font-weight:900;min-width:28px;text-align:center">${dqty}</span>
+          <button onclick="changeDetailQty(1)" style="width:36px;height:36px;border:none;background:none;font-size:18px;font-weight:900;color:#5C3A1E;cursor:pointer">+</button>
+        </div>
+        ${stock!=null?`<div style="font-size:11px;color:#9C7A5A">剩 ${stock} 件</div>`:""}
+      </div>`:""}
+    </div>
+    <div style="position:fixed;bottom:0;left:0;right:0;z-index:20;background:white;border-top:1px solid #E8D5B0;padding:12px 16px;box-shadow:0 -4px 16px rgba(0,0,0,0.06)">
+      <div style="max-width:600px;margin:0 auto">
+        ${soldOut
+          ?`<button disabled style="width:100%;background:#E8D5B0;color:white;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:900;cursor:not-allowed">此款式已售完</button>`
+          :`<div style="display:flex;gap:8px">
+              <button onclick="detailAddToCart('${pid}',${selIdx})" style="flex:1;background:white;color:#F4845F;border:2px solid #F4845F;border-radius:12px;padding:14px;font-size:14px;font-weight:900;cursor:pointer">加入購物車</button>
+              <button onclick="detailBuyNow('${pid}',${selIdx})" style="flex:1;background:#F4845F;color:white;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:900;cursor:pointer">立即購買</button>
+            </div>`
+        }
+      </div>
+    </div>`;
+}
+function detailBuyNow(pid,specIndex){
+  detailAddToCart(pid,specIndex);
+  goToCheckout();
+}
+function detailSelectSpec(pid,idx){
+  G.selectedSpec=G.selectedSpec||{};
+  G.selectedSpec[pid]=idx;
+  G.detailQty=1;
+  renderDetail();
+}
+function changeDetailQty(delta){
+  const pid=G.detailProduct;
+  const p=G.products.find(x=>x.id===pid);
+  if(!p)return;
+  const hasSpecs=Array.isArray(p.specs)&&p.specs.length>0;
+  const selIdx=G.selectedSpec[pid]??0;
+  const stockRaw=hasSpecs?(p.specStock||[])[selIdx]:null;
+  const stock=(stockRaw===null||stockRaw===undefined||stockRaw==="")?null:Number(stockRaw);
+  let next=Math.max(1,( G.detailQty||1)+delta);
+  if(stock!=null&&next>stock){showToast(`庫存只剩 ${stock} 件`);next=stock;}
+  G.detailQty=next;
+  renderDetail();
+}
+function detailAddToCart(pid,specIndex){
+  const p=G.products.find(x=>x.id===pid);
+  if(!p)return;
+  const hasSpecs=Array.isArray(p.specs)&&p.specs.length>0;
+  const cartKey=hasSpecs?`${pid}::${specIndex}`:pid;
+  const addQty=G.detailQty||1;
+  const cur=G.cart[cartKey]?.qty||0;
+  const stockRaw=hasSpecs?(p.specStock||[])[specIndex]:null;
+  const stock=(stockRaw===null||stockRaw===undefined||stockRaw==="")?null:Number(stockRaw);
+  let next=cur+addQty;
+  if(stock!=null&&next>stock){showToast(`庫存只剩 ${stock} 件，目前購物車已有 ${cur} 件`);next=stock;}
+  if(next<=0)return;
+  G.cart[cartKey]={qty:next,product:p,specIndex:hasSpecs?specIndex:null,spec:hasSpecs?p.specs[specIndex]:""};
+  G.detailQty=1;
+  showToast(`已加入購物車（${next} 件）`);
+  renderDetail();
+  renderCartBar();
+}
+function detailChangeQty(cartKey,delta,pid,specIndex){
+  const p=G.products.find(x=>x.id===pid);
+  if(!p)return;
+  const hasSpecs=Array.isArray(p.specs)&&p.specs.length>0;
+  const stockRaw=hasSpecs?(p.specStock||[])[specIndex]:null;
+  const stock=(stockRaw===null||stockRaw===undefined||stockRaw==="")?null:Number(stockRaw);
+  const cur=G.cart[cartKey]?.qty||0;
+  let next=Math.max(0,cur+delta);
+  if(stock!=null&&next>stock){showToast(`庫存只剩 ${stock} 件`);next=stock;}
+  if(next===0){delete G.cart[cartKey];}
+  else{G.cart[cartKey]={qty:next,product:p,specIndex:hasSpecs?specIndex:null,spec:hasSpecs?p.specs[specIndex]:""};}
+  renderDetail();
+  renderCartBar();
+}
+
+function changeQty(cartKey,delta,pid,specIndex){
+  const p=G.products.find(x=>x.id===pid);
+  if(!p)return;
+  const hasSpecs=Array.isArray(p.specs)&&p.specs.length>0;
+  const stockRaw=hasSpecs?(p.specStock||[])[specIndex]:null;
+  const stock=(stockRaw===null||stockRaw===undefined||stockRaw==="")?null:Number(stockRaw);
+  const cur=G.cart[cartKey]?.qty||0;
+  let next=Math.max(0,cur+delta);
+  if(stock!=null&&next>stock){
+    showToast(`庫存只剩 ${stock} 件`);
+    next=stock;
+  }
+  if(next===0){delete G.cart[cartKey];}
+  else{G.cart[cartKey]={qty:next,product:p,specIndex:hasSpecs?specIndex:null,spec:hasSpecs?p.specs[specIndex]:""};}
+  renderGrid();
+  renderCartBar();
+}
+function setSelectedSpec(pid,idx){
+  G.selectedSpec=G.selectedSpec||{};
+  G.selectedSpec[pid]=parseInt(idx,10);
+  renderGrid();
+}
+
+function headerMemberClick(){
+  if(G.lineUser){
+    if(confirm(`目前以 LINE 登入：${G.lineUser.displayName}\n\n要登出嗎？`))logoutLine();
+  } else {
+    lineLogin();
+  }
+}
+function headerCartClick(){
+  const items=Object.values(G.cart);
+  if(!items.length){showToast("購物車是空的，先選幾樣商品吧");return;}
+  goToCheckout();
 }
 
 function renderCartBar(){
   const items=Object.values(G.cart);
+  const totalQty=items.reduce((s,i)=>s+i.qty,0);
+  // 更新主頁頂部購物車 badge
+  const badge=document.getElementById("header-cart-badge");
+  if(badge){
+    if(totalQty>0){
+      badge.textContent=totalQty;
+      badge.style.display="flex";
+    } else {
+      badge.style.display="none";
+    }
+  }
+  // 更新主頁頂部會員按鈕
+  const memberBtn=document.getElementById("header-member-btn");
+  if(memberBtn){
+    if(G.lineUser&&G.lineUser.pictureUrl){
+      memberBtn.innerHTML=`<img src="${G.lineUser.pictureUrl}" style="width:24px;height:24px;border-radius:50%;object-fit:cover;border:2px solid #06C755"/>`;
+    } else {
+      memberBtn.innerHTML=`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+    }
+  }
+  // 底部購物車列
   const bar=document.getElementById("cart-bar");
+  if(!bar)return;
   if(!items.length){bar.style.display="none";return;}
   bar.style.display="block";
-  const totalQty=items.reduce((s,i)=>s+i.qty,0);
   const totalPrice=items.reduce((s,i)=>s+i.qty*(i.product.finalPrice||0),0);
   document.getElementById("cart-count-text").textContent=`已選 ${totalQty} 件`;
   document.getElementById("cart-total-text").textContent=`NT$ ${totalPrice.toLocaleString()}`;
+}
+
+function renderCartSummary(){
+  const el=document.getElementById("cart-summary");
+  if(!el)return;
+  const items=Object.values(G.cart);
+  if(!items.length){
+    // 購物車空了就跳回商品頁
+    backToCatalog();
+    showToast("購物車已清空");
+    return;
+  }
+  const total=items.reduce((s,i)=>s+i.qty*(i.product.finalPrice||0),0);
+  el.innerHTML=items.map(item=>{
+    const cartKey=item.specIndex!=null?`${item.product.id}::${item.specIndex}`:item.product.id;
+    const specLabel=item.spec?`<div style="font-size:11px;color:#9C7A5A;margin-top:1px">${item.spec}</div>`:"";
+    const price=item.product.finalPrice||0;
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #FAF8F5">
+      <div style="width:44px;height:44px;border-radius:8px;overflow:hidden;background:#FAF8F5;flex-shrink:0">
+        ${item.product.photo?`<img src="${item.product.photo}" style="width:100%;height:100%;object-fit:cover"/>`:`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:20px">${item.product.emoji||"📦"}</div>`}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:700;color:#3D2010;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${item.product.name||""}</div>
+        ${specLabel}
+        <div style="font-size:12px;color:#F4845F;font-weight:700;margin-top:2px">NT$ ${(price*item.qty).toLocaleString()}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+        <button onclick="cartCheckoutQty('${cartKey}',-1,'${item.product.id}',${item.specIndex??-1})" style="width:26px;height:26px;border:1px solid #E8D5B0;background:white;border-radius:6px;font-size:14px;font-weight:900;color:#5C3A1E;cursor:pointer">−</button>
+        <span style="font-size:13px;font-weight:900;min-width:18px;text-align:center">${item.qty}</span>
+        <button onclick="cartCheckoutQty('${cartKey}',1,'${item.product.id}',${item.specIndex??-1})" style="width:26px;height:26px;border:none;background:#5C3A1E;color:white;border-radius:6px;font-size:14px;font-weight:900;cursor:pointer">+</button>
+        <button onclick="cartCheckoutRemove('${cartKey}')" style="width:26px;height:26px;border:none;background:#FDEDEC;color:#C0392B;border-radius:6px;font-size:14px;cursor:pointer;margin-left:2px">×</button>
+      </div>
+    </div>`;
+  }).join("")+
+  `<div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;margin-top:4px">
+    <div style="font-size:13px;font-weight:700;color:#9C7A5A">總計</div>
+    <div style="font-size:18px;font-weight:900;color:#F4845F">NT$ ${total.toLocaleString()}</div>
+  </div>`;
+  // 同步更新送出按鈕的金額
+  const submitBtn=document.getElementById("submit-btn");
+  if(submitBtn)submitBtn.textContent=`送出訂單・NT$ ${total.toLocaleString()}`;
+}
+
+function cartCheckoutQty(cartKey,delta,pid,specIndex){
+  const p=G.products.find(x=>x.id===pid);
+  if(!p)return;
+  const hasSpecs=specIndex>=0;
+  const stockRaw=hasSpecs?(p.specStock||[])[specIndex]:null;
+  const stock=(stockRaw===null||stockRaw===undefined||stockRaw==="")?null:Number(stockRaw);
+  const cur=G.cart[cartKey]?.qty||0;
+  let next=Math.max(0,cur+delta);
+  if(stock!=null&&next>stock){showToast(`庫存只剩 ${stock} 件`);next=stock;}
+  if(next===0){delete G.cart[cartKey];}
+  else{G.cart[cartKey]={...G.cart[cartKey],qty:next};}
+  renderCartSummary();
+  renderCartBar();
+}
+
+function cartCheckoutRemove(cartKey){
+  delete G.cart[cartKey];
+  renderCartSummary();
+  renderCartBar();
 }
 
 function goToCheckout(){
@@ -230,11 +528,14 @@ function goToCheckout(){
   document.getElementById("cart-bar").style.display="none";
   document.getElementById("checkout-view").style.display="block";
   renderCheckout();
+  renderCartSummary();
   window.scrollTo(0,0);
 }
 function backToCatalog(){
   document.getElementById("checkout-view").style.display="none";
+  document.getElementById("detail-view").style.display="none";
   document.getElementById("catalog-view").style.display="block";
+  G.detailProduct=null;
   renderCartBar();
   window.scrollTo(0,0);
 }
@@ -246,17 +547,8 @@ function renderCheckout(){
   const f=G.form;
   el.innerHTML=`
     <button onclick="backToCatalog()" style="background:none;border:none;color:#9C7A5A;font-size:14px;font-weight:700;cursor:pointer;padding:0 0 14px;display:flex;align-items:center;gap:4px">← 返回商品頁</button>
-    <div style="font-size:16px;font-weight:900;margin-bottom:10px">📦 訂單內容</div>
-    <div style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:12px 14px;margin-bottom:16px">
-      ${items.map(i=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #FAF8F5;font-size:13px">
-        <div style="flex:1;padding-right:8px">${i.product.name||""} <span style="color:#9C7A5A">×${i.qty}</span></div>
-        <div style="font-weight:700;white-space:nowrap">NT$ ${(i.qty*(i.product.finalPrice||0)).toLocaleString()}</div>
-      </div>`).join("")}
-      <div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;margin-top:4px">
-        <div style="font-size:13px;font-weight:700;color:#9C7A5A">總計</div>
-        <div style="font-size:18px;font-weight:900;color:#F4845F">NT$ ${total.toLocaleString()}</div>
-      </div>
-    </div>
+    <div style="font-size:16px;font-weight:900;margin-bottom:10px">🛒 購物車</div>
+    <div id="cart-summary" style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:12px 14px;margin-bottom:16px"></div>
 
     <div style="font-size:16px;font-weight:900;margin-bottom:10px">🧾 訂購人資料</div>
     <div style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:14px;margin-bottom:16px;display:flex;flex-direction:column;gap:12px">
@@ -265,21 +557,25 @@ function renderCheckout(){
         <input id="f-name" type="text" value="${f.name}" placeholder="請輸入訂購人姓名" oninput="G.form.name=this.value" style="width:100%;margin-top:4px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;font-size:14px;outline:none;box-sizing:border-box"/>
       </div>
       <div>
+        <label style="font-size:12px;font-weight:700;color:#5C3A1E">社群暱稱 *</label>
+        <input id="f-community" type="text" value="${f.communityName}" placeholder="請輸入您在社團／群組裡使用的暱稱" oninput="G.form.communityName=this.value" style="width:100%;margin-top:4px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;font-size:14px;outline:none;box-sizing:border-box"/>
+      </div>
+      <div>
         <label style="font-size:12px;font-weight:700;color:#5C3A1E">訂購人電話 *</label>
         <input id="f-phone" type="tel" value="${f.phone}" placeholder="請輸入手機號碼" oninput="G.form.phone=this.value" style="width:100%;margin-top:4px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;font-size:14px;outline:none;box-sizing:border-box"/>
       </div>
       <div>
-        <label style="font-size:12px;font-weight:700;color:#5C3A1E">LINE ID（供聯繫用，選填）</label>
-        <input id="f-line" type="text" value="${f.lineId}" placeholder="方便的話留一下，出貨會更快通知您" oninput="G.form.lineId=this.value" style="width:100%;margin-top:4px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;font-size:14px;outline:none;box-sizing:border-box"/>
+        <label style="font-size:12px;font-weight:700;color:#5C3A1E">LINE ID（供聯繫用）*</label>
+        <input id="f-line" type="text" value="${f.lineId}" placeholder="請輸入 LINE ID，方便通知您出貨進度" oninput="G.form.lineId=this.value" style="width:100%;margin-top:4px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;font-size:14px;outline:none;box-sizing:border-box"/>
       </div>
       <div>
-        <label style="font-size:12px;font-weight:700;color:#5C3A1E">收件地址 *</label>
-        <textarea id="f-address" rows="2" placeholder="請輸入收件地址（超商取貨可填門市名稱）" oninput="G.form.address=this.value" style="width:100%;margin-top:4px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;font-size:14px;outline:none;box-sizing:border-box;resize:vertical">${f.address}</textarea>
+        <label style="font-size:12px;font-weight:700;color:#5C3A1E">收件地址（選填）</label>
+        <textarea id="f-address" rows="2" placeholder="若走超商取貨，稍後我們會另外傳連結給您自己選門市，這裡可以先留空" oninput="G.form.address=this.value" style="width:100%;margin-top:4px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;font-size:14px;outline:none;box-sizing:border-box;resize:vertical">${f.address}</textarea>
       </div>
       <div>
         <label style="font-size:12px;font-weight:700;color:#5C3A1E">付款方式 *</label>
         <select id="f-payment" onchange="G.form.payment=this.value" style="width:100%;margin-top:4px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;font-size:14px;outline:none;box-sizing:border-box">
-          ${["貨到付款","超商取貨付款","匯款轉帳"].map(o=>`<option value="${o}" ${f.payment===o?"selected":""}>${o}</option>`).join("")}
+          ${["匯款轉帳"].map(o=>`<option value="${o}" ${f.payment===o?"selected":""}>${o}</option>`).join("")}
         </select>
       </div>
       <div>
@@ -297,11 +593,30 @@ function showCheckoutError(msg){
   el.textContent=msg;el.style.display="block";
 }
 
+// 下單成功後扣庫存：一定要先讀「當下最新」的商品資料再整份寫回去，
+// 不能只送 specStock 這一個欄位，不然會把商品其他欄位（照片、規格圖片等）洗掉
+async function decrementProductStock(productId,specIndex,qty){
+  try{
+    const fresh=await fsGetDoc("products",productId);
+    if(!fresh||!Array.isArray(fresh.specStock))return;
+    const stockVal=fresh.specStock[specIndex];
+    if(stockVal===null||stockVal===undefined||stockVal==="")return; // 不限量，不用扣
+    const newStock=[...fresh.specStock];
+    newStock[specIndex]=Math.max(0,Number(stockVal)-qty);
+    const merged={...fresh,specStock:newStock};
+    delete merged.id;
+    await fsCreate("products",productId,merged);
+  }catch(e){
+    console.error("扣庫存失敗（訂單本身已經成功送出，不影響客人）",e);
+  }
+}
+
 async function submitOrder(){
   const f=G.form;
   if(!f.name.trim()){showCheckoutError("請填寫訂購人姓名");return;}
+  if(!f.communityName.trim()){showCheckoutError("請填寫社群暱稱");return;}
   if(!f.phone.trim()){showCheckoutError("請填寫訂購人電話");return;}
-  if(!f.address.trim()){showCheckoutError("請填寫收件地址");return;}
+  if(!f.lineId.trim()){showCheckoutError("請填寫 LINE ID");return;}
   const items=Object.values(G.cart);
   if(!items.length){showCheckoutError("購物車是空的，請先選擇商品");return;}
 
@@ -320,12 +635,12 @@ async function submitOrder(){
         const merged={...existingDoc};
         if(!merged.phone)merged.phone=f.phone.trim();
         if(!merged.address)merged.address=f.address.trim();
-        if(!merged.communityName)merged.communityName=f.name.trim();
+        if(!merged.communityName)merged.communityName=f.communityName.trim();
         delete merged.id;
         await fsCreate("customers",customerId,merged);
       } else {
         await fsCreate("customers",customerId,{
-          communityName:f.name.trim(),
+          communityName:f.communityName.trim(),
           lineName:G.lineUser.displayName||"",
           lineUserId:G.lineUser.userId,
           phone:f.phone.trim(),
@@ -340,7 +655,7 @@ async function submitOrder(){
         customerId=existing[0].id;
       } else {
         await fsCreate("customers",customerId,{
-          communityName:f.name.trim(),
+          communityName:f.communityName.trim(),
           lineName:f.lineId.trim(),
           phone:f.phone.trim(),
           address:f.address.trim(),
@@ -359,8 +674,9 @@ async function submitOrder(){
         productId:p.id,
         productName:p.name||"",
         productEmoji:p.emoji||"📦",
+        spec:item.spec||"",
         customerId,
-        communityName:f.name.trim(),
+        communityName:f.communityName.trim(),
         buyerName:f.name.trim(),
         qty:item.qty,
         unitPrice:p.finalPrice||0,
@@ -376,6 +692,9 @@ async function submitOrder(){
         lineUserId:(G.lineUser&&G.lineUser.userId)||"",
         createdAt:groupTs,
       });
+      if(item.specIndex!=null){
+        await decrementProductStock(p.id,item.specIndex,item.qty);
+      }
       i++;
     }
 
@@ -395,7 +714,7 @@ function showSuccess(items,total){
     <div style="text-align:center;padding:40px 16px">
       <div style="font-size:48px;margin-bottom:12px">🎉</div>
       <div style="font-size:18px;font-weight:900;margin-bottom:6px">訂單已送出！</div>
-      <div style="font-size:13px;color:#9C7A5A;margin-bottom:20px">我們會盡快與您確認訂單內容，謝謝您的訂購</div>
+      <div style="font-size:13px;color:#9C7A5A;margin-bottom:20px">我們會盡快跟您確認訂單內容和匯款資訊。若是超商取貨，之後會再傳一個連結給您，屆時再麻煩您自己選門市，謝謝您的訂購</div>
       <div style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:16px;text-align:left;margin-bottom:20px">
         ${items.map(i=>`<div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0">
           <div>${i.product.name||""} ×${i.qty}</div>
@@ -430,7 +749,7 @@ function lineLogin(){
 function logoutLine(){
   localStorage.removeItem("butter_line_user");
   G.lineUser=null;
-  G.form.name="";G.form.lineId="";
+  G.form.name="";G.form.lineId="";G.form.communityName="";
   renderLineBanner();
 }
 function restoreLineUser(){
@@ -442,6 +761,7 @@ function restoreLineUser(){
       G.lineUser=u;
       if(!G.form.name)G.form.name=u.displayName||"";
       if(!G.form.lineId)G.form.lineId=u.displayName||"";
+      if(!G.form.communityName)G.form.communityName=u.displayName||"";
     }
   }catch(e){}
 }
@@ -468,6 +788,7 @@ async function handleLineLoginCallback(){
     localStorage.setItem("butter_line_user",JSON.stringify(data));
     if(!G.form.name)G.form.name=data.displayName||"";
     if(!G.form.lineId)G.form.lineId=data.displayName||"";
+    if(!G.form.communityName)G.form.communityName=data.displayName||"";
     showToast("LINE登入成功！");
   }catch(e){
     console.error(e);

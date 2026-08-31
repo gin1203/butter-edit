@@ -1014,6 +1014,11 @@ body.live-mode .hide-live { display: none !important; }
         <div id="ep-tier-color-photos"></div>
       </div>
     </div>
+    <!-- 商城庫存數量 -->
+    <div id="ep-shop-stock-section" style="margin-bottom:10px;display:none">
+      <label style="display:block;font-size:11px;font-weight:700;color:#E65100;margin-bottom:6px">🛒 商城庫存數量（每個規格可賣幾件，留空=不限量）</label>
+      <div id="ep-shop-stock-list" style="display:flex;flex-direction:column;gap:6px"></div>
+    </div>
     <!-- 別名 -->
     <div style="margin-bottom:10px">
       <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">🏷️ 批次比對別名（客人可能怎麼叫它，用逗號分隔）</label>
@@ -4002,6 +4007,7 @@ window.openModal=function(id,data){
       epRenderRivals();
       window.G.epSpecsList=[...(data.specs||[])];
       window.G.epSpecImages=(window.G.epSpecsList||[]).map((s,i)=>(data.specImages||[])[i]||"");
+      window.G.epSpecStock=(window.G.epSpecsList||[]).map((s,i)=>(data.specStock||[])[i]??"");
       epRenderSpecs();
       window.G.epTierColorImages={};
       const epTierColorsReset=document.getElementById("ep-tier-colors");if(epTierColorsReset)epTierColorsReset.value="";
@@ -4622,6 +4628,7 @@ window.epRenderSpecs=function(){
   window.G.epSpecImages=window.G.epSpecImages||[];
   if(!list.length){
     box.innerHTML='<span style="font-size:12px;color:#C5A880;font-style:italic;padding:4px">尚未新增規格/口味</span>';
+    renderEpShopStock();
     return;
   }
   const armed=window.G.specPasteTarget;
@@ -4646,6 +4653,31 @@ window.epRenderSpecs=function(){
       <button onclick="event.stopPropagation();epRemoveSpec(${i})" style="background:#F5EDE0;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;color:#9C7A5A;cursor:pointer;line-height:1;padding:0">×</button>
     </span>`;
   }).join("");
+  renderEpShopStock();
+};
+// 商城庫存：讀目前 epSpecsList，為每個規格渲染一個數量輸入格
+function renderEpShopStock(){
+  const section=document.getElementById("ep-shop-stock-section");
+  const listEl=document.getElementById("ep-shop-stock-list");
+  if(!section||!listEl)return;
+  const specs=window.G.epSpecsList||[];
+  if(!specs.length){section.style.display="none";return;}
+  section.style.display="block";
+  window.G.epSpecStock=window.G.epSpecStock||[];
+  while(window.G.epSpecStock.length<specs.length)window.G.epSpecStock.push("");
+  window.G.epSpecStock.length=specs.length;
+  listEl.innerHTML=specs.map((s,i)=>{
+    const val=window.G.epSpecStock[i]??"";
+    return `<div style="display:flex;align-items:center;gap:8px;background:#FFF8F3;border:1px solid #FFD9C0;border-radius:8px;padding:6px 10px">
+      <div style="font-size:12px;font-weight:700;color:#5C3A1E;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${String(s)}</div>
+      <input type="number" min="0" value="${val}" placeholder="不限" oninput="epShopStockChange(${i},this.value)" style="width:72px;background:white;border:1px solid #E8D5B0;border-radius:6px;padding:5px 8px;font-size:13px;outline:none;text-align:center"/>
+      <span style="font-size:10px;color:#9C7A5A">件（空=不限）</span>
+    </div>`;
+  }).join("");
+}
+window.epShopStockChange=function(idx,val){
+  window.G.epSpecStock=window.G.epSpecStock||[];
+  window.G.epSpecStock[idx]=val===""?"":Math.max(0,parseInt(val,10)||0);
 };
 // 規格順序拖曳排序：用 Pointer Events（不是 HTML5 原生 drag-and-drop），
 // 因為原生 drag-and-drop 在手機觸控螢幕上完全沒反應，Pointer Events 才能手機/滑鼠都通用
@@ -6536,8 +6568,9 @@ window.saveEditProd=async function(){
   const newFlags=epGetFlags();
   const rawSpecs=window.G.epSpecsList||[];
   const rawSpecImages=window.G.epSpecImages||[];
-  const newSpecs=[];const newSpecImages=[];
-  rawSpecs.forEach((s,i)=>{const t=String(s).trim();if(t){newSpecs.push(t);newSpecImages.push(rawSpecImages[i]||"");}});
+  const rawSpecStock=window.G.epSpecStock||[];
+  const newSpecs=[];const newSpecImages=[];const newSpecStock=[];
+  rawSpecs.forEach((s,i)=>{const t=String(s).trim();if(t){newSpecs.push(t);newSpecImages.push(rawSpecImages[i]||"");newSpecStock.push(rawSpecStock[i]??"");}});
   const newAliases=(document.getElementById("ep-aliases")?.value.trim()||"").split(",").map(s=>s.trim()).filter(Boolean);
   const newNote=document.getElementById("ep-note")?.value.trim()||"";
   const originalAmt=window.G.epPromoOriginal||fa;
@@ -6545,7 +6578,7 @@ window.saveEditProd=async function(){
   const promoPct=window.G.epPromoPct||null;
   const promoGroup=document.getElementById("ep-promo-group")?.value.trim()||"";
   const weight=parseFloat(document.getElementById("ep-weight")?.value)||0;
-  const upd={name,currency:editCur,currencySymbol:CURR[editCur]?.symbol||"₩",paymentMethod:editPm,foreignAmount:fa,originalAmount:originalAmt,promoDivisor,promoPct,promoGroup,beforeTax,afterTax,finalPrice:price,profit,margin,twPrice,rivalPrice,rivalPrices,url,specs:newSpecs,aliases:newAliases,note:newNote,catKey:newCatKey,category:newCatObj.label,emoji:newCatObj.emoji,flags:newFlags,channel:window.G.editChannel||"",weight};
+  const upd={name,currency:editCur,currencySymbol:CURR[editCur]?.symbol||"₩",paymentMethod:editPm,foreignAmount:fa,originalAmount:originalAmt,promoDivisor,promoPct,promoGroup,beforeTax,afterTax,finalPrice:price,profit,margin,twPrice,rivalPrice,rivalPrices,url,specs:newSpecs,specStock:newSpecStock,aliases:newAliases,note:newNote,catKey:newCatKey,category:newCatObj.label,emoji:newCatObj.emoji,flags:newFlags,channel:window.G.editChannel||"",weight};
   const oldId=m.id; // 一定要在下面用到 oldId 之前先宣告好，不然會直接丟出錯誤、卡在上傳中出不來
   const saveBtn2=document.querySelector('button[onclick="saveEditProd()"]');
   const origBtnHtml2=saveBtn2?.innerHTML;
@@ -11844,6 +11877,7 @@ window.renderCustomers=function(){
       const sl2={pending:"#E07B39",settled:"#2E7D32",shipped:"#2980B9"};
       const stl={pending:"待訂金",deposit:"已付訂金",settled:"已付尾款",shipped:"已寄出"};
       const isQuote=o.orderType==="quote";
+      const isShopWeb=o.orderType==="shop_web";
       // 「待報價」代表還沒真的跟客人確認過價格，這裡改成即時抓「商品目前的售價」，
       // 不要用下單當下存的舊價格快照，避免商品改價之後，這裡還顯示舊價格、報錯給客人
       const dp=isQuote?(window.G.products.find(x=>x.id===o.productId)?.finalPrice??(o.discountPrice||o.unitPrice||0)):(o.discountPrice||o.unitPrice||0);
@@ -11856,6 +11890,7 @@ window.renderCustomers=function(){
           <span style="font-size:11px;color:#3D2010;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${isQuote?"📋 ":isPreorder?(isPurchased?"✅ ":"🛒 "):""}${(window.G.products.find(x=>x.id===o.productId)?.flags?.isCold)?"🧊 ":""}${cleanProductName((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品")}${o.spec?" ("+o.spec+")":""} ×${o.qty}</span>
           ${o.givenFromStock?`<span onclick="event.stopPropagation();cancelGivenFromStock('${o.id}')" title="點一下取消已給狀態，改回待購買" style="font-size:9px;background:#C8E6C9;color:#1B5E20;border-radius:4px;padding:1px 5px;font-weight:700;white-space:nowrap;flex-shrink:0;cursor:pointer">✅ 已給</span>`:""}
           ${isQuote?`<span style="font-size:9px;background:#BBDEFB;color:#0277BD;border-radius:4px;padding:1px 5px;font-weight:700;white-space:nowrap;flex-shrink:0">待報價，不算進統計</span>`:""}
+          ${isShopWeb?`<span style="font-size:9px;background:#FFE0B2;color:#E65100;border-radius:4px;padding:1px 5px;font-weight:700;white-space:nowrap;flex-shrink:0">🛍️ 商城訂單</span>`:""}
         </div>
         <div style="display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;gap:5px;flex:1 1 auto;min-width:0">
           <span style="font-size:11px;font-weight:700;color:#3D2010">${isQuote?"約 ":""}NT$${(dp*o.qty).toLocaleString()}</span>
@@ -11946,9 +11981,10 @@ window.renderCustomers=function(){
         ${(()=>{
           const depositBtn=`<button data-cid="${c.id}" onclick="copyDepositOrder(this.dataset.cid)" style="font-size:11px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">💰 收訂金</button>`;
           const shopBtn=`<button data-cid="${c.id}" onclick="openShopModal(this.dataset.cid)" style="font-size:11px;background:#FFF3E0;color:#E65100;border:1px solid #FFCC80;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">🏪 開賣場</button>`;
-          const colsNew="1fr 1fr 1fr 1fr";
+          const shipBtn=(c.phone||c.address)?`<button data-cid="${c.id}" onclick="copyShippingInfo(this.dataset.cid)" style="font-size:11px;background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">📋 賣貨便</button>`:"";
+          const colsNew=shipBtn?"repeat(5,1fr)":"1fr 1fr 1fr 1fr";
           if(cO.length>0){
-            return `<div style="display:grid;grid-template-columns:${colsNew};gap:5px;margin-bottom:8px"><button data-oid="${cO[0].id}" onclick="openEditOrd(this.dataset.oid)" style="font-size:11px;background:#FDF6EC;color:#C5A880;border:1px solid #E8D5B0;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">修改</button>${depositBtn}<button data-cid="${c.id}" onclick="copyCustOrder(this.dataset.cid)" style="font-size:11px;background:#EAF4FD;color:#0277BD;border:1px solid #90D7FF;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">複製訂單</button>${shopBtn}</div>`;
+            return `<div style="display:grid;grid-template-columns:${colsNew};gap:5px;margin-bottom:8px"><button data-oid="${cO[0].id}" onclick="openEditOrd(this.dataset.oid)" style="font-size:11px;background:#FDF6EC;color:#C5A880;border:1px solid #E8D5B0;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">修改</button>${depositBtn}<button data-cid="${c.id}" onclick="copyCustOrder(this.dataset.cid)" style="font-size:11px;background:#EAF4FD;color:#0277BD;border:1px solid #90D7FF;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">複製訂單</button>${shopBtn}${shipBtn}</div>`;
           }
           // 完全沒有訂單的客戶：也要能直接新增商品，不用等他有訂單明細才能用「修改」進去加東西
           return `<button data-cid="${c.id}" data-cname="${(c.communityName||c.lineName||'').replace(/"/g,"&quot;")}" onclick="doQuickAddOrder(this.dataset.cid,this.dataset.cname)" style="width:100%;font-size:11px;background:#EBF5FB;color:#2980B9;border:1px solid #AED6F1;padding:8px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center;margin-bottom:8px">＋ 新增訂單</button>`;
@@ -12968,6 +13004,63 @@ window.buildGroupedOrderLines=function(orders){
 // "active"（預設）＝只複製還沒結案、進行中的商品，這是最常用的情境——客人追加新東西，只想複製新的那幾樣
 // "all" ＝不分結案狀態，全部商品都複製
 // "closed" ＝只複製已經結案那一批（例如想回頭找舊訂單的明細發給客人核對）
+window.copyShippingInfo=function(cid){
+  const c=window.G.customers.find(x=>x.id===cid);
+  if(!c){showToast("找不到客戶資料","error");return;}
+  const name=c.communityName||c.lineName||"（未填姓名）";
+  const phone=c.phone||"（未填電話）";
+  const address=c.address||"（未填地址）";
+  const text=`收件人：${name}\n電話：${phone}\n地址：${address}`;
+  navigator.clipboard.writeText(text).then(()=>{
+    showToast("已複製收件資訊，可以直接貼到賣貨便系統");
+  }).catch(()=>{
+    showToast("複製失敗，請手動複製","error");
+  });
+};
+
+function resolveCustomerLineUserId(c){
+  if(c.lineUserId)return{userId:c.lineUserId,ambiguous:false};
+  const map=window.G.lineUserMap||{};
+  const key=(c.lineName||c.communityName||"").trim().toLowerCase();
+  if(!key)return{userId:null,ambiguous:false};
+  const matches=map[key]||[];
+  if(matches.length===1)return{userId:matches[0].userId,ambiguous:false};
+  if(matches.length>1)return{userId:null,ambiguous:true};
+  return{userId:null,ambiguous:false};
+}
+
+window.sendShopLinkToCustomer=async function(custId){
+  const c=window.G.customers.find(x=>x.id===custId);
+  const linkInput=document.getElementById("shop-link-input");
+  const statusEl=document.getElementById("shop-link-status");
+  const link=(linkInput?.value||"").trim();
+  if(!link){statusEl.textContent="請先貼上賣貨便連結";statusEl.style.color="#C0392B";return;}
+  if(!c){statusEl.textContent="找不到客戶資料";statusEl.style.color="#C0392B";return;}
+  const{userId,ambiguous}=resolveCustomerLineUserId(c);
+  if(!userId){
+    statusEl.textContent=ambiguous?"⚠️ 有多個同名的LINE帳號，無法自動判斷，請改用複製連結自己傳":"⚠️ 找不到這位客人的LINE ID，請確認他有傳過訊息給官方帳號";
+    statusEl.style.color="#D97706";return;
+  }
+  statusEl.textContent="傳送中...";statusEl.style.color="#9C7A5A";
+  try{
+    const message=`🏪 您的專屬賣場連結來囉！\n\n請點選以下連結，選擇要取貨的門市：\n${link}`;
+    const resp=await fetch("https://butter-ai.kueigin.workers.dev",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","X-Service":"line-quote"},
+      body:JSON.stringify({userId,message}),
+    });
+    const result=await resp.json();
+    if(result.success){
+      statusEl.textContent="✅ 已傳送給客人！";statusEl.style.color="#16A34A";
+      showToast("賣場連結已透過LINE傳送給客人");
+    } else {
+      statusEl.textContent="傳送失敗："+JSON.stringify(result.error);statusEl.style.color="#C0392B";
+    }
+  }catch(e){
+    statusEl.textContent="傳送失敗："+e.message;statusEl.style.color="#C0392B";
+  }
+};
+
 window.copyCustOrder=function(cid,scope){
   scope=scope||"active";
   const c=window.G.customers.find(x=>x.id===cid);if(!c)return;
@@ -13869,6 +13962,15 @@ window.openShopModal=function(custId){
       
       <!-- 開啟賣貨便 -->
       <a href="https://myship.7-11.com.tw/fast/add" target="_blank" style="display:block;width:100%;background:#E65100;color:white;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:900;cursor:pointer;text-align:center;text-decoration:none">🔗 開啟賣貨便快速結帳賣場</a>
+
+      <!-- 傳送連結給客人 -->
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid #FAF8F5">
+        <div style="font-size:10px;color:#9C7A5A;font-weight:700;margin-bottom:4px">③ 賣貨便給你的賣場連結建好之後，貼在這裡</div>
+        <input id="shop-link-input" type="text" placeholder="貼上 https://myship.7-11.com.tw/... 的連結" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;font-size:13px;outline:none;box-sizing:border-box;margin-bottom:8px"/>
+        <button data-cid="${custId}" onclick="sendShopLinkToCustomer(this.dataset.cid)" style="width:100%;background:#06C755;color:white;border:none;border-radius:12px;padding:12px;font-size:14px;font-weight:900;cursor:pointer">📨 透過 LINE 傳送連結給客人</button>
+        <div id="shop-link-status" style="font-size:10px;color:#9C7A5A;margin-top:6px"></div>
+      </div>
+
       <button onclick="document.getElementById('modal-shop').remove()" style="width:100%;margin-top:8px;background:white;color:#9C7A5A;border:1px solid #E8D5B0;border-radius:12px;padding:10px;font-size:13px;font-weight:700;cursor:pointer">關閉</button>
     </div>`;
   document.body.appendChild(div);
