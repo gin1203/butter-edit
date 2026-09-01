@@ -6221,12 +6221,11 @@ window.batchSetShopVisible=async function(visible){
 // shop.html 每次載入都會先讀這個，false 就顯示「暫停接單」頁面
 async function loadShopOpenState(){
   try{
-    const url=`https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT}/databases/(default)/documents/settings/shop?key=${FIREBASE_API_KEY}`;
+    const url=`https://firestore.googleapis.com/v1/projects/thebutter-2eb30/databases/(default)/documents/settings/shop?key=AIzaSyAt6Te8T9DggqFmhBzZz5iEKIXlPH11DpE`;
     const resp=await fetch(url);
     const btn=document.getElementById("shop-toggle-btn");
     if(!btn)return;
     if(resp.status===404){
-      // 還沒建立過設定文件，預設當成開啟
       btn.textContent="🟢 賣場開啟中（點我關閉）";
       btn.style.background="#E8F5E9";btn.style.color="#2E7D32";
       window._shopOpen=true;
@@ -6238,7 +6237,11 @@ async function loadShopOpenState(){
       btn.style.background=isOpen?"#E8F5E9":"#FDEDEC";
       btn.style.color=isOpen?"#2E7D32":"#C0392B";
     }
-  }catch(e){console.error("讀取賣場狀態失敗",e);}
+  }catch(e){
+    console.error("讀取賣場狀態失敗",e);
+    const btn=document.getElementById("shop-toggle-btn");
+    if(btn){btn.textContent="⚠️ 讀取失敗，點我重試";btn.style.background="#FFF3E0";btn.style.color="#E65100";}
+  }
 }
 async function toggleShopOpen(){
   const btn=document.getElementById("shop-toggle-btn");
@@ -6248,7 +6251,7 @@ async function toggleShopOpen(){
   if(!confirm(confirmMsg))return;
   try{
     btn.textContent="更新中…";btn.disabled=true;
-    const url=`https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT}/databases/(default)/documents/settings/shop?key=${FIREBASE_API_KEY}`;
+    const url=`https://firestore.googleapis.com/v1/projects/thebutter-2eb30/databases/(default)/documents/settings/shop?key=AIzaSyAt6Te8T9DggqFmhBzZz5iEKIXlPH11DpE`;
     await fetch(url,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({fields:{shopOpen:{booleanValue:next},updatedAt:{integerValue:Date.now()}}})});
     window._shopOpen=next;
     btn.textContent=next?"🟢 賣場開啟中（點我關閉）":"🔴 賣場已關閉（點我開啟）";
