@@ -41,11 +41,6 @@
 
   <div id="catalog-view" style="padding:14px 16px">
     <div id="product-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px"></div>
-    <!-- 聯絡客服 -->
-    <a href="https://line.me/R/ti/p/995iznve" id="cs-btn" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:20px;background:white;border:1px solid #E8D5B0;border-radius:14px;padding:14px;text-decoration:none;color:#5C3A1E">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-      <span style="font-size:13px;font-weight:700">有問題嗎？聯絡客服</span>
-    </a>
   </div>
 
   <div id="detail-view" style="display:none"></div>
@@ -63,6 +58,11 @@
     <button onclick="goToCheckout()" style="background:#F4845F;color:white;border:none;border-radius:12px;padding:12px 24px;font-size:14px;font-weight:900;cursor:pointer;white-space:nowrap">查看購物車</button>
   </div>
 </div>
+
+<!-- 懸浮 LINE 客服按鈕（登入後才顯示） -->
+<a id="line-float-btn" href="https://line.me/R/ti/p/995iznve" target="_blank" style="display:none;position:fixed;right:16px;bottom:100px;z-index:40;width:52px;height:52px;border-radius:50%;background:#06C755;box-shadow:0 4px 16px rgba(6,199,85,0.4);align-items:center;justify-content:center;text-decoration:none">
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
+</a>
 
 <div id="toast" style="display:none;position:fixed;bottom:100px;left:50%;transform:translateX(-50%);z-index:100;padding:10px 18px;border-radius:99px;background:#5C3A1E;color:white;font-size:12px;font-weight:700;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.25)"></div>
 
@@ -191,23 +191,30 @@ async function handleLineLoginCallback(){
   renderLineBanner();
   renderCartBar();
 }
+function updateLineFloatBtn(){
+  const btn=document.getElementById("line-float-btn");
+  if(!btn)return;
+  btn.style.display=G.lineUser?"flex":"none";
+}
 function renderLineBanner(){
   const el=document.getElementById("line-banner");
   const memberBtn=document.getElementById("header-member-btn");
   if(!el)return;
   if(G.lineUser){
-    el.innerHTML="";// 已登入不顯示橫幅，改用 header 圖示
+    el.innerHTML="";
     if(memberBtn){
       memberBtn.innerHTML=G.lineUser.pictureUrl
         ?`<img src="${G.lineUser.pictureUrl}" style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:2px solid #06C755"/>`
         :`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#06C755" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
     }
   } else {
-    el.innerHTML=`<button onclick="lineLogin()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;background:#06C755;color:white;border:none;border-radius:10px;padding:9px;font-size:13px;font-weight:700;cursor:pointer">💬 登入 LINE 查看價格並下單</button>`;
+    el.innerHTML=`<button id="line-login-banner-btn" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;background:#06C755;color:white;border:none;border-radius:10px;padding:9px;font-size:13px;font-weight:700;cursor:pointer">💬 登入 LINE 查看價格並下單</button>`;
+    document.getElementById("line-login-banner-btn")?.addEventListener("click",lineLogin);
     if(memberBtn){
       memberBtn.innerHTML=`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
     }
   }
+  updateLineFloatBtn();
 }
 function headerMemberClick(){
   if(G.lineUser){
@@ -223,12 +230,16 @@ function headerCartClick(){
 async function loadProducts(){
   // 先檢查賣場是否開啟
   try{
-    const settings=await fsGet("settings","shop");
-    if(settings&&settings.shopOpen===false){
-      showShopClosed(settings.closedMessage||"");
-      return;
+    const resp=await fetch(`${BASE_URL}/settings/shop?key=${FIREBASE_API_KEY}`);
+    if(resp.ok){
+      const data=await resp.json();
+      const shopOpen=data.fields?.shopOpen?.booleanValue;
+      if(shopOpen===false){
+        showShopClosed(data.fields?.closedMessage?.stringValue||"");
+        return;
+      }
     }
-  }catch(e){/* settings 不存在就當作開啟 */}
+  }catch(e){/* 讀不到就當作開啟 */}
   try{G.products=await fsListShopProducts();}
   catch(e){console.error(e);showToast("商品載入失敗："+e.message);}
   G.loaded=true;

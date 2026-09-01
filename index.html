@@ -6219,7 +6219,7 @@ window.batchSetShopVisible=async function(visible){
 // 開啟/關閉客人看到的商城頁面（shop.html）：
 // 狀態存在 Firestore 的 settings/shop 文件裡的 shopOpen 欄位，
 // shop.html 每次載入都會先讀這個，false 就顯示「暫停接單」頁面
-async function loadShopOpenState(){
+window.loadShopOpenState=async function(){
   try{
     const url=`https://firestore.googleapis.com/v1/projects/thebutter-2eb30/databases/(default)/documents/settings/shop?key=AIzaSyAt6Te8T9DggqFmhBzZz5iEKIXlPH11DpE`;
     const resp=await fetch(url);
@@ -6242,8 +6242,8 @@ async function loadShopOpenState(){
     const btn=document.getElementById("shop-toggle-btn");
     if(btn){btn.textContent="⚠️ 讀取失敗，點我重試";btn.style.background="#FFF3E0";btn.style.color="#E65100";}
   }
-}
-async function toggleShopOpen(){
+};
+window.toggleShopOpen=async function(){
   const btn=document.getElementById("shop-toggle-btn");
   const current=window._shopOpen!==false;
   const next=!current;
@@ -6262,9 +6262,9 @@ async function toggleShopOpen(){
   }catch(e){
     btn.disabled=false;
     showToast("更新失敗："+e.message,"error");
-    await loadShopOpenState();
+    await window.loadShopOpenState();
   }
-}
+};
 window.batchDeleteProducts=async function(){
   const ids=[...window.G.selectedProducts];
   if(!ids.length){showToast("請先選擇商品","warning");return;}
