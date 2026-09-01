@@ -6220,18 +6220,17 @@ window.batchSetShopVisible=async function(visible){
 // 狀態存在 Firestore 的 settings/shop 文件裡的 shopOpen 欄位，
 // shop.html 每次載入都會先讀這個，false 就顯示「暫停接單」頁面
 window.loadShopOpenState=async function(){
+  const btn=document.getElementById("shop-toggle-btn");
+  if(!btn)return;
   try{
-    const url=`https://firestore.googleapis.com/v1/projects/thebutter-2eb30/databases/(default)/documents/settings/shop?key=AIzaSyAt6Te8T9DggqFmhBzZz5iEKIXlPH11DpE`;
-    const resp=await fetch(url);
-    const btn=document.getElementById("shop-toggle-btn");
-    if(!btn)return;
-    if(resp.status===404){
+    const {doc,getDoc}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    const snap=await getDoc(doc(db,"settings","shop"));
+    if(!snap.exists()){
       btn.textContent="🟢 賣場開啟中（點我關閉）";
       btn.style.background="#E8F5E9";btn.style.color="#2E7D32";
       window._shopOpen=true;
     } else {
-      const data=await resp.json();
-      const isOpen=data.fields?.shopOpen?.booleanValue!==false;
+      const isOpen=snap.data().shopOpen!==false;
       window._shopOpen=isOpen;
       btn.textContent=isOpen?"🟢 賣場開啟中（點我關閉）":"🔴 賣場已關閉（點我開啟）";
       btn.style.background=isOpen?"#E8F5E9":"#FDEDEC";
@@ -6239,8 +6238,8 @@ window.loadShopOpenState=async function(){
     }
   }catch(e){
     console.error("讀取賣場狀態失敗",e);
-    const btn=document.getElementById("shop-toggle-btn");
-    if(btn){btn.textContent="⚠️ 讀取失敗，點我重試";btn.style.background="#FFF3E0";btn.style.color="#E65100";}
+    btn.textContent="⚠️ 讀取失敗，點我重試";
+    btn.style.background="#FFF3E0";btn.style.color="#E65100";
   }
 };
 window.toggleShopOpen=async function(){
@@ -6251,8 +6250,8 @@ window.toggleShopOpen=async function(){
   if(!confirm(confirmMsg))return;
   try{
     btn.textContent="更新中…";btn.disabled=true;
-    const url=`https://firestore.googleapis.com/v1/projects/thebutter-2eb30/databases/(default)/documents/settings/shop?key=AIzaSyAt6Te8T9DggqFmhBzZz5iEKIXlPH11DpE`;
-    await fetch(url,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({fields:{shopOpen:{booleanValue:next},updatedAt:{integerValue:Date.now()}}})});
+    const {doc,setDoc}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    await setDoc(doc(db,"settings","shop"),{shopOpen:next,updatedAt:Date.now()});
     window._shopOpen=next;
     btn.textContent=next?"🟢 賣場開啟中（點我關閉）":"🔴 賣場已關閉（點我開啟）";
     btn.style.background=next?"#E8F5E9":"#FDEDEC";
