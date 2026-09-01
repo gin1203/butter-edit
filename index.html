@@ -98,6 +98,7 @@ body.live-mode .hide-live { display: none !important; }
   <!-- Quick add + Nav row -->
   <div style="max-width:720px;margin:0 auto;padding:0 12px">
     <button onclick="openQuickAdd()" style="width:100%;background:#A5D6A7;color:#2E7D32;border:none;border-radius:12px;padding:10px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:6px">✨ 快速上架</button>
+    <button id="shop-toggle-btn" onclick="toggleShopOpen()" style="width:100%;background:#EEE;color:#999;border:none;border-radius:12px;padding:8px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:6px">⏳ 讀取賣場狀態…</button>
     <div id="nav-bar" style="display:flex;gap:3px;background:#E8D5B0;padding:4px;border-radius:14px">
       <button id="nav-list"    onclick="showTab('list')"        style="flex:1;display:flex;flex-direction:column;align-items:center;padding:6px 2px;border-radius:10px;font-size:9px;font-weight:700;border:none;cursor:pointer;background:#5C3A1E;color:#F5E6C8"><span style="font-size:15px">📋</span>商品</button>
       <button id="nav-cust"    onclick="showTab('customers')"   style="flex:1;display:flex;flex-direction:column;align-items:center;padding:6px 2px;border-radius:10px;font-size:9px;font-weight:700;border:none;cursor:pointer;background:transparent;color:#9C7A5A"><span style="font-size:15px">👥</span>客戶</button>
@@ -2746,6 +2747,7 @@ onAuthStateChanged(auth,async user=>{
     fetchRates();
     // 登入當下先畫一次畫面（此時資料可能還沒回來），讓「載入中」提示能立刻顯示，不會整片空白乾等
     renderList();renderCustomers();renderInvoice();
+    loadShopOpenState();
     // 背景查詢實際角色，不擋畫面
     let roleResolved=false;
     const t=setTimeout(()=>{ if(!roleResolved) applyRoleUI("owner"); },5000); // 5秒都查不到，視為第一個帳號=老闆
@@ -6213,6 +6215,53 @@ window.batchSetShopVisible=async function(visible){
     showToast(`操作完成：成功 ${ok} 件，失敗 ${fail} 件（可能是網路問題，請稍後重試）`,"error");
   }
 };
+// ── 賣場開關 ───────────────────────────────────────────────────────────
+// 開啟/關閉客人看到的商城頁面（shop.html）：
+// 狀態存在 Firestore 的 settings/shop 文件裡的 shopOpen 欄位，
+// shop.html 每次載入都會先讀這個，false 就顯示「暫停接單」頁面
+async function loadShopOpenState(){
+  try{
+    const url=`https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT}/databases/(default)/documents/settings/shop?key=${FIREBASE_API_KEY}`;
+    const resp=await fetch(url);
+    const btn=document.getElementById("shop-toggle-btn");
+    if(!btn)return;
+    if(resp.status===404){
+      // 還沒建立過設定文件，預設當成開啟
+      btn.textContent="🟢 賣場開啟中（點我關閉）";
+      btn.style.background="#E8F5E9";btn.style.color="#2E7D32";
+      window._shopOpen=true;
+    } else {
+      const data=await resp.json();
+      const isOpen=data.fields?.shopOpen?.booleanValue!==false;
+      window._shopOpen=isOpen;
+      btn.textContent=isOpen?"🟢 賣場開啟中（點我關閉）":"🔴 賣場已關閉（點我開啟）";
+      btn.style.background=isOpen?"#E8F5E9":"#FDEDEC";
+      btn.style.color=isOpen?"#2E7D32":"#C0392B";
+    }
+  }catch(e){console.error("讀取賣場狀態失敗",e);}
+}
+async function toggleShopOpen(){
+  const btn=document.getElementById("shop-toggle-btn");
+  const current=window._shopOpen!==false;
+  const next=!current;
+  const confirmMsg=next?"確定開啟賣場？客人就可以打開商城頁面下單了":"確定關閉賣場？客人打開商城頁面會看到「暫停接單」";
+  if(!confirm(confirmMsg))return;
+  try{
+    btn.textContent="更新中…";btn.disabled=true;
+    const url=`https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT}/databases/(default)/documents/settings/shop?key=${FIREBASE_API_KEY}`;
+    await fetch(url,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({fields:{shopOpen:{booleanValue:next},updatedAt:{integerValue:Date.now()}}})});
+    window._shopOpen=next;
+    btn.textContent=next?"🟢 賣場開啟中（點我關閉）":"🔴 賣場已關閉（點我開啟）";
+    btn.style.background=next?"#E8F5E9":"#FDEDEC";
+    btn.style.color=next?"#2E7D32":"#C0392B";
+    btn.disabled=false;
+    showToast(next?"✅ 賣場已開啟，客人可以下單了":"🔒 賣場已關閉");
+  }catch(e){
+    btn.disabled=false;
+    showToast("更新失敗："+e.message,"error");
+    await loadShopOpenState();
+  }
+}
 window.batchDeleteProducts=async function(){
   const ids=[...window.G.selectedProducts];
   if(!ids.length){showToast("請先選擇商品","warning");return;}
