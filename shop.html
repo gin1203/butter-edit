@@ -150,7 +150,7 @@ async function fsListShopProducts(){
 }
 
 // ── LINE Login ─────────────────────────────────────
-function lineLoginRedirectUri(){return location.origin+location.pathname;}
+function lineLoginRedirectUri(){return "https://gin1203.github.io/butter-edit/shop.html";}
 function lineLogin(){
   const state=Math.random().toString(36).slice(2)+Date.now();
   localStorage.setItem("butter_line_state",state);
@@ -405,14 +405,14 @@ function renderDetail(){
   el.innerHTML=`
     <!-- 詳情頁 Header -->
     <div style="position:fixed;top:0;left:0;right:0;z-index:50;background:#FAF8F5;padding:10px 16px;border-bottom:1px solid #E8D5B0;display:flex;align-items:center;gap:10px;max-width:600px;margin:0 auto">
-      <button onclick="closeDetail()" style="background:none;border:none;cursor:pointer;padding:0;color:#5C3A1E;display:flex;align-items:center;gap:4px;font-size:13px;font-weight:700">
+      <button id="detail-back-btn" style="background:none;border:none;cursor:pointer;padding:0;color:#5C3A1E;display:flex;align-items:center;gap:4px;font-size:13px;font-weight:700">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>返回
       </button>
       <div style="flex:1"></div>
-      <button onclick="headerMemberClick()" style="background:none;border:none;cursor:pointer;padding:4px;color:#5C3A1E" id="detail-member-btn">
+      <button id="detail-member-btn" style="background:none;border:none;cursor:pointer;padding:4px;color:#5C3A1E">
         ${G.lineUser&&G.lineUser.pictureUrl?`<img src="${G.lineUser.pictureUrl}" style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:2px solid #06C755"/>`:`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`}
       </button>
-      <button onclick="headerCartClick()" style="background:none;border:none;cursor:pointer;padding:4px;color:#5C3A1E;position:relative">
+      <button id="detail-cart-btn" style="background:none;border:none;cursor:pointer;padding:4px;color:#5C3A1E;position:relative">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
         ${totalCartQty>0?`<div style="position:absolute;top:0;right:0;background:#F4845F;color:white;font-size:9px;font-weight:900;border-radius:99px;min-width:16px;height:16px;display:flex;align-items:center;justify-content:center;padding:0 3px">${totalCartQty}</div>`:""}
       </button>
@@ -448,6 +448,10 @@ function renderDetail(){
     <div style="position:fixed;bottom:0;left:0;right:0;z-index:20;background:white;border-top:1px solid #E8D5B0;padding:12px 16px;box-shadow:0 -4px 16px rgba(0,0,0,0.06)">
       <div style="max-width:600px;margin:0 auto">${bottomBtn}</div>
     </div>`;
+  // 綁定詳情頁按鈕（避免 GitHub Pages CSP 擋掉 inline onclick）
+  document.getElementById("detail-back-btn")?.addEventListener("click",closeDetail);
+  document.getElementById("detail-member-btn")?.addEventListener("click",headerMemberClick);
+  document.getElementById("detail-cart-btn")?.addEventListener("click",headerCartClick);
 }
 
 function detailSelectSpec(pid,idx){
