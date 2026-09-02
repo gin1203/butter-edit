@@ -187,6 +187,27 @@ async function handleLineLoginCallback(){
     G.lineUser=data;
     localStorage.setItem("butter_line_user",JSON.stringify(data));
     showToast(`歡迎，${data.displayName}！`);
+    // 登入成功後，自動把這個人寫進 customers（讓後台看得到誰登入過，不需要等他送出訂單）
+    try{
+      const custId="line_"+data.userId.slice(0,16);
+      const existing=await fsGet("customers",custId);
+      if(!existing){
+        await fsCreate("customers",custId,{
+          communityName:"",
+          lineName:data.displayName||"",
+          lineUserId:data.userId,
+          pictureUrl:data.pictureUrl||"",
+          phone:"",
+          address:"",
+          note:"（商城登入自動建立）",
+          shopMember:true,
+          createdAt:Date.now(),
+        });
+      } else if(!existing.shopMember){
+        // 已存在但沒有 shopMember 標記，補上去
+        await fsCreate("customers",custId,{...existing,shopMember:true,pictureUrl:data.pictureUrl||existing.pictureUrl||""});
+      }
+    }catch(e){console.warn("建立商城會員資料失敗（不影響登入）",e);}
   }catch(e){showToast("LINE登入失敗："+(e.message||""));}
   renderLineBanner();
   renderCartBar();
@@ -666,39 +687,51 @@ function showSuccess(items,total,name){
   const el=document.getElementById("success-view");
   el.style.display="block";
 
-  // 組成詢問訊息文字（帶入到 LINE）
   const itemLines=items.map(i=>`・${i.product.name}${i.spec?" ("+i.spec+")":""} ×${i.qty}`).join("\n");
-  const msg=encodeURIComponent(`我剛在商城送出詢問單，請問可以幫我確認嗎？\n\n${itemLines}\n\n參考金額：NT$${total.toLocaleString()}`);
+  const msg=encodeURIComponent(`我剛在商城下單了！請幫我確認訂單，謝謝🙏\n\n【訂單內容】\n${itemLines}\n\n參考金額：NT$${total.toLocaleString()}\n訂購人：${name}`);
   const lineUrl=`https://line.me/R/oaMessage/${LINE_OA_ID.replace("@","")}/?text=${msg}`;
 
   el.innerHTML=`
-    <div style="text-align:center;padding:40px 16px">
-      <div style="font-size:48px;margin-bottom:12px">🎉</div>
-      <div style="font-size:18px;font-weight:900;margin-bottom:6px">訂單已送出！</div>
-      <div style="font-size:13px;color:#9C7A5A;margin-bottom:24px">下一步請點下方按鈕，透過 LINE 通知我們，這樣我們才能主動聯繫您確認金額及出貨喔</div>
-
-      <a href="${lineUrl}" style="display:block;width:100%;background:#06C755;color:white;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:900;cursor:pointer;text-decoration:none;margin-bottom:12px">
-        💬 點我在 LINE 通知店家
-      </a>
-
-      <div style="background:#FFF8E1;border:1px solid #FFE082;border-radius:12px;padding:12px 14px;text-align:left;font-size:12px;color:#7B5800;line-height:1.7;margin-bottom:20px">
-        <b>接下來的步驟：</b><br>
-        1. 點上方按鈕，LINE 會自動幫您輸入訊息<br>
-        2. 按送出，我們收到後會盡快回覆確認金額<br>
-        3. 確認後請轉帳，收款後我們安排出貨
+    <div style="padding:24px 16px 60px">
+      <div style="text-align:center;margin-bottom:24px">
+        <div style="font-size:44px;margin-bottom:8px">✅</div>
+        <div style="font-size:18px;font-weight:900;color:#3D2010;margin-bottom:6px">訂單已記錄！</div>
+        <div style="font-size:13px;color:#9C7A5A">還差最後一步，請完成下方操作</div>
       </div>
 
-      <div style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:16px;text-align:left;margin-bottom:20px">
-        ${items.map(i=>`<div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0">
-          <div>${i.product.name}${i.spec?" ("+i.spec+")":""}  ×${i.qty}</div>
-          <div style="font-weight:700">NT$ ${((i.product.finalPrice||0)*i.qty).toLocaleString()}</div>
-        </div>`).join("")}
-        <div style="display:flex;justify-content:space-between;padding-top:10px;margin-top:6px;border-top:1px solid #FAF8F5">
-          <div style="font-weight:700;color:#9C7A5A">參考總計</div>
-          <div style="font-weight:900;color:#F4845F">NT$ ${total.toLocaleString()}</div>
+      <!-- 主要行動：LINE 通知（強調必要性） -->
+      <div style="background:#F0FFF4;border:2px solid #06C755;border-radius:16px;padding:16px;margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <div style="font-size:20px">⚠️</div>
+          <div style="font-size:13px;font-weight:900;color:#1A7A3A">必須完成這個步驟，否則我們無法確認您的訂單</div>
+        </div>
+        <a href="${lineUrl}" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:#06C755;color:white;border-radius:12px;padding:16px;font-size:16px;font-weight:900;text-decoration:none;box-sizing:border-box">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
+          點我加入官方 LINE 完成下單
+        </a>
+        <div style="font-size:11px;color:#1A7A3A;text-align:center;margin-top:8px;line-height:1.5">
+          點下去會自動帶入您的訂單資訊<br>在 LINE 裡按「傳送」即完成
         </div>
       </div>
-      <button onclick="location.reload()" style="background:#5C3A1E;color:white;border:none;border-radius:12px;padding:12px 28px;font-size:14px;font-weight:900;cursor:pointer">回到商品頁繼續逛</button>
+
+      <!-- 訂單明細 -->
+      <div style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:14px;margin-bottom:16px">
+        <div style="font-size:12px;font-weight:900;color:#9C7A5A;margin-bottom:10px">📋 您的訂單內容</div>
+        ${items.map(i=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #FAF8F5;font-size:13px">
+          <div style="flex:1;padding-right:8px">
+            <div style="font-weight:700">${i.product.name}</div>
+            ${i.spec?`<div style="font-size:11px;color:#9C7A5A">${i.spec}</div>`:""}
+            <div style="font-size:11px;color:#9C7A5A">× ${i.qty} 件</div>
+          </div>
+          <div style="font-weight:900;color:#F4845F;white-space:nowrap">NT$ ${((i.product.finalPrice||0)*i.qty).toLocaleString()}</div>
+        </div>`).join("")}
+        <div style="display:flex;justify-content:space-between;padding-top:10px;margin-top:4px">
+          <div style="font-size:13px;font-weight:700;color:#9C7A5A">參考總計</div>
+          <div style="font-size:17px;font-weight:900;color:#F4845F">NT$ ${total.toLocaleString()}</div>
+        </div>
+      </div>
+
+      <button onclick="location.reload()" style="width:100%;background:white;color:#9C7A5A;border:1px solid #E8D5B0;border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer">回到商品頁繼續逛</button>
     </div>`;
   window.scrollTo(0,0);
 }
