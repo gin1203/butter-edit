@@ -694,7 +694,7 @@ function showSuccess(items,total,name){
 
   const itemLines=items.map(i=>`・${i.product.name}${i.spec?" ("+i.spec+")":""} ×${i.qty}`).join("\n");
   const msg=encodeURIComponent(`我剛在商城下單了！請幫我確認訂單，謝謝🙏\n\n【訂單內容】\n${itemLines}\n\n參考金額：NT$${total.toLocaleString()}\n訂購人：${name}`);
-  const lineUrl=`https://line.me/R/oaMessage/${LINE_OA_ID.replace("@","")}/?text=${msg}`;
+  const lineUrl=`https://line.me/R/ti/p/${LINE_OA_ID}?text=${msg}`;
 
   el.innerHTML=`
     <div style="padding:24px 16px 60px">
@@ -715,9 +715,14 @@ function showSuccess(items,total,name){
           點我加入官方 LINE 完成下單
         </a>
         <div style="font-size:11px;color:#1A7A3A;text-align:center;margin-top:8px;line-height:1.5">
-          點下去會自動帶入您的訂單資訊<br>在 LINE 裡按「傳送」即完成
+          點下去會自動帶入您的訂單資訊<br>在 LINE 裡按「傳送」即完成<br>
+          <span style="color:#9C7A5A">（電腦用戶請用手機點擊，或直接搜尋官方帳號 <b>${LINE_OA_ID}</b>）</span>
         </div>
       </div>
+      <!-- 電腦用戶：複製訂單資訊 -->
+      <button id="copy-order-btn" onclick="copyOrderInfo()" style="width:100%;background:white;color:#5C3A1E;border:1px solid #E8D5B0;border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:16px">
+        📋 複製訂單資訊（電腦用戶可貼到 LINE）
+      </button>
 
       <!-- 訂單明細 -->
       <div style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:14px;margin-bottom:16px">
@@ -741,6 +746,17 @@ function showSuccess(items,total,name){
       </div>
       <button onclick="location.reload()" style="width:100%;background:white;color:#9C7A5A;border:1px solid #E8D5B0;border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer">回到商品頁繼續逛</button>
     </div>`;
+  // 讓複製按鈕能存取這筆訂單的資料
+  window.copyOrderInfo=function(){
+    const itemLines=items.map(i=>`・${i.product.name}${i.spec?" ("+i.spec+")":""} ×${i.qty}`).join("\n");
+    const text=`我剛在商城下單了！請幫我確認訂單，謝謝🙏\n\n【訂單內容】\n${itemLines}\n\n參考金額：NT$${total.toLocaleString()}\n訂購人：${name}`;
+    navigator.clipboard.writeText(text).then(()=>{
+      const btn=document.getElementById("copy-order-btn");
+      if(btn){btn.textContent="✅ 已複製！請開啟 LINE 貼上傳送";btn.style.background="#E8F5E9";btn.style.color="#2E7D32";btn.style.border="1px solid #A5D6A7";}
+    }).catch(()=>{
+      alert("複製失敗，請手動複製以下內容：\n\n"+text);
+    });
+  };
   window.scrollTo(0,0);
 }
 
