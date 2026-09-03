@@ -204,8 +204,9 @@ async function handleLineLoginCallback(){
           createdAt:Date.now(),
         });
       } else if(!existing.shopMember){
-        // 已存在但沒有 shopMember 標記，補上去
-        await fsCreate("customers",custId,{...existing,shopMember:true,pictureUrl:data.pictureUrl||existing.pictureUrl||""});
+        // 已存在但沒有 shopMember 標記，只補這一個欄位，其他資料完全不動
+        const patchUrl=`${BASE_URL}/customers/${custId}?updateMask.fieldPaths=shopMember&updateMask.fieldPaths=pictureUrl&key=${FIREBASE_API_KEY}`;
+        await fetch(patchUrl,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({fields:{shopMember:{booleanValue:true},pictureUrl:{stringValue:data.pictureUrl||""}}})});
       }
     }catch(e){console.warn("建立商城會員資料失敗（不影響登入）",e);}
   }catch(e){showToast("LINE登入失敗："+(e.message||""));}
@@ -735,6 +736,9 @@ function showSuccess(items,total,name){
         </div>
       </div>
 
+      <div style="background:#FFF8E1;border:1px solid #FFE082;border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:12px;color:#7B5800;line-height:1.7">
+        ⚠️ 請在 <b>48小時內</b>前往官方 LINE 確認訂單並完成轉帳，逾時訂單將自動取消
+      </div>
       <button onclick="location.reload()" style="width:100%;background:white;color:#9C7A5A;border:1px solid #E8D5B0;border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer">回到商品頁繼續逛</button>
     </div>`;
   window.scrollTo(0,0);
