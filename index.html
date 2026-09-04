@@ -11949,7 +11949,7 @@ window.renderCustomers=function(){
           ${o.givenFromStock?`<span onclick="event.stopPropagation();cancelGivenFromStock('${o.id}')" title="點一下取消已給狀態，改回待購買" style="font-size:9px;background:#C8E6C9;color:#1B5E20;border-radius:4px;padding:1px 5px;font-weight:700;white-space:nowrap;flex-shrink:0;cursor:pointer">✅ 已給</span>`:""}
           ${isQuote?`<span style="font-size:9px;background:#BBDEFB;color:#0277BD;border-radius:4px;padding:1px 5px;font-weight:700;white-space:nowrap;flex-shrink:0">待報價，不算進統計</span>`:""}
           ${isShopWeb?`<span style="font-size:9px;background:#FFE0B2;color:#E65100;border-radius:4px;padding:1px 5px;font-weight:700;white-space:nowrap;flex-shrink:0">🛍️ 商城訂單</span>`:""}
-        </div>
+          ${o.note?`<span style="font-size:9px;background:#FFF3E0;color:#7B5800;border-radius:4px;padding:1px 5px;font-weight:700;white-space:nowrap;flex-shrink:0" title="${o.note}">📝 ${o.note.length>12?o.note.slice(0,12)+"…":o.note}</span>`:""}
         <div style="display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;gap:5px;flex:1 1 auto;min-width:0">
           <span style="font-size:11px;font-weight:700;color:#3D2010">${isQuote?"約 ":""}NT$${(dp*o.qty).toLocaleString()}</span>
           ${isQuote?`<button data-oid="${o.id}" onclick="event.stopPropagation();openSendQuote(this.dataset.oid)" style="font-size:10px;color:#065F46;background:#D1FAE5;border:1px solid #6EE7B7;padding:2px 6px;border-radius:5px;cursor:pointer;font-weight:700">傳送報價</button>`:""}

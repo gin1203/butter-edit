@@ -18,7 +18,7 @@
   <!-- 主頁 Header -->
   <div id="main-header" style="position:sticky;top:0;z-index:20;background:#FAF8F5;padding:12px 16px 10px;border-bottom:1px solid #E8D5B0">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <div style="font-size:19px;font-weight:900;color:#5C3A1E">🧈 THE BUTTER</div>
+      <div style="font-size:19px;font-weight:900;color:#5C3A1E;cursor:pointer" onclick="backToCatalog();closeDetail();">🧈 THE BUTTER</div>
       <div style="display:flex;align-items:center;gap:2px">
         <button id="header-member-btn" onclick="headerMemberClick()" style="background:none;border:none;cursor:pointer;padding:6px;color:#5C3A1E">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -325,7 +325,6 @@ function renderGrid(){
         ${p.photo?`<img src="${p.photo}" style="width:100%;height:100%;object-fit:cover" loading="lazy"/>`:`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px">${p.emoji||"📦"}</div>`}
       </div>
       <div style="padding:8px 10px 12px;display:flex;flex-direction:column;flex:1">
-        <div style="font-size:10px;color:#9C7A5A;font-weight:700;margin-bottom:2px">${p.id}</div>
         <div style="font-size:12px;font-weight:700;color:#3D2010;line-height:1.35;margin-bottom:6px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${p.name||""}</div>
         ${priceHtml}
         ${hasSpecs?`<div style="font-size:10px;color:#9C7A5A;margin-top:2px">${specsArr.length} 種顏色/款式</div>`:""}
@@ -427,7 +426,7 @@ function renderDetail(){
 
     <!-- 商品資訊 -->
     <div style="padding:16px 16px 140px">
-      <div style="font-size:10px;color:#9C7A5A;font-weight:700;margin-bottom:4px">${p.id}・${p.category||""}</div>
+      <div style="font-size:10px;color:#9C7A5A;font-weight:700;margin-bottom:4px">${p.category||""}</div>
       <div style="font-size:18px;font-weight:900;color:#3D2010;line-height:1.3;margin-bottom:8px">${p.name||""}</div>
       ${G.lineUser
         ?`<div style="font-size:22px;font-weight:900;color:#F4845F;margin-bottom:20px">NT$ ${price.toLocaleString()}</div>`
@@ -564,7 +563,7 @@ function renderCheckout(){
       </div>
     </div>
     <div style="background:#FFF8E1;border:1px solid #FFE082;border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:12px;color:#7B5800;line-height:1.6">
-      📌 送出訂單後，請務必點下方按鈕通知我們，我們才能主動聯繫您確認金額及出貨事宜
+      📌 送出訂單後，下一頁會引導您前往官方 LINE，完成這個步驟我們才能主動聯繫您確認金額及出貨事宜
     </div>
     <div id="checkout-error" style="display:none;color:#C0392B;font-size:12px;font-weight:700;margin-bottom:10px"></div>
     <button onclick="submitOrder()" id="submit-btn" style="width:100%;background:#F4845F;color:white;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:900;cursor:pointer;margin-bottom:0">送出訂單</button>
@@ -693,8 +692,9 @@ function showSuccess(items,total,name){
   el.style.display="block";
 
   const itemLines=items.map(i=>`・${i.product.name}${i.spec?" ("+i.spec+")":""} ×${i.qty}`).join("\n");
-  const msg=encodeURIComponent(`我剛在商城下單了！請幫我確認訂單，謝謝🙏\n\n【訂單內容】\n${itemLines}\n\n參考金額：NT$${total.toLocaleString()}\n訂購人：${name}`);
-  const lineUrl=`https://line.me/R/ti/p/${LINE_OA_ID}?text=${msg}`;
+  const orderText=`我剛在商城下單了！請幫我確認訂單，謝謝🙏\n\n【訂單內容】\n${itemLines}\n\n參考金額：NT$${total.toLocaleString()}\n訂購人：${name}`;
+  const msg=encodeURIComponent(orderText);
+  const lineUrl=`line://ti/p/${LINE_OA_ID}?text=${msg}`;
 
   el.innerHTML=`
     <div style="padding:24px 16px 60px">
@@ -710,13 +710,13 @@ function showSuccess(items,total,name){
           <div style="font-size:20px">⚠️</div>
           <div style="font-size:13px;font-weight:900;color:#1A7A3A">必須完成這個步驟，否則我們無法確認您的訂單</div>
         </div>
-        <a href="${lineUrl}" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:#06C755;color:white;border-radius:12px;padding:16px;font-size:16px;font-weight:900;text-decoration:none;box-sizing:border-box">
+        <button id="line-complete-btn" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:#06C755;color:white;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:900;cursor:pointer;box-sizing:border-box">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
           點我加入官方 LINE 完成下單
-        </a>
-        <div style="font-size:11px;color:#1A7A3A;text-align:center;margin-top:8px;line-height:1.5">
-          點下去會自動帶入您的訂單資訊<br>在 LINE 裡按「傳送」即完成<br>
-          <span style="color:#9C7A5A">（電腦用戶請用手機點擊，或直接搜尋官方帳號 <b>${LINE_OA_ID}</b>）</span>
+        </button>
+        <div style="font-size:11px;color:#1A7A3A;text-align:center;margin-top:8px;line-height:1.6">
+          點下去會<b>自動複製訂單資訊</b>到剪貼簿<br>進入 LINE 後直接<b>長按貼上</b>再按傳送即完成<br>
+          <span style="color:#9C7A5A">（電腦用戶請搜尋官方帳號 <b>${LINE_OA_ID}</b>）</span>
         </div>
       </div>
       <!-- 電腦用戶：複製訂單資訊 -->
@@ -746,6 +746,17 @@ function showSuccess(items,total,name){
       </div>
       <button onclick="location.reload()" style="width:100%;background:white;color:#9C7A5A;border:1px solid #E8D5B0;border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer">回到商品頁繼續逛</button>
     </div>`;
+  // 點 LINE 按鈕時：先複製訂單文字到剪貼簿，再跳轉到 LINE
+  document.getElementById("line-complete-btn")?.addEventListener("click",()=>{
+    navigator.clipboard.writeText(orderText).then(()=>{
+      // 複製成功後跳轉
+      location.href=lineUrl;
+    }).catch(()=>{
+      // 複製失敗也還是跳轉（不要擋住客人）
+      location.href=lineUrl;
+    });
+  });
+
   // 讓複製按鈕能存取這筆訂單的資料
   window.copyOrderInfo=function(){
     const itemLines=items.map(i=>`・${i.product.name}${i.spec?" ("+i.spec+")":""} ×${i.qty}`).join("\n");
