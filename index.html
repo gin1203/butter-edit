@@ -73,38 +73,37 @@ body.live-mode .hide-live { display: none !important; }
 <div id="app" style="display:none">
 
 <!-- ── Header + Nav 合併固定容器 ── -->
-<div id="top-bar" style="position:fixed;top:0;z-index:30;width:100%;background:#F5E6C8;box-shadow:0 2px 12px rgba(100,60,20,0.08);padding-bottom:10px;overflow:hidden">
-  <!-- 匯率細條 -->
-  <div style="margin:6px 12px 0;background:#F5E6C8;border:1px solid #E8D5B0;border-radius:8px;padding:4px 12px;text-align:center;font-size:10px;color:#9C7A5A;letter-spacing:0.03em;line-height:1.6">
-    <span style="color:#C5A880">⚡</span> <span id="rate-bar" style="margin-left:2px">載入中...</span>
-  </div>
-  <!-- Header row -->
-  <div style="max-width:720px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;padding:10px 12px 6px">
+<div id="top-bar" style="position:fixed;top:0;z-index:30;width:100%;background:#F5E6C8;box-shadow:0 2px 12px rgba(100,60,20,0.08);padding-bottom:8px;overflow:hidden">
+  <!-- Header row：品牌名稱 + 匯率(縮成小字) + 操作圖示，全部同一排 -->
+  <div style="max-width:720px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;padding:8px 12px 4px;gap:8px">
     <div style="flex:1;min-width:0">
-      <div style="font-size:8px;letter-spacing:0.12em;color:#9C7A5A;font-weight:700;text-transform:uppercase;line-height:1">Premium Select</div>
-      <h1 style="margin:2px 0 0;font-size:16px;font-weight:900;color:#3D2010;line-height:1;white-space:nowrap">The Butter Edit</h1>
+      <h1 style="margin:0;font-size:15px;font-weight:900;color:#3D2010;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">The Butter Edit</h1>
+      <div id="rate-bar-compact" style="font-size:9px;color:#B0906A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px">載入匯率中...</div>
     </div>
-    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+    <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
       <div id="pending-badge" style="display:none;background:#5C3A1E;color:#F5E6C8;font-size:10px;font-weight:700;padding:3px 7px;border-radius:99px;white-space:nowrap"></div>
       <span id="user-role-badge" style="display:none;font-size:9px;font-weight:700;color:#9C7A5A;background:#FAF8F5;border:1px solid #E8D5B0;padding:2px 5px;border-radius:99px"></span>
-      <button onclick="doLogout()" style="padding:6px 9px;border-radius:8px;border:1px solid #E8D5B0;background:#FAF8F5;color:#9C7A5A;cursor:pointer;font-size:11px;font-weight:700">登出</button>
-      <button onclick="showTab('settings')" style="padding:6px;border-radius:8px;border:none;background:transparent;color:#9C7A5A;cursor:pointer;flex-shrink:0">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+      <button onclick="doLogout()" style="padding:6px 8px;border-radius:8px;border:1px solid #E8D5B0;background:#FAF8F5;color:#9C7A5A;cursor:pointer;font-size:10px;font-weight:700">登出</button>
+      <button onclick="showTab('settings')" style="padding:5px;border-radius:8px;border:none;background:transparent;color:#9C7A5A;cursor:pointer;flex-shrink:0">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/>
         </svg>
       </button>
     </div>
   </div>
-  <!-- Quick add + Nav row -->
+  <!-- Quick add + 賣場開關：並排一排，不再各佔一整排 -->
   <div style="max-width:720px;margin:0 auto;padding:0 12px">
-    <button onclick="openQuickAdd()" style="width:100%;background:#A5D6A7;color:#2E7D32;border:none;border-radius:12px;padding:10px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:6px">✨ 快速上架</button>
-    <button id="shop-toggle-btn" onclick="toggleShopOpen()" style="width:100%;background:#EEE;color:#999;border:none;border-radius:12px;padding:8px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:6px">⏳ 讀取賣場狀態…</button>
+    <div style="display:flex;gap:6px;margin-bottom:6px">
+      <button onclick="openQuickAdd()" style="flex:1;background:#A5D6A7;color:#2E7D32;border:none;border-radius:12px;padding:9px 4px;font-size:13px;font-weight:700;cursor:pointer">✨ 快速上架</button>
+      <button id="shop-toggle-btn" onclick="toggleShopOpen()" style="flex:1;background:#EEE;color:#999;border:none;border-radius:12px;padding:9px 4px;font-size:12px;font-weight:700;cursor:pointer">⏳ 讀取中…</button>
+    </div>
     <div id="nav-bar" style="display:flex;gap:3px;background:#E8D5B0;padding:4px;border-radius:14px">
       <button id="nav-list"    onclick="showTab('list')"        style="flex:1;display:flex;flex-direction:column;align-items:center;padding:6px 2px;border-radius:10px;font-size:9px;font-weight:700;border:none;cursor:pointer;background:#5C3A1E;color:#F5E6C8"><span style="font-size:15px">📋</span>商品</button>
       <button id="nav-cust"    onclick="showTab('customers')"   style="flex:1;display:flex;flex-direction:column;align-items:center;padding:6px 2px;border-radius:10px;font-size:9px;font-weight:700;border:none;cursor:pointer;background:transparent;color:#9C7A5A"><span style="font-size:15px">👥</span>客戶</button>
       <button id="nav-invoice" onclick="showTab('invoice')"     style="flex:1;display:flex;flex-direction:column;align-items:center;padding:6px 2px;border-radius:10px;font-size:9px;font-weight:700;border:none;cursor:pointer;background:transparent;color:#9C7A5A"><span style="font-size:15px">🧾</span>對帳單</button>
       <button id="nav-stats"   onclick="showTab('stats')"       style="flex:1;display:flex;flex-direction:column;align-items:center;padding:6px 2px;border-radius:10px;font-size:9px;font-weight:700;border:none;cursor:pointer;background:transparent;color:#9C7A5A"><span style="font-size:15px">📊</span>統計</button>
-      <button id="nav-search"  onclick="showTab('pricesearch')" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:6px 2px;border-radius:10px;font-size:9px;font-weight:700;border:none;cursor:pointer;background:transparent;color:#9C7A5A"><span style="font-size:15px">🔍</span>查價</button>
+      <!-- 查價分頁目前隱藏（沒在用），資料和功能都還在，之後想用把下面這行的 display:none 拿掉就好 -->
+      <button id="nav-search"  onclick="showTab('pricesearch')" style="display:none;flex:1;flex-direction:column;align-items:center;padding:6px 2px;border-radius:10px;font-size:9px;font-weight:700;border:none;cursor:pointer;background:transparent;color:#9C7A5A"><span style="font-size:15px">🔍</span>查價</button>
     </div>
   </div>
 </div>
@@ -476,16 +475,16 @@ body.live-mode .hide-live { display: none !important; }
     <button id="cust-view-unpurchased" onclick="setCustViewFilter('unpurchased')" style="flex:1;font-size:12px;font-weight:700;padding:8px 4px;border-radius:99px;border:none;background:white;color:#9C7A5A;cursor:pointer;transition:background 0.15s,color 0.15s">待購代買</button>
     <button id="cust-view-quote" onclick="setCustViewFilter('quote')" style="flex:1;font-size:12px;font-weight:700;padding:8px 4px;border-radius:99px;border:none;background:white;color:#9C7A5A;cursor:pointer;transition:background 0.15s,color 0.15s">待報價</button>
   </div>
-  <div style="display:flex;gap:5px;margin-bottom:8px">
-    <button id="cust-view-nocommunity" onclick="setCustViewFilter(window.G.custViewFilter==='noCommunity'?'all':'noCommunity')" style="flex:1;min-width:0;padding:7px 2px;border-radius:10px;font-size:10.5px;font-weight:700;border:1px solid #F5B942;background:#FFF9E6;color:#9C6B2E;cursor:pointer;text-align:center">🔗 無社群名</button>
-    <button id="cust-view-hasnote" onclick="setCustViewFilter(window.G.custViewFilter==='hasNote'?'all':'hasNote')" style="flex:1;min-width:0;padding:7px 2px;border-radius:10px;font-size:10.5px;font-weight:700;border:1px solid #F0D9A8;background:#FDF3E0;color:#9C6B2E;cursor:pointer;text-align:center">📝 有備註</button>
-    <button id="cust-view-hascold" onclick="setCustViewFilter(window.G.custViewFilter==='hasCold'?'all':'hasCold')" style="flex:1;min-width:0;padding:7px 2px;border-radius:10px;font-size:10.5px;font-weight:700;border:1px solid #BEE0F5;background:#EAF4FB;color:#1E5F8C;cursor:pointer;text-align:center">🧊 有冷藏</button>
-    <button onclick="openBatchOrder()" style="flex:1;min-width:0;padding:7px 2px;border-radius:10px;font-size:10.5px;font-weight:700;border:1px solid #F8BBD0;background:#FCE4EC;color:#AD1457;cursor:pointer;text-align:center">📋 喊單文字</button>
-    <button onclick="showTripOrphanScan()" style="flex:1;min-width:0;padding:7px 2px;border-radius:10px;font-size:10.5px;font-weight:700;border:1px solid #FCD34D;background:#FFFBEB;color:#92400E;cursor:pointer;text-align:center">✈️ 趟次異常</button>
-    <button id="cust-view-archived" onclick="window.G.showArchivedCust=!window.G.showArchivedCust;renderCustomers();this.style.background=window.G.showArchivedCust?'#8B6F47':'#F5F0E8';this.style.color=window.G.showArchivedCust?'white':'#8B6F47';this.textContent=window.G.showArchivedCust?'📦 顯示中':'📦 已封存';" style="flex:1;min-width:0;padding:7px 2px;border-radius:10px;font-size:10.5px;font-weight:700;border:1px solid #D9C9AD;background:#F5F0E8;color:#8B6F47;cursor:pointer;text-align:center">📦 已封存</button>
-    <button id="cust-shop-member-btn" onclick="window.G.showShopMemberOnly=!window.G.showShopMemberOnly;renderCustomers();this.style.background=window.G.showShopMemberOnly?'#E65100':'#FFF3E0';this.style.color=window.G.showShopMemberOnly?'white':'#E65100';this.textContent=window.G.showShopMemberOnly?'🛍️ 商城中':'🛍️ 商城會員';" style="flex:1;min-width:0;padding:7px 2px;border-radius:10px;font-size:10.5px;font-weight:700;border:1px solid #FFCC80;background:#FFF3E0;color:#E65100;cursor:pointer;text-align:center">🛍️ 商城會員</button>
+  <div id="cust-status-tabs" style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:8px"></div>
+  <div id="cust-filter-chips" style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:8px"></div>
+  <div style="position:relative;margin-bottom:8px">
+    <button onclick="event.stopPropagation();toggleCustToolsMenu()" style="width:100%;padding:8px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #E8D5B0;background:#FAF8F5;color:#9C7A5A;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">⋯ 更多工具</button>
+    <div id="cust-tools-menu" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:white;border:1px solid #E8D5B0;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:20;overflow:hidden">
+      <button onclick="event.stopPropagation();closeCustToolsMenu();openBatchOrder()" style="display:block;width:100%;text-align:left;font-size:12px;color:#AD1457;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600">📋 喊單文字</button>
+      <button onclick="event.stopPropagation();closeCustToolsMenu();showTripOrphanScan()" style="display:block;width:100%;text-align:left;font-size:12px;color:#92400E;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">✈️ 趟次異常</button>
+      <button onclick="event.stopPropagation();closeCustToolsMenu();showTotalsCrossCheck()" style="display:block;width:100%;text-align:left;font-size:12px;color:#166534;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">🔍 三頁金額交叉核對</button>
+    </div>
   </div>
-  <button onclick="showTotalsCrossCheck()" style="width:100%;margin-bottom:8px;padding:8px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #A7D8C5;background:#EAFAF3;color:#166534;cursor:pointer">🔍 客戶／對帳單／統計 三頁金額交叉核對</button>
   <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#9C7A5A;margin-bottom:8px;cursor:pointer">
     <input type="checkbox" id="cust-select-all" onchange="toggleSelectAll('customer')" style="width:16px;height:16px;accent-color:#C5A880"/> 全選
   </label>
@@ -499,25 +498,8 @@ body.live-mode .hide-live { display: none !important; }
     <button onclick="const i=document.getElementById('inv-search');i.value='';window.G.invSearch='';renderInvoice();" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#C5A880;font-size:16px;padding:4px;line-height:1">✕</button>
   </div>
   <select id="inv-trip-bar" onchange="setTripFilter(this.value)" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;color:#3D2010;outline:none;margin-bottom:8px;cursor:pointer"></select>
-  <div style="display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap">
-    <button data-invf="all"        onclick="setInvFilter('all')"        style="flex:1;min-width:60px;padding:8px 2px;border-radius:10px;font-size:10px;font-weight:700;border:1px solid #C5A880;background:#C5A880;color:white;cursor:pointer">全部</button>
-    <button data-invf="pending"    onclick="setInvFilter('pending')"    style="flex:1;min-width:60px;padding:8px 2px;border-radius:10px;font-size:10px;font-weight:700;border:1px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">待訂金</button>
-    <button data-invf="deposit"    onclick="setInvFilter('deposit')"    style="flex:1;min-width:60px;padding:8px 2px;border-radius:10px;font-size:10px;font-weight:700;border:1px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">已付訂金</button>
-    <button data-invf="settled"    onclick="setInvFilter('settled')"    style="flex:1;min-width:60px;padding:8px 2px;border-radius:10px;font-size:10px;font-weight:700;border:1px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">已付尾款</button>
-    <button data-invf="shipped"    onclick="setInvFilter('shipped')"    style="flex:1;min-width:60px;padding:8px 2px;border-radius:10px;font-size:10px;font-weight:700;border:1px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">已寄出</button>
-    <button data-invf="notshipped" onclick="setInvFilter('notshipped')" style="flex:1;min-width:80px;padding:8px 2px;border-radius:10px;font-size:10px;font-weight:700;border:1px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🚚 尚未寄出</button>
-  </div>
-  <div style="display:flex;gap:8px;margin-bottom:10px">
-    <button id="inv-unpurchased-btn" data-invf="unpurchased" onclick="toggleInvUnpurchased()" style="flex:1;padding:9px 4px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #C4B5FD;background:#F3F0FF;color:#6D28D9;cursor:pointer">🛒 查看尚未購買的代買單</button>
-    <button id="inv-cold-btn" onclick="toggleInvColdOnly()" style="flex:1;padding:9px 4px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #BEE0F5;background:#EAF4FB;color:#1E5F8C;cursor:pointer">🧊 只看冷藏商品</button>
-    <button id="inv-unclosed-btn" onclick="toggleInvUnclosedOnly()" style="flex:1;padding:9px 4px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #A7D8C5;background:#EAFAF3;color:#166534;cursor:pointer">🔓 只看未結案</button>
-  </div>
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px">
-    <div style="background:white;border:1px solid #E8D5B0;border-radius:10px;padding:8px;text-align:center"><div style="font-size:8px;color:#9C7A5A">待訂金</div><div id="inv-pending" style="font-size:16px;font-weight:900;color:#E07B39">0</div></div>
-    <div style="background:white;border:1px solid #E8D5B0;border-radius:10px;padding:8px;text-align:center"><div style="font-size:8px;color:#9C7A5A">已付訂金</div><div id="inv-deposit" style="font-size:16px;font-weight:900;color:#9C7A5A">0</div></div>
-    <div style="background:white;border:1px solid #E8D5B0;border-radius:10px;padding:8px;text-align:center"><div style="font-size:8px;color:#9C7A5A">已付尾款</div><div id="inv-settled" style="font-size:16px;font-weight:900;color:#2E7D32">0</div></div>
-    <div style="background:white;border:1px solid #E8D5B0;border-radius:10px;padding:8px;text-align:center"><div style="font-size:8px;color:#9C7A5A">已寄出</div><div id="inv-shipped" style="font-size:16px;font-weight:900;color:#1565C0">0</div></div>
-  </div>
+  <div id="inv-status-tabs" style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:8px"></div>
+  <div id="inv-extra-chips" style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap"></div>
   <!-- 批次 -->
   <div id="inv-batch-bar" style="display:none;background:#FDF6EC;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;margin-bottom:8px;align-items:center;gap:8px;flex-wrap:wrap">
     <span id="inv-sel-count" style="font-size:12px;font-weight:700;color:#9C7A5A;flex:1">已選 0 筆</span>
@@ -1258,10 +1240,10 @@ body.live-mode .hide-live { display: none !important; }
       </div>
     </div>
     <div id="eo-order-list" style="overflow-y:auto;flex:1;padding:12px 16px 8px"></div>
-    <div style="padding:10px 16px 32px;border-top:1px solid #F0E6D0;flex-shrink:0;position:relative;overflow:visible">
-      <!-- 新增商品到訂單 -->
-      <div style="margin-bottom:10px">
-        <div style="font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:6px">＋ 新增商品到此訂單</div>
+    <div style="padding:10px 16px 32px;border-top:1px solid #F0E6D0;flex-shrink:0;position:relative;overflow:visible;background:#FBF6ED">
+      <!-- 新增商品到訂單：用不同底色的區塊明確跟上面「修改現有商品」分開，避免搞混 -->
+      <div style="background:#EAF4EA;border:1px solid #C8E0C8;border-radius:12px;padding:12px;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:900;color:#2E7D32;margin-bottom:8px">➕ 新增商品到此訂單</div>
         <div id="eo-trip-picker" style="background:#FDF6EC;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;margin-bottom:8px">
           <div style="font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:6px">✈️ 這次新增的商品要歸屬哪個趟次？</div>
           <div id="eo-trip-picker-btns" style="display:flex;flex-wrap:wrap;gap:6px"></div>
@@ -2786,7 +2768,7 @@ setTimeout(fixBodyPadding,50);
 setTimeout(fixBodyPadding,300);
 
 async function fetchRates(){
-  const el=document.getElementById("rate-bar");
+  const el=document.getElementById("rate-bar-compact");
   try{
     // 原本用 Frankfurter API 完全沒支援台幣（TWD），每次一定失敗，一直在用預設值。
     // 改用 ExchangeRate-API 的免費開放端點（不用金鑰，支援台幣）。
@@ -2800,12 +2782,15 @@ async function fetchRates(){
     if(d.rates.USD)window.G.rates.USD=Math.round(10000/d.rates.USD)/10000;
     if(el){
       const{KRW,JPY,THB,USD}=window.G.rates;
-      el.innerHTML=`🇰🇷 ₩1=NT$${KRW} &nbsp;·&nbsp; 🇯🇵 ¥1=NT$${JPY} &nbsp;·&nbsp; 🇹🇭 ฿1=NT$${THB} &nbsp;·&nbsp; 🇺🇸 $1=NT$${USD}<br><span style="color:#B0906A;font-size:9px">即時匯率</span>`;
+      // 頭部空間有限，只留最常用的韓幣/日幣在這一行，其餘匯率點進「設定」還是看得到完整版
+      el.innerHTML=`⚡ ₩${KRW}・¥${JPY}・$${USD}`;
+      el.title=`即時匯率：₩1=NT$${KRW}　¥1=NT$${JPY}　฿1=NT$${THB}　$1=NT$${USD}`;
     }
   }catch(e){
     if(el){
       const{KRW,JPY,THB,USD}=window.G.rates;
-      el.innerHTML=`🇰🇷 ₩1=NT$${KRW} &nbsp;·&nbsp; 🇯🇵 ¥1=NT$${JPY} &nbsp;·&nbsp; 🇹🇭 ฿1=NT$${THB} &nbsp;·&nbsp; 🇺🇸 $1=NT$${USD}<br><span style="color:#B0906A;font-size:9px">預設值</span>`;
+      el.innerHTML=`⚡ ₩${KRW}・¥${JPY}・$${USD}（預設值）`;
+      el.title=`匯率（預設值）：₩1=NT$${KRW}　¥1=NT$${JPY}　฿1=NT$${THB}　$1=NT$${USD}`;
     }
   }
 }
@@ -6192,6 +6177,72 @@ window.batchArchiveProducts=async function(){
 };
 // 上架/下架到「客人商城」（shop.html 那個公開頁面）：只是切換 shopVisible 這個欄位，
 // 不影響其他資料，商城頁面只會抓 shopVisible===true 而且沒被封存的商品
+// ── 客戶卡片「⋯」更多選單 ──────────────────────────────────────────────
+// 一次只開一個選單：開新的之前先把其他已經開著的關掉，
+// 並且監聽一次全域點擊，點選單以外的地方會自動收合
+window.toggleCustMoreMenu=function(cid){
+  const menu=document.getElementById("cust-more-menu-"+cid);
+  if(!menu)return;
+  const isOpen=menu.style.display==="block";
+  document.querySelectorAll("[id^='cust-more-menu-']").forEach(m=>m.style.display="none");
+  if(!isOpen){
+    menu.style.display="block";
+    setTimeout(()=>{
+      document.addEventListener("click",window._custMoreMenuOutsideHandler=function handler(e){
+        if(!menu.contains(e.target)){
+          menu.style.display="none";
+          document.removeEventListener("click",handler);
+        }
+      });
+    },0);
+  }
+};
+window.closeCustMoreMenu=function(cid){
+  const menu=document.getElementById("cust-more-menu-"+cid);
+  if(menu)menu.style.display="none";
+};
+
+// ── 訂單那排「⋯」更多選單（複製訂單/開賣場）─────────────────────────────
+window.toggleOrderMoreMenu=function(cid){
+  const menu=document.getElementById("order-more-menu-"+cid);
+  if(!menu)return;
+  const isOpen=menu.style.display==="block";
+  document.querySelectorAll("[id^='order-more-menu-']").forEach(m=>m.style.display="none");
+  if(!isOpen){
+    menu.style.display="block";
+    setTimeout(()=>{
+      document.addEventListener("click",window._orderMoreMenuOutsideHandler=function handler(e){
+        if(!menu.contains(e.target)){
+          menu.style.display="none";
+          document.removeEventListener("click",handler);
+        }
+      });
+    },0);
+  }
+};
+window.closeOrderMoreMenu=function(cid){
+  const menu=document.getElementById("order-more-menu-"+cid);
+  if(menu)menu.style.display="none";
+};
+
+window.confirmShopOrder=async function(oid){
+  if(!confirm("確認這筆商城訂單？\n確認後不會被自動取消，之後可以正常用收訂金/出貨流程處理。"))return;
+  try{
+    await fbUpd("orders",oid,{status:"confirmed",confirmedAt:Date.now()});
+    const o=window.G.orders.find(x=>x.id===oid);
+    if(o)o.status="confirmed";
+    renderCustomers();
+    showToast("✅ 已確認訂單");
+    // 商城訂單原本沒有歸屬任何趟次，確認的同時順便問一下要歸屬哪一趟，
+    // 不然之後在「依趟次」篩選時會找不到這筆訂單
+    if(window.G.trips&&window.G.trips.length){
+      setTimeout(()=>window.openMoveTrip(oid),300);
+    }
+  }catch(e){
+    showToast("更新失敗："+e.message,"error");
+  }
+};
+
 window.batchSetShopVisible=async function(visible){
   const ids=[...window.G.selectedProducts];
   if(!ids.length){showToast("請先選擇商品","warning");return;}
@@ -8003,19 +8054,28 @@ window.eoRenderSuggestions=function(){
   const hasDiscount=(parseFloat(discEl?.value)||0)>0;
   const hasFreeShip=fsEl?.checked;
   const suggestions=[];
-  // 「新客滿800折50」是給第一次上門的新客人用的優惠，如果這個客戶之前已經用過一次了，
-  // 之後再滿800也不用一直跳出來提示套用，不然變成常客每次都在提醒一個只給新客的折扣
+  // 「新客滿800折50」是給第一次上門的新客人用的優惠，只要符合下面任一情況就不該再提示：
+  // 1) 這個客戶之前已經用過這個折扣了
+  // 2) 這個客戶根本不是新客——除了正在編輯的這批訂單以外，還有其他訂單記錄（不管是不是已結案）
   const custId=window.G.activeEordCustId;
   const custName=window.G.activeEordCustName||"";
   const custLine=window.G.activeEordCustLine||"";
-  const usedNewCustomerDiscount=(window.G.orders||[]).some(o=>{
-    if(!(o.sharedDiscountReason||"").includes("新客滿800折50"))return false;
+  const currentOrderIds=new Set(window.G.activeEordOrderIds||[]);
+  const matchesThisCustomer=o=>{
     if(custId&&o.customerId)return o.customerId===custId;
     const on=(o.communityName||o.buyerName||"").trim().toLowerCase();
     const ol=(o.lineName||"").trim().toLowerCase();
     return (custName&&on===custName)||(custLine&&ol===custLine&&custLine!=="");
+  };
+  const usedNewCustomerDiscount=(window.G.orders||[]).some(o=>{
+    if(!(o.sharedDiscountReason||"").includes("新客滿800折50"))return false;
+    return matchesThisCustomer(o);
   });
-  if(rawTotal>=800&&!hasDiscount&&!usedNewCustomerDiscount)suggestions.push({label:"這筆滿 $800 了，要套用「新客滿800折50」的折扣嗎？",action:"eoApplySuggestedDiscount()"});
+  const hasOtherOrderHistory=(window.G.orders||[]).some(o=>{
+    if(currentOrderIds.has(o.id))return false; // 排除正在編輯的這幾筆，不算歷史紀錄
+    return matchesThisCustomer(o);
+  });
+  if(rawTotal>=800&&!hasDiscount&&!usedNewCustomerDiscount&&!hasOtherOrderHistory)suggestions.push({label:"這筆滿 $800 了，要套用「新客滿800折50」的折扣嗎？",action:"eoApplySuggestedDiscount()"});
   if(rawTotal>=3500&&!hasFreeShip)suggestions.push({label:"這筆滿 $3500 了，要套用免運嗎？",action:"eoApplySuggestedFreeShipping()"});
   if(!suggestions.length){banner.style.display="none";banner.innerHTML="";return;}
   banner.style.display="block";
@@ -11220,6 +11280,29 @@ window.eoFixOldPercentDiscount=async function(){
   showToast(`已修復 ${ids.length} 筆商品，改成整批打${pct}折的新格式`,"success");
   setTimeout(()=>window.openEditOrd(ids[0]),500);
 };
+// ── 修改訂單視窗裡，每個商品的「⋯」更多選單（換規格/移趟/換客戶/刪除）─────
+window.toggleEoItemMenu=function(oid){
+  const menu=document.getElementById("eo-item-menu-"+oid);
+  if(!menu)return;
+  const isOpen=menu.style.display==="block";
+  document.querySelectorAll("[id^='eo-item-menu-']").forEach(m=>m.style.display="none");
+  if(!isOpen){
+    menu.style.display="block";
+    setTimeout(()=>{
+      document.addEventListener("click",window._eoItemMenuOutsideHandler=function handler(e){
+        if(!menu.contains(e.target)){
+          menu.style.display="none";
+          document.removeEventListener("click",handler);
+        }
+      });
+    },0);
+  }
+};
+window.closeEoItemMenu=function(oid){
+  const menu=document.getElementById("eo-item-menu-"+oid);
+  if(menu)menu.style.display="none";
+};
+
 window.openEditOrd=function(oid){
   const o=window.G.orders.find(x=>x.id===oid);
   if(!o){showToast("找不到訂單","error");return;}
@@ -11250,6 +11333,7 @@ window.openEditOrd=function(oid){
     return false;
   }).filter(x=>!x.batchClosed); // 已結案的訂單要排除，不能被拉進「修改訂單」一起編輯，
   // 不然整批設定（訂金/折扣/免運）存檔的時候，可能會蓋掉已結案訂單身上鎖定的資料
+  window.G.activeEordOrderIds=cOrders.map(x=>x.id);
   if(!cOrders.length){
     if(activeTabPage)activeTabPage.classList.add("active");
     showToast("這位客人目前的訂單都已經結案了，如果要修改，請先在客戶頁/對帳單頁點「重新開啟」","warning");
@@ -11300,38 +11384,43 @@ window.openEditOrd=function(oid){
   const list=document.getElementById("eo-order-list");
   const EO_COLLAPSE_N=4;
   window.G.eoExpanded=cOrders.length<=EO_COLLAPSE_N; // 訂單筆數不多就直接全部展開，不用多一道操作
-  list.innerHTML=cOrders.map((x,idx)=>{
+  const listHeader=`<div style="font-size:11px;font-weight:900;color:#8B6F47;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #E8D5B0">📦 修改現有商品</div>`;
+  list.innerHTML=listHeader+cOrders.map((x,idx)=>{
     const dp=x.discountPrice||x.unitPrice||0;
     const purchasedTag=x.orderType==="preorder"?(x.purchased?'<span style="font-size:9px;background:#D1FAE5;color:#065F46;border:1px solid #6EE7B7;padding:1px 6px;border-radius:4px">已買到</span>':'<span style="font-size:9px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:1px 6px;border-radius:4px">待購入</span>'):"";
     const rowBg=x.orderType==="preorder"&&!x.purchased?"#F3F0FF":"white";
     const hideStyle=(!window.G.eoExpanded&&idx>=EO_COLLAPSE_N)?"display:none":"";
-    return `<div class="eo-collapsible-row" style="background:${rowBg};border:1px solid #E8D5B0;border-radius:12px;padding:12px 14px;margin-bottom:8px;${hideStyle}" data-oid="${x.id}">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <div style="display:flex;align-items:center;gap:6px">
-          <span style="font-size:13px;font-weight:700;color:#3D2010">${(window.G.products.find(p=>p.id===x.productId)?.name)||x.productName||"商品"}${x.spec?` <span style="font-size:11px;font-weight:700;color:#9C7A5A;background:#F5F0E8;border-radius:4px;padding:1px 6px">${x.spec}</span>`:""}</span>
+    return `<div class="eo-collapsible-row" style="background:${rowBg};border:1.5px solid #DDBF8F;border-radius:12px;padding:12px 14px;margin-bottom:12px;${hideStyle};position:relative;box-shadow:0 1px 3px rgba(139,111,71,0.08)" data-oid="${x.id}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;flex:1;min-width:0">
+          <span style="font-size:14px;font-weight:900;color:#3D2010">${(window.G.products.find(p=>p.id===x.productId)?.name)||x.productName||"商品"}</span>
+          ${x.spec?`<span style="font-size:11px;font-weight:700;color:#9C7A5A;background:#F5F0E8;border-radius:4px;padding:1px 6px">${x.spec}</span>`:""}
           ${purchasedTag}
-        </div>
-        <div style="display:flex;align-items:center;gap:6px">
           <span style="font-size:10px;font-weight:700;color:${scol[x.status]||"#9C7A5A"}">${sl[x.status]||""}</span>
-          <button onclick="openChangeSpec('${x.id}')" style="color:#9C6B2E;background:#FDF3E0;border:1px solid #F0D9A8;border-radius:6px;padding:2px 7px;font-size:11px;cursor:pointer;font-weight:700">換規格</button>
-          <button onclick="openMoveTrip('${x.id}')" style="color:#0277BD;background:#E3F2FD;border:1px solid #90CAF9;border-radius:6px;padding:2px 7px;font-size:11px;cursor:pointer;font-weight:700">移趟</button>
-          <button onclick="openReassignCustomer('${x.id}')" style="color:#1E5F8C;background:#EAF4FB;border:1px solid #BEE0F5;border-radius:6px;padding:2px 7px;font-size:11px;cursor:pointer;font-weight:700">換客戶</button>
-          <button onclick="eoDeleteOrder('${x.id}')" style="color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;border-radius:6px;padding:2px 7px;font-size:11px;cursor:pointer;font-weight:700">刪除</button>
+        </div>
+        <div style="position:relative;flex-shrink:0">
+          <button data-menu-oid="${x.id}" onclick="event.stopPropagation();toggleEoItemMenu(this.dataset.menuOid)" style="color:#9C7A5A;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:6px;padding:4px 9px;font-size:13px;cursor:pointer;font-weight:900">⋯</button>
+          <div id="eo-item-menu-${x.id}" style="display:none;position:absolute;top:100%;right:0;margin-top:4px;background:white;border:1px solid #E8D5B0;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:30;min-width:120px;overflow:hidden">
+            <button onclick="event.stopPropagation();closeEoItemMenu('${x.id}');openChangeSpec('${x.id}')" style="display:block;width:100%;text-align:left;font-size:12px;color:#9C6B2E;background:white;border:none;padding:9px 12px;cursor:pointer;font-weight:600">🔄 換規格</button>
+            <button onclick="event.stopPropagation();closeEoItemMenu('${x.id}');openMoveTrip('${x.id}')" style="display:block;width:100%;text-align:left;font-size:12px;color:#0277BD;background:white;border:none;padding:9px 12px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">✈️ 移趟</button>
+            <button onclick="event.stopPropagation();closeEoItemMenu('${x.id}');openReassignCustomer('${x.id}')" style="display:block;width:100%;text-align:left;font-size:12px;color:#1E5F8C;background:white;border:none;padding:9px 12px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">🔀 換客戶</button>
+            <button onclick="event.stopPropagation();closeEoItemMenu('${x.id}');eoDeleteOrder('${x.id}')" style="display:block;width:100%;text-align:left;font-size:12px;color:#C0392B;background:white;border:none;padding:9px 12px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">🗑️ 刪除</button>
+          </div>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
         <div>
-          <div style="font-size:10px;color:#9C7A5A;margin-bottom:3px">數量</div>
-          <input type="text" inputmode="numeric" class="eo-qty" value="${x.qty}" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:14px;font-weight:700;outline:none"/>
+          <div style="font-size:10px;color:#9C7A5A;margin-bottom:2px">數量</div>
+          <input type="text" inputmode="numeric" class="eo-qty" value="${x.qty}" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;font-size:14px;font-weight:700;outline:none"/>
         </div>
         <div>
-          <div style="font-size:10px;color:#9C7A5A;margin-bottom:3px">售價 (NT$)</div>
-          <input type="text" inputmode="decimal" class="eo-price" value="${dp}" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:14px;font-weight:700;outline:none"/>
+          <div style="font-size:10px;color:#9C7A5A;margin-bottom:2px">售價 (NT$)</div>
+          <input type="text" inputmode="decimal" class="eo-price" value="${dp}" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;font-size:14px;font-weight:700;outline:none"/>
         </div>
       </div>
-      <div style="margin-top:6px">
-        <div style="font-size:10px;color:#9C7A5A;margin-bottom:3px">🏷️ 折扣／備註（選填）</div>
-        <input type="text" class="eo-discount-note" value="${x.discountNote||""}" placeholder="例如：折50、贈品、會員優惠..." style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:12px;outline:none"/>
+      <div>
+        <div style="font-size:10px;color:#9C7A5A;margin-bottom:2px">🏷️ 折扣／備註（選填）</div>
+        <input type="text" class="eo-discount-note" value="${x.discountNote||""}" placeholder="例如：折50、贈品、會員優惠..." style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;font-size:12px;outline:none"/>
       </div>
     </div>`;
   }).join("")+(!window.G.eoExpanded&&cOrders.length>EO_COLLAPSE_N?`<button id="eo-expand-btn" onclick="eoToggleExpand()" style="width:100%;margin-bottom:8px;background:#FDF6EC;color:#B08968;border:1px dashed #E8D5B0;border-radius:8px;padding:8px;font-size:12px;font-weight:700;cursor:pointer">▼ 展開查看／編輯其餘 ${cOrders.length-EO_COLLAPSE_N} 筆</button>`:"");
@@ -11770,8 +11859,59 @@ window.saveBatchEdit=async function(){
 };
 
 
+// 判斷一個客戶目前屬於哪個狀態分頁籤（待訂金／已付訂金待尾款／已付尾款待出貨／已完成）
+// 邏輯：只要客戶手上還有任何一筆訂單卡在比較早的階段，就歸到那個較早的分頁籤，
+// 這樣你在「待訂金」分頁一定看得到所有還欠訂金的人，不會因為他同時有其他已出貨的訂單而被藏起來
+function getCustStatusBucket(c,allOrders){
+  const matches=(o)=>{
+    if(c.id&&o.customerId)return o.customerId===c.id;
+    const on=(o.communityName||o.buyerName||"").trim().toLowerCase();
+    const ol=(o.lineName||"").trim().toLowerCase();
+    return ((c.communityName||"").trim().toLowerCase()&&on===(c.communityName||"").trim().toLowerCase())||
+           ((c.lineName||"").trim().toLowerCase()&&ol===(c.lineName||"").trim().toLowerCase());
+  };
+  const custOrders=allOrders.filter(o=>o.orderType!=="quote"&&matches(o));
+  if(!custOrders.length)return null; // 完全沒有訂單，不歸類到任何分頁籤
+  const active=custOrders.filter(o=>!o.batchClosed);
+  if(!active.length)return "done"; // 全部訂單都已結案
+  if(active.some(o=>o.status==="pending"))return "pending";
+  if(active.some(o=>o.status==="deposit"))return "deposit";
+  if(active.some(o=>o.status==="settled"))return "settled";
+  return "done"; // 剩下的都已寄出，只是還沒手動結案
+}
+
+function renderCustStatusTabs(){
+  const el=document.getElementById("cust-status-tabs");
+  if(!el)return;
+  const customers=(window.G.customers||[]).filter(c=>window.G.showArchivedCust?!!c.archived:!c.archived);
+  const tripOrders=getTripOrders(); // 跟著目前選擇的趟次篩選，不是撈全部歷史訂單
+  const buckets={pending:0,deposit:0,settled:0,done:0};
+  customers.forEach(c=>{
+    const b=getCustStatusBucket(c,tripOrders);
+    if(b)buckets[b]++;
+  });
+  const totalClassified=buckets.pending+buckets.deposit+buckets.settled+buckets.done;
+  const tabs=[
+    ["all","全部",totalClassified,"#5C3A1E"],
+    ["pending","待訂金",buckets.pending,"#E07B39"],
+    ["deposit","待尾款",buckets.deposit,"#8B6F47"],
+    ["settled","待出貨",buckets.settled,"#2E7D32"],
+    ["done","已完成",buckets.done,"#1565C0"],
+  ];
+  const active=window.G.custStatusTab||"all";
+  el.innerHTML=tabs.map(([key,label,count,color])=>{
+    const isActive=active===key;
+    return `<button onclick="window.G.custStatusTab='${key}';renderCustomers();" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 2px;border-radius:12px;border:1.5px solid ${isActive?color:"#E8D5B0"};background:${isActive?color:"white"};cursor:pointer">
+      <div style="font-size:18px;font-weight:900;color:${isActive?"white":color}">${count}</div>
+      <div style="font-size:9px;font-weight:700;color:${isActive?"white":"#9C7A5A"};margin-top:2px;white-space:nowrap">${label}</div>
+    </button>`;
+  }).join("");
+}
+
 window.renderCustomers=function(){
   const container=document.getElementById("customer-cards");if(!container)return;
+  renderCustFilterChips();
+  renderCustStatusTabs();
   const{customers,custSearch,custViewFilter,selectedCustomers}=window.G;
   const orders=getTripOrders();
   let filtered=custSearch?customers.filter(c=>{
@@ -11838,6 +11978,12 @@ window.renderCustomers=function(){
     filtered=filtered.filter(c=>!!c.shopMember||
       window.G.orders.some(o=>o.customerId===c.id&&o.orderType==="shop_web")
     );
+  }
+  // 狀態分頁籤：待訂金／已付訂金待尾款／已付尾款待出貨／已完成
+  const statusTab=window.G.custStatusTab||"all";
+  if(statusTab!=="all"){
+    const tripOrdersForStatus=getTripOrders();
+    filtered=filtered.filter(c=>getCustStatusBucket(c,tripOrdersForStatus)===statusTab);
   }
   if(!filtered.length){
     if(!window.G.customersLoaded){container.innerHTML=`<div style="background:white;border-radius:14px;padding:48px 20px;text-align:center;border:1px solid #E8D5B0"><div style="font-size:32px;margin-bottom:8px">⏳</div><div style="font-weight:700;color:#3D2010">客戶資料載入中…</div><div style="font-size:12px;color:#9C7A5A;margin-top:6px">網路較慢時可能需要幾秒鐘，請稍候</div></div>`;return;}
@@ -11940,19 +12086,24 @@ window.renderCustomers=function(){
       // 不要用下單當下存的舊價格快照，避免商品改價之後，這裡還顯示舊價格、報錯給客人
       const dp=isQuote?(window.G.products.find(x=>x.id===o.productId)?.finalPrice??(o.discountPrice||o.unitPrice||0)):(o.discountPrice||o.unitPrice||0);
       const isPreorder=o.orderType==="preorder";
+      const needsPurchaseTracking=isPreorder||(isShopWeb&&(o.status==="confirmed"||o.status==="settled"));
       const isPurchased=o.purchased===true;
-      const rowBg=isQuote?"#E3F2FD":isPreorder?(isPurchased?"#FAF8F5":"#F3F0FF"):"#FAF8F5";
-      const leftBar=isQuote?"border-left:4px solid #0277BD":isPreorder?`border-left:4px solid ${isPurchased?"#A7F3D0":"#9333EA"}`:"border-left:4px solid transparent";
-      return `<div data-oid="${o.id}" onclick="${isPreorder?`togglePurchased(this.dataset.oid)`:''}" style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:4px 8px;background:${rowBg};border-radius:8px;padding:6px 10px;${leftBar};${isPreorder?"cursor:pointer;":""}" title="${isPreorder?(isPurchased?"已買到，點擊切換":"待購入，點擊切換已買到"):""}">
+      const rowBg=isQuote?"#E3F2FD":needsPurchaseTracking?(isPurchased?"#FAF8F5":"#F3F0FF"):"#FAF8F5";
+      const leftBar=isQuote?"border-left:4px solid #0277BD":needsPurchaseTracking?`border-left:4px solid ${isPurchased?"#A7F3D0":"#9333EA"}`:"border-left:4px solid transparent";
+      return `<div data-oid="${o.id}" onclick="${needsPurchaseTracking?`togglePurchased(this.dataset.oid)`:''}" style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:4px 8px;background:${rowBg};border-radius:8px;padding:6px 10px;${leftBar};${needsPurchaseTracking?"cursor:pointer;":""}" title="${needsPurchaseTracking?(isPurchased?"已買到，點擊切換":"待購入，點擊切換已買到"):""}">
         <div style="display:flex;align-items:center;gap:6px;min-width:140px;flex:1 1 auto">
-          <span style="font-size:11px;color:#3D2010;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${isQuote?"📋 ":isPreorder?(isPurchased?"✅ ":"🛒 "):""}${(window.G.products.find(x=>x.id===o.productId)?.flags?.isCold)?"🧊 ":""}${cleanProductName((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品")}${o.spec?" ("+o.spec+")":""} ×${o.qty}</span>
+          <span style="font-size:11px;color:#3D2010;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${isQuote?"📋 ":needsPurchaseTracking?(isPurchased?"✅ ":"🛒 "):""}${(window.G.products.find(x=>x.id===o.productId)?.flags?.isCold)?"🧊 ":""}${cleanProductName((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品")}${o.spec?" ("+o.spec+")":""} ×${o.qty}</span>
           ${o.givenFromStock?`<span onclick="event.stopPropagation();cancelGivenFromStock('${o.id}')" title="點一下取消已給狀態，改回待購買" style="font-size:9px;background:#C8E6C9;color:#1B5E20;border-radius:4px;padding:1px 5px;font-weight:700;white-space:nowrap;flex-shrink:0;cursor:pointer">✅ 已給</span>`:""}
           ${isQuote?`<span style="font-size:9px;background:#BBDEFB;color:#0277BD;border-radius:4px;padding:1px 5px;font-weight:700;white-space:nowrap;flex-shrink:0">待報價，不算進統計</span>`:""}
           ${isShopWeb?`<span style="font-size:9px;background:#FFE0B2;color:#E65100;border-radius:4px;padding:1px 5px;font-weight:700;white-space:nowrap;flex-shrink:0">🛍️ 商城訂單</span>`:""}
           ${o.note?`<span style="font-size:9px;background:#FFF3E0;color:#7B5800;border-radius:4px;padding:1px 5px;font-weight:700;white-space:nowrap;flex-shrink:0" title="${o.note}">📝 ${o.note.length>12?o.note.slice(0,12)+"…":o.note}</span>`:""}
+          ${o.discountNote?`<span style="font-size:9px;background:#FDF6EC;color:#A08060;border:1px solid #E8D5B0;border-radius:4px;padding:1px 5px;font-weight:700;white-space:nowrap;flex-shrink:0">🏷️ ${o.discountNote}</span>`:""}
+        </div>
         <div style="display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;gap:5px;flex:1 1 auto;min-width:0">
           <span style="font-size:11px;font-weight:700;color:#3D2010">${isQuote?"約 ":""}NT$${(dp*o.qty).toLocaleString()}</span>
-          ${isQuote?`<button data-oid="${o.id}" onclick="event.stopPropagation();openSendQuote(this.dataset.oid)" style="font-size:10px;color:#065F46;background:#D1FAE5;border:1px solid #6EE7B7;padding:2px 6px;border-radius:5px;cursor:pointer;font-weight:700">傳送報價</button>`:""}
+          ${isShopWeb&&o.status==="pending"?`<button data-oid="${o.id}" onclick="event.stopPropagation();confirmShopOrder(this.dataset.oid)" style="font-size:10px;color:#2E7D32;background:#E8F5E9;border:1px solid #A5D6A7;padding:2px 6px;border-radius:5px;cursor:pointer;font-weight:700">✅ 確認訂單</button>`:""}
+          ${isShopWeb&&(o.status==="confirmed"||o.status==="settled")?`<button data-oid="${o.id}" onclick="event.stopPropagation();togglePurchased(this.dataset.oid)" title="點擊切換採購狀態" style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:5px;cursor:pointer;border:1.5px solid ${isPurchased?"#6EE7B7":"#FCD34D"};background:${isPurchased?"#D1FAE5":"#FEF3C7"};color:${isPurchased?"#065F46":"#92400E"}">${isPurchased?"✅ 已買到":"🛒 待採購"}</button>`:""}
+          ${isShopWeb&&o.status==="cancelled"?`<span style="font-size:9px;background:#FDEDEC;color:#C0392B;border-radius:4px;padding:1px 5px;font-weight:700">❌ 已取消</span>`:""}          ${isQuote?`<button data-oid="${o.id}" onclick="event.stopPropagation();openSendQuote(this.dataset.oid)" style="font-size:10px;color:#065F46;background:#D1FAE5;border:1px solid #6EE7B7;padding:2px 6px;border-radius:5px;cursor:pointer;font-weight:700">傳送報價</button>`:""}
           ${isQuote?`<button data-oid="${o.id}" onclick="event.stopPropagation();quoteConvert(this.dataset.oid)" style="font-size:10px;color:#5B21B6;background:#EDE9FE;border:1px solid #C4B5FD;padding:2px 6px;border-radius:5px;cursor:pointer;font-weight:700">轉正式訂單</button>`:""}
           ${o.tracking?`<span style="font-size:9px;color:#6090B0;background:#EAF4FD;border:1px solid #BDD9F0;padding:2px 5px;border-radius:5px">📦</span>`:""}
           <button data-oid="${o.id}" onclick="event.stopPropagation();deleteOrder(this.dataset.oid)" style="font-size:10px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:2px 5px;border-radius:5px;cursor:pointer">🗑️</button>
@@ -12008,13 +12159,16 @@ window.renderCustomers=function(){
             })()}
           </div>
         </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <button data-cid="${c.id}" onclick="openCustHistory(this.dataset.cid)" style="font-size:11px;color:#9C7A5A;background:#FAF8F5;border:1px solid #E8D5B0;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600;white-space:nowrap;flex:0 0 auto">歷史</button>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;position:relative">
           <button data-cid="${c.id}" data-cname="${c.communityName||c.lineName||''}" onclick="openEditCustOrOrder(this.dataset.cid,this.dataset.cname)" style="font-size:11px;color:#C5A880;background:#FDF6EC;border:1px solid #E8D5B0;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600;white-space:nowrap;flex:0 0 auto">修改</button>
           <button data-cid="${c.id}" onclick="openLineNotify(this.dataset.cid)" style="font-size:11px;color:#06C755;background:#F0FFF4;border:1px solid #86EFAC;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600;white-space:nowrap;flex:0 0 auto">出貨</button>
-          <button data-cid="${c.id}" onclick="${cO.length>0&&cO.every(o=>o.batchClosed)?"reopenBatch":"closeBatch"}(this.dataset.cid)" style="font-size:11px;color:#1E5F8C;background:#EAF4FB;border:1px solid #BEE0F5;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600;white-space:nowrap;flex:0 0 auto">${cO.length>0&&cO.every(o=>o.batchClosed)?"🔓 重新開啟":"🔒 結案"}</button>
-          <button data-cid="${c.id}" onclick="toggleArchiveCustomer(this.dataset.cid)" style="font-size:11px;color:#8B6F47;background:#F5F0E8;border:1px solid #D9C9AD;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600;white-space:nowrap;flex:0 0 auto">${c.archived?"↩️ 取消封存":"📦 封存"}</button>
-          <button onclick="deleteCustomer('${c.id}')" style="font-size:11px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:600;white-space:nowrap;flex:0 0 auto">刪除</button>
+          <button data-cid="${c.id}" onclick="event.stopPropagation();toggleCustMoreMenu(this.dataset.cid)" style="font-size:13px;color:#9C7A5A;background:#FAF8F5;border:1px solid #E8D5B0;padding:4px 9px;border-radius:6px;cursor:pointer;font-weight:900;white-space:nowrap;flex:0 0 auto">⋯</button>
+          <div id="cust-more-menu-${c.id}" style="display:none;position:absolute;top:100%;right:0;margin-top:4px;background:white;border:1px solid #E8D5B0;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:20;min-width:140px;overflow:hidden">
+            <button data-cid="${c.id}" onclick="event.stopPropagation();closeCustMoreMenu('${c.id}');openCustHistory('${c.id}')" style="display:block;width:100%;text-align:left;font-size:12px;color:#3D2010;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600">📋 歷史</button>
+            <button data-cid="${c.id}" onclick="event.stopPropagation();closeCustMoreMenu('${c.id}');${cO.length>0&&cO.every(o=>o.batchClosed)?"reopenBatch":"closeBatch"}('${c.id}')" style="display:block;width:100%;text-align:left;font-size:12px;color:#1E5F8C;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">${cO.length>0&&cO.every(o=>o.batchClosed)?"🔓 重新開啟":"🔒 結案"}</button>
+            <button data-cid="${c.id}" onclick="event.stopPropagation();closeCustMoreMenu('${c.id}');toggleArchiveCustomer('${c.id}')" style="display:block;width:100%;text-align:left;font-size:12px;color:#8B6F47;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">${c.archived?"↩️ 取消封存":"📦 封存"}</button>
+            <button onclick="event.stopPropagation();closeCustMoreMenu('${c.id}');deleteCustomer('${c.id}')" style="display:block;width:100%;text-align:left;font-size:12px;color:#C0392B;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">🗑️ 刪除</button>
+          </div>
         </div>
       </div>
       ${c.phone?`<div style="font-size:11px;color:#9C7A5A;margin-bottom:3px">📞 ${c.phone}</div>`:""}
@@ -12039,33 +12193,14 @@ window.renderCustomers=function(){
         ${(()=>{
           const depositBtn=`<button data-cid="${c.id}" onclick="copyDepositOrder(this.dataset.cid)" style="font-size:11px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">💰 收訂金</button>`;
           const shopBtn=`<button data-cid="${c.id}" onclick="openShopModal(this.dataset.cid)" style="font-size:11px;background:#FFF3E0;color:#E65100;border:1px solid #FFCC80;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">🏪 開賣場</button>`;
-          const shipBtn=(c.phone||c.address)?`<button data-cid="${c.id}" onclick="copyShippingInfo(this.dataset.cid)" style="font-size:11px;background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">📋 賣貨便</button>`:"";
-          const colsNew=shipBtn?"repeat(5,1fr)":"1fr 1fr 1fr 1fr";
           if(cO.length>0){
-            return `<div style="display:grid;grid-template-columns:${colsNew};gap:5px;margin-bottom:8px"><button data-oid="${cO[0].id}" onclick="openEditOrd(this.dataset.oid)" style="font-size:11px;background:#FDF6EC;color:#C5A880;border:1px solid #E8D5B0;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">修改</button>${depositBtn}<button data-cid="${c.id}" onclick="copyCustOrder(this.dataset.cid)" style="font-size:11px;background:#EAF4FD;color:#0277BD;border:1px solid #90D7FF;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">複製訂單</button>${shopBtn}${shipBtn}</div>`;
+            return `<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:5px;margin-bottom:8px"><button data-oid="${cO[0].id}" onclick="openEditOrd(this.dataset.oid)" style="font-size:11px;background:#FDF6EC;color:#C5A880;border:1px solid #E8D5B0;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">修改</button>${depositBtn}<button data-cid="${c.id}" onclick="copyCustOrder(this.dataset.cid)" style="font-size:11px;background:#EAF4FD;color:#0277BD;border:1px solid #90D7FF;padding:6px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center">複製訂單</button>${shopBtn}</div>`;
           }
           // 完全沒有訂單的客戶：也要能直接新增商品，不用等他有訂單明細才能用「修改」進去加東西
           return `<button data-cid="${c.id}" data-cname="${(c.communityName||c.lineName||'').replace(/"/g,"&quot;")}" onclick="doQuickAddOrder(this.dataset.cid,this.dataset.cname)" style="width:100%;font-size:11px;background:#EBF5FB;color:#2980B9;border:1px solid #AED6F1;padding:8px 4px;border-radius:8px;cursor:pointer;font-weight:700;text-align:center;margin-bottom:8px">＋ 新增訂單</button>`;
         })()}
         ${rowsHtml?`<div style="display:flex;flex-direction:column;gap:4px">${rowsHtml}</div>`:""}
         ${!showAllOrders?`<button data-cid="${c.id}" onclick="expandCustOrders(this.dataset.cid)" style="width:100%;margin-top:6px;background:#FDF6EC;color:#B08968;border:1px dashed #E8D5B0;border-radius:8px;padding:6px;font-size:11px;font-weight:700;cursor:pointer">▼ 展開查看全部 ${groupKeys.length} 項</button>`:""}
-        ${(()=>{
-          if(!closedDisplay.length)return "";
-          window.G.custClosedExpandedSet=window.G.custClosedExpandedSet||new Set();
-          const closedExpanded=window.G.custClosedExpandedSet.has(c.id);
-          const closedQty=closedDisplay.reduce((s,o)=>s+(o.qty||1),0);
-          const closedAmt=closedDisplay.reduce((s,o)=>{
-            const isQ=o.orderType==="quote";
-            const p=isQ?(window.G.products.find(x=>x.id===o.productId)?.finalPrice??(o.discountPrice||o.unitPrice||0)):(o.discountPrice||o.unitPrice||0);
-            return s+p*o.qty;
-          },0);
-          const toggleBtn=`<div style="display:flex;gap:6px;margin-top:8px">
-            <button data-cid="${c.id}" onclick="window.toggleCustClosedSection(this.dataset.cid)" style="flex:1;background:#EAF4FB;color:#1E5F8C;border:1px solid #BEE0F5;border-radius:8px;padding:7px;font-size:11px;font-weight:700;cursor:pointer">${closedExpanded?"▾":"▸"} 🔒 已結案 ${closedDisplay.length}筆（共${closedQty}件・NT$${closedAmt.toLocaleString()}）</button>
-            <button data-cid="${c.id}" onclick="copyCustOrder(this.dataset.cid,'all')" title="複製全部商品，不分結案狀態" style="flex-shrink:0;background:#FDF6EC;color:#B08968;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer">複製全部</button>
-          </div>`;
-          const closedRows=closedExpanded?`<div style="display:flex;flex-direction:column;gap:4px;margin-top:6px">${closedDisplay.map(renderOrderRow).join("")}<button data-cid="${c.id}" onclick="copyCustOrder(this.dataset.cid,'closed')" style="width:100%;margin-top:4px;background:#FDF6EC;color:#B08968;border:1px dashed #E8D5B0;border-radius:8px;padding:6px;font-size:11px;font-weight:700;cursor:pointer">📋 只複製這批已結案的</button></div>`:"";
-          return toggleBtn+closedRows;
-        })()}
       </div>
     </div>`;
   });
@@ -12111,37 +12246,53 @@ window.setCustViewFilter=function(mode){
     const active=map[mode];
     if(active)Object.assign(active.style,{background:mode==="all"?"#C5A880":mode==="quote"?"#0277BD":"#7C3AED",color:"white"});
   }
-  const noCommBtn=document.getElementById("cust-view-nocommunity");
-  if(noCommBtn){
-    if(mode==="noCommunity"){
-      Object.assign(noCommBtn.style,{background:"#F5B942",color:"white",borderColor:"#F5B942"});
-      noCommBtn.textContent="🔗 無社群名（篩選中）";
-    } else {
-      Object.assign(noCommBtn.style,{background:"#FFF9E6",color:"#9C6B2E",borderColor:"#F5B942"});
-      noCommBtn.textContent="🔗 無社群名";
-    }
-  }
-  const hasNoteBtn=document.getElementById("cust-view-hasnote");
-  if(hasNoteBtn){
-    if(mode==="hasNote"){
-      Object.assign(hasNoteBtn.style,{background:"#E0A030",color:"white",borderColor:"#E0A030"});
-      hasNoteBtn.textContent="📝 有備註（篩選中）";
-    } else {
-      Object.assign(hasNoteBtn.style,{background:"#FDF3E0",color:"#9C6B2E",borderColor:"#F0D9A8"});
-      hasNoteBtn.textContent="📝 有備註";
-    }
-  }
-  const hasColdBtn=document.getElementById("cust-view-hascold");
-  if(hasColdBtn){
-    if(mode==="hasCold"){
-      Object.assign(hasColdBtn.style,{background:"#1E5F8C",color:"white",borderColor:"#1E5F8C"});
-      hasColdBtn.textContent="🧊 有冷藏（篩選中）";
-    } else {
-      Object.assign(hasColdBtn.style,{background:"#EAF4FB",color:"#1E5F8C",borderColor:"#BEE0F5"});
-      hasColdBtn.textContent="🧊 有冷藏";
-    }
-  }
   renderCustomers();
+};
+// 「無社群名/有備註/有冷藏/已封存/商城會員」這幾個篩選器改成中性小藥丸，
+// 平常都是淡灰色不搶眼，只有真的啟用的那個才會變深色凸顯——避免每個篩選器都用鮮豔色，
+// 導致畫面看起來每個都很重要、結果全部都很搶眼
+function renderCustFilterChips(){
+  const el=document.getElementById("cust-filter-chips");
+  if(!el)return;
+  const cvf=window.G.custViewFilter;
+  const chips=[
+    {label:"🔗 無社群名",active:cvf==="noCommunity",onclick:"setCustViewFilter(window.G.custViewFilter==='noCommunity'?'all':'noCommunity')"},
+    {label:"📝 有備註",active:cvf==="hasNote",onclick:"setCustViewFilter(window.G.custViewFilter==='hasNote'?'all':'hasNote')"},
+    {label:"🧊 有冷藏",active:cvf==="hasCold",onclick:"setCustViewFilter(window.G.custViewFilter==='hasCold'?'all':'hasCold')"},
+    {label:window.G.showArchivedCust?"📦 顯示封存中":"📦 已封存",active:!!window.G.showArchivedCust,onclick:"toggleArchivedCustFilter()"},
+    {label:window.G.showShopMemberOnly?"🛍️ 商城會員中":"🛍️ 商城會員",active:!!window.G.showShopMemberOnly,onclick:"toggleShopMemberFilter()"},
+  ];
+  el.innerHTML=chips.map(c=>`<button onclick="${c.onclick}" style="padding:8px 2px;border-radius:10px;font-size:10.5px;font-weight:700;border:1px solid ${c.active?"#5C3A1E":"#E8D5B0"};background:${c.active?"#5C3A1E":"white"};color:${c.active?"#F5E6C8":"#9C7A5A"};cursor:pointer;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.label}</button>`).join("");
+}
+window.toggleArchivedCustFilter=function(){
+  window.G.showArchivedCust=!window.G.showArchivedCust;
+  renderCustomers();
+};
+window.toggleShopMemberFilter=function(){
+  window.G.showShopMemberOnly=!window.G.showShopMemberOnly;
+  renderCustomers();
+};
+// 「⋯ 更多工具」：喊單文字/趟次異常/三頁交叉核對，這些是偶爾才用的工具，不是篩選器，
+// 收進這個選單裡，不要跟篩選器混在一起搶版面
+window.toggleCustToolsMenu=function(){
+  const menu=document.getElementById("cust-tools-menu");
+  if(!menu)return;
+  const isOpen=menu.style.display==="block";
+  menu.style.display=isOpen?"none":"block";
+  if(!isOpen){
+    setTimeout(()=>{
+      document.addEventListener("click",window._custToolsMenuOutsideHandler=function handler(e){
+        if(!menu.contains(e.target)){
+          menu.style.display="none";
+          document.removeEventListener("click",handler);
+        }
+      });
+    },0);
+  }
+};
+window.closeCustToolsMenu=function(){
+  const menu=document.getElementById("cust-tools-menu");
+  if(menu)menu.style.display="none";
 };
 window.setCustSortMode=function(mode){
   window.G.custSortMode=mode;
@@ -12156,70 +12307,67 @@ window.setCustSortMode=function(mode){
 
 // ── 渲染對帳單 ────────────────────────────────────────────────────────
 window.toggleInvUnpurchased=function(){
-  const btn=document.getElementById("inv-unpurchased-btn");
-  const isOn=window.G.orderFilter==="unpurchased";
-  if(isOn){
-    setInvFilter("all");
-    if(btn){btn.style.background="#F3F0FF";btn.style.color="#6D28D9";btn.style.borderColor="#C4B5FD";btn.textContent="🛒 查看尚未購買的代買單";}
-  } else {
-    setInvFilter("unpurchased");
-    if(btn){btn.style.background="#7C3AED";btn.style.color="white";btn.style.borderColor="#7C3AED";btn.textContent="🛒 尚未購買的代買單（篩選中）";}
-  }
+  setInvFilter(window.G.orderFilter==="unpurchased"?"all":"unpurchased");
 };
 window.toggleInvColdOnly=function(){
   window.G.invColdOnly=!window.G.invColdOnly;
-  const btn=document.getElementById("inv-cold-btn");
-  if(btn){
-    if(window.G.invColdOnly){
-      btn.style.background="#1E5F8C";btn.style.color="white";btn.style.borderColor="#1E5F8C";
-      btn.textContent="🧊 只看冷藏商品（篩選中）";
-    } else {
-      btn.style.background="#EAF4FB";btn.style.color="#1E5F8C";btn.style.borderColor="#BEE0F5";
-      btn.textContent="🧊 只看冷藏商品";
-    }
-  }
   renderInvoice();
 };
 window.toggleInvUnclosedOnly=function(){
   window.G.invUnclosedOnly=!window.G.invUnclosedOnly;
-  const btn=document.getElementById("inv-unclosed-btn");
-  if(btn){
-    if(window.G.invUnclosedOnly){
-      btn.style.background="#166534";btn.style.color="white";btn.style.borderColor="#166534";
-      btn.textContent="🔓 只看未結案（篩選中）";
-    } else {
-      btn.style.background="#EAFAF3";btn.style.color="#166534";btn.style.borderColor="#A7D8C5";
-      btn.textContent="🔓 只看未結案";
-    }
-  }
   renderInvoice();
 };
 
 window.setInvFilter=function(f){
   window.G.orderFilter=f;
-  // 切到其他篩選時重置代買按鈕
-  if(f!=="unpurchased"){
-    const btn=document.getElementById("inv-unpurchased-btn");
-    if(btn){btn.style.background="#F3F0FF";btn.style.color="#6D28D9";btn.style.borderColor="#C4B5FD";btn.textContent="🛒 查看尚未購買的代買單";}
-  }
-  document.querySelectorAll("[data-invf]").forEach(btn=>{
-    const a=btn.dataset.invf===f;
-    if(btn.dataset.invf==="unpurchased"){
-      btn.style.background=a?"#F59E0B":"#FFFBEB";
-      btn.style.color=a?"white":"#92400E";
-      btn.style.borderColor=a?"#F59E0B":"#FCD34D";
-    } else {
-      btn.style.background=a?"#C5A880":"white";
-      btn.style.color=a?"white":"#9C7A5A";
-      btn.style.borderColor=a?"#C5A880":"#E8D5B0";
-    }
-  });
   renderInvoice();
 };
+
+// 對帳單頂部：把原本「篩選按鈕」跟「人數統計」兩排重複的東西合併成一排——
+// 這排數字本身就是可以點的篩選按鈕，點哪個狀態就篩選哪個狀態，跟客戶分頁的狀態分頁籤同一套邏輯
+function renderInvStatusTabs(tripOrdersForCount){
+  const el=document.getElementById("inv-status-tabs");
+  if(!el)return;
+  const countBuyers=(stat)=>{
+    const os=stat==="all"?tripOrdersForCount:tripOrdersForCount.filter(o=>o.status===stat);
+    return new Set(os.map(o=>o.customerId||o.communityName||o.buyerName||"未知")).size;
+  };
+  const defs=[
+    {key:"all",label:"全部",color:"#5C3A1E"},
+    {key:"pending",label:"待訂金",color:"#E07B39"},
+    {key:"deposit",label:"已付訂金",color:"#8B6F47"},
+    {key:"settled",label:"已付尾款",color:"#2E7D32"},
+    {key:"shipped",label:"已寄出",color:"#1565C0"},
+  ];
+  const active=window.G.orderFilter||"all";
+  el.innerHTML=defs.map(d=>{
+    const isActive=active===d.key;
+    const count=countBuyers(d.key);
+    return `<button data-invf="${d.key}" onclick="setInvFilter('${d.key}')" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 2px;border-radius:12px;border:1.5px solid ${isActive?d.color:"#E8D5B0"};background:${isActive?d.color:"white"};cursor:pointer">
+      <div style="font-size:18px;font-weight:900;color:${isActive?"white":d.color}">${count}</div>
+      <div style="font-size:9px;font-weight:700;color:${isActive?"white":"#9C7A5A"};margin-top:2px;white-space:nowrap">${d.label}</div>
+    </button>`;
+  }).join("");
+}
+// 「尚未購買代買單／冷藏／未結案／尚未寄出」這幾個不是主要狀態、是額外的快速篩選，
+// 改成中性小藥丸，平常低調，啟用的那個才變深色
+function renderInvExtraChips(){
+  const el=document.getElementById("inv-extra-chips");
+  if(!el)return;
+  const chips=[
+    {label:"🛒 尚未購買代買單",active:window.G.orderFilter==="unpurchased",onclick:"toggleInvUnpurchased()"},
+    {label:"🧊 冷藏",active:!!window.G.invColdOnly,onclick:"toggleInvColdOnly()"},
+    {label:"🔓 未結案",active:!!window.G.invUnclosedOnly,onclick:"toggleInvUnclosedOnly()"},
+    {label:"🚚 尚未寄出",active:window.G.orderFilter==="notshipped",onclick:"setInvFilter(window.G.orderFilter==='notshipped'?'all':'notshipped')"},
+  ];
+  el.innerHTML=chips.map(c=>`<button onclick="${c.onclick}" style="flex:1;min-width:0;padding:7px 4px;border-radius:99px;font-size:10.5px;font-weight:700;border:1px solid ${c.active?"#5C3A1E":"#E8D5B0"};background:${c.active?"#5C3A1E":"white"};color:${c.active?"#F5E6C8":"#9C7A5A"};cursor:pointer;text-align:center;white-space:nowrap">${c.label}</button>`).join("");
+}
 
 window.renderInvoice=function(){
   const container=document.getElementById("invoice-cards");if(!container)return;
   const{orders,orderFilter,invSearch,selectedOrders,tripFilter,currentTrip}=window.G;
+  renderInvStatusTabs(getTripOrders());
+  renderInvExtraChips();
   // 先依趟次篩選
   let filtered=getTripOrders().filter(o=>o.orderType!=="quote"); // 待報價還沒確定要買，不列入對帳單
   if(orderFilter==="unpurchased"){
@@ -12267,17 +12415,6 @@ window.renderInvoice=function(){
   filtered.sort((a,b)=>b.createdAt-a.createdAt);
   const ss={pending:"background:#FEF3C7;color:#92400E;border-color:#FCD34D",settled:"background:#D1FAE5;color:#065F46;border-color:#6EE7B7",shipped:"background:#DBEAFE;color:#1E40AF;border-color:#93C5FD"};
   const sl={pending:"待訂金",deposit:"已付訂金",settled:"已付尾款",shipped:"已寄出"};
-  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
-  // 以人數計算（只計當趟訂單）
-  const tripOrdersForCount=getTripOrders();
-  const countBuyers=(stat)=>{
-    const os=tripOrdersForCount.filter(o=>o.status===stat);
-    return new Set(os.map(o=>o.customerId||o.communityName||o.buyerName||"未知")).size;
-  };
-  set("inv-pending",countBuyers("pending")+"人");
-  set("inv-deposit",countBuyers("deposit")+"人");
-  set("inv-settled",countBuyers("settled")+"人");
-  set("inv-shipped",countBuyers("shipped")+"人");
   // 待報價還沒確定要買，不算進對帳金額/統計，但還是要讓你在對帳單上看得到，
   // 不然會誤以為這筆喊單登記失敗、資料不見了
   const quoteOrders=getTripOrders().filter(o=>o.orderType==="quote");

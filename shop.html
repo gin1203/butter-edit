@@ -684,6 +684,35 @@ async function submitOrder(){
 }
 
 // ── 完成頁 ─────────────────────────────────────────
+// 複製到剪貼簿：優先用新版 Clipboard API，失敗的話（有些手機瀏覽器/App內建瀏覽器不支援）
+// 用舊式的 execCommand 當備案，盡量確保複製這件事真的成功
+function copyToClipboard(text){
+  return new Promise((resolve)=>{
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(()=>resolve(true)).catch(()=>{
+        resolve(fallbackCopy(text));
+      });
+    } else {
+      resolve(fallbackCopy(text));
+    }
+  });
+}
+function fallbackCopy(text){
+  try{
+    const ta=document.createElement("textarea");
+    ta.value=text;
+    ta.style.position="fixed";
+    ta.style.left="-9999px";
+    ta.style.top="0";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    const ok=document.execCommand("copy");
+    document.body.removeChild(ta);
+    return ok;
+  }catch(e){return false;}
+}
+
 function showSuccess(items,total,name){
   document.getElementById("checkout-view").style.display="none";
   document.getElementById("cart-bar").style.display="none";
@@ -746,26 +775,25 @@ function showSuccess(items,total,name){
       </div>
       <button onclick="location.reload()" style="width:100%;background:white;color:#9C7A5A;border:1px solid #E8D5B0;border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer">回到商品頁繼續逛</button>
     </div>`;
-  // 點 LINE 按鈕時：先複製訂單文字到剪貼簿，再跳轉到 LINE
+  // 點 LINE 按鈕時：先複製訂單文字到剪貼簿、跳出「已複製」提示，稍微延遲再跳轉，
+  // 避免手機上剪貼簿還沒寫完，App 就已經切換過去
   document.getElementById("line-complete-btn")?.addEventListener("click",()=>{
-    navigator.clipboard.writeText(orderText).then(()=>{
-      // 複製成功後跳轉
-      location.href=lineUrl;
-    }).catch(()=>{
-      // 複製失敗也還是跳轉（不要擋住客人）
-      location.href=lineUrl;
+    copyToClipboard(orderText).then((ok)=>{
+      showToast(ok?"✅ 已複製訂單內容，請在 LINE 裡長按貼上":"⚠️ 複製失敗，請改用下方「複製訂單資訊」按鈕");
+      setTimeout(()=>{location.href=lineUrl;},ok?350:0);
     });
   });
 
   // 讓複製按鈕能存取這筆訂單的資料
   window.copyOrderInfo=function(){
-    const itemLines=items.map(i=>`・${i.product.name}${i.spec?" ("+i.spec+")":""} ×${i.qty}`).join("\n");
-    const text=`我剛在商城下單了！請幫我確認訂單，謝謝🙏\n\n【訂單內容】\n${itemLines}\n\n參考金額：NT$${total.toLocaleString()}\n訂購人：${name}`;
-    navigator.clipboard.writeText(text).then(()=>{
+    copyToClipboard(orderText).then((ok)=>{
       const btn=document.getElementById("copy-order-btn");
-      if(btn){btn.textContent="✅ 已複製！請開啟 LINE 貼上傳送";btn.style.background="#E8F5E9";btn.style.color="#2E7D32";btn.style.border="1px solid #A5D6A7";}
-    }).catch(()=>{
-      alert("複製失敗，請手動複製以下內容：\n\n"+text);
+      if(ok){
+        showToast("✅ 已複製訂單內容，請貼到 LINE 傳送給我們");
+        if(btn){btn.textContent="✅ 已複製！請開啟 LINE 貼上傳送";btn.style.background="#E8F5E9";btn.style.color="#2E7D32";btn.style.border="1px solid #A5D6A7";}
+      } else {
+        alert("複製失敗，請手動複製以下內容：\n\n"+orderText);
+      }
     });
   };
   window.scrollTo(0,0);
