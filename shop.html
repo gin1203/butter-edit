@@ -281,6 +281,24 @@ async function loadProducts(){
   renderCatTabs();
   renderGrid();
   renderCartBar();
+  startProductAutoRefresh(); // 背景定期重新抓取商品資料，價格/庫存改了客人不用手動整理頁面
+}
+// 每 30 秒偷偷重新抓一次商品資料（改價格、改庫存後，客人畫面上會自動跟著更新，
+// 不用手動重新整理）。只有在「商品格子」或「商品詳情頁」的時候才更新畫面，
+// 客人正在填寫結帳表單時不要打斷他、也不要動購物車內容
+let _productRefreshTimer=null;
+function startProductAutoRefresh(){
+  clearInterval(_productRefreshTimer);
+  _productRefreshTimer=setInterval(async()=>{
+    try{
+      const fresh=await fsListShopProducts();
+      G.products=fresh;
+      const onCatalog=document.getElementById("catalog-view").style.display!=="none";
+      const onDetail=document.getElementById("detail-view").style.display!=="none";
+      if(onCatalog){renderCatTabs();renderGrid();}
+      if(onDetail){renderDetail();}
+    }catch(e){/* 背景更新失敗就算了，不要用錯誤訊息打擾客人，下次還會再試 */}
+  },30000);
 }
 function showShopClosed(msg){
   document.getElementById("catalog-view").innerHTML=`
