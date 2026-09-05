@@ -510,10 +510,13 @@ body.live-mode .hide-live { display: none !important; }
     <button onclick="batchMoveTripOrders()" style="font-size:10px;background:#EBF5FB;color:#2980B9;border:1px solid #AED6F1;padding:5px 8px;border-radius:8px;font-weight:700;cursor:pointer">✈️ 移趟</button>
     <button onclick="batchDeleteOrders()" style="font-size:11px;background:#FDEDEC;color:#C0392B;border:1px solid #F1948A;padding:5px 10px;border-radius:8px;font-weight:700;cursor:pointer">刪除</button>
   </div>
-  <!-- 匯出 - 藍色系 -->
-  <div style="display:flex;gap:8px;margin-bottom:12px">
-    <button onclick="exportProductCSV()" style="flex:1;background:#EBF5FB;color:#2980B9;border:1px solid #AED6F1;padding:10px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer">匯出商品庫</button>
-    <button onclick="exportShippingCSV()" style="flex:1;background:#EBF5FB;color:#2980B9;border:1px solid #AED6F1;padding:10px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer">📦 匯出買家對帳單</button>
+  <!-- 匯出功能不常用，收進「更多工具」，平常不佔版面 -->
+  <div style="position:relative;margin-bottom:12px">
+    <button onclick="event.stopPropagation();toggleInvToolsMenu()" style="width:100%;padding:8px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #E8D5B0;background:#FAF8F5;color:#9C7A5A;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">⋯ 更多工具</button>
+    <div id="inv-tools-menu" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:white;border:1px solid #E8D5B0;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:20;overflow:hidden">
+      <button onclick="event.stopPropagation();closeInvToolsMenu();exportProductCSV()" style="display:block;width:100%;text-align:left;font-size:12px;color:#2980B9;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600">📤 匯出商品庫</button>
+      <button onclick="event.stopPropagation();closeInvToolsMenu();exportShippingCSV()" style="display:block;width:100%;text-align:left;font-size:12px;color:#2980B9;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">📦 匯出買家對帳單</button>
+    </div>
   </div>
   <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#9C7A5A;margin-bottom:8px;cursor:pointer">
     <input type="checkbox" id="inv-select-all" onchange="toggleSelectAll('order')" style="width:16px;height:16px;accent-color:#C5A880"/> 全選
@@ -12313,6 +12316,28 @@ window.closeCustToolsMenu=function(){
   const menu=document.getElementById("cust-tools-menu");
   if(menu)menu.style.display="none";
 };
+
+// ── 對帳單頁面「⋯ 更多工具」（匯出商品庫/匯出買家對帳單）─────────────────
+window.toggleInvToolsMenu=function(){
+  const menu=document.getElementById("inv-tools-menu");
+  if(!menu)return;
+  const isOpen=menu.style.display==="block";
+  menu.style.display=isOpen?"none":"block";
+  if(!isOpen){
+    setTimeout(()=>{
+      document.addEventListener("click",window._invToolsMenuOutsideHandler=function handler(e){
+        if(!menu.contains(e.target)){
+          menu.style.display="none";
+          document.removeEventListener("click",handler);
+        }
+      });
+    },0);
+  }
+};
+window.closeInvToolsMenu=function(){
+  const menu=document.getElementById("inv-tools-menu");
+  if(menu)menu.style.display="none";
+};
 window.setCustSortMode=function(mode){
   window.G.custSortMode=mode;
   const pBtn=document.getElementById("cust-sort-pending");
@@ -12334,6 +12359,7 @@ window.toggleInvColdOnly=function(){
 };
 window.toggleInvUnclosedOnly=function(){
   window.G.invUnclosedOnly=!window.G.invUnclosedOnly;
+  if(window.G.invUnclosedOnly)window.G.invShowClosedOnly=false;
   renderInvoice();
 };
 
@@ -12377,10 +12403,17 @@ function renderInvExtraChips(){
     {label:"🛒 尚未購買代買單",active:window.G.orderFilter==="unpurchased",onclick:"toggleInvUnpurchased()"},
     {label:"🧊 冷藏",active:!!window.G.invColdOnly,onclick:"toggleInvColdOnly()"},
     {label:"🔓 未結案",active:!!window.G.invUnclosedOnly,onclick:"toggleInvUnclosedOnly()"},
+    {label:"🔒 只看已結案",active:!!window.G.invShowClosedOnly,onclick:"toggleInvShowClosedOnly()"},
     {label:"🚚 尚未寄出",active:window.G.orderFilter==="notshipped",onclick:"setInvFilter(window.G.orderFilter==='notshipped'?'all':'notshipped')"},
   ];
   el.innerHTML=chips.map(c=>`<button onclick="${c.onclick}" style="flex:1;min-width:0;padding:7px 4px;border-radius:99px;font-size:10.5px;font-weight:700;border:1px solid ${c.active?"#5C3A1E":"#E8D5B0"};background:${c.active?"#5C3A1E":"white"};color:${c.active?"#F5E6C8":"#9C7A5A"};cursor:pointer;text-align:center;white-space:nowrap">${c.label}</button>`).join("");
 }
+window.toggleInvShowClosedOnly=function(){
+  window.G.invShowClosedOnly=!window.G.invShowClosedOnly;
+  // 「只看已結案」跟「未結案」是互斥的兩個視角，開一個要把另一個關掉，不然邏輯會打架
+  if(window.G.invShowClosedOnly)window.G.invUnclosedOnly=false;
+  renderInvoice();
+};
 
 window.renderInvoice=function(){
   const container=document.getElementById("invoice-cards");if(!container)return;
@@ -12430,6 +12463,14 @@ window.renderInvoice=function(){
       allOrdersForClosedCheck.filter(o=>!o.batchClosed).map(o=>o.customerId||o.communityName||o.buyerName||"未知")
     );
     filtered=filtered.filter(o=>unclosedBuyerKeys.has(o.customerId||o.communityName||o.buyerName||"未知"));
+  }
+  // 只看已結案——反過來，只保留「有已結案訂單」的買家，用來查歷史紀錄
+  if(window.G.invShowClosedOnly){
+    const allOrdersForClosedCheck2=getTripOrders();
+    const closedBuyerKeys=new Set(
+      allOrdersForClosedCheck2.filter(o=>o.batchClosed).map(o=>o.customerId||o.communityName||o.buyerName||"未知")
+    );
+    filtered=filtered.filter(o=>closedBuyerKeys.has(o.customerId||o.communityName||o.buyerName||"未知"));
   }
   filtered.sort((a,b)=>b.createdAt-a.createdAt);
   const ss={pending:"background:#FEF3C7;color:#92400E;border-color:#FCD34D",settled:"background:#D1FAE5;color:#065F46;border-color:#6EE7B7",shipped:"background:#DBEAFE;color:#1E40AF;border-color:#93C5FD"};
@@ -12502,7 +12543,19 @@ window.renderInvoice=function(){
             <span style="font-weight:900;font-size:14px;color:#3D2010">👤 ${b.name}</span>
             ${b.lineName?`<span style="font-size:11px;color:#9C7A5A;margin-left:6px">LINE：${b.lineName}</span>`:""}
           </div>
-          <span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:${statusColor[allStatus]}22;color:${statusColor[allStatus]};border:1px solid ${statusColor[allStatus]}44;flex-shrink:0">${statusLabel[allStatus]||""}</span>
+          ${isQuoteOnly?`<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:${statusColor[allStatus]}22;color:${statusColor[allStatus]};border:1px solid ${statusColor[allStatus]}44;flex-shrink:0">${statusLabel[allStatus]||""}</span>`:(()=>{
+            const colorMap={pending:"#F59E0B",deposit:"#9333EA",settled:"#10B981",shipped:"#3B82F6"};
+            const slb={pending:"待訂金",deposit:"已付訂金",settled:"已付尾款",shipped:"已寄出"};
+            const uniform=b.orders.every(o=>o.status===b.orders[0]?.status);
+            const curVal=uniform?b.orders[0]?.status:"";
+            const curColor=curVal?colorMap[curVal]:"#9C7A5A";
+            const curLabel=curVal?slb[curVal]:"狀態不一";
+            // 平常看起來就是個小標籤，點下去才變成下拉選單，不用在訂單中間多佔一整條版面
+            return `<select data-bkey="${encodeURIComponent(b.key)}" onchange="updateBuyerStatus(decodeURIComponent(this.dataset.bkey),this.value)" style="font-size:10px;font-weight:700;padding:3px 20px 3px 8px;border-radius:99px;background:${curColor}22;color:${curColor};border:1px solid ${curColor}44;flex-shrink:0;cursor:pointer;appearance:none;-webkit-appearance:none">
+              ${!uniform?`<option value="" disabled selected>${curLabel}</option>`:""}
+              ${["pending","deposit","settled","shipped"].map(k=>`<option value="${k}" ${curVal===k?"selected":""}>${slb[k]}</option>`).join("")}
+            </select>`;
+          })()}
           ${b.orders.length>0&&b.orders.every(o=>o.batchClosed)?`<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:#EAF4FB;color:#1E5F8C;border:1px solid #BEE0F5;flex-shrink:0">🔒 已結案</span>`:""}
         </div>
         ${(()=>{const activeInv=b.orders.filter(o=>!o.batchClosed);return activeInv.length>0&&activeInv.every(o=>o.status==="shipped")?`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:#EAF4FB;border:1px solid #BEE0F5;border-radius:8px;padding:6px 10px;margin-bottom:8px">
@@ -12510,18 +12563,7 @@ window.renderInvoice=function(){
           <button data-bkey="${encodeURIComponent(b.key)}" onclick="closeBatch(decodeURIComponent(this.dataset.bkey))" style="flex-shrink:0;font-size:11px;font-weight:700;color:white;background:#1E5F8C;border:none;border-radius:6px;padding:4px 10px;cursor:pointer">🔒 結案</button>
         </div>`:"";})()}
         ${isQuoteOnly?"":`
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:8px">
-          ${["pending","deposit","settled","shipped"].map(k=>{
-            const active=b.orders.every(o=>o.status===k);
-            const colorMap={pending:"#F59E0B",deposit:"#9333EA",settled:"#10B981",shipped:"#3B82F6"};
-            const bg=active?(colorMap[k]||"#9C7A5A"):"white";
-            const cl=active?"white":"#9C7A5A";
-            const bc=active?(colorMap[k]||"#9C7A5A"):"#E8D5B0";
-            const slb={pending:"待訂金",deposit:"已付訂金",settled:"已付尾款",shipped:"已寄出"};
-            return `<button data-bkey="${encodeURIComponent(b.key)}" data-st="${k}" onclick="updateBuyerStatus(decodeURIComponent(this.dataset.bkey),this.dataset.st)" style="padding:5px 2px;border-radius:6px;font-size:10px;font-weight:700;border:1px solid ${bc};background:${bg};color:${cl};cursor:pointer;white-space:nowrap;text-align:center">${slb[k]}</button>`;
-          }).join("")}
-        </div>
-        <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end">
+        <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;margin-top:4px">
           <button data-bkey="${encodeURIComponent(b.key)}" onclick="copyDepositOrder(null,decodeURIComponent(this.dataset.bkey))" style="font-size:10px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:700;white-space:nowrap;flex:0 0 auto">💰 收訂金</button>
           <button data-bkey="${encodeURIComponent(b.key)}" onclick="openAskSettlement(decodeURIComponent(this.dataset.bkey))" style="font-size:10px;background:#EAF4FD;color:#0277BD;border:1px solid #90D7FF;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700;white-space:nowrap;flex:0 0 auto">複製結清</button>
           <button data-cid="${b.orders[0]?.customerId||""}" onclick="this.dataset.cid?openLineNotify(this.dataset.cid):showToast('這位客人還沒建立客戶資料，沒辦法發出貨通知','warning')" style="font-size:10px;background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700;white-space:nowrap;flex:0 0 auto">🚚 出貨</button>
@@ -12557,23 +12599,13 @@ window.renderInvoice=function(){
           };
           // 已結案的商品明細跟進行中的分開，已結案的收合成獨立區塊，理由跟客戶頁一樣：
           // 避免舊的、已經處理完的商品洗版，一打開卡片先看到的都是還在進行中的品項
-          const activeInvOrders=b.orders.filter(o=>!o.batchClosed);
-          const closedInvOrders=b.orders.filter(o=>o.batchClosed);
+          const activeInvOrders=window.G.invShowClosedOnly?b.orders.filter(o=>o.batchClosed):b.orders.filter(o=>!o.batchClosed);
           const activeRows=[...activeInvOrders].sort((x,y)=>{
             const xDone=x.orderType!=="preorder"||x.purchased===true;
             const yDone=y.orderType!=="preorder"||y.purchased===true;
             return xDone===yDone?0:xDone?1:-1;
           }).map(renderInvRow).join("");
-          let closedBlock="";
-          if(closedInvOrders.length){
-            window.G.invClosedExpandedSet=window.G.invClosedExpandedSet||new Set();
-            const closedExpanded=window.G.invClosedExpandedSet.has(b.key);
-            const closedQty=closedInvOrders.reduce((s,o)=>s+(o.qty||1),0);
-            const closedAmt=closedInvOrders.reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0);
-            closedBlock=`<button data-bkey="${encodeURIComponent(b.key)}" onclick="window.toggleInvClosedSection(decodeURIComponent(this.dataset.bkey))" style="width:100%;margin-top:8px;background:#EAF4FB;color:#1E5F8C;border:1px solid #BEE0F5;border-radius:8px;padding:7px;font-size:11px;font-weight:700;cursor:pointer">${closedExpanded?"▾":"▸"} 🔒 已結案 ${closedInvOrders.length}筆商品（共${closedQty}件・NT$${closedAmt.toLocaleString()}）${closedExpanded?"":"　點擊展開查看"}</button>`;
-            if(closedExpanded)closedBlock+=closedInvOrders.map(renderInvRow).join("");
-          }
-          return activeRows+closedBlock;
+          return activeRows;
         })()}
         ${(b.quotes&&b.quotes.length)?`
         <div style="margin-top:${b.orders.length?"6px":"0"};padding-top:${b.orders.length?"6px":"0"};${b.orders.length?"border-top:1px dashed #BBDEFB":""}">
