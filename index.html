@@ -533,63 +533,62 @@ body.live-mode .hide-live { display: none !important; }
 
 <!-- ═══ 統計 ═══ -->
 <div id="tab-stats" class="tab-page" style="padding:16px 16px 80px">
-  <!-- 趟次選擇 -->
-  <div style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:14px;margin-bottom:12px">
-    <div style="font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:8px">✈️ 選擇趟次</div>
-    <select id="stats-trip-selector" onchange="setStatsTripFilter(this.value)" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:700;color:#3D2010;outline:none;cursor:pointer"></select>
+  <!-- 趟次選擇（精簡成一排，不用整張卡片） -->
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">
+    <select id="stats-trip-selector" onchange="setStatsTripFilter(this.value)" style="flex:1;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:9px 12px;font-size:13px;font-weight:700;color:#3D2010;outline:none;cursor:pointer"></select>
+    <button onclick="openCategoryHealth()" style="flex-shrink:0;background:none;border:1px solid #E8D5B0;color:#9C7A5A;border-radius:10px;padding:9px 12px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">📊 分類健檢</button>
   </div>
-  <button onclick="openCategoryHealth()" style="width:100%;background:#EDE9FE;color:#5B21B6;border:1.5px solid #C4B5FD;border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:12px">📊 商品分類健檢（跨全部趟次，看回購率/客單價/毛利）</button>
-  <!-- 核心數字 -->
-  <div id="stats-summary" style="margin-bottom:12px"></div>
+  <!-- 核心數字（毛利潤 hero） -->
+
+  <!-- 淨利結算：跟核心數字同一組視覺語言，兩者合起來是完整的「這趟賺多少」故事 -->
+  <div id="stats-net" style="margin-bottom:20px"></div>
+
   <!-- 出行費用 -->
-  <div style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:16px;margin-bottom:12px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-      <div style="font-size:12px;font-weight:700;color:#3D2010">✈️ 出行費用（計入淨利計算）</div>
-      <div id="exp-trip-label" style="font-size:10px;color:#C5A880;font-weight:700;background:#FDF6EC;padding:3px 8px;border-radius:99px;border:1px solid #E8D5B0">目前趟次：載入中</div>
+  <div style="background:#FFFFFF;border:1px solid #EDE2CC;border-radius:16px;padding:18px;margin-bottom:14px;box-shadow:0 1px 3px rgba(140,110,70,0.06)">
+    <div style="font-size:12px;font-weight:700;color:#7A6248;margin-bottom:12px">出行費用</div>
+    <div id="trip-expenses-list" style="margin-bottom:8px"></div>
+    <div id="expense-form-area" style="background:#FAF8F5;border:1px solid #E8D5B0;border-radius:12px;padding:12px;margin-top:6px">
+      <!-- 快速套用常見費用 -->
+      <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px">
+        <button onclick="document.getElementById('exp-label').value='✈️ 機票';document.getElementById('exp-amount').focus()" style="font-size:10px;background:white;color:#9C7A5A;border:1px solid #E8D5B0;padding:4px 8px;border-radius:99px;cursor:pointer">✈️ 機票</button>
+        <button onclick="document.getElementById('exp-label').value='🏨 飯店';document.getElementById('exp-amount').focus()" style="font-size:10px;background:white;color:#9C7A5A;border:1px solid #E8D5B0;padding:4px 8px;border-radius:99px;cursor:pointer">🏨 飯店</button>
+        <button onclick="document.getElementById('exp-label').value='🚌 交通';document.getElementById('exp-amount').focus()" style="font-size:10px;background:white;color:#9C7A5A;border:1px solid #E8D5B0;padding:4px 8px;border-radius:99px;cursor:pointer">🚌 交通</button>
+        <button onclick="document.getElementById('exp-label').value='🍜 餐費';document.getElementById('exp-amount').focus()" style="font-size:10px;background:white;color:#9C7A5A;border:1px solid #E8D5B0;padding:4px 8px;border-radius:99px;cursor:pointer">🍜 餐費</button>
+        <button onclick="document.getElementById('exp-label').value='📦 運費';document.getElementById('exp-amount').focus()" style="font-size:10px;background:white;color:#9C7A5A;border:1px solid #E8D5B0;padding:4px 8px;border-radius:99px;cursor:pointer">📦 運費</button>
+        <button onclick="document.getElementById('exp-label').value='💳 刷卡手續費';document.getElementById('exp-amount').focus()" style="font-size:10px;background:white;color:#9C7A5A;border:1px solid #E8D5B0;padding:4px 8px;border-radius:99px;cursor:pointer">💳 手續費</button>
+        <button onclick="document.getElementById('exp-label').value='🎫 景點門票';document.getElementById('exp-amount').focus()" style="font-size:10px;background:white;color:#9C7A5A;border:1px solid #E8D5B0;padding:4px 8px;border-radius:99px;cursor:pointer">🎫 門票</button>
+        <button onclick="document.getElementById('exp-label').value='📱 電話網路費';document.getElementById('exp-amount').focus()" style="font-size:10px;background:white;color:#9C7A5A;border:1px solid #E8D5B0;padding:4px 8px;border-radius:99px;cursor:pointer">📱 電話費</button>
+        <button onclick="document.getElementById('exp-label').value='🛒 其他費用';document.getElementById('exp-amount').focus()" style="font-size:10px;background:white;color:#9C7A5A;border:1px solid #E8D5B0;padding:4px 8px;border-radius:99px;cursor:pointer">🛒 其他</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <input type="text" id="exp-label" placeholder="項目（例如：機票）" style="flex:1;min-width:0;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;font-size:13px;outline:none"/>
+        <input type="text" inputmode="numeric" id="exp-amount" placeholder="金額" style="width:76px;flex-shrink:0;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:8px 8px;font-size:13px;outline:none"/>
+        <select id="exp-currency" style="width:62px;flex-shrink:0;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:8px 2px;font-size:11px;font-weight:700;color:#3D2010;outline:none">
+          <option value="TWD">🇹🇼 台幣</option>
+          <option value="KRW">🇰🇷 韓幣</option>
+          <option value="JPY">🇯🇵 日幣</option>
+          <option value="THB">🇹🇭 泰銖</option>
+          <option value="USD">🇺🇸 美金</option>
+        </select>
+        <button onclick="addExpense()" style="flex-shrink:0;background:#C5A880;color:white;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer">＋</button>
+      </div>
+      <div style="font-size:10px;color:#9C7A5A;margin-top:6px">選韓幣/日幣/泰銖/美金時，直接輸入當地金額，系統會用目前匯率自動換算成台幣計入統計</div>
     </div>
-    <div id="trip-expenses-list" style="margin-bottom:10px"></div>
-    <!-- 快速套用常見費用 -->
-    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px">
-      <div style="font-size:10px;color:#9C7A5A;font-weight:700;width:100%;margin-bottom:2px">快速新增</div>
-      <button onclick="document.getElementById('exp-label').value='✈️ 機票';document.getElementById('exp-amount').focus()" style="font-size:10px;background:#FAF8F5;color:#9C7A5A;border:1px solid #E8D5B0;padding:4px 8px;border-radius:99px;cursor:pointer">✈️ 機票</button>
-      <button onclick="document.getElementById('exp-label').value='🏨 飯店';document.getElementById('exp-amount').focus()" style="font-size:10px;background:#FAF8F5;color:#9C7A5A;border:1px solid #E8D5B0;padding:4px 8px;border-radius:99px;cursor:pointer">🏨 飯店</button>
-      <button onclick="document.getElementById('exp-label').value='🚌 交通';document.getElementById('exp-amount').focus()" style="font-size:10px;background:#FAF8F5;color:#9C7A5A;border:1px solid #E8D5B0;padding:4px 8px;border-radius:99px;cursor:pointer">🚌 交通</button>
-      <button onclick="document.getElementById('exp-label').value='🍜 餐費';document.getElementById('exp-amount').focus()" style="font-size:10px;background:#FAF8F5;color:#9C7A5A;border:1px solid #E8D5B0;padding:4px 8px;border-radius:99px;cursor:pointer">🍜 餐費</button>
-      <button onclick="document.getElementById('exp-label').value='📦 運費';document.getElementById('exp-amount').focus()" style="font-size:10px;background:#FAF8F5;color:#9C7A5A;border:1px solid #E8D5B0;padding:4px 8px;border-radius:99px;cursor:pointer">📦 運費</button>
-      <button onclick="document.getElementById('exp-label').value='💳 刷卡手續費';document.getElementById('exp-amount').focus()" style="font-size:10px;background:#FAF8F5;color:#9C7A5A;border:1px solid #E8D5B0;padding:4px 8px;border-radius:99px;cursor:pointer">💳 手續費</button>
-      <button onclick="document.getElementById('exp-label').value='🎫 景點門票';document.getElementById('exp-amount').focus()" style="font-size:10px;background:#FAF8F5;color:#9C7A5A;border:1px solid #E8D5B0;padding:4px 8px;border-radius:99px;cursor:pointer">🎫 門票</button>
-      <button onclick="document.getElementById('exp-label').value='📱 電話網路費';document.getElementById('exp-amount').focus()" style="font-size:10px;background:#FAF8F5;color:#9C7A5A;border:1px solid #E8D5B0;padding:4px 8px;border-radius:99px;cursor:pointer">📱 電話費</button>
-      <button onclick="document.getElementById('exp-label').value='🛒 其他費用';document.getElementById('exp-amount').focus()" style="font-size:10px;background:#FAF8F5;color:#9C7A5A;border:1px solid #E8D5B0;padding:4px 8px;border-radius:99px;cursor:pointer">🛒 其他</button>
-    </div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px">
-      <input type="text" id="exp-label" placeholder="項目（例如：機票）" style="flex:1;min-width:0;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;font-size:13px;outline:none"/>
-      <input type="text" inputmode="numeric" id="exp-amount" placeholder="金額" style="width:76px;flex-shrink:0;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px 8px;font-size:13px;outline:none"/>
-      <select id="exp-currency" style="width:62px;flex-shrink:0;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:8px 2px;font-size:11px;font-weight:700;color:#3D2010;outline:none">
-        <option value="TWD">🇹🇼 台幣</option>
-        <option value="KRW">🇰🇷 韓幣</option>
-        <option value="JPY">🇯🇵 日幣</option>
-        <option value="THB">🇹🇭 泰銖</option>
-        <option value="USD">🇺🇸 美金</option>
-      </select>
-      <button onclick="addExpense()" style="flex-shrink:0;background:#C5A880;color:white;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer">＋</button>
-    </div>
-    <div style="font-size:10px;color:#9C7A5A;margin-top:6px">💡 選韓幣/日幣/泰銖/美金時，直接輸入當地金額，系統會用目前匯率自動換算成台幣計入統計</div>
   </div>
-  <!-- 淨利結算 -->
-  <div id="stats-net" style="margin-bottom:12px"></div>
+
   <!-- 分類營收 -->
-  <div style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:16px;margin-bottom:12px">
-    <div style="font-size:12px;font-weight:700;color:#3D2010;margin-bottom:10px">🏷️ 分類營收</div>
+  <div style="background:#FFFFFF;border:1px solid #EDE2CC;border-radius:16px;padding:18px;margin-bottom:14px;box-shadow:0 1px 3px rgba(140,110,70,0.06)">
+    <div style="font-size:12px;font-weight:700;color:#7A6248;margin-bottom:14px">分類營收</div>
     <div id="stats-by-cat"></div>
   </div>
   <!-- 商品排行 -->
-  <div style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:16px;margin-bottom:12px">
-    <div style="font-size:12px;font-weight:700;color:#3D2010;margin-bottom:10px">🏆 商品銷售排行</div>
+  <div style="background:#FFFFFF;border:1px solid #EDE2CC;border-radius:16px;padding:18px;margin-bottom:14px;box-shadow:0 1px 3px rgba(140,110,70,0.06)">
+    <div style="font-size:12px;font-weight:700;color:#7A6248;margin-bottom:14px">商品銷售排行</div>
     <div id="stats-top-products"></div>
   </div>
   <!-- 客戶消費排行 -->
-  <div style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:16px;margin-bottom:12px">
-    <div style="font-size:12px;font-weight:700;color:#3D2010;margin-bottom:10px">👤 客戶消費排行</div>
+  <div style="background:#FFFFFF;border:1px solid #EDE2CC;border-radius:16px;padding:18px;margin-bottom:14px;box-shadow:0 1px 3px rgba(140,110,70,0.06)">
+    <div style="font-size:12px;font-weight:700;color:#7A6248;margin-bottom:14px">客戶消費排行</div>
     <div id="stats-top-customers"></div>
   </div>
 </div>
@@ -10607,6 +10606,15 @@ window.setStatsTripFilter=function(f){
 // 費用儲存在 G（不同步 Firebase，重整清空；也可擴展到 Firebase）
 if(!window.G.expenses)window.G.expenses={};  // {tripId: [{label,amount}]}
 
+window.toggleExpenseForm=function(){
+  const area=document.getElementById("expense-form-area");
+  const btn=document.getElementById("exp-add-toggle-btn");
+  if(!area)return;
+  const isOpen=area.style.display==="block";
+  area.style.display=isOpen?"none":"block";
+  if(btn)btn.textContent=isOpen?"+ 新增費用":"− 收起";
+  if(!isOpen)document.getElementById("exp-label")?.focus();
+};
 window.addExpense=function(){
   const label=document.getElementById("exp-label")?.value.trim();
   const amount=parseFloat(document.getElementById("exp-amount")?.value)||0;
@@ -10802,31 +10810,8 @@ window.renderStats=function(){
   const grossProfit=Math.round(rev-cost);
   const margin=rev>0?Math.round((grossProfit/rev)*100):0;
 
-  // 核心數字卡：改成一個焦點數字 + 安靜的次要資訊，不要五顏六色的格子牆，
-  // 讓「毛利潤」（這趟到底有沒有賺錢）當視覺焦點，其他數字退到背景當補充資訊
-  const sumEl=document.getElementById("stats-summary");
-  const profitPositive=grossProfit>=0;
-  const profitColor=profitPositive?"#2E6A4A":"#A0453D";
-  if(sumEl) sumEl.innerHTML=`
-    <div style="background:linear-gradient(180deg,#FDFBF7,#FAF6EE);border:1px solid #E8D5B0;border-radius:16px;padding:22px 20px;margin-bottom:10px">
-      <div style="font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:6px">這趟毛利潤</div>
-      <div style="font-size:34px;font-weight:900;color:${profitColor};line-height:1.1;letter-spacing:-0.01em">${profitPositive?"":"−"}NT$${Math.abs(grossProfit).toLocaleString()}</div>
-      <div style="font-size:12px;font-weight:700;color:${profitColor};margin-top:4px">毛利率 ${margin}%</div>
-      <div style="display:flex;margin-top:18px;padding-top:16px;border-top:1px solid #E8D5B0">
-        <div style="flex:1;text-align:left">
-          <div style="font-size:10px;color:#9C7A5A;margin-bottom:3px">總營業額</div>
-          <div style="font-size:16px;font-weight:800;color:#5C3A1E">NT$${rev.toLocaleString()}</div>
-        </div>
-        <div style="flex:1;text-align:left;border-left:1px solid #E8D5B0;padding-left:14px">
-          <div style="font-size:10px;color:#9C7A5A;margin-bottom:3px">採購成本</div>
-          <div style="font-size:16px;font-weight:800;color:#5C3A1E">NT$${Math.round(cost).toLocaleString()}</div>
-        </div>
-        <div style="flex:1;text-align:left;border-left:1px solid #E8D5B0;padding-left:14px">
-          <div style="font-size:10px;color:#9C7A5A;margin-bottom:3px">已接單</div>
-          <div style="font-size:16px;font-weight:800;color:#5C3A1E">${qty} 件</div>
-        </div>
-      </div>
-    </div>`;
+  // 核心數字卡：整合成一張卡片，全部維持同一套米色/咖啡色系，不用深色塊製造對比，
+  // 靠字級大小分層來呈現重要性——淨利（最終結論）最大最粗，毛利潤中等，其他細節最安靜
 
   // 費用列表
   const tripKey=statsTripFilter==="all"?"all":statsTripFilter==="auto"?(getLatestTrip()?.id||"all"):statsTripFilter;
@@ -10834,7 +10819,7 @@ window.renderStats=function(){
   const totalExp=exps.reduce((s,e)=>s+e.amount,0);
   const expEl=document.getElementById("trip-expenses-list");
   if(expEl){
-    if(!exps.length){expEl.innerHTML=`<div style="font-size:12px;color:#9C7A5A;margin-bottom:8px">尚未記錄費用，在下方新增</div>`;}
+    if(!exps.length){expEl.innerHTML=`<div style="font-size:12px;color:#9C7A5A;margin-bottom:8px">尚未記錄費用，點右上角「+ 新增費用」</div>`;}
     else{
       expEl.innerHTML=exps.map(e=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #FAF8F5">
         <span style="font-size:13px;color:#3D2010">${e.label}${e.origCurrency&&e.origCurrency!=="TWD"?`<br><span style="font-size:10px;color:#9C7A5A">${CURR[e.origCurrency]?.symbol||""}${(e.origAmount||0).toLocaleString()} ${CURR[e.origCurrency]?.name||e.origCurrency}</span>`:""}</span>
@@ -10849,72 +10834,101 @@ window.renderStats=function(){
     }
   }
 
-  // 淨利結算
+  // 淨利結算：整頁真正的焦點，跟毛利潤合併成一張卡片，用字級大小分出主次，
+  // 不再用深色塊區隔，全部保持在同一套溫和的米色調性裡
   const netProfit=grossProfit-totalExp;
   const netEl=document.getElementById("stats-net");
+  const netPositive=netProfit>=0;
+  const netColor=netPositive?"#3D6B4F":"#A0453D";
+  const grossPositive=grossProfit>=0;
+  const grossColor=grossPositive?"#6B8F7A":"#B07A7A";
   if(netEl) netEl.innerHTML=`
-    <div style="background:${netProfit>=0?"#EBF7EE":"#FDEDEC"};border:1px solid ${netProfit>=0?"#B2DFDB":"#F1948A"};border-radius:14px;padding:18px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid ${netProfit>=0?"#B2DFDB":"#F1948A"}">
-        <span style="font-size:13px;font-weight:700;color:${netProfit>=0?"#2E7D32":"#C0392B"}">💰 淨利（毛利 − 出行費用）</span>
+    <div style="background:#FFFFFF;border:1px solid #EDE2CC;border-radius:18px;padding:26px 22px;box-shadow:0 1px 3px rgba(140,110,70,0.06)">
+      <div style="font-size:11px;font-weight:600;color:#AD9270;letter-spacing:0.02em;margin-bottom:8px">這趟淨利</div>
+      <div style="font-size:38px;font-weight:800;color:${netColor};line-height:1.05;letter-spacing:-0.02em">${netPositive?"":"−"}NT$${Math.abs(netProfit).toLocaleString()}</div>
+      ${rev>0?`<div style="font-size:12px;font-weight:600;color:${netColor};margin-top:6px;opacity:0.85">淨利率 ${Math.round((netProfit/rev)*100)}%</div>`:""}
+
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:20px;padding-top:18px;border-top:1px solid #F3ECDC">
+        <span style="font-size:12px;color:#AD9270">毛利潤</span>
+        <span style="font-size:17px;font-weight:700;color:${grossColor}">${grossPositive?"":"−"}NT$${Math.abs(grossProfit).toLocaleString()}</span>
       </div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;color:#9C7A5A;margin-bottom:6px"><span>毛利潤</span><span>NT$${grossProfit.toLocaleString()}</span></div>
-      ${totalExp>0?`<div style="display:flex;justify-content:space-between;font-size:12px;color:#E07B39;margin-bottom:6px"><span>− 出行費用</span><span>NT$${totalExp.toLocaleString()}</span></div>`:""}
-      <div style="display:flex;justify-content:space-between;font-size:20px;font-weight:900;color:${netProfit>=0?"#2E7D32":"#C0392B"}"><span>淨利</span><span>NT$${netProfit.toLocaleString()}</span></div>
-      ${rev>0?`<div style="font-size:10px;color:#9C7A5A;margin-top:6px;text-align:right">淨利率 ${Math.round((netProfit/rev)*100)}%</div>`:""}
+      ${totalExp>0?`<div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:8px">
+        <span style="font-size:12px;color:#AD9270">出行費用</span>
+        <span style="font-size:14px;font-weight:600;color:#B08050">− NT$${totalExp.toLocaleString()}</span>
+      </div>`:""}
+
+      <div style="display:flex;margin-top:20px;padding-top:16px;border-top:1px solid #F3ECDC">
+        <div style="flex:1;text-align:left">
+          <div style="font-size:10px;color:#AD9270;margin-bottom:3px">總營業額</div>
+          <div style="font-size:14px;font-weight:700;color:#7A6248">NT$${rev.toLocaleString()}</div>
+        </div>
+        <div style="flex:1;text-align:left;border-left:1px solid #F3ECDC;padding-left:14px">
+          <div style="font-size:10px;color:#AD9270;margin-bottom:3px">採購成本</div>
+          <div style="font-size:14px;font-weight:700;color:#7A6248">NT$${Math.round(cost).toLocaleString()}</div>
+        </div>
+        <div style="flex:1;text-align:left;border-left:1px solid #F3ECDC;padding-left:14px">
+          <div style="font-size:10px;color:#AD9270;margin-bottom:3px">已接單</div>
+          <div style="font-size:14px;font-weight:700;color:#7A6248">${qty} 件</div>
+        </div>
+      </div>
     </div>`;
 
-  // 分類營收 bar chart
+  // 分類營收
   const cats=Object.values(catMap).sort((a,b)=>b.rev-a.rev);
   const maxRev=cats[0]?.rev||1;
   const catEl=document.getElementById("stats-by-cat");
-  if(catEl) catEl.innerHTML=cats.length?cats.map(c=>`
-    <div style="margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
-        <span style="font-weight:700;color:#3D2010">${c.emoji} ${c.label}</span>
-        <span style="color:#A08060;font-weight:700">NT$${c.rev.toLocaleString()} <span style="color:#9C7A5A;font-weight:400">(${c.qty}件)</span></span>
+  if(catEl) catEl.innerHTML=cats.length?cats.map((c,i)=>{
+    const pct=Math.round(c.rev/maxRev*100);
+    return `<div style="position:relative;border-radius:10px;overflow:hidden;margin-bottom:6px;background:#FAF6EE">
+      <div style="position:absolute;inset:0;width:${pct}%;background:#F0E2BE;border-radius:10px;transition:width .4s"></div>
+      <div style="position:relative;display:flex;align-items:center;gap:10px;padding:10px 12px">
+        <span style="font-size:11px;font-weight:900;color:#B08050;width:16px;flex-shrink:0">${i+1}</span>
+        <span style="flex:1;font-size:12px;font-weight:700;color:#5C3A1E;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.emoji} ${c.label}</span>
+        <span style="flex-shrink:0;text-align:right">
+          <span style="font-size:13px;font-weight:800;color:#7A6248">NT$${c.rev.toLocaleString()}</span>
+          <span style="font-size:10px;color:#AD9270"> (${c.qty}件)</span>
+        </span>
       </div>
-      <div style="background:#FAF8F5;border-radius:99px;height:8px;overflow:hidden">
-        <div style="width:${Math.round(c.rev/maxRev*100)}%;height:100%;background:#C5A880;border-radius:99px;transition:width .4s"></div>
-      </div>
-    </div>`).join(""):`<div style="font-size:12px;color:#9C7A5A">尚無資料</div>`;
+    </div>`;
+  }).join(""):`<div style="font-size:12px;color:#9C7A5A">尚無資料</div>`;
 
   // 商品排行 Top 10
   const prods=Object.values(prodMap).sort((a,b)=>b.qty-a.qty).slice(0,10);
   const maxQ=prods[0]?.qty||1;
   const prodEl=document.getElementById("stats-top-products");
-  if(prodEl) prodEl.innerHTML=prods.length?prods.map((p,i)=>`
-    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #FAF8F5">
-      <span style="font-size:12px;font-weight:900;color:#C5A880;width:18px;text-align:center">${i+1}</span>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:12px;font-weight:700;color:#3D2010;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</div>
-        <div style="background:#FAF8F5;border-radius:99px;height:5px;margin-top:4px;overflow:hidden">
-          <div style="width:${Math.round(p.qty/maxQ*100)}%;height:100%;background:#C5A880;border-radius:99px"></div>
-        </div>
+  if(prodEl) prodEl.innerHTML=prods.length?prods.map((p,i)=>{
+    const pct=Math.round(p.qty/maxQ*100);
+    return `<div style="position:relative;border-radius:10px;overflow:hidden;margin-bottom:6px;background:#FAF6EE">
+      <div style="position:absolute;inset:0;width:${pct}%;background:#F0E2BE;border-radius:10px;transition:width .4s"></div>
+      <div style="position:relative;display:flex;align-items:center;gap:10px;padding:10px 12px">
+        <span style="font-size:11px;font-weight:900;color:#B08050;width:16px;flex-shrink:0">${i+1}</span>
+        <span style="flex:1;font-size:12px;font-weight:700;color:#5C3A1E;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</span>
+        <span style="flex-shrink:0;text-align:right">
+          <span style="font-size:13px;font-weight:800;color:#7A6248">${p.qty} 件</span>
+          <span style="font-size:10px;color:#AD9270"> NT$${p.rev.toLocaleString()}</span>
+        </span>
       </div>
-      <div style="text-align:right;flex-shrink:0">
-        <div style="font-size:13px;font-weight:900;color:#A08060">${p.qty} 件</div>
-        <div style="font-size:10px;color:#9C7A5A">NT$${p.rev.toLocaleString()}</div>
-      </div>
-    </div>`).join(""):`<div style="font-size:12px;color:#9C7A5A">尚無資料</div>`;
+    </div>`;
+  }).join(""):`<div style="font-size:12px;color:#9C7A5A">尚無資料</div>`;
 
   // 客戶消費排行 Top 10
   const custs=Object.values(custMap).sort((a,b)=>b.rev-a.rev).slice(0,10);
   const maxCR=custs[0]?.rev||1;
   const custEl=document.getElementById("stats-top-customers");
-  if(custEl) custEl.innerHTML=custs.length?custs.map((c,i)=>`
-    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #FAF8F5">
-      <span style="font-size:12px;font-weight:900;color:#C5A880;width:18px;text-align:center">${i+1}</span>
-      <div style="flex:1">
-        <div style="font-size:12px;font-weight:700;color:#3D2010">👤 ${c.name}</div>
-        <div style="background:#FAF8F5;border-radius:99px;height:5px;margin-top:4px;overflow:hidden">
-          <div style="width:${Math.round(c.rev/maxCR*100)}%;height:100%;background:#C5A880;border-radius:99px"></div>
-        </div>
+  if(custEl) custEl.innerHTML=custs.length?custs.map((c,i)=>{
+    const pct=Math.round(c.rev/maxCR*100);
+    return `<div style="position:relative;border-radius:10px;overflow:hidden;margin-bottom:6px;background:#FAF6EE">
+      <div style="position:absolute;inset:0;width:${pct}%;background:#F0E2BE;border-radius:10px;transition:width .4s"></div>
+      <div style="position:relative;display:flex;align-items:center;gap:10px;padding:10px 12px">
+        <span style="font-size:11px;font-weight:900;color:#B08050;width:16px;flex-shrink:0">${i+1}</span>
+        <span style="flex:1;font-size:12px;font-weight:700;color:#5C3A1E;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</span>
+        <span style="flex-shrink:0;text-align:right">
+          <span style="font-size:13px;font-weight:800;color:#7A6248">NT$${c.rev.toLocaleString()}</span>
+          <span style="font-size:10px;color:#AD9270"> (${c.qty}件)</span>
+        </span>
       </div>
-      <div style="text-align:right;flex-shrink:0">
-        <div style="font-size:13px;font-weight:900;color:#A08060">NT$${c.rev.toLocaleString()}</div>
-        <div style="font-size:10px;color:#9C7A5A">${c.qty} 件</div>
-      </div>
-    </div>`).join(""):`<div style="font-size:12px;color:#9C7A5A">尚無資料</div>`;
+    </div>`;
+  }).join(""):`<div style="font-size:12px;color:#9C7A5A">尚無資料</div>`;
 };
 
 window.renderTripHistory=function(){
@@ -12441,7 +12455,7 @@ function renderInvExtraChips(){
   const el=document.getElementById("inv-extra-chips");
   if(!el)return;
   const chips=[
-    {label:"尚未購買代買單",active:window.G.orderFilter==="unpurchased",onclick:"toggleInvUnpurchased()"},
+    {label:"尚未購買",active:window.G.orderFilter==="unpurchased",onclick:"toggleInvUnpurchased()"},
     {label:"冷藏",active:!!window.G.invColdOnly,onclick:"toggleInvColdOnly()"},
     {label:"未結案",active:!!window.G.invUnclosedOnly,onclick:"toggleInvUnclosedOnly()"},
     {label:"只看已結案",active:!!window.G.invShowClosedOnly,onclick:"toggleInvShowClosedOnly()"},
