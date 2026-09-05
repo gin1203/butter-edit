@@ -253,6 +253,12 @@ function headerCartClick(){
 function cleanProductName(name){
   return (name||"").replace(/\s*[（(][1-4]\+[1-4][）)]/g,"").trim();
 }
+// 取得這個商品實際要用的「最低購買倍數」：優先用後台手動填的 purchaseMultiple，
+// 沒填的話就沿用商品本身已經有的「2+1」類活動標籤（promoDivisor），
+// 這樣有促銷標籤的商品不用重複設定兩次
+function getPurchaseMultiple(p){
+  return p.purchaseMultiple||p.promoDivisor||null;
+}
 
 // ── 商品載入 ───────────────────────────────────────
 async function loadProducts(){
@@ -321,15 +327,20 @@ function renderGrid(){
     const specsArr=hasSpecs?p.specs.filter(s=>s!=null&&String(s).trim()!==""):[];
     const totalInCart=Object.entries(G.cart).filter(([k])=>k===p.id||k.startsWith(p.id+"::")).reduce((s,[,v])=>s+v.qty,0);
     const price=p.finalPrice||0;
+    // 有設定「最低購買倍數」的商品（例如2+1），後台存的售價其實是「平均下來的單價」（比如3件均100），
+    // 這裡反推回「原價」給客人看（100×3÷2=150），總金額算法完全不變，只是顯示的單價文字比較合理，
+    // 不會讓客人誤以為單買一件也是100
+    const pMultiple=getPurchaseMultiple(p);
+    const displayPrice=pMultiple?Math.round(price*pMultiple/(pMultiple-1)):price;
     const allSoldOut=hasSpecs&&specsArr.every((_,i)=>{const st=(p.specStock||[])[i];const n=(st===null||st===undefined||st==="")?null:Number(st);return n!=null&&n<=0;});
     // 價格顯示：未登入顯示鎖頭
     const priceHtml=G.lineUser
-      ?`<div style="font-size:15px;font-weight:900;color:#F4845F;margin-top:auto">NT$ ${price.toLocaleString()}</div>`
+      ?`<div style="font-size:15px;font-weight:900;color:#F4845F;margin-top:auto">NT$ ${displayPrice.toLocaleString()}</div>`
       :`<div style="font-size:13px;font-weight:700;color:#9C7A5A;margin-top:auto;display:flex;align-items:center;gap:4px">🔒 登入查看價格</div>`;
     return `<div onclick="openDetail('${p.id}')" style="background:white;border-radius:14px;border:1px solid #E8D5B0;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;position:relative">
       ${totalInCart>0?`<div style="position:absolute;top:8px;right:8px;z-index:2;background:#F4845F;color:white;font-size:10px;font-weight:900;border-radius:99px;width:20px;height:20px;display:flex;align-items:center;justify-content:center">${totalInCart}</div>`:""}
       ${allSoldOut?`<div style="position:absolute;top:8px;left:8px;z-index:2;background:rgba(0,0,0,0.45);color:white;font-size:10px;font-weight:700;border-radius:6px;padding:2px 7px">售完</div>`:""}
-      ${!allSoldOut&&p.purchaseMultiple?`<div style="position:absolute;top:8px;left:8px;z-index:2;background:#FF6B35;color:white;font-size:10px;font-weight:900;border-radius:6px;padding:2px 7px">每${p.purchaseMultiple}件一組</div>`:""}
+      ${!allSoldOut&&pMultiple?`<div style="position:absolute;top:8px;left:8px;z-index:2;background:#FF6B35;color:white;font-size:10px;font-weight:900;border-radius:6px;padding:2px 7px">買${pMultiple-1}送1</div>`:""}
       <div style="width:100%;aspect-ratio:1/1;background:#FAF8F5;overflow:hidden">
         ${p.photo?`<img src="${p.photo}" style="width:100%;height:100%;object-fit:cover" loading="lazy"/>`:`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px">${p.emoji||"📦"}</div>`}
       </div>
@@ -352,7 +363,8 @@ function openDetail(pid){
   // 有設定「最低購買倍數」的商品（例如2+1活動），改用多規格同時選購的介面，
   // 每個規格各自記一個數量，這裡先歸零準備
   const hasSpecsForMultiple=Array.isArray(p.specs)&&p.specs.length>0;
-  if(p.purchaseMultiple&&hasSpecsForMultiple){
+  const pMultipleForInit=getPurchaseMultiple(p);
+  if(pMultipleForInit&&hasSpecsForMultiple){
     G.multiSpecQty=G.multiSpecQty||{};
     G.multiSpecQty[pid]=new Array(p.specs.length).fill(0);
   }
@@ -378,7 +390,8 @@ function renderDetail(){
   const el=document.getElementById("detail-view");
   const hasSpecs=Array.isArray(p.specs)&&p.specs.length>0;
   const specsArr=hasSpecs?p.specs.filter(s=>s!=null&&String(s).trim()!==""):[];
-  const isMultiMode=!!(p.purchaseMultiple&&hasSpecs); // 有設定「最低購買倍數」才用多規格同時選購介面
+  const pMultiple=getPurchaseMultiple(p);
+  const isMultiMode=!!(pMultiple&&hasSpecs); // 有設定「最低購買倍數」（或本身就有2+1標籤）才用多規格同時選購介面
   const selIdx=G.selectedSpec[pid]??0;
   const specImg=isMultiMode?(p.photo||""):((p.specImages||[])[selIdx]||"");
   const mainImg=specImg||p.photo||"";
@@ -387,6 +400,7 @@ function renderDetail(){
   const soldOut=stock!=null&&stock<=0;
   const cartKey=hasSpecs?`${pid}::${selIdx}`:pid;
   const price=p.finalPrice||0;
+  const displayPrice=pMultiple?Math.round(price*pMultiple/(pMultiple-1)):price;
   const dqty=G.detailQty||1;
   const totalCartQty=Object.values(G.cart).reduce((s,i)=>s+i.qty,0);
 
@@ -414,14 +428,14 @@ function renderDetail(){
     if(!G.multiSpecQty[pid])G.multiSpecQty[pid]=new Array(specsArr.length).fill(0);
     const qtys=G.multiSpecQty[pid];
     const total=qtys.reduce((s,n)=>s+n,0);
-    const multiple=p.purchaseMultiple;
+    const multiple=pMultiple;
     const remainder=total%multiple;
     const isValid=total>0&&remainder===0;
     multiSpecBlock=`
     <div style="margin-bottom:16px">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
         <div style="font-size:12px;font-weight:700;color:#9C7A5A">選擇規格與數量</div>
-        <span style="font-size:10px;font-weight:700;background:#FFF3E0;color:#E65100;border-radius:4px;padding:1px 6px">每 ${multiple} 件一組</span>
+        <span style="font-size:10px;font-weight:700;background:#FFF3E0;color:#E65100;border-radius:4px;padding:1px 6px">買${multiple-1}送1</span>
       </div>
       <div style="font-size:11px;color:#9C7A5A;margin-bottom:10px">口味/款式可以任選混搭，只要湊到 ${multiple} 的倍數即可</div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
@@ -456,7 +470,7 @@ function renderDetail(){
     G.multiSpecQty=G.multiSpecQty||{};
     const qtys=G.multiSpecQty[pid]||new Array(specsArr.length).fill(0);
     const total=qtys.reduce((s,n)=>s+n,0);
-    const isValid=total>0&&total%p.purchaseMultiple===0;
+    const isValid=total>0&&total%pMultiple===0;
     bottomBtn=`<div style="display:flex;gap:8px">
       <button ${isValid?"":"disabled"} onclick="detailAddMultiSpecToCart('${pid}')" style="flex:1;background:${isValid?"white":"#F5F5F5"};color:${isValid?"#F4845F":"#BDBDBD"};border:2px solid ${isValid?"#F4845F":"#E8D5B0"};border-radius:12px;padding:14px;font-size:13px;font-weight:900;cursor:${isValid?"pointer":"not-allowed"}">加入購物車</button>
       <button ${isValid?"":"disabled"} onclick="detailAddMultiSpecToCart('${pid}',true)" style="flex:1;background:${isValid?"#F4845F":"#E8D5B0"};color:white;border:none;border-radius:12px;padding:14px;font-size:13px;font-weight:900;cursor:${isValid?"pointer":"not-allowed"}">立即購買</button>
@@ -497,7 +511,10 @@ function renderDetail(){
       <div style="font-size:10px;color:#9C7A5A;font-weight:700;margin-bottom:4px">${p.category||""}</div>
       <div style="font-size:18px;font-weight:900;color:#3D2010;line-height:1.3;margin-bottom:8px">${cleanProductName(p.name)}</div>
       ${G.lineUser
-        ?`<div style="font-size:22px;font-weight:900;color:#F4845F;margin-bottom:20px">NT$ ${price.toLocaleString()}</div>`
+        ?`<div style="margin-bottom:20px">
+            <div style="font-size:22px;font-weight:900;color:#F4845F">NT$ ${displayPrice.toLocaleString()}</div>
+            ${isMultiMode?`<div style="font-size:12px;font-weight:700;color:#E65100;margin-top:4px">買${pMultiple-1}送1，每${pMultiple}件計價NT$${(price*pMultiple).toLocaleString()}</div>`:""}
+          </div>`
         :`<div style="display:inline-flex;align-items:center;gap:6px;background:#F5F5F5;border-radius:8px;padding:8px 14px;margin-bottom:20px;cursor:pointer" onclick="lineLogin()"><span style="font-size:14px">🔒</span><span style="font-size:13px;font-weight:700;color:#9C7A5A">登入 LINE 查看價格</span></div>`}
       ${isMultiMode?multiSpecBlock:specBtns}
       ${(G.lineUser&&!soldOut&&!isMultiMode)?`
@@ -543,7 +560,7 @@ function detailAddMultiSpecToCart(pid,buyNow){
   const specsArr=(p.specs||[]).filter(s=>s!=null&&String(s).trim()!=="");
   const qtys=(G.multiSpecQty||{})[pid]||[];
   const total=qtys.reduce((s,n)=>s+n,0);
-  const multiple=p.purchaseMultiple||1;
+  const multiple=getPurchaseMultiple(p)||1;
   if(total===0||total%multiple!==0){
     showToast(`請選擇 ${multiple} 的倍數才能加入購物車`);
     return;
