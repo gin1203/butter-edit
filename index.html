@@ -3612,7 +3612,7 @@ window.openMoveTrip=function(oid){
   const trips=window.G.trips||[];
   // 用第一筆訂單的 tripId 作為當前趟次
   const o=window.G.orders.find(x=>x.id===targetIds[0]);
-  if(!o)return;
+  if(!o){showToast("找不到這筆訂單，請重新整理頁面再試","error");return;}
   const currentTripId=o.tripId||"";
   const otherTrips=trips.filter(t=>t.id!==currentTripId);
   if(!otherTrips.length){showToast("沒有其他趟次可以移動","error");return;}
@@ -3642,13 +3642,25 @@ window.openMoveTrip=function(oid){
 window.doMoveTrip=async function(newTripId){
   const oids=window.G.moveTripOids||[];
   if(!oids.length)return;
-  await Promise.all(oids.map(id=>fbUpd("orders",id,{tripId:newTripId})));
-  const t=window.G.trips.find(x=>x.id===newTripId);
-  document.getElementById("modal-move-trip")?.remove();
-  window.G.moveTripOids=[];
-  showToast(`已移到「${t?.name||newTripId}」✅`,"success");
-  const orphanModal=document.getElementById("modal-trip-orphan-scan");
-  if(orphanModal&&orphanModal.style.display!=="none")renderTripOrphanScan();
+  try{
+    const now=Date.now();
+    await Promise.all(oids.map(id=>fbUpd("orders",id,{tripId:newTripId,lastActivityAt:now})));
+    // 寫入成功後，同步更新本地暫存的訂單資料，畫面才會立刻反映，不用等下次重新整理
+    oids.forEach(id=>{
+      const o=window.G.orders.find(x=>x.id===id);
+      if(o){o.tripId=newTripId;o.lastActivityAt=now;}
+    });
+    const t=window.G.trips.find(x=>x.id===newTripId);
+    document.getElementById("modal-move-trip")?.remove();
+    window.G.moveTripOids=[];
+    showToast(`已移到「${t?.name||newTripId}」✅`,"success");
+    const orphanModal=document.getElementById("modal-trip-orphan-scan");
+    if(orphanModal&&orphanModal.style.display!=="none")renderTripOrphanScan();
+    renderCustomers();renderInvoice();renderList();
+  }catch(e){
+    console.error("移趟失敗：",e);
+    showToast("❌ 移趟失敗："+(e.message||"請檢查網路後再試一次"),"error");
+  }
 };
 
 // ── 商品子分類自動偵測 ────────────────────────────────────────────────────
@@ -6228,9 +6240,10 @@ window.closeOrderMoreMenu=function(cid){
 window.confirmShopOrder=async function(oid){
   if(!confirm("確認這筆商城訂單？\n確認後不會被自動取消，之後可以正常用收訂金/出貨流程處理。"))return;
   try{
-    await fbUpd("orders",oid,{status:"confirmed",confirmedAt:Date.now()});
+    const now=Date.now();
+    await fbUpd("orders",oid,{status:"confirmed",confirmedAt:now,lastActivityAt:now});
     const o=window.G.orders.find(x=>x.id===oid);
-    if(o)o.status="confirmed";
+    if(o){o.status="confirmed";o.lastActivityAt=now;}
     renderCustomers();
     showToast("✅ 已確認訂單");
     // 商城訂單原本沒有歸屬任何趟次，確認的同時順便問一下要歸屬哪一趟，
@@ -7373,7 +7386,10 @@ window.moQtyClamp=function(){
 };
 
 window.updateOrderStatus=async function(id,status){
-  await fbUpd("orders",id,{status});
+  const now=Date.now();
+  await fbUpd("orders",id,{status,lastActivityAt:now});
+  const o=window.G.orders.find(x=>x.id===id);
+  if(o)o.lastActivityAt=now;
   const l={pending:"待對帳",settled:"已結單",shipped:"已寄出"};
   showToast(`已更新為「${l[status]||status}」`);
 };
@@ -11991,7 +12007,10 @@ window.renderCustomers=function(){
   // 排序：預設「待對帳優先」；也可以切成「筆畫排序」方便直接找特定客戶
   const custLatest=c=>{
     const cOrds=orders.filter(o=>o.customerId?o.customerId===c.id:(o.communityName||o.buyerName||"").trim().toLowerCase()===(c.communityName||"").trim().toLowerCase());
-    return cOrds.length?Math.max(...cOrds.map(o=>o.createdAt||0)):c.createdAt||0;
+    // 排序看「最近有動作過的時間」，不是單純訂單建立時間——
+    // 確認訂單、移趟、收訂金這些操作都會更新 lastActivityAt，剛處理過的客戶會自動浮到最上面
+    const times=cOrds.map(o=>Math.max(o.lastActivityAt||0,o.createdAt||0));
+    return times.length?Math.max(...times):c.createdAt||0;
   };
   const custPendingCount=c=>{
     const cOrds=orders.filter(o=>o.customerId?o.customerId===c.id:(o.communityName||o.buyerName||"").trim().toLowerCase()===(c.communityName||"").trim().toLowerCase());
@@ -12735,7 +12754,9 @@ window.togglePurchased=async function(oid){
     upd.costSnapshotAt=null;
     upd.paymentMethodSnapshot=null;
   }
+  upd.lastActivityAt=Date.now();
   await fbUpd("orders",oid,upd);
+  if(o)o.lastActivityAt=upd.lastActivityAt;
   showToast(next?"✓ 已標記為買到了！":"已取消買到標記");
 };
 
