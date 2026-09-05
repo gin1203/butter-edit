@@ -408,20 +408,25 @@ body.live-mode .hide-live { display: none !important; }
     </div>
     <button onclick="openQuickAdd()" style="background:#C5A880;color:white;border:none;border-radius:10px;padding:10px 14px;font-size:18px;font-weight:700;cursor:pointer">＋</button>
   </div>
-  <!-- 匯出按鈕 + 連線模式 (非連線模式才顯示匯出) -->
+  <!-- 匯出/工具功能不常用，收進「更多工具」 -->
   <div id="product-toolbar" style="display:flex;gap:6px;margin-bottom:8px;align-items:center">
     <button id="list-view-toggle" onclick="toggleListView()" style="background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:7px 12px;font-size:16px;cursor:pointer" title="切換顯示模式">☰</button>
-    <button onclick="exportProductCSV()" style="flex:1;font-size:11px;background:#EBF5FB;color:#2980B9;border:1px solid #AED6F1;padding:7px 4px;border-radius:8px;font-weight:700;cursor:pointer">匯出商品庫</button>
-    <button onclick="showStockPlan()" style="flex:1;font-size:11px;background:#FFF3E0;color:#E07B39;border:1px solid #FFCC80;padding:7px 4px;border-radius:8px;font-weight:700;cursor:pointer">備貨清單</button>
-    <button onclick="showPromoGroups()" style="flex:1;font-size:11px;background:#FDF2E9;color:#C0392B;border:1px solid #F1948A;padding:7px 4px;border-radius:8px;font-weight:700;cursor:pointer">行銷活動</button>
-    <button onclick="showDupProductScan()" style="flex:1;font-size:11px;background:#FFF9F0;color:#92400E;border:1px solid #FCD34D;padding:7px 4px;border-radius:8px;font-weight:700;cursor:pointer">檢查重複</button>
-    <button onclick="showProductOrphanScan()" style="flex:1;font-size:11px;background:#FDEDEC;color:#943126;border:1px solid #F1948A;padding:7px 4px;border-radius:8px;font-weight:700;cursor:pointer">連結異常</button>
+    <div style="position:relative;flex:1">
+      <button onclick="event.stopPropagation();toggleListToolsMenu()" style="width:100%;padding:8px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #E8D5B0;background:#FAF8F5;color:#9C7A5A;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">⋯ 更多工具</button>
+      <div id="list-tools-menu" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:white;border:1px solid #E8D5B0;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:20;overflow:hidden">
+        <button onclick="event.stopPropagation();closeListToolsMenu();exportProductCSV()" style="display:block;width:100%;text-align:left;font-size:12px;color:#2980B9;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600">📤 匯出商品庫</button>
+        <button onclick="event.stopPropagation();closeListToolsMenu();showStockPlan()" style="display:block;width:100%;text-align:left;font-size:12px;color:#E07B39;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">📋 備貨清單</button>
+        <button onclick="event.stopPropagation();closeListToolsMenu();showPromoGroups()" style="display:block;width:100%;text-align:left;font-size:12px;color:#C0392B;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">🏷️ 行銷活動</button>
+        <button onclick="event.stopPropagation();closeListToolsMenu();showDupProductScan()" style="display:block;width:100%;text-align:left;font-size:12px;color:#92400E;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">🔍 檢查重複</button>
+        <button onclick="event.stopPropagation();closeListToolsMenu();showProductOrphanScan()" style="display:block;width:100%;text-align:left;font-size:12px;color:#943126;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">⚠️ 連結異常</button>
+      </div>
+    </div>
   </div>
-  <div class="hide-live" style="display:flex;gap:4px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:99px;padding:3px;margin-bottom:8px">
-    <button id="list-sort-default" onclick="setListSortMode('default')" style="flex:1;font-size:12px;font-weight:700;padding:8px 4px;border-radius:99px;border:none;background:#C5A880;color:white;cursor:pointer;transition:background 0.15s,color 0.15s">🕐 上架順序</button>
-    <button id="list-sort-sold" onclick="setListSortMode('sold')" style="flex:1;font-size:12px;font-weight:700;padding:8px 4px;border-radius:99px;border:none;background:white;color:#9C7A5A;cursor:pointer;transition:background 0.15s,color 0.15s">🔥 熱銷排行</button>
-    <button id="list-sort-profit" onclick="setListSortMode('profit')" style="flex:1;font-size:12px;font-weight:700;padding:8px 4px;border-radius:99px;border:none;background:white;color:#9C7A5A;cursor:pointer;transition:background 0.15s,color 0.15s">💰 利潤高低</button>
-  </div>
+  <select id="list-sort-select" class="hide-live" onchange="setListSortMode(this.value)" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;color:#3D2010;outline:none;margin-bottom:8px;cursor:pointer">
+    <option value="default">🕐 上架順序</option>
+    <option value="sold">🔥 熱銷排行</option>
+    <option value="profit">💰 利潤高低</option>
+  </select>
   <!-- 批次操作列 -->
   <div id="list-batch-bar" style="display:none;background:#FDF6EC;border:1px solid #E8D5B0;border-radius:10px;padding:10px 14px;margin-bottom:8px;display:none;align-items:center;justify-content:space-between">
     <span id="list-sel-count" style="font-size:12px;font-weight:700;color:#9C7A5A">已選 0 件</span>
@@ -434,10 +439,7 @@ body.live-mode .hide-live { display: none !important; }
       <button onclick="batchDeleteProducts()" style="font-size:11px;background:#FDEDEC;color:#C0392B;border:1px solid #F1948A;padding:5px 10px;border-radius:8px;font-weight:700;cursor:pointer">🗑️ 批次刪除</button>
     </div>
   </div>
-  <div style="display:flex;gap:6px;margin-bottom:8px">
-    <button id="list-archived-toggle" onclick="toggleListShowArchived()" style="flex:1;font-size:11px;font-weight:700;padding:7px 10px;border-radius:8px;border:1px solid #BCAAA4;background:#EFEBE9;color:#6D4C41;cursor:pointer">📦 查看已封存商品</button>
-    <button id="list-ordered-toggle" onclick="toggleListOnlyOrdered()" style="flex:1;font-size:11px;font-weight:700;padding:7px 10px;border-radius:8px;border:1px solid #AED6F1;background:#EBF5FB;color:#2980B9;cursor:pointer">🛒 只看有喊單商品</button>
-  </div>
+  <div id="list-filter-chips" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px"></div>
   <div id="cur-filters" class="scrollbar-none" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:6px"></div>
   <div id="cat-filters" class="scrollbar-none" style="display:flex;flex-wrap:wrap;gap:6px;padding-bottom:4px;margin-bottom:6px"></div>
   <div id="subcat-filters" class="scrollbar-none" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;min-height:0"></div>
@@ -1005,6 +1007,11 @@ body.live-mode .hide-live { display: none !important; }
     <div id="ep-shop-stock-section" style="margin-bottom:10px;display:none">
       <label style="display:block;font-size:11px;font-weight:700;color:#E65100;margin-bottom:6px">🛒 商城庫存數量（每個規格可賣幾件，留空=不限量）</label>
       <div id="ep-shop-stock-list" style="display:flex;flex-direction:column;gap:6px"></div>
+    </div>
+    <!-- 最低購買倍數（例如2+1活動，客人一次至少要湊到3的倍數） -->
+    <div style="margin-bottom:10px">
+      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">🔢 最低購買倍數（選填，例如「2+1」活動填 3，商城客人下單數量必須是這個數字的倍數）</label>
+      <input type="number" inputmode="numeric" min="1" id="ep-multiple" placeholder="例如：3（不限制就留空）" style="width:100%;background:#FFF9F0;border:1px solid #FFCC80;border-radius:10px;padding:10px 14px;font-size:13px;outline:none;box-sizing:border-box"/>
     </div>
     <!-- 別名 -->
     <div style="margin-bottom:10px">
@@ -4012,6 +4019,8 @@ window.openModal=function(id,data){
       window.G.epSpecImages=(window.G.epSpecsList||[]).map((s,i)=>(data.specImages||[])[i]||"");
       window.G.epSpecStock=(window.G.epSpecsList||[]).map((s,i)=>(data.specStock||[])[i]??"");
       epRenderSpecs();
+      const epMultipleInput=document.getElementById("ep-multiple");
+      if(epMultipleInput)epMultipleInput.value=data.purchaseMultiple||"";
       window.G.epTierColorImages={};
       const epTierColorsReset=document.getElementById("ep-tier-colors");if(epTierColorsReset)epTierColorsReset.value="";
       const epTierSizesReset=document.getElementById("ep-tier-sizes");if(epTierSizesReset)epTierSizesReset.value="";
@@ -6048,7 +6057,14 @@ onSnapshot(collection(db,"trips"),s=>{
 onSnapshot(collection(db,"orders"),s=>{
   window.G._syncFlags.orders={fromCache:s.metadata.fromCache,pending:s.metadata.hasPendingWrites};
   updateSyncStatusUI();
-  window.G.orders=s.docs.map(d=>{const o={id:d.id,...d.data()};o.productName=cleanProductName(o.productName);return o;});
+  window.G.orders=s.docs.map(d=>{
+    const o={id:d.id,...d.data()};
+    o.productName=cleanProductName(o.productName);
+    // 商城下單存的是 selectedSpec 這個欄位名稱，後台所有顯示規格的地方讀的都是 spec，
+    // 這裡統一補齊，不然商城訂單的規格（顏色/款式）永遠顯示不出來
+    if(!o.spec&&o.selectedSpec)o.spec=o.selectedSpec;
+    return o;
+  });
   window.G.ordersLoaded=true;
   clearTimeout(window.G._orderRenderTimer);
   window.G._orderRenderTimer=setTimeout(()=>{
@@ -6148,16 +6164,7 @@ window.unarchiveProduct=async function(id){
 };
 window.toggleListShowArchived=function(){
   window.G.listShowArchived=!window.G.listShowArchived;
-  const btn=document.getElementById("list-archived-toggle");
-  if(btn){
-    if(window.G.listShowArchived){
-      btn.textContent="↩️ 返回一般商品清單";
-      btn.style.background="#6D4C41";btn.style.color="white";btn.style.borderColor="#6D4C41";
-    } else {
-      btn.textContent="📦 查看已封存商品";
-      btn.style.background="#EFEBE9";btn.style.color="#6D4C41";btn.style.borderColor="#BCAAA4";
-    }
-  }
+  renderListFilterChips();
   renderList();
 };
 
@@ -6697,7 +6704,8 @@ window.saveEditProd=async function(){
   const promoPct=window.G.epPromoPct||null;
   const promoGroup=document.getElementById("ep-promo-group")?.value.trim()||"";
   const weight=parseFloat(document.getElementById("ep-weight")?.value)||0;
-  const upd={name,currency:editCur,currencySymbol:CURR[editCur]?.symbol||"₩",paymentMethod:editPm,foreignAmount:fa,originalAmount:originalAmt,promoDivisor,promoPct,promoGroup,beforeTax,afterTax,finalPrice:price,profit,margin,twPrice,rivalPrice,rivalPrices,url,specs:newSpecs,specStock:newSpecStock,aliases:newAliases,note:newNote,catKey:newCatKey,category:newCatObj.label,emoji:newCatObj.emoji,flags:newFlags,channel:window.G.editChannel||"",weight};
+  const purchaseMultipleVal=parseInt(document.getElementById("ep-multiple")?.value||"",10);
+  const upd={name,currency:editCur,currencySymbol:CURR[editCur]?.symbol||"₩",paymentMethod:editPm,foreignAmount:fa,originalAmount:originalAmt,promoDivisor,promoPct,promoGroup,beforeTax,afterTax,finalPrice:price,profit,margin,twPrice,rivalPrice,rivalPrices,url,specs:newSpecs,specStock:newSpecStock,purchaseMultiple:purchaseMultipleVal>1?purchaseMultipleVal:null,aliases:newAliases,note:newNote,catKey:newCatKey,category:newCatObj.label,emoji:newCatObj.emoji,flags:newFlags,channel:window.G.editChannel||"",weight};
   const oldId=m.id; // 一定要在下面用到 oldId 之前先宣告好，不然會直接丟出錯誤、卡在上傳中出不來
   const saveBtn2=document.querySelector('button[onclick="saveEditProd()"]');
   const origBtnHtml2=saveBtn2?.innerHTML;
@@ -7504,10 +7512,20 @@ window.eoRenderTripPicker=function(){
     const filterTrip=(window.G.tripFilter&&window.G.tripFilter!=="all")?window.G.tripFilter:null;
     window.G.moSelectedTripId=filterTrip||getLatestTrip()?.id||trips[0]?.id||"";
   }
-  box.innerHTML=trips.map(t=>{
+  // 只把最近3個趟次做成按鈕，太久以前的趟次不太會再用到，收進下拉選單裡，不用一直攤開佔版面
+  const RECENT_N=2;
+  const recentTrips=trips.slice(0,RECENT_N);
+  const olderTrips=trips.slice(RECENT_N);
+  const selectedInRecent=recentTrips.some(t=>t.id===window.G.moSelectedTripId);
+  const btnsHtml=recentTrips.map(t=>{
     const active=window.G.moSelectedTripId===t.id;
     return `<button data-tid="${t.id}" onclick="window.eoSelectTrip(this.dataset.tid)" style="padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;border:1.5px solid ${active?"#5C3A1E":"#E8D5B0"};background:${active?"#5C3A1E":"white"};color:${active?"#F5E6C8":"#9C7A5A"};cursor:pointer">${t.name||t.id}</button>`;
   }).join("");
+  const olderSelectHtml=olderTrips.length?`<select onchange="window.eoSelectTrip(this.value)" style="padding:5px 8px;border-radius:8px;font-size:11px;font-weight:700;border:1.5px solid ${!selectedInRecent?"#5C3A1E":"#E8D5B0"};background:${!selectedInRecent?"#5C3A1E":"white"};color:${!selectedInRecent?"#F5E6C8":"#9C7A5A"};cursor:pointer">
+    <option value="" ${selectedInRecent?"selected":""} disabled>更早的趟次...</option>
+    ${olderTrips.map(t=>`<option value="${t.id}" ${window.G.moSelectedTripId===t.id?"selected":""}>${t.name||t.id}</option>`).join("")}
+  </select>`:"";
+  box.innerHTML=btnsHtml+olderSelectHtml;
 };
 window.eoSelectTrip=function(tid){
   window.G.moSelectedTripId=tid;
@@ -10964,29 +10982,51 @@ function updateStats(){
 // ── 渲染商品 ──────────────────────────────────────────────────────────
 window.setListSortMode=function(mode){
   window.G.listSortMode=mode;
-  ["default","sold","profit"].forEach(m=>{
-    const btn=document.getElementById("list-sort-"+m);
-    if(btn)Object.assign(btn.style,m===mode?{background:"#C5A880",color:"white"}:{background:"white",color:"#9C7A5A"});
-  });
+  const sel=document.getElementById("list-sort-select");
+  if(sel)sel.value=mode;
   renderList();
 };
 window.toggleListOnlyOrdered=function(){
   window.G.listOnlyOrdered=!window.G.listOnlyOrdered;
-  const btn=document.getElementById("list-ordered-toggle");
-  if(btn){
-    if(window.G.listOnlyOrdered){
-      btn.textContent="🛒 只看有喊單商品（已套用）";
-      btn.style.background="#2980B9";btn.style.color="white";btn.style.borderColor="#2980B9";
-    } else {
-      btn.textContent="🛒 只看有喊單商品";
-      btn.style.background="#EBF5FB";btn.style.color="#2980B9";btn.style.borderColor="#AED6F1";
-    }
-  }
+  renderListFilterChips();
   renderList();
+};
+
+// 商品頁：查看已封存商品／只看有喊單商品，改成中性小藥丸，平常低調，啟用才變色
+function renderListFilterChips(){
+  const el=document.getElementById("list-filter-chips");
+  if(!el)return;
+  const chips=[
+    {label:window.G.listShowArchived?"返回一般商品清單":"查看已封存商品",active:!!window.G.listShowArchived,onclick:"toggleListShowArchived()"},
+    {label:window.G.listOnlyOrdered?"只看有喊單商品中":"只看有喊單商品",active:!!window.G.listOnlyOrdered,onclick:"toggleListOnlyOrdered()"},
+  ];
+  el.innerHTML=chips.map(c=>`<button onclick="${c.onclick}" style="padding:8px 4px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid ${c.active?"#5C3A1E":"#E8D5B0"};background:${c.active?"#5C3A1E":"white"};color:${c.active?"#F5E6C8":"#9C7A5A"};cursor:pointer;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.label}</button>`).join("");
+}
+// 商品頁「⋯ 更多工具」（匯出商品庫/備貨清單/行銷活動/檢查重複/連結異常）
+window.toggleListToolsMenu=function(){
+  const menu=document.getElementById("list-tools-menu");
+  if(!menu)return;
+  const isOpen=menu.style.display==="block";
+  menu.style.display=isOpen?"none":"block";
+  if(!isOpen){
+    setTimeout(()=>{
+      document.addEventListener("click",window._listToolsMenuOutsideHandler=function handler(e){
+        if(!menu.contains(e.target)){
+          menu.style.display="none";
+          document.removeEventListener("click",handler);
+        }
+      });
+    },0);
+  }
+};
+window.closeListToolsMenu=function(){
+  const menu=document.getElementById("list-tools-menu");
+  if(menu)menu.style.display="none";
 };
 
 window.renderList=function(){
   const container=document.getElementById("product-cards");if(!container)return;
+  renderListFilterChips();
   const{products,orders,listSearch,listFilterCat,listFilterCurrency,selectedProducts}=window.G;
   // 效能重點：以前每個商品都重新掃一次「全部訂單」找出屬於自己的訂單（商品數×訂單數的運算量），
   // 商品/訂單一多，這個清單只要打字搜尋、或任何一筆訂單異動，就會整個卡住。
@@ -11438,8 +11478,15 @@ window.openEditOrd=function(oid){
         </div>
       </div>
       <div>
+        ${x.discountNote?`
         <div style="font-size:10px;color:#9C7A5A;margin-bottom:2px">🏷️ 折扣／備註（選填）</div>
-        <input type="text" class="eo-discount-note" value="${x.discountNote||""}" placeholder="例如：折50、贈品、會員優惠..." style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;font-size:12px;outline:none"/>
+        <input type="text" class="eo-discount-note" value="${x.discountNote}" placeholder="例如：折50、贈品、會員優惠..." style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;font-size:12px;outline:none"/>
+        `:`
+        <button type="button" onclick="event.stopPropagation();this.style.display='none';this.nextElementSibling.style.display='block';this.nextElementSibling.querySelector('input').focus();" style="background:none;border:none;color:#B08968;font-size:11px;font-weight:700;cursor:pointer;padding:2px 0">+ 加折扣／備註</button>
+        <div style="display:none">
+          <input type="text" class="eo-discount-note" value="" placeholder="例如：折50、贈品、會員優惠..." style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;font-size:12px;outline:none;margin-top:2px"/>
+        </div>
+        `}
       </div>
     </div>`;
   }).join("")+(!window.G.eoExpanded&&cOrders.length>EO_COLLAPSE_N?`<button id="eo-expand-btn" onclick="eoToggleExpand()" style="width:100%;margin-bottom:8px;background:#FDF6EC;color:#B08968;border:1px dashed #E8D5B0;border-radius:8px;padding:8px;font-size:12px;font-weight:700;cursor:pointer">▼ 展開查看／編輯其餘 ${cOrders.length-EO_COLLAPSE_N} 筆</button>`:"");
@@ -12278,11 +12325,11 @@ function renderCustFilterChips(){
   if(!el)return;
   const cvf=window.G.custViewFilter;
   const chips=[
-    {label:"🔗 無社群名",active:cvf==="noCommunity",onclick:"setCustViewFilter(window.G.custViewFilter==='noCommunity'?'all':'noCommunity')"},
-    {label:"📝 有備註",active:cvf==="hasNote",onclick:"setCustViewFilter(window.G.custViewFilter==='hasNote'?'all':'hasNote')"},
-    {label:"🧊 有冷藏",active:cvf==="hasCold",onclick:"setCustViewFilter(window.G.custViewFilter==='hasCold'?'all':'hasCold')"},
-    {label:window.G.showArchivedCust?"📦 顯示封存中":"📦 已封存",active:!!window.G.showArchivedCust,onclick:"toggleArchivedCustFilter()"},
-    {label:window.G.showShopMemberOnly?"🛍️ 商城會員中":"🛍️ 商城會員",active:!!window.G.showShopMemberOnly,onclick:"toggleShopMemberFilter()"},
+    {label:"無社群名",active:cvf==="noCommunity",onclick:"setCustViewFilter(window.G.custViewFilter==='noCommunity'?'all':'noCommunity')"},
+    {label:"有備註",active:cvf==="hasNote",onclick:"setCustViewFilter(window.G.custViewFilter==='hasNote'?'all':'hasNote')"},
+    {label:"有冷藏",active:cvf==="hasCold",onclick:"setCustViewFilter(window.G.custViewFilter==='hasCold'?'all':'hasCold')"},
+    {label:window.G.showArchivedCust?"顯示封存中":"已封存",active:!!window.G.showArchivedCust,onclick:"toggleArchivedCustFilter()"},
+    {label:window.G.showShopMemberOnly?"商城會員中":"商城會員",active:!!window.G.showShopMemberOnly,onclick:"toggleShopMemberFilter()"},
   ];
   el.innerHTML=chips.map(c=>`<button onclick="${c.onclick}" style="padding:8px 2px;border-radius:10px;font-size:10.5px;font-weight:700;border:1px solid ${c.active?"#5C3A1E":"#E8D5B0"};background:${c.active?"#5C3A1E":"white"};color:${c.active?"#F5E6C8":"#9C7A5A"};cursor:pointer;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.label}</button>`).join("");
 }
@@ -12400,11 +12447,11 @@ function renderInvExtraChips(){
   const el=document.getElementById("inv-extra-chips");
   if(!el)return;
   const chips=[
-    {label:"🛒 尚未購買代買單",active:window.G.orderFilter==="unpurchased",onclick:"toggleInvUnpurchased()"},
-    {label:"🧊 冷藏",active:!!window.G.invColdOnly,onclick:"toggleInvColdOnly()"},
-    {label:"🔓 未結案",active:!!window.G.invUnclosedOnly,onclick:"toggleInvUnclosedOnly()"},
-    {label:"🔒 只看已結案",active:!!window.G.invShowClosedOnly,onclick:"toggleInvShowClosedOnly()"},
-    {label:"🚚 尚未寄出",active:window.G.orderFilter==="notshipped",onclick:"setInvFilter(window.G.orderFilter==='notshipped'?'all':'notshipped')"},
+    {label:"尚未購買代買單",active:window.G.orderFilter==="unpurchased",onclick:"toggleInvUnpurchased()"},
+    {label:"冷藏",active:!!window.G.invColdOnly,onclick:"toggleInvColdOnly()"},
+    {label:"未結案",active:!!window.G.invUnclosedOnly,onclick:"toggleInvUnclosedOnly()"},
+    {label:"只看已結案",active:!!window.G.invShowClosedOnly,onclick:"toggleInvShowClosedOnly()"},
+    {label:"尚未寄出",active:window.G.orderFilter==="notshipped",onclick:"setInvFilter(window.G.orderFilter==='notshipped'?'all':'notshipped')"},
   ];
   el.innerHTML=chips.map(c=>`<button onclick="${c.onclick}" style="flex:1;min-width:0;padding:7px 4px;border-radius:99px;font-size:10.5px;font-weight:700;border:1px solid ${c.active?"#5C3A1E":"#E8D5B0"};background:${c.active?"#5C3A1E":"white"};color:${c.active?"#F5E6C8":"#9C7A5A"};cursor:pointer;text-align:center;white-space:nowrap">${c.label}</button>`).join("");
 }
@@ -14124,8 +14171,9 @@ window.doQuickAddOrder=function(custId, custName){
           <div><div style="font-size:10px;color:#9C7A5A;margin-bottom:3px">售價 (NT$)</div>
             <input type="text" inputmode="decimal" class="eo-price" value="${dp}" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:14px;font-weight:700;outline:none"/></div>
         </div>
-        <div style="margin-top:6px"><div style="font-size:10px;color:#9C7A5A;margin-bottom:3px">🏷️ 折扣／備註（選填）</div>
-          <input type="text" class="eo-discount-note" value="${x.discountNote||""}" placeholder="例如：折50、贈品、會員優惠..." style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:12px;outline:none"/></div>
+        <div style="margin-top:6px">${x.discountNote?`<div style="font-size:10px;color:#9C7A5A;margin-bottom:3px">🏷️ 折扣／備註（選填）</div>
+          <input type="text" class="eo-discount-note" value="${x.discountNote}" placeholder="例如：折50、贈品、會員優惠..." style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:12px;outline:none"/>`:`<button type="button" onclick="event.stopPropagation();this.style.display='none';this.nextElementSibling.style.display='block';this.nextElementSibling.querySelector('input').focus();" style="background:none;border:none;color:#B08968;font-size:11px;font-weight:700;cursor:pointer;padding:2px 0">+ 加折扣／備註</button>
+          <div style="display:none"><input type="text" class="eo-discount-note" value="" placeholder="例如：折50、贈品、會員優惠..." style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:7px 10px;font-size:12px;outline:none;margin-top:2px"/></div>`}</div>
       </div>`;
     }).join("");
   const el=document.getElementById("modal-eord");
