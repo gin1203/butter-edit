@@ -264,9 +264,11 @@ async function loadProducts(){
   }catch(e){/* 讀不到就當作開啟 */}
   try{G.products=await fsListShopProducts();}
   catch(e){console.error(e);showToast("商品載入失敗："+e.message);}
+  restoreCartFromStorage(); // 商品資料齊全了，才能把存起來的購物車內容對照回完整商品資訊
   G.loaded=true;
   renderCatTabs();
   renderGrid();
+  renderCartBar();
 }
 function showShopClosed(msg){
   document.getElementById("catalog-view").innerHTML=`
@@ -343,6 +345,7 @@ function openDetail(pid){
   document.getElementById("catalog-view").style.display="none";
   document.getElementById("detail-view").style.display="block";
   document.getElementById("main-header").style.display="none";
+  document.getElementById("cart-bar").style.display="none"; // 詳情頁自己底部就有按鈕，蓋住浮動購物車列避免互相遮擋
   renderDetail();
   window.scrollTo(0,0);
 }
@@ -472,6 +475,33 @@ function changeDetailQty(delta){
   G.detailQty=next;
   renderDetail();
 }
+// ── 購物車存到瀏覽器（重新整理不會不見）───────────────────────────────
+// 只存商品ID/規格/數量這些小東西，不存整個商品物件（商品圖片是 base64，存下去會太肥），
+// 重新整理後等商品清單載入完成，再用商品ID去對照回完整的商品資料
+function saveCartToStorage(){
+  try{
+    const minimal={};
+    for(const[key,item]of Object.entries(G.cart)){
+      minimal[key]={productId:item.product.id,specIndex:item.specIndex,spec:item.spec,qty:item.qty};
+    }
+    localStorage.setItem("butter_cart",JSON.stringify(minimal));
+  }catch(e){/* 存不進去就算了，不要影響購物流程 */}
+}
+function restoreCartFromStorage(){
+  try{
+    const raw=localStorage.getItem("butter_cart");
+    if(!raw)return;
+    const minimal=JSON.parse(raw);
+    const restored={};
+    for(const[key,item]of Object.entries(minimal)){
+      const product=G.products.find(p=>p.id===item.productId);
+      if(!product)continue; // 商品可能已經下架，這種就不要恢復了
+      restored[key]={qty:item.qty,product,specIndex:item.specIndex,spec:item.spec};
+    }
+    G.cart=restored;
+  }catch(e){/* 讀不到就當作空的購物車 */}
+}
+
 function detailAddToCart(pid,specIndex){
   const p=G.products.find(x=>x.id===pid);if(!p)return;
   const hasSpecs=Array.isArray(p.specs)&&p.specs.length>0;
@@ -495,6 +525,7 @@ function detailBuyNow(pid,specIndex){
 
 // ── 購物車列 ───────────────────────────────────────
 function renderCartBar(){
+  saveCartToStorage();
   const items=Object.values(G.cart);
   const totalQty=items.reduce((s,i)=>s+i.qty,0);
   const badge=document.getElementById("header-cart-badge");
@@ -509,13 +540,25 @@ function renderCartBar(){
 }
 
 // ── 詢問單（結帳頁）──────────────────────────────
-function goToCheckout(){
+async function goToCheckout(){
   if(!G.lineUser){lineLogin();return;}
   document.getElementById("catalog-view").style.display="none";
   document.getElementById("detail-view").style.display="none";
   document.getElementById("main-header").style.display="none";
   document.getElementById("cart-bar").style.display="none";
   document.getElementById("checkout-view").style.display="block";
+  // 曾經下過單的客人（用同一個LINE帳號登入），自動帶入社群暱稱跟電話，不用每次重打
+  if(!G.form)G.form={name:"",phone:"",communityName:"",lineId:"",note:""};
+  if(!G.form.communityName||!G.form.phone){
+    try{
+      const custId="line_"+G.lineUser.userId.slice(0,16);
+      const existing=await fsGet("customers",custId);
+      if(existing){
+        if(!G.form.communityName&&existing.communityName)G.form.communityName=existing.communityName;
+        if(!G.form.phone&&existing.phone)G.form.phone=existing.phone;
+      }
+    }catch(e){/* 查不到就當作新客人，不影響下單 */}
+  }
   renderCheckout();
   window.scrollTo(0,0);
 }
@@ -551,11 +594,11 @@ function renderCheckout(){
       </div>
       <div>
         <label style="font-size:12px;font-weight:700;color:#5C3A1E">社群暱稱 *</label>
-        <input id="f-community" type="text" value="" placeholder="您在群組裡的暱稱" oninput="G.form.communityName=this.value" style="width:100%;margin-top:4px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;font-size:14px;outline:none;box-sizing:border-box"/>
+        <input id="f-community" type="text" value="${f.communityName||""}" placeholder="您在群組裡的暱稱" oninput="G.form.communityName=this.value" style="width:100%;margin-top:4px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;font-size:14px;outline:none;box-sizing:border-box"/>
       </div>
       <div>
         <label style="font-size:12px;font-weight:700;color:#5C3A1E">電話 *</label>
-        <input id="f-phone" type="tel" value="" placeholder="請輸入手機號碼" oninput="G.form.phone=this.value" style="width:100%;margin-top:4px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;font-size:14px;outline:none;box-sizing:border-box"/>
+        <input id="f-phone" type="tel" value="${f.phone||""}" placeholder="請輸入手機號碼" oninput="G.form.phone=this.value" style="width:100%;margin-top:4px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;font-size:14px;outline:none;box-sizing:border-box"/>
       </div>
       <div>
         <label style="font-size:12px;font-weight:700;color:#5C3A1E">備註（選填）</label>
@@ -717,11 +760,12 @@ function showSuccess(items,total,name){
   document.getElementById("checkout-view").style.display="none";
   document.getElementById("cart-bar").style.display="none";
   G.cart={};
+  localStorage.removeItem("butter_cart");
   const el=document.getElementById("success-view");
   el.style.display="block";
 
   const itemLines=items.map(i=>`・${i.product.name}${i.spec?" ("+i.spec+")":""} ×${i.qty}`).join("\n");
-  const orderText=`我剛在商城下單了！請幫我確認訂單，謝謝🙏\n\n【訂單內容】\n${itemLines}\n\n參考金額：NT$${total.toLocaleString()}\n訂購人：${name}`;
+  const orderText=`我剛在商城下單了！請幫我確認訂單，謝謝🙏\n\n【訂單內容】\n${itemLines}\n\n金額：NT$${total.toLocaleString()}\n社群暱稱：${name}`;
   const msg=encodeURIComponent(orderText);
   const lineUrl=`line://ti/p/${LINE_OA_ID}?text=${msg}`;
 
