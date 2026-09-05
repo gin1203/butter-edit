@@ -479,6 +479,10 @@ function changeDetailQty(delta){
 // 只存商品ID/規格/數量這些小東西，不存整個商品物件（商品圖片是 base64，存下去會太肥），
 // 重新整理後等商品清單載入完成，再用商品ID去對照回完整的商品資料
 function saveCartToStorage(){
+  // 保險機制：商品資料還沒載入完成、購物車還沒真正從瀏覽器恢復過之前，
+  // 絕對不要寫回瀏覽器——避免任何未來的程式碼不小心在恢復完成前呼叫這個函式，
+  // 把使用者原本存好的購物車內容洗成空的
+  if(!G.loaded)return;
   try{
     const minimal={};
     for(const[key,item]of Object.entries(G.cart)){
@@ -532,7 +536,12 @@ function renderCartBar(){
   if(badge){badge.textContent=totalQty;badge.style.display=totalQty>0?"flex":"none";}
   const bar=document.getElementById("cart-bar");
   if(!bar)return;
-  if(!items.length){bar.style.display="none";return;}
+  // 商品詳情頁自己底部就有按鈕，這個浮動列絕對不能在詳情頁出現，
+  // 不然會蓋住詳情頁的「加入購物車/立即購買」按鈕——這是之前修過的同一個問題，
+  // 這次是因為 detailAddToCart 也會呼叫這個函式來更新數字，但沒有排除詳情頁這個情境
+  const detailView=document.getElementById("detail-view");
+  const isOnDetailPage=detailView&&detailView.style.display!=="none";
+  if(!items.length||isOnDetailPage){bar.style.display="none";return;}
   bar.style.display="block";
   const totalPrice=items.reduce((s,i)=>s+i.qty*(i.product.finalPrice||0),0);
   document.getElementById("cart-count-text").textContent=`已選 ${totalQty} 件`;
@@ -848,7 +857,9 @@ async function init(){
   G.form={name:"",phone:"",communityName:"",lineId:"",note:""};
   restoreLineUser();
   renderLineBanner();
-  renderCartBar();
+  // 注意：這裡不能呼叫 renderCartBar()——這時候購物車還沒從瀏覽器裡恢復（那個動作在
+  // loadProducts() 裡面，要等商品資料載入完成才能對照回完整商品內容），如果這裡先呼叫，
+  // 會把「目前還是空的」購物車狀態存回瀏覽器，蓋掉真正該恢復的內容
   await handleLineLoginCallback();
   loadProducts();
 }
