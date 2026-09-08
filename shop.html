@@ -513,13 +513,34 @@ function renderDetail(){
     const remainder=total%multiple;
     const isValid=total>0&&remainder===0;
     const badgeLabel=hasBundleChoice?`${multiple}件$${p.bundlePrice.toLocaleString()}`:`買${multiple-1}送1`;
+    if(!G.lineUser){
+      // 沒登入的話，只給看口味列表跟照片（純資訊），數量按鈕、小計金額全部不能顯示，
+      // 不然沒登入的人也能算出價格，「登入才能看價格」這個規則就形同虛設
+      multiSpecBlock=`
+      <div style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+          <div style="font-size:12px;font-weight:700;color:#9C7A5A">選擇規格與數量</div>
+          <span style="font-size:10px;font-weight:700;background:#FFF3E0;color:#E65100;border-radius:4px;padding:1px 6px">${badgeLabel}</span>
+        </div>
+        <div style="font-size:11px;color:#9C7A5A;margin-bottom:10px">登入 LINE 後才能選數量、看價格；點縮圖可以先看清楚照片</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
+          ${specsArr.map((s,i)=>{
+            const si=(p.specImages||[])[i]||"";
+            return `<div style="display:flex;align-items:center;gap:10px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 12px">
+              ${si?`<img src="${si}" onclick="event.stopPropagation();setDetailHeroImg('${pid}',${i})" style="width:32px;height:32px;border-radius:8px;object-fit:cover;flex-shrink:0;cursor:pointer"/>`:""}
+              <div style="flex:1;min-width:0;font-size:13px;font-weight:700;color:#3D2010">${s}</div>
+            </div>`;
+          }).join("")}
+        </div>
+      </div>`;
+    } else {
     multiSpecBlock=`
     <div style="margin-bottom:16px">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
         <div style="font-size:12px;font-weight:700;color:#9C7A5A">選擇規格與數量</div>
         <span style="font-size:10px;font-weight:700;background:#FFF3E0;color:#E65100;border-radius:4px;padding:1px 6px">${badgeLabel}</span>
       </div>
-      <div style="font-size:11px;color:#9C7A5A;margin-bottom:10px">口味/款式可以任選混搭</div>
+      <div style="font-size:11px;color:#9C7A5A;margin-bottom:10px">口味/款式可以任選混搭，點縮圖可以放大看該口味的照片</div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
         ${specsArr.map((s,i)=>{
           const st=(p.specStock||[])[i];
@@ -527,7 +548,7 @@ function renderDetail(){
           const isSoldOut=stNum!=null&&stNum<=0;
           const si=(p.specImages||[])[i]||"";
           return `<div style="display:flex;align-items:center;gap:10px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 12px;opacity:${isSoldOut?0.5:1}">
-            ${si?`<img src="${si}" style="width:32px;height:32px;border-radius:8px;object-fit:cover;flex-shrink:0"/>`:""}
+            ${si?`<img src="${si}" onclick="event.stopPropagation();setDetailHeroImg('${pid}',${i})" style="width:32px;height:32px;border-radius:8px;object-fit:cover;flex-shrink:0;cursor:pointer"/>`:""}
             <div style="flex:1;min-width:0">
               <div style="font-size:13px;font-weight:700;color:#3D2010">${s}${isSoldOut?"（售完）":""}</div>
               ${(!isSoldOut&&stNum!=null&&stNum<=5)?`<div style="font-size:10px;color:#E65100;font-weight:700">僅剩 ${stNum} 件</div>`:""}
@@ -548,6 +569,7 @@ function renderDetail(){
         <div style="font-size:11px;font-weight:700;color:${isValid?"#2E7D32":"#E65100"}">${total===0?`請選擇 ${multiple} 的倍數`:isValid?"✓ 可以加入購物車":`還差 ${multiple-remainder} 件才湊到 ${multiple} 的倍數`}</div>
       </div>
     </div>`;
+    }
   }
 
   // 底部按鈕區
@@ -592,7 +614,7 @@ function renderDetail(){
 
     <!-- 商品圖 -->
     <div style="width:100%;aspect-ratio:1/1;background:#FAF8F5;overflow:hidden">
-      ${mainImg?`<img src="${mainImg}" style="width:100%;height:100%;object-fit:cover"/>`:`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:60px">${p.emoji||"📦"}</div>`}
+      ${mainImg?`<img id="detail-hero-img" src="${mainImg}" style="width:100%;height:100%;object-fit:cover"/>`:`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:60px">${p.emoji||"📦"}</div>`}
     </div>
 
     <!-- 商品資訊 -->
@@ -636,7 +658,17 @@ function setBuyMode(pid,mode){
   G.detailQty=1;
   renderDetail();
 }
+// 多選項湊單模式：點某個口味的小縮圖，把上方主圖換成該口味的照片看清楚，
+// 不重新整理整個詳情頁（不然湊單清單裡已經選好的數量會被打斷），只單純換圖片
+function setDetailHeroImg(pid,specIdx){
+  const p=G.products.find(x=>x.id===pid);if(!p)return;
+  const img=(p.specImages||[])[specIdx];
+  if(!img)return;
+  const heroEl=document.getElementById("detail-hero-img");
+  if(heroEl)heroEl.src=img;
+}
 function changeMultiSpecQty(pid,specIdx,delta){
+  if(!G.lineUser)return; // 沒登入不能調整數量，畫面上本來就沒有按鈕，這裡多一層防護
   const p=G.products.find(x=>x.id===pid);if(!p)return;
   G.multiSpecQty=G.multiSpecQty||{};
   const specsArr=(p.specs||[]).filter(s=>s!=null&&String(s).trim()!=="");
@@ -652,6 +684,7 @@ function changeMultiSpecQty(pid,specIdx,delta){
 }
 // 多規格同時選購：一次把所有選了數量的規格，各自當成獨立的購物車項目一起加進去
 function detailAddMultiSpecToCart(pid,buyNow){
+  if(!G.lineUser){lineLogin();return;} // 沒登入不能加入購物車，畫面上本來就沒有按鈕，這裡多一層防護
   const p=G.products.find(x=>x.id===pid);if(!p)return;
   const specsArr=(p.specs||[]).filter(s=>s!=null&&String(s).trim()!=="");
   const qtys=(G.multiSpecQty||{})[pid]||[];
@@ -1146,6 +1179,19 @@ window.addEventListener("scroll",()=>{
   const onCatalog=document.getElementById("catalog-view")?.style.display!=="none";
   btn.style.display=(onCatalog&&window.scrollY>400)?"flex":"none";
 });
+// 防止隨手右鍵/長按另存圖片——只是增加一點小麻煩，防不住真的想截圖或拍照的人，
+// 但至少擋掉「右鍵→另存新檔」這種最輕鬆的偷圖方式
+document.addEventListener("contextmenu",e=>{
+  if(e.target.tagName==="IMG")e.preventDefault();
+});
+document.addEventListener("dragstart",e=>{
+  if(e.target.tagName==="IMG")e.preventDefault();
+});
+// 手機長按圖片跳出選單也一起擋掉
+const _noSaveStyle=document.createElement("style");
+_noSaveStyle.textContent="img{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}";
+document.head.appendChild(_noSaveStyle);
+
 init();
 </script>
 </body>

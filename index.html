@@ -430,6 +430,7 @@ body.live-mode .hide-live { display: none !important; }
       <option value="all">全部商品</option>
       <option value="archived">已封存</option>
       <option value="ordered">有喊單</option>
+      <option value="shopVisible">商城商品</option>
     </select>
   </div>
   <!-- 批次操作列 -->
@@ -2545,9 +2546,9 @@ window.G.calcPhotoPos={x:50,y:50};
 window.cImgPick=async function(input){
   const file=input.files[0];if(!file)return;
   showToast("壓縮圖片中…","success");
-  // 主照片在畫面上只會顯示成小卡片縮圖，480px/0.7的畫質已經很夠用，
-  // 縮小一點檔案大小，同步商品清單時要傳輸的資料量也會跟著變小，滑動列表比較不會頓
-  const b64=await compressImg(file,480,0.7);
+  // 這張主照片會被商城詳情頁放大當作主圖顯示給客人看，不是只有後台自己看的小縮圖，
+  // 畫質太差客人會覺得模糊，改用更高的解析度跟品質
+  const b64=await compressImg(file,900,0.82);
   window.G.calcPhoto=b64;
   window.G.calcPhotoOriginal=b64;
   window.G.calcPhotoPos={x:50,y:50};
@@ -2582,8 +2583,8 @@ window.G.editPhotoPos=null;
 window.epImgPick=async function(input){
   const file=input.files[0];if(!file)return;
   showToast("壓縮圖片中…","success");
-  // 同上，主照片縮小一點，減少資料量
-  const b64=await compressImg(file,480,0.7);
+  // 同上，這張照片會被商城放大顯示，提高畫質
+  const b64=await compressImg(file,900,0.82);
   window.G.editPhoto=b64;
   window.G.editPhotoOriginal=b64;
   window.G.editPhotoPos={x:50,y:50};
@@ -5195,10 +5196,13 @@ window.checkSpecImagesSizeWarn=function(specImagesArr){
   }
   return true;
 };
-// 規格數量不多的商品，維持原本的高畫質；規格一多（超過6個），改用比較小的壓縮設定，
-// 不然疊加起來很容易超過 Firebase 單份資料 1MB 的上限
+// 規格圖片在商城詳情頁會被當成主圖放大顯示（不是只有小圖示），所以畫質不能太差，
+// 但規格一多，同一份商品資料裡疊加的圖片也跟著變多，要顧到 Firebase 單份資料 1MB 上限，
+// 依規格數量分三級，規格越多每張就壓縮得更小一點
 window.getSpecImgCompressParams=function(specCount){
-  return specCount>6?{maxPx:360,quality:0.65}:{maxPx:640,quality:0.8};
+  if(specCount>10)return{maxPx:420,quality:0.68};
+  if(specCount>6)return{maxPx:560,quality:0.72};
+  return{maxPx:800,quality:0.8};
 };
 
 window.qaSpecImgBrowse=function(idx){
@@ -6259,6 +6263,7 @@ window.unarchiveProduct=async function(id){
 window.setListFilterMode=function(mode){
   window.G.listShowArchived=mode==="archived";
   window.G.listOnlyOrdered=mode==="ordered";
+  window.G.listOnlyShopVisible=mode==="shopVisible";
   const sel=document.getElementById("list-filter-select");
   if(sel)sel.value=mode;
   renderList();
@@ -6369,6 +6374,21 @@ window.confirmShopOrder=async function(oid){
   }
 };
 
+// 單一商品直接在卡片上切換上下架，不用勾選、不用滑到最上面按批次按鈕
+window.toggleShopVisibleSingle=async function(id,event){
+  event?.stopPropagation(); // 避免順便觸發卡片本身的點擊（例如展開修改視窗）
+  const p=window.G.products.find(x=>x.id===id);
+  if(!p)return;
+  const next=!p.shopVisible;
+  try{
+    await fbUpd("products",id,{shopVisible:next});
+    p.shopVisible=next;
+    showToast(next?"✅ 已上架到商城":"已從商城下架");
+    renderList();
+  }catch(e){
+    showToast("切換失敗："+e.message,"error");
+  }
+};
 window.batchSetShopVisible=async function(visible){
   const ids=[...window.G.selectedProducts];
   if(!ids.length){showToast("請先選擇商品","warning");return;}
@@ -6826,6 +6846,12 @@ window.saveEditProd=async function(){
     upd.photoPos=`${pp.x}% ${pp.y}%`;
   }
   if(saveBtn2){saveBtn2.innerHTML="💾 儲存中…";}
+  // 診斷用：記錄這次要存的資料量，之後如果又遇到照片模糊/存檔怪異的狀況，
+  // 直接打開瀏覽器主控台（F12→Console）就能看到實際數字，不用再靠截圖來回確認
+  try{
+    const estSize=JSON.stringify(upd).length;
+    console.log(`[存檔診斷] ${m.id} 這次要存的資料量約 ${(estSize/1024).toFixed(1)} KB，主照片約 ${((upd.photo?.length||0)/1024).toFixed(1)} KB`);
+  }catch(e){}
   // 類別改變 或 手動調整編號時，更新料號
   let newId=oldId;
   const manualCode=(document.getElementById("ep-code")?.value||"").trim().toUpperCase();
@@ -6873,11 +6899,40 @@ window.saveEditProd=async function(){
       alert("儲存失敗，請把這段錯誤訊息截圖給開發者：\n\n"+msg);
       return;
     }
+    console.warn("[存檔] 第一次嘗試超過容量上限，開始補救流程",msg);
     // 規格圖片太多，資料超過1MB上限：不是整個不帶圖片存，而是保留原本已經存好的照片不動，
     // 這次新增/修改的照片依序嘗試塞進去，塞得下多少算多少，塞不下的部分維持原狀、留到下次繼續補
     const{finalImages,addedCount,totalNew}=epTrimSpecImagesToFit(upd,newSpecs,newSpecImages,m);
-    await fbUpd("products",m.id,{...upd,specImages:finalImages});
-    showToast(epOverCapacityMsg(addedCount,totalNew),"warning");
+    try{
+      await fbUpd("products",m.id,{...upd,specImages:finalImages});
+      showToast(epOverCapacityMsg(addedCount,totalNew),"warning");
+    }catch(err2){
+      const msg2=(err2&&err2.message)||String(err2);
+      if(!/exceeds the maximum allowed size|bytes/i.test(msg2)){
+        if(saveBtn2){saveBtn2.disabled=false;saveBtn2.innerHTML=origBtnHtml2;}
+        alert("儲存失敗，請把這段錯誤訊息截圖給開發者：\n\n"+msg2);
+        return;
+      }
+      // 連規格圖片都清到最少了還是超過容量，代表問題出在「主照片本身太大」，
+      // 之前這裡完全沒處理這種情況，會直接卡死、存不進去卻又顯示成功——
+      // 現在改成：把主照片再壓縮小一點，用比較保守的設定重試最後一次
+      console.warn("[存檔] 補救後仍超過容量，問題可能出在主照片本身太大，改用更保守的壓縮設定重試",msg2);
+      if(upd.photo){
+        try{
+          upd.photo=await compressImg(await(await fetch(upd.photo)).blob(),480,0.65);
+        }catch(compressErr){
+          console.error("[存檔] 重新壓縮主照片失敗",compressErr);
+        }
+      }
+      try{
+        await fbUpd("products",m.id,{...upd,specImages:finalImages});
+        showToast("⚠️ 主照片檔案較大，已自動改用較小的版本存檔，畫質可能沒那麼高，可以之後再試著換一張檔案更小的原圖","warning");
+      }catch(err3){
+        if(saveBtn2){saveBtn2.disabled=false;saveBtn2.innerHTML=origBtnHtml2;}
+        alert("儲存失敗：這個商品的資料量太大，即使縮小照片也存不進去。\n\n建議：先刪除幾張用不到的規格圖片，或把照片換成檔案更小的原圖再試一次。\n\n錯誤訊息：\n"+((err3&&err3.message)||String(err3)));
+        return;
+      }
+    }
   }
   // 記錄歷史價格（只有價格或韓幣原價變動才記錄）
   if(m.finalPrice!==price||m.foreignAmount!==fa){
@@ -11190,6 +11245,8 @@ window.renderList=function(){
     const mX=listFilterCurrency==="all"||(p.currency||"KRW")===listFilterCurrency;
     // 只看有喊單商品：這個商品目前有沒有任何一筆訂單（不分件數多寡，有登記過就算）
     const mOrdered=!window.G.listOnlyOrdered||((ordersByProduct[p.id]||[]).reduce((s,o)=>s+(o.qty||0),0)>0);
+    // 只看商城商品：有上架到商城（shopVisible === true）的才算
+    const mShopVisible=!window.G.listOnlyShopVisible||p.shopVisible===true;
     let mS=true;
     if(sqGlobal){
       const pOrders2=ordersByProduct[p.id]||[];
@@ -11201,7 +11258,7 @@ window.renderList=function(){
       const mChannelAbbr=channelAbbr[sqGlobal]&&channelLower.includes(channelAbbr[sqGlobal]);
       mS=p.name.toLowerCase().includes(sqGlobal)||p.id.toLowerCase().includes(sqGlobal)||buyerNames.includes(sqGlobal)||channelLower.includes(sqGlobal)||specsStr.includes(sqGlobal)||mChannelAbbr;
     }
-    return mC&&mX&&mS&&mSub&&mArchived&&mOrdered;
+    return mC&&mX&&mS&&mSub&&mArchived&&mOrdered&&mShopVisible;
   });
   // 排序：預設維持上架順序；也可以切成熱銷排行或利潤高低
   const sortMode=window.G.listSortMode||"default";
@@ -11229,7 +11286,8 @@ window.renderList=function(){
     const mArchived=window.G.listShowArchived?p.archived===true:!p.archived;
     const mX=listFilterCurrency==="all"||(p.currency||"KRW")===listFilterCurrency;
     const mOrdered=!window.G.listOnlyOrdered||((ordersByProduct[p.id]||[]).reduce((s,o)=>s+(o.qty||0),0)>0);
-    if(!sqGlobal)return mArchived&&mX&&mOrdered;
+    const mShopVisible=!window.G.listOnlyShopVisible||p.shopVisible===true;
+    if(!sqGlobal)return mArchived&&mX&&mOrdered&&mShopVisible;
     const pOrders2=ordersByProduct[p.id]||[];
     const buyerNames=pOrders2.map(o=>(o.communityName||o.lineName||o.buyerName||"").toLowerCase()).join(" ");
     const specsStr=(Array.isArray(p.specs)?p.specs.join(","):p.specs||"").toLowerCase();
@@ -11237,7 +11295,7 @@ window.renderList=function(){
     const channelLower=(p.channel||"").toLowerCase();
     const mChannelAbbr=channelAbbr[sqGlobal]&&channelLower.includes(channelAbbr[sqGlobal]);
     const mS=p.name.toLowerCase().includes(sqGlobal)||p.id.toLowerCase().includes(sqGlobal)||buyerNames.includes(sqGlobal)||channelLower.includes(sqGlobal)||specsStr.includes(sqGlobal)||mChannelAbbr;
-    return mArchived&&mX&&mS&&mOrdered;
+    return mArchived&&mX&&mS&&mOrdered&&mShopVisible;
   };
   const nonCatFilteredProducts=products.filter(matchesNonCatFilters);
   const fc=document.getElementById("cat-filters");
@@ -11281,7 +11339,7 @@ window.renderList=function(){
   // 改成一次只畫一批（30件），捲到底/按「顯示更多」才畫下一批，
   // 不管商品庫多大，畫面上同時存在的圖片數量都有上限，這才是真正治本的做法。
   const LIST_PAGE_SIZE=30;
-  const filterSig=JSON.stringify([listSearch,listFilterCat,listFilterCurrency,window.G.listFilterSubcat,window.G.listShowArchived,window.G.listOnlyOrdered,window.G.listSortMode,window.G.listViewMode]);
+  const filterSig=JSON.stringify([listSearch,listFilterCat,listFilterCurrency,window.G.listFilterSubcat,window.G.listShowArchived,window.G.listOnlyOrdered,window.G.listOnlyShopVisible,window.G.listSortMode,window.G.listViewMode]);
   if(window.G._listFilterSig!==filterSig){
     window.G._listFilterSig=filterSig;
     window.G.listShownCount=LIST_PAGE_SIZE;
@@ -11300,7 +11358,7 @@ window.renderList=function(){
       const liveAfterTax=Math.round(calcCost(p.foreignAmount||0,p.currency||"KRW",window.isDutyFreeChannel(p.channel,p.flags?.noTaxRefund),p.paymentMethod||"card").afterTax*10)/10;
       const badgeHtml=pOrders.length>0?('<div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:5px">'+pOrders.map(o=>'<div style="display:inline-flex;align-items:center;gap:3px;background:#C5A880;color:white;font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px"><span>'+(o.communityName||o.lineName||"客人")+'</span><button data-oid="'+o.id+'" onclick="event.stopPropagation();deleteOrderFromGrid(this.dataset.oid)" style="background:none;border:none;color:white;font-size:13px;cursor:pointer;padding:0 0 0 2px;line-height:1;font-weight:900">×</button></div>').join("")+'</div>'):'' ;
       return '<div onclick="openMoFromGrid(\''+p.id+'\')" style="background:white;border-radius:14px;border:1px solid #E8D5B0;overflow:hidden;cursor:pointer;position:relative">'
-        +(p.shopVisible?'<div style="position:absolute;top:6px;left:6px;z-index:1;font-size:9px;font-weight:900;background:#E65100;color:white;padding:2px 7px;border-radius:99px">🛒 商城中</div>':'')
+        +'<button data-pid="'+p.id+'" onclick="toggleShopVisibleSingle(this.dataset.pid,event)" style="position:absolute;top:6px;left:6px;z-index:1;font-size:9px;font-weight:900;background:'+(p.shopVisible?'#E65100':'rgba(255,255,255,0.9)')+';color:'+(p.shopVisible?'white':'#9C7A5A')+';border:'+(p.shopVisible?'none':'1px solid #E8D5B0')+';padding:3px 8px;border-radius:99px;cursor:pointer">'+(p.shopVisible?'🛒 商城中':'🛒 上架')+'</button>'
         +'<div style="width:100%;aspect-ratio:1/1;background:#FAF8F5;display:flex;align-items:center;justify-content:center;overflow:hidden">'
         +(p.photo?'<img src="'+p.photo+'" style="width:100%;height:100%;object-fit:cover" loading="lazy"/>':('<div style="font-size:40px">'+(p.emoji||"📦")+'</div>'))
         +'</div>'
@@ -11337,7 +11395,7 @@ window.renderList=function(){
         <input type="checkbox" ${checked?"checked":""} onchange="toggleSelectItem('product','${p.id}')" style="width:16px;height:16px;accent-color:#C5A880;flex-shrink:0"/>
         <span style="font-size:10px;font-weight:900;background:#5C3A1E;color:#F5E6C8;padding:2px 8px;border-radius:4px;flex-shrink:0;white-space:nowrap">${p.id}</span>
         <span style="font-size:10px;background:#FAF8F5;border:1px solid #E8D5B0;color:#9C7A5A;padding:2px 8px;border-radius:99px;flex-shrink:0;white-space:nowrap">${p.category}</span>
-        ${p.shopVisible?'<span style="font-size:10px;font-weight:900;background:#FFF3E0;border:1px solid #FFCC80;color:#E65100;padding:2px 8px;border-radius:99px;flex-shrink:0;white-space:nowrap">🛒 商城中</span>':''}
+        <button data-pid="${p.id}" onclick="toggleShopVisibleSingle(this.dataset.pid,event)" style="font-size:10px;font-weight:900;background:${p.shopVisible?"#FFF3E0":"white"};border:1px solid ${p.shopVisible?"#FFCC80":"#E8D5B0"};color:${p.shopVisible?"#E65100":"#9C7A5A"};padding:2px 8px;border-radius:99px;flex-shrink:0;white-space:nowrap;cursor:pointer">${p.shopVisible?"🛒 商城中":"🛒 上架"}</button>
         <span style="font-size:10px;background:#FDF6EC;border:1px solid #E8D5B0;color:#A08060;padding:2px 8px;border-radius:99px;flex-shrink:0;white-space:nowrap">${cur?.name||""}</span>
         ${p.channel?`<span style="font-size:10px;background:#E8F5E9;border:1px solid #A5D6A7;color:#2E7D32;padding:2px 8px;border-radius:99px;font-weight:700;flex-shrink:0;white-space:nowrap">${p.channel}</span>`:""}
         ${(()=>{const sc=window.getSubcat?.(p.name,p.catKey);return sc?`<span style="font-size:10px;background:#F3E8FF;border:1px solid #D8B4FE;color:#7B5EA7;padding:2px 8px;border-radius:99px;font-weight:700;flex-shrink:0;white-space:nowrap">${sc.label.replace(/^\S+\s*/,"")}</span>`:"";})()}
@@ -14178,7 +14236,8 @@ window.G.qaProdPhotoPos={x:50,y:50};
 window.qaProdImgPick=async function(input){
   const file=input.files[0];if(!file)return;
   showToast("壓縮圖片中…","success");
-  const b64=await compressImg(file,520,0.72);
+  // 這張照片會被商城放大顯示，提高畫質避免模糊
+  const b64=await compressImg(file,900,0.82);
   window.G.qaProdPhoto=b64;
   window.G.qaProdPhotoOriginal=b64;
   window.G.qaProdPhotoPos={x:50,y:50};
@@ -14985,9 +15044,10 @@ window.qaLiveImgPick=async function(input){
   // 這裡原本直接讀取原始檔案、完全沒有壓縮——手機拍的原圖動輒好幾MB，
   // 一旦超過 Firebase 單份資料 1MB 的上限，整個商品就會存不進去，
   // 而且不會有明顯的錯誤訊息，只會看起來像「按了立即上架卻沒反應」。
-  // 統一改成跟其他上傳照片的地方一樣，先壓縮再用。
+  // 統一改成跟其他上傳照片的地方一樣，先壓縮再用，並且提高畫質，
+  // 因為這張照片同樣會被商城放大顯示給客人看
   showToast("壓縮圖片中…","success");
-  const b64=await compressImg(file,480,0.7);
+  const b64=await compressImg(file,900,0.82);
   const thumb=document.getElementById("qa-live-img-thumb");
   const preview=document.getElementById("qa-live-img-preview");
   const label=document.getElementById("qa-live-img-label");
