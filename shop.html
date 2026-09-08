@@ -1035,6 +1035,13 @@ async function submitOrder(){
         await fetch(url,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({fields:{completed:{booleanValue:true},completedAt:{integerValue:Date.now()}}})});
       }catch(e){/* 標記失敗不影響訂單本身 */}
     }
+    // 通知老闆有新訂單進來——推播失敗也不能讓訂單流程整個中斷，客人的訂單本身已經存好了
+    try{
+      const itemsSummary=items.map(i=>`${cleanProductName(i.product.name)}${i.spec?"("+i.spec+")":""}×${i.qty}`).join("、");
+      const orderTotal=items.reduce((s,i)=>s+i.qty*(i.product.finalPrice||0),0);
+      const summary=`社群暱稱：${community}\n${itemsSummary}\n金額：NT$${orderTotal.toLocaleString()}`;
+      fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json","X-Service":"notify-new-order"},body:JSON.stringify({summary})}).catch(()=>{});
+    }catch(e){/* 通知失敗不影響訂單本身 */}
     showSuccess(items,items.reduce((s,i)=>s+i.qty*(i.product.finalPrice||0),0),community);
   }catch(e){
     console.error(e);
