@@ -64,6 +64,11 @@
   <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
 </a>
 
+<!-- 回到頂部按鈕（只有在商品格子頁往下滑夠遠才出現，跟LINE按鈕分開兩側避免打架） -->
+<button id="back-to-top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="display:none;position:fixed;left:16px;bottom:100px;z-index:40;width:44px;height:44px;border-radius:50%;background:white;border:1px solid #E8D5B0;box-shadow:0 4px 16px rgba(0,0,0,0.12);align-items:center;justify-content:center;cursor:pointer;color:#5C3A1E">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+</button>
+
 <div id="toast" style="display:none;position:fixed;bottom:100px;left:50%;transform:translateX(-50%);z-index:100;padding:10px 18px;border-radius:99px;background:#5C3A1E;color:white;font-size:12px;font-weight:700;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.25)"></div>
 
 <script>
@@ -131,6 +136,23 @@ async function fsGet(col,id){
   if(resp.status!==200)return null;
   const data=await resp.json();
   return fsDoc({name:id,fields:data.fields||{}});
+}
+// 客人下單後扣庫存：重新讀一次商品最新的 specStock（避免用本地快取的舊資料去扣，
+// 兩個人幾乎同時下單也不會完全準確，但至少比完全不扣好很多），
+// 只扣「有設定庫存上限」的規格，設定「不限量」（留空）的規格不動它
+async function decrementProductStock(productId,specIndex,qty){
+  if(specIndex==null||specIndex<0)return; // 沒有規格的商品，目前沒有庫存欄位可以扣
+  try{
+    const fresh=await fsGet("products",productId);
+    if(!fresh||!Array.isArray(fresh.specStock))return;
+    const stockArr=[...fresh.specStock];
+    const cur=stockArr[specIndex];
+    if(cur===null||cur===undefined||cur===""){return;} // 這個規格是不限量，不用扣
+    stockArr[specIndex]=Math.max(0,Number(cur)-qty);
+    const values=stockArr.map(s=>(s===""||s===null||s===undefined)?{stringValue:""}:{stringValue:String(s)});
+    const url=`${BASE_URL}/products/${productId}?updateMask.fieldPaths=specStock&key=${FIREBASE_API_KEY}`;
+    await fetch(url,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({fields:{specStock:{arrayValue:{values}}}})});
+  }catch(e){console.error("扣庫存失敗（不影響訂單本身）：",e);}
 }
 async function fsQuery(col,field,value){
   const url=`${BASE_URL}:runQuery?key=${FIREBASE_API_KEY}`;
@@ -324,8 +346,17 @@ function setCat(key){G.cat=key;renderCatTabs();renderGrid();}
 function renderGrid(){
   const grid=document.getElementById("product-grid");
   if(!G.loaded){
-    grid.style.display="block";
-    grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:48px 0"><div style="font-size:28px">⏳</div><div style="font-weight:700;margin-top:8px">商品載入中…</div></div>`;
+    // 骨架畫面：用灰色色塊模擬最終版面的形狀，比純文字「載入中」更順、不會有畫面空白後突然跳出內容的落差感
+    grid.style.display="grid";
+    const skeletonCard=`<div style="background:white;border-radius:14px;border:1px solid #E8D5B0;overflow:hidden">
+      <div style="width:100%;aspect-ratio:1/1;background:linear-gradient(90deg,#F0EAE0 25%,#F7F3EC 37%,#F0EAE0 63%);background-size:400% 100%;animation:shimmer 1.4s ease infinite"></div>
+      <div style="padding:8px 10px 12px">
+        <div style="height:9px;width:40%;background:#F0EAE0;border-radius:4px;margin-bottom:6px"></div>
+        <div style="height:11px;width:85%;background:#F0EAE0;border-radius:4px;margin-bottom:6px"></div>
+        <div style="height:13px;width:50%;background:#F0EAE0;border-radius:4px"></div>
+      </div>
+    </div>`;
+    grid.innerHTML=`<style>@keyframes shimmer{0%{background-position:100% 0}100%{background-position:0 0}}</style>`+skeletonCard.repeat(6);
     return;
   }
   const q=G.search;
@@ -349,7 +380,7 @@ function renderGrid(){
     // 這裡反推回「原價」給客人看（100×3÷2=150），總金額算法完全不變，只是顯示的單價文字比較合理，
     // 不會讓客人誤以為單買一件也是100
     const pMultiple=getPurchaseMultiple(p);
-    const displayPrice=pMultiple?Math.round(price*pMultiple/(pMultiple-1)):price;
+    const displayPrice=p.shopDisplayPrice||(pMultiple?Math.round(price*pMultiple/(pMultiple-1)):price);
     const allSoldOut=hasSpecs&&specsArr.every((_,i)=>{const st=(p.specStock||[])[i];const n=(st===null||st===undefined||st==="")?null:Number(st);return n!=null&&n<=0;});
     // 價格顯示：未登入顯示鎖頭
     const priceHtml=G.lineUser
@@ -358,7 +389,7 @@ function renderGrid(){
     return `<div onclick="openDetail('${p.id}')" style="background:white;border-radius:14px;border:1px solid #E8D5B0;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;position:relative">
       ${totalInCart>0?`<div style="position:absolute;top:8px;right:8px;z-index:2;background:#F4845F;color:white;font-size:10px;font-weight:900;border-radius:99px;width:20px;height:20px;display:flex;align-items:center;justify-content:center">${totalInCart}</div>`:""}
       ${allSoldOut?`<div style="position:absolute;top:8px;left:8px;z-index:2;background:rgba(0,0,0,0.45);color:white;font-size:10px;font-weight:700;border-radius:6px;padding:2px 7px">售完</div>`:""}
-      ${!allSoldOut&&pMultiple?`<div style="position:absolute;top:8px;left:8px;z-index:2;background:#FF6B35;color:white;font-size:10px;font-weight:900;border-radius:6px;padding:2px 7px">買${pMultiple-1}送1</div>`:""}
+      ${!allSoldOut&&pMultiple?`<div style="position:absolute;top:8px;left:8px;z-index:2;background:#FF6B35;color:white;font-size:10px;font-weight:900;border-radius:6px;padding:2px 7px">${p.shopPromoLabel||`買${pMultiple-1}送1`}</div>`:""}
       <div style="width:100%;aspect-ratio:1/1;background:#FAF8F5;overflow:hidden">
         ${p.photo?`<img src="${p.photo}" style="width:100%;height:100%;object-fit:cover" loading="lazy"/>`:`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px">${p.emoji||"📦"}</div>`}
       </div>
@@ -418,7 +449,7 @@ function renderDetail(){
   const soldOut=stock!=null&&stock<=0;
   const cartKey=hasSpecs?`${pid}::${selIdx}`:pid;
   const price=p.finalPrice||0;
-  const displayPrice=pMultiple?Math.round(price*pMultiple/(pMultiple-1)):price;
+  const displayPrice=p.shopDisplayPrice||(pMultiple?Math.round(price*pMultiple/(pMultiple-1)):price);
   const dqty=G.detailQty||1;
   const totalCartQty=Object.values(G.cart).reduce((s,i)=>s+i.qty,0);
 
@@ -453,9 +484,9 @@ function renderDetail(){
     <div style="margin-bottom:16px">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
         <div style="font-size:12px;font-weight:700;color:#9C7A5A">選擇規格與數量</div>
-        <span style="font-size:10px;font-weight:700;background:#FFF3E0;color:#E65100;border-radius:4px;padding:1px 6px">買${multiple-1}送1</span>
+        <span style="font-size:10px;font-weight:700;background:#FFF3E0;color:#E65100;border-radius:4px;padding:1px 6px">${p.shopPromoLabel||`買${multiple-1}送1`}</span>
       </div>
-      <div style="font-size:11px;color:#9C7A5A;margin-bottom:10px">口味/款式可以任選混搭，只要湊到 ${multiple} 的倍數即可</div>
+      <div style="font-size:11px;color:#9C7A5A;margin-bottom:10px">口味/款式可以任選混搭</div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
         ${specsArr.map((s,i)=>{
           const st=(p.specStock||[])[i];
@@ -464,7 +495,10 @@ function renderDetail(){
           const si=(p.specImages||[])[i]||"";
           return `<div style="display:flex;align-items:center;gap:10px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 12px;opacity:${isSoldOut?0.5:1}">
             ${si?`<img src="${si}" style="width:32px;height:32px;border-radius:8px;object-fit:cover;flex-shrink:0"/>`:""}
-            <div style="flex:1;font-size:13px;font-weight:700;color:#3D2010">${s}${isSoldOut?"（售完）":""}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:700;color:#3D2010">${s}${isSoldOut?"（售完）":""}</div>
+              ${(!isSoldOut&&stNum!=null&&stNum<=5)?`<div style="font-size:10px;color:#E65100;font-weight:700">僅剩 ${stNum} 件</div>`:""}
+            </div>
             <div style="display:flex;align-items:center;background:white;border:1px solid #E8D5B0;border-radius:8px;overflow:hidden;flex-shrink:0">
               <button ${isSoldOut?"disabled":""} onclick="changeMultiSpecQty('${pid}',${i},-1)" style="width:30px;height:30px;border:none;background:none;font-size:16px;font-weight:900;color:#5C3A1E;cursor:pointer">−</button>
               <span style="font-size:14px;font-weight:900;min-width:24px;text-align:center">${qtys[i]||0}</span>
@@ -474,7 +508,10 @@ function renderDetail(){
         }).join("")}
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;background:${isValid?"#F0FFF4":"#FFF8E1"};border:1px solid ${isValid?"#A5D6A7":"#FFE082"};border-radius:10px;padding:10px 14px">
-        <div style="font-size:13px;font-weight:900;color:${isValid?"#2E7D32":"#7B5800"}">已選 ${total} 件</div>
+        <div>
+          <div style="font-size:13px;font-weight:900;color:${isValid?"#2E7D32":"#7B5800"}">已選 ${total} 件</div>
+          ${total>0?`<div style="font-size:12px;font-weight:800;color:${isValid?"#2E7D32":"#7B5800"};margin-top:1px">小計 NT$${(price*total).toLocaleString()}</div>`:""}
+        </div>
         <div style="font-size:11px;font-weight:700;color:${isValid?"#2E7D32":"#E65100"}">${total===0?`請選擇 ${multiple} 的倍數`:isValid?"✓ 可以加入購物車":`還差 ${multiple-remainder} 件才湊到 ${multiple} 的倍數`}</div>
       </div>
     </div>`;
@@ -528,11 +565,9 @@ function renderDetail(){
     <div style="padding:16px 16px 140px">
       <div style="font-size:10px;color:#9C7A5A;font-weight:700;margin-bottom:4px">${p.category||""}</div>
       <div style="font-size:18px;font-weight:900;color:#3D2010;line-height:1.3;margin-bottom:8px">${cleanProductName(p.name)}</div>
+      ${p.shopDescription?`<div style="font-size:13px;color:#5C3A1E;line-height:1.7;white-space:pre-wrap;margin-bottom:16px">${p.shopDescription}</div>`:""}
       ${G.lineUser
-        ?`<div style="margin-bottom:20px">
-            <div style="font-size:22px;font-weight:900;color:#F4845F">NT$ ${displayPrice.toLocaleString()}</div>
-            ${isMultiMode?`<div style="font-size:12px;font-weight:700;color:#E65100;margin-top:4px">買${pMultiple-1}送1，每${pMultiple}件計價NT$${(price*pMultiple).toLocaleString()}</div>`:""}
-          </div>`
+        ?`<div style="margin-bottom:20px"><div style="font-size:22px;font-weight:900;color:#F4845F">NT$ ${displayPrice.toLocaleString()}</div></div>`
         :`<div style="display:inline-flex;align-items:center;gap:6px;background:#F5F5F5;border-radius:8px;padding:8px 14px;margin-bottom:20px;cursor:pointer" onclick="lineLogin()"><span style="font-size:14px">🔒</span><span style="font-size:13px;font-weight:700;color:#9C7A5A">登入 LINE 查看價格</span></div>`}
       ${isMultiMode?multiSpecBlock:specBtns}
       ${(G.lineUser&&!soldOut&&!isMultiMode)?`
@@ -753,7 +788,7 @@ function renderCheckout(){
       </div>
     </div>
     <div style="background:#FFF8E1;border:1px solid #FFE082;border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:12px;color:#7B5800;line-height:1.6">
-      📌 送出訂單後，下一頁會引導您前往官方 LINE，完成這個步驟我們才能主動聯繫您確認金額及出貨事宜
+      📌 送出訂單後，請務必依照下一頁指示加入官方 LINE
     </div>
     <div id="checkout-error" style="display:none;color:#C0392B;font-size:12px;font-weight:700;margin-bottom:10px"></div>
     <button onclick="submitOrder()" id="submit-btn" style="width:100%;background:#F4845F;color:white;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:900;cursor:pointer;margin-bottom:0">送出訂單</button>
@@ -829,6 +864,21 @@ async function submitOrder(){
   document.getElementById("checkout-error").style.display="none";
 
   try{
+    // 送出前重新確認一次庫存：客人填表單可能花了一點時間，這段期間庫存可能被別人買走，
+    // 這裡重新讀一次最新資料，庫存不夠就擋下來，不要讓訂單生米煮成熟飯後才發現超賣
+    for(const item of items){
+      if(item.specIndex==null)continue; // 沒有規格的商品沒有庫存欄位可以查
+      const fresh=await fsGet("products",item.product.id);
+      const freshStock=fresh?.specStock?.[item.specIndex];
+      if(freshStock!==null&&freshStock!==undefined&&freshStock!==""){
+        if(Number(freshStock)<item.qty){
+          showCheckoutError(`「${cleanProductName(item.product.name)}${item.spec?"("+item.spec+")":""}」庫存只剩 ${freshStock} 件，請回商品頁調整數量`);
+          btn.disabled=false;btn.textContent="送出訂單";
+          return;
+        }
+      }
+    }
+
     // 建立/更新客戶資料
     let customerId;
     if(G.lineUser?.userId){
@@ -863,6 +913,7 @@ async function submitOrder(){
         phone,lineUserId:G.lineUser?.userId||"",
         note,purchased:false,createdAt:groupTs,
       });
+      await decrementProductStock(p.id,item.specIndex,item.qty);
     }
 
     showSuccess(items,items.reduce((s,i)=>s+i.qty*(i.product.finalPrice||0),0),community);
@@ -1001,6 +1052,14 @@ async function init(){
   await handleLineLoginCallback();
   loadProducts();
 }
+// 回到頂部按鈕：只在商品格子頁、往下滑超過一定距離才出現，
+// 詳情頁/結帳頁不顯示（那些頁面已經有自己的固定底部按鈕，不要疊在一起）
+window.addEventListener("scroll",()=>{
+  const btn=document.getElementById("back-to-top-btn");
+  if(!btn)return;
+  const onCatalog=document.getElementById("catalog-view")?.style.display!=="none";
+  btn.style.display=(onCatalog&&window.scrollY>400)?"flex":"none";
+});
 init();
 </script>
 </body>

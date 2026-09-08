@@ -483,7 +483,7 @@ body.live-mode .hide-live { display: none !important; }
     <button id="cust-view-quote" onclick="setCustViewFilter('quote')" style="flex:1;font-size:12px;font-weight:700;padding:8px 4px;border-radius:99px;border:none;background:white;color:#9C7A5A;cursor:pointer;transition:background 0.15s,color 0.15s">待報價</button>
   </div>
   <div id="cust-status-tabs" style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:8px"></div>
-  <div id="cust-filter-chips" style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:8px"></div>
+  <div id="cust-filter-chips" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px"></div>
   <div style="position:relative;margin-bottom:8px">
     <button onclick="event.stopPropagation();toggleCustToolsMenu()" style="width:100%;padding:8px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #E8D5B0;background:#FAF8F5;color:#9C7A5A;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">⋯ 更多工具</button>
     <div id="cust-tools-menu" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:white;border:1px solid #E8D5B0;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:20;overflow:hidden">
@@ -1016,6 +1016,23 @@ body.live-mode .hide-live { display: none !important; }
     <div style="margin-bottom:10px">
       <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">🔢 最低購買倍數（如果商品有套用「2+1」類活動標籤，這裡會自動帶入，不需要手動填；只有想覆蓋才需要改）</label>
       <input type="number" inputmode="numeric" min="1" id="ep-multiple" placeholder="例如：3（不限制就留空）" style="width:100%;background:#FFF9F0;border:1px solid #FFCC80;border-radius:10px;padding:10px 14px;font-size:13px;outline:none;box-sizing:border-box"/>
+    </div>
+    <!-- 顯示單價／促銷文字：給「3件300」這種固定折扣組合用，不是「買2送1」時才需要填 -->
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <div style="flex:1">
+        <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">💲 顯示單價（選填）</label>
+        <input type="number" inputmode="numeric" min="0" id="ep-display-price" placeholder="例如：120" style="width:100%;background:#FFF9F0;border:1px solid #FFCC80;border-radius:10px;padding:10px 14px;font-size:13px;outline:none;box-sizing:border-box"/>
+      </div>
+      <div style="flex:1">
+        <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">🏷️ 促銷標籤文字（選填）</label>
+        <input type="text" id="ep-promo-label" placeholder="例如：3件$300" style="width:100%;background:#FFF9F0;border:1px solid #FFCC80;border-radius:10px;padding:10px 14px;font-size:13px;outline:none;box-sizing:border-box"/>
+      </div>
+    </div>
+    <div style="font-size:10px;color:#B08050;margin-top:-6px;margin-bottom:10px;line-height:1.5">💡 如果不是「買X送1」，而是像「一入120、三入300」這種固定折扣組合：上面「最低購買倍數」填3，這裡「顯示單價」填120（客人看到的單價）、「促銷標籤文字」填「3件$300」，系統結帳金額還是照原本設定的售價計算，不受這裡影響</div>
+    <!-- 商城商品說明：客人在商城詳情頁會直接看到，跟上面給自己看的內部備註是分開的 -->
+    <div style="margin-bottom:10px">
+      <label style="display:block;font-size:11px;font-weight:700;color:#E65100;margin-bottom:5px">🛍️ 商城商品說明（選填，客人在商城商品詳情頁會直接看到這段文字，例如尺寸、成分、使用方式）</label>
+      <textarea id="ep-shop-description" rows="3" placeholder="例如：韓國進口，內含2支，尺寸約10x15cm，建議陰涼處保存" style="width:100%;background:#FFF9F0;border:1px solid #FFCC80;border-radius:10px;padding:10px 14px;font-size:13px;outline:none;box-sizing:border-box;resize:vertical"></textarea>
     </div>
     <!-- 別名 -->
     <div style="margin-bottom:10px">
@@ -3569,7 +3586,11 @@ window.openMoFromGrid=function(pid){
 
 window.deleteOrderFromGrid=async function(oid){
   if(!confirm("確定刪除這筆喊單？"))return;
+  const o=window.G.orders.find(x=>x.id===oid);
   await fbDel("orders",oid);
+  if(o&&o.orderType==="shop_web"&&o.productId&&o.status!=="cancelled"){
+    releaseShopStock(o.productId,o.spec||o.selectedSpec||"",o.qty||1);
+  }
   showToast("已刪除","success");
 };
 
@@ -4025,6 +4046,12 @@ window.openModal=function(id,data){
       epRenderSpecs();
       const epMultipleInput=document.getElementById("ep-multiple");
       if(epMultipleInput)epMultipleInput.value=data.purchaseMultiple||data.promoDivisor||"";
+      const epDisplayPriceInput=document.getElementById("ep-display-price");
+      if(epDisplayPriceInput)epDisplayPriceInput.value=data.shopDisplayPrice||"";
+      const epPromoLabelInput=document.getElementById("ep-promo-label");
+      if(epPromoLabelInput)epPromoLabelInput.value=data.shopPromoLabel||"";
+      const epShopDescInput=document.getElementById("ep-shop-description");
+      if(epShopDescInput)epShopDescInput.value=data.shopDescription||"";
       window.G.epTierColorImages={};
       const epTierColorsReset=document.getElementById("ep-tier-colors");if(epTierColorsReset)epTierColorsReset.value="";
       const epTierSizesReset=document.getElementById("ep-tier-sizes");if(epTierSizesReset)epTierSizesReset.value="";
@@ -6718,7 +6745,10 @@ window.saveEditProd=async function(){
   const promoGroup=document.getElementById("ep-promo-group")?.value.trim()||"";
   const weight=parseFloat(document.getElementById("ep-weight")?.value)||0;
   const purchaseMultipleVal=parseInt(document.getElementById("ep-multiple")?.value||"",10);
-  const upd={name,currency:editCur,currencySymbol:CURR[editCur]?.symbol||"₩",paymentMethod:editPm,foreignAmount:fa,originalAmount:originalAmt,promoDivisor,promoPct,promoGroup,beforeTax,afterTax,finalPrice:price,profit,margin,twPrice,rivalPrice,rivalPrices,url,specs:newSpecs,specStock:newSpecStock,purchaseMultiple:purchaseMultipleVal>1?purchaseMultipleVal:null,aliases:newAliases,note:newNote,catKey:newCatKey,category:newCatObj.label,emoji:newCatObj.emoji,flags:newFlags,channel:window.G.editChannel||"",weight};
+  const shopDisplayPriceVal=parseFloat(document.getElementById("ep-display-price")?.value||"")||null;
+  const shopPromoLabelVal=(document.getElementById("ep-promo-label")?.value||"").trim();
+  const shopDescriptionVal=(document.getElementById("ep-shop-description")?.value||"").trim();
+  const upd={name,currency:editCur,currencySymbol:CURR[editCur]?.symbol||"₩",paymentMethod:editPm,foreignAmount:fa,originalAmount:originalAmt,promoDivisor,promoPct,promoGroup,beforeTax,afterTax,finalPrice:price,profit,margin,twPrice,rivalPrice,rivalPrices,url,specs:newSpecs,specStock:newSpecStock,purchaseMultiple:purchaseMultipleVal>1?purchaseMultipleVal:null,shopDisplayPrice:shopDisplayPriceVal,shopPromoLabel:shopPromoLabelVal,shopDescription:shopDescriptionVal,aliases:newAliases,note:newNote,catKey:newCatKey,category:newCatObj.label,emoji:newCatObj.emoji,flags:newFlags,channel:window.G.editChannel||"",weight};
   const oldId=m.id; // 一定要在下面用到 oldId 之前先宣告好，不然會直接丟出錯誤、卡在上傳中出不來
   const saveBtn2=document.querySelector('button[onclick="saveEditProd()"]');
   const origBtnHtml2=saveBtn2?.innerHTML;
@@ -6885,7 +6915,12 @@ window.deleteCustomer=async function(id){
     const ol=(o.lineName||"").trim().toLowerCase();
     return (nm&&nm===on)||(ln&&ln===ol);
   });
-  for(const o of relatedOrders)await fbDel("orders",o.id);
+  for(const o of relatedOrders){
+    await fbDel("orders",o.id);
+    if(o.orderType==="shop_web"&&o.productId&&o.status!=="cancelled"){
+      releaseShopStock(o.productId,o.spec||o.selectedSpec||"",o.qty||1);
+    }
+  }
   await fbDel("customers",id);window.G.selectedCustomers.delete(id);showToast("客戶及相關訂單已刪除");
 };
 window.batchMoveTrip=function(){
@@ -6939,7 +6974,12 @@ window.batchDeleteCustomers=async function(){
   const names=custs.map(c=>c?.communityName||c?.lineName||"未知").join("、");
   if(!orders.length){showToast("選取的客戶沒有訂單","warning");return;}
   if(!confirm(`⚠️ 確定刪除以下客戶的所有訂單明細（${orders.length} 筆）？\n\n${names}\n\n客戶資料本身不會刪除。`))return;
-  for(const o of orders)await fbDel("orders",o.id);
+  for(const o of orders){
+    await fbDel("orders",o.id);
+    if(o.orderType==="shop_web"&&o.productId&&o.status!=="cancelled"){
+      releaseShopStock(o.productId,o.spec||o.selectedSpec||"",o.qty||1);
+    }
+  }
   window.G.selectedCustomers.clear();
   showToast(`已刪除 ${orders.length} 筆訂單`);
   setTimeout(()=>renderCustomers(),600);
@@ -7417,9 +7457,32 @@ window.updateOrderStatus=async function(id,status){
   const l={pending:"待對帳",settled:"已結單",shipped:"已寄出"};
   showToast(`已更新為「${l[status]||status}」`);
 };
+// 刪除商城訂單時，把庫存還回去——不然明明訂單刪掉了，庫存卻永遠少那幾件，
+// 用後台本來就有即時同步的 window.G.products 當資料來源，不用另外去讀一次
+async function releaseShopStock(productId,spec,qty){
+  try{
+    const product=window.G.products.find(p=>p.id===productId);
+    if(!product||!Array.isArray(product.specStock)||!Array.isArray(product.specs))return;
+    const specIdx=product.specs.indexOf(spec);
+    if(specIdx<0)return;
+    const cur=product.specStock[specIdx];
+    if(cur===null||cur===undefined||cur===""){return;} // 這個規格設定不限量，不用處理
+    const newStock=[...product.specStock];
+    newStock[specIdx]=Number(cur)+(qty||1);
+    await fbUpd("products",productId,{specStock:newStock});
+  }catch(e){console.error("釋放庫存失敗（不影響刪除本身）：",e);}
+}
 window.deleteOrder=async function(id){
   if(!confirm("確定刪除此訂單？"))return;
-  await fbDel("orders",id);window.G.selectedOrders.delete(id);showToast("訂單已刪除");
+  const o=window.G.orders.find(x=>x.id===id);
+  await fbDel("orders",id);window.G.selectedOrders.delete(id);
+  // 商城訂單刪除的同時把庫存還回去——但如果這筆訂單已經被系統自動取消過
+  // （狀態是 cancelled，Cron那邊已經還過一次庫存了），這裡就不能再還一次，
+  // 不然同一批庫存會被重複加回去，數字會虛增
+  if(o&&o.orderType==="shop_web"&&o.productId&&o.status!=="cancelled"){
+    releaseShopStock(o.productId,o.spec||o.selectedSpec||"",o.qty||1);
+  }
+  showToast("訂單已刪除");
 };
 window.batchMoveTripOrders=function(){
   const ids=[...window.G.selectedOrders];
@@ -7474,7 +7537,14 @@ window.batchDeleteOrders=async function(){
     ?`確定刪除 ${allIds.length} 筆訂單？（其中包含 ${closedCount} 筆已結案的訂單，刪除後歷史紀錄也會一併消失，請特別確認）`
     :`確定刪除 ${allIds.length} 筆訂單？`;
   if(!confirm(confirmMsg))return;
-  for(const id of allIds)await fbDel("orders",id);
+  for(const id of allIds){
+    const o=window.G.orders.find(x=>x.id===id);
+    await fbDel("orders",id);
+    // 商城訂單一起還庫存，已取消的訂單庫存已經還過一次了，不要重複還
+    if(o&&o.orderType==="shop_web"&&o.productId&&o.status!=="cancelled"){
+      releaseShopStock(o.productId,o.spec||o.selectedSpec||"",o.qty||1);
+    }
+  }
   window.G.selectedOrders.clear();showToast(`已刪除 ${allIds.length} 筆訂單`);
 };
 window.eoClearProdSearch=function(){
@@ -7877,7 +7947,12 @@ function finishReassignRefresh(oid){
 
 window.eoDeleteOrder=async function(oid){
   if(!confirm("確定刪除這筆訂單？"))return;
+  const o=window.G.orders.find(x=>x.id===oid);
   await fbDel("orders",oid);
+  // 商城訂單一起還庫存，已取消的訂單庫存已經還過一次了，不要重複還
+  if(o&&o.orderType==="shop_web"&&o.productId&&o.status!=="cancelled"){
+    releaseShopStock(o.productId,o.spec||o.selectedSpec||"",o.qty||1);
+  }
   window.G.orders=window.G.orders.filter(x=>x.id!==oid);
   const cid=window.G.activeEordCustId;
   const remain=window.G.orders.filter(x=>x.customerId===cid);
@@ -11105,7 +11180,7 @@ window.renderList=function(){
   const fc=document.getElementById("cat-filters");
   if(fc){
     const usedCats=CATS.filter(c=>nonCatFilteredProducts.some(p=>p.catKey===c.key));
-    fc.innerHTML=[["all","全部",nonCatFilteredProducts.length],...usedCats.map(c=>[c.key,c.emoji+" "+c.label,nonCatFilteredProducts.filter(p=>p.catKey===c.key).length])].map(([k,l,n])=>`<button onclick="window.G.listFilterCat='${k}';window.G.listFilterSubcat=null;renderList()" style="flex-shrink:0;padding:6px 12px;border-radius:99px;font-size:11px;font-weight:700;border:1px solid ${listFilterCat===k?"#C5A880":"#E8D5B0"};background:${listFilterCat===k?"#C5A880":"white"};color:${listFilterCat===k?"white":"#9C7A5A"};cursor:pointer">${l}(${n})</button>`).join("");
+    fc.innerHTML=[["all","全部"],...usedCats.map(c=>[c.key,c.label])].map(([k,l])=>`<button onclick="window.G.listFilterCat='${k}';window.G.listFilterSubcat=null;renderList()" style="flex-shrink:0;padding:6px 14px;border-radius:99px;font-size:11px;font-weight:700;border:1px solid ${listFilterCat===k?"#C5A880":"#E8D5B0"};background:${listFilterCat===k?"#C5A880":"white"};color:${listFilterCat===k?"white":"#9C7A5A"};cursor:pointer">${l}</button>`).join("");
   }
   // 子分類篩選列
   const sf=document.getElementById("subcat-filters");
@@ -11117,8 +11192,8 @@ window.renderList=function(){
       const unclassified=catProds.filter(p=>!window.getSubcat(p.name,listFilterCat));
       if(subcats.length>0){
         sf.style.display="flex";
-        sf.innerHTML=subcats.map(s=>`<button onclick="window.G.listFilterSubcat=window.G.listFilterSubcat==='${s.key}'?null:'${s.key}';renderList()" style="flex-shrink:0;padding:4px 10px;border-radius:99px;font-size:10px;font-weight:700;border:1px solid ${curSub===s.key?"#E07B39":"#FFCC80"};background:${curSub===s.key?"#E07B39":"#FFF3E0"};color:${curSub===s.key?"white":"#C76B25"};cursor:pointer">${s.label}(${catProds.filter(p=>window.getSubcat(p.name,listFilterCat)?.key===s.key).length})</button>`).join("")
-          +(unclassified.length>0?`<button onclick="window.G.listFilterSubcat=window.G.listFilterSubcat==='__none__'?null:'__none__';renderList()" style="flex-shrink:0;padding:4px 10px;border-radius:99px;font-size:10px;font-weight:700;border:1px solid ${curSub==="__none__"?"#C0392B":"#F1948A"};background:${curSub==="__none__"?"#C0392B":"#FDEDEC"};color:${curSub==="__none__"?"white":"#C0392B"};cursor:pointer">❓ 未分類(${unclassified.length})</button>`:"");
+        sf.innerHTML=subcats.map(s=>`<button onclick="window.G.listFilterSubcat=window.G.listFilterSubcat==='${s.key}'?null:'${s.key}';renderList()" style="flex-shrink:0;padding:4px 12px;border-radius:99px;font-size:10px;font-weight:700;border:1px solid ${curSub===s.key?"#C5A880":"#E8D5B0"};background:${curSub===s.key?"#C5A880":"#FAF8F5"};color:${curSub===s.key?"white":"#9C7A5A"};cursor:pointer">${s.label}</button>`).join("")
+          +(unclassified.length>0?`<button onclick="window.G.listFilterSubcat=window.G.listFilterSubcat==='__none__'?null:'__none__';renderList()" style="flex-shrink:0;padding:4px 12px;border-radius:99px;font-size:10px;font-weight:700;border:1px solid ${curSub==="__none__"?"#C5A880":"#E8D5B0"};background:${curSub==="__none__"?"#C5A880":"#FAF8F5"};color:${curSub==="__none__"?"white":"#9C7A5A"};cursor:pointer">未分類</button>`:"");
       } else {
         sf.innerHTML="";
       }
@@ -12053,6 +12128,12 @@ window.renderCustomers=function(){
       window.G.orders.some(o=>o.customerId===c.id&&o.orderType==="shop_web")
     );
   }
+  // 只看有被自動取消訂單的客人（超過48小時沒確認，被 Cron 自動取消的商城訂單）
+  if(window.G.showCancelledOnly){
+    filtered=filtered.filter(c=>
+      window.G.orders.some(o=>(o.customerId===c.id||(c.communityName&&(o.communityName||"").trim()===c.communityName.trim()))&&o.status==="cancelled")
+    );
+  }
   // 狀態分頁籤：待訂金／已付訂金待尾款／已付尾款待出貨／已完成
   const statusTab=window.G.custStatusTab||"all";
   if(statusTab!=="all"){
@@ -12338,6 +12419,7 @@ function renderCustFilterChips(){
     {label:"有冷藏",active:cvf==="hasCold",onclick:"setCustViewFilter(window.G.custViewFilter==='hasCold'?'all':'hasCold')"},
     {label:window.G.showArchivedCust?"顯示封存中":"已封存",active:!!window.G.showArchivedCust,onclick:"toggleArchivedCustFilter()"},
     {label:window.G.showShopMemberOnly?"商城會員中":"商城會員",active:!!window.G.showShopMemberOnly,onclick:"toggleShopMemberFilter()"},
+    {label:window.G.showCancelledOnly?"已取消中":"已取消",active:!!window.G.showCancelledOnly,onclick:"toggleCancelledFilter()"},
   ];
   el.innerHTML=chips.map(c=>`<button onclick="${c.onclick}" style="padding:8px 2px;border-radius:10px;font-size:10.5px;font-weight:700;border:1px solid ${c.active?"#5C3A1E":"#E8D5B0"};background:${c.active?"#5C3A1E":"white"};color:${c.active?"#F5E6C8":"#9C7A5A"};cursor:pointer;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.label}</button>`).join("");
 }
@@ -12347,6 +12429,10 @@ window.toggleArchivedCustFilter=function(){
 };
 window.toggleShopMemberFilter=function(){
   window.G.showShopMemberOnly=!window.G.showShopMemberOnly;
+  renderCustomers();
+};
+window.toggleCancelledFilter=function(){
+  window.G.showCancelledOnly=!window.G.showCancelledOnly;
   renderCustomers();
 };
 // 「⋯ 更多工具」：喊單文字/趟次異常/三頁交叉核對，這些是偶爾才用的工具，不是篩選器，
@@ -12619,12 +12705,12 @@ window.renderInvoice=function(){
         </div>`:"";})()}
         ${isQuoteOnly?"":`
         <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;margin-top:4px">
-          <button data-bkey="${encodeURIComponent(b.key)}" onclick="copyDepositOrder(null,decodeURIComponent(this.dataset.bkey))" style="font-size:10px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:700;white-space:nowrap;flex:0 0 auto">💰 收訂金</button>
+          <button data-bkey="${encodeURIComponent(b.key)}" onclick="copyDepositOrder(null,decodeURIComponent(this.dataset.bkey))" style="font-size:10px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:4px 8px;border-radius:6px;cursor:pointer;font-weight:700;white-space:nowrap;flex:0 0 auto">收訂金</button>
           <button data-bkey="${encodeURIComponent(b.key)}" onclick="openAskSettlement(decodeURIComponent(this.dataset.bkey))" style="font-size:10px;background:#EAF4FD;color:#0277BD;border:1px solid #90D7FF;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700;white-space:nowrap;flex:0 0 auto">複製結清</button>
-          <button data-cid="${b.orders[0]?.customerId||""}" onclick="this.dataset.cid?openLineNotify(this.dataset.cid):showToast('這位客人還沒建立客戶資料，沒辦法發出貨通知','warning')" style="font-size:10px;background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700;white-space:nowrap;flex:0 0 auto">🚚 出貨</button>
-          <button data-bkey="${encodeURIComponent(b.key)}" onclick="${b.orders.length>0&&b.orders.every(o=>o.batchClosed)?"reopenBatch":"closeBatch"}(decodeURIComponent(this.dataset.bkey))" style="font-size:10px;background:#EAF4FB;color:#1E5F8C;border:1px solid #BEE0F5;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700;white-space:nowrap;flex:0 0 auto">${b.orders.length>0&&b.orders.every(o=>o.batchClosed)?"🔓 重新開啟":"🔒 結案"}</button>
-          <button data-cid="${b.orders[0]?.customerId||""}" onclick="this.dataset.cid?openShopModal(this.dataset.cid):showToast('這位客人還沒建立客戶資料，沒辦法開賣場','warning')" style="font-size:10px;background:#FFF3E0;color:#E65100;border:1px solid #FFCC80;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700;white-space:nowrap;flex:0 0 auto">🏪 開賣場</button>
-          <button data-oid="${b.orders[0]?.id}" onclick="openEditOrd(this.dataset.oid)" style="font-size:10px;padding:4px 10px;border-radius:6px;font-weight:700;border:1px solid #E8D5B0;background:#FDF6EC;color:#C5A880;cursor:pointer;white-space:nowrap;flex:0 0 auto">✏️ 修改</button>
+          <button data-cid="${b.orders[0]?.customerId||""}" onclick="this.dataset.cid?openLineNotify(this.dataset.cid):showToast('這位客人還沒建立客戶資料，沒辦法發出貨通知','warning')" style="font-size:10px;background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700;white-space:nowrap;flex:0 0 auto">出貨</button>
+          <button data-bkey="${encodeURIComponent(b.key)}" onclick="${b.orders.length>0&&b.orders.every(o=>o.batchClosed)?"reopenBatch":"closeBatch"}(decodeURIComponent(this.dataset.bkey))" style="font-size:10px;background:#EAF4FB;color:#1E5F8C;border:1px solid #BEE0F5;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700;white-space:nowrap;flex:0 0 auto">${b.orders.length>0&&b.orders.every(o=>o.batchClosed)?"重新開啟":"結案"}</button>
+          <button data-cid="${b.orders[0]?.customerId||""}" onclick="this.dataset.cid?openShopModal(this.dataset.cid):showToast('這位客人還沒建立客戶資料，沒辦法開賣場','warning')" style="font-size:10px;background:#FFF3E0;color:#E65100;border:1px solid #FFCC80;padding:4px 10px;border-radius:6px;cursor:pointer;font-weight:700;white-space:nowrap;flex:0 0 auto">開賣場</button>
+          <button data-oid="${b.orders[0]?.id}" onclick="openEditOrd(this.dataset.oid)" style="font-size:10px;padding:4px 10px;border-radius:6px;font-weight:700;border:1px solid #E8D5B0;background:#FDF6EC;color:#C5A880;cursor:pointer;white-space:nowrap;flex:0 0 auto">修改</button>
         </div>`}
       </div>
       <!-- 商品明細 -->
