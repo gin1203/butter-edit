@@ -3590,7 +3590,7 @@ window.deleteOrderFromGrid=async function(oid){
   if(!confirm("確定刪除這筆喊單？"))return;
   const o=window.G.orders.find(x=>x.id===oid);
   await fbDel("orders",oid);
-  if(o&&o.orderType==="shop_web"&&o.productId&&o.status!=="cancelled"){
+  if(o&&o.productId&&o.status!=="cancelled"){
     releaseShopStock(o.productId,o.spec||o.selectedSpec||"",o.qty||1);
   }
   showToast("已刪除","success");
@@ -7035,7 +7035,7 @@ window.deleteCustomer=async function(id){
   });
   for(const o of relatedOrders){
     await fbDel("orders",o.id);
-    if(o.orderType==="shop_web"&&o.productId&&o.status!=="cancelled"){
+    if(o.productId&&o.status!=="cancelled"){
       releaseShopStock(o.productId,o.spec||o.selectedSpec||"",o.qty||1);
     }
   }
@@ -7094,7 +7094,7 @@ window.batchDeleteCustomers=async function(){
   if(!confirm(`⚠️ 確定刪除以下客戶的所有訂單明細（${orders.length} 筆）？\n\n${names}\n\n客戶資料本身不會刪除。`))return;
   for(const o of orders){
     await fbDel("orders",o.id);
-    if(o.orderType==="shop_web"&&o.productId&&o.status!=="cancelled"){
+    if(o.productId&&o.status!=="cancelled"){
       releaseShopStock(o.productId,o.spec||o.selectedSpec||"",o.qty||1);
     }
   }
@@ -7575,6 +7575,21 @@ window.updateOrderStatus=async function(id,status){
   const l={pending:"待對帳",settled:"已結單",shipped:"已寄出"};
   showToast(`已更新為「${l[status]||status}」`);
 };
+// 手動新增訂單時，如果這個商品有設定「商城庫存數量」，一併扣掉，
+// 保持跟商城那邊的庫存數字同步，不管客人是從商城下單、還是直接跟你聯絡
+async function decrementShopStockForManualOrder(productId,spec,qty){
+  try{
+    const product=window.G.products.find(p=>p.id===productId);
+    if(!product||!Array.isArray(product.specStock)||!Array.isArray(product.specs))return;
+    const specIdx=product.specs.indexOf(spec);
+    if(specIdx<0)return; // 這個規格不存在，或這個商品根本沒有規格，不用處理
+    const cur=product.specStock[specIdx];
+    if(cur===null||cur===undefined||cur===""){return;} // 這個規格設定不限量，不用扣
+    const newStock=[...product.specStock];
+    newStock[specIdx]=Math.max(0,Number(cur)-(qty||1));
+    await fbUpd("products",productId,{specStock:newStock});
+  }catch(e){console.error("手動訂單扣庫存失敗（不影響訂單本身）：",e);}
+}
 // 刪除商城訂單時，把庫存還回去——不然明明訂單刪掉了，庫存卻永遠少那幾件，
 // 用後台本來就有即時同步的 window.G.products 當資料來源，不用另外去讀一次
 async function releaseShopStock(productId,spec,qty){
@@ -7597,7 +7612,7 @@ window.deleteOrder=async function(id){
   // 商城訂單刪除的同時把庫存還回去——但如果這筆訂單已經被系統自動取消過
   // （狀態是 cancelled，Cron那邊已經還過一次庫存了），這裡就不能再還一次，
   // 不然同一批庫存會被重複加回去，數字會虛增
-  if(o&&o.orderType==="shop_web"&&o.productId&&o.status!=="cancelled"){
+  if(o&&o.productId&&o.status!=="cancelled"){
     releaseShopStock(o.productId,o.spec||o.selectedSpec||"",o.qty||1);
   }
   showToast("訂單已刪除");
@@ -7659,7 +7674,7 @@ window.batchDeleteOrders=async function(){
     const o=window.G.orders.find(x=>x.id===id);
     await fbDel("orders",id);
     // 商城訂單一起還庫存，已取消的訂單庫存已經還過一次了，不要重複還
-    if(o&&o.orderType==="shop_web"&&o.productId&&o.status!=="cancelled"){
+    if(o&&o.productId&&o.status!=="cancelled"){
       releaseShopStock(o.productId,o.spec||o.selectedSpec||"",o.qty||1);
     }
   }
@@ -8068,7 +8083,7 @@ window.eoDeleteOrder=async function(oid){
   const o=window.G.orders.find(x=>x.id===oid);
   await fbDel("orders",oid);
   // 商城訂單一起還庫存，已取消的訂單庫存已經還過一次了，不要重複還
-  if(o&&o.orderType==="shop_web"&&o.productId&&o.status!=="cancelled"){
+  if(o&&o.productId&&o.status!=="cancelled"){
     releaseShopStock(o.productId,o.spec||o.selectedSpec||"",o.qty||1);
   }
   window.G.orders=window.G.orders.filter(x=>x.id!==oid);
@@ -8410,7 +8425,7 @@ window.saveAllEditOrders=async function(){
       }
       if(sharedDeposit>0){
         const o=window.G.orders.find(x=>x.id===oid);
-        if(o&&o.status==="pending")upd.status="deposit";
+        if(o&&(o.status==="pending"||o.status==="confirmed"))upd.status="deposit";
       } else {
         // 訂金欄位被清空歸零：如果這筆原本是「已付訂金」狀態，要退回「待訂金」，
         // 不然會變成「顯示已付訂金、但訂金金額其實是0」這種矛盾狀態
@@ -8434,6 +8449,10 @@ window.saveAllEditOrders=async function(){
         communityName:c?.communityName||"",lineName:c?.lineName||"",
         buyerName:c?.communityName||c?.lineName||"",tripId};
       await fbSet("orders",item.id,saveOrder);
+      // 手動新增的訂單，如果這個商品有設定「商城庫存數量」，一樣要扣，
+      // 不然客人直接跟你聯絡下單、你手動登記，庫存數字不會跟著減少，
+      // 商城那邊還是顯示原本的庫存，容易造成同一件商品被賣超過實際庫存
+      decrementShopStockForManualOrder(item.productId,item.spec||"",item.qty||1);
       // 注意：不要在這裡手動 push 進 window.G.orders！
       // onSnapshot(collection(db,"orders"),...) 監聽器一寫入就會自動把 window.G.orders
       // 整包重新同步一次，這裡如果又手動 push 一次，會跟監聽器同步進來的那筆重複，
@@ -11192,7 +11211,7 @@ function updateStats(){
   const box=document.getElementById("s-profit-box");
   if(box){box.style.background=profitBg;box.style.borderColor=profitBorder;}
   const sb=document.getElementById("stats-block");if(sb)sb.style.display=window.G.products.length>0?"block":"none";
-  const pending=window.G.orders.filter(o=>o.status==="pending").length;
+  const pending=window.G.orders.filter(o=>o.status==="pending"||o.status==="confirmed").length;
   const badge=document.getElementById("pending-badge");
   if(badge){badge.textContent=`${pending} 待對帳`;badge.style.display=pending>0?"inline-block":"none";}
 }
@@ -12144,7 +12163,7 @@ function getCustStatusBucket(c,allOrders){
   if(!custOrders.length)return null; // 完全沒有訂單，不歸類到任何分頁籤
   const active=custOrders.filter(o=>!o.batchClosed);
   if(!active.length)return "done"; // 全部訂單都已結案
-  if(active.some(o=>o.status==="pending"))return "pending";
+  if(active.some(o=>o.status==="pending"||o.status==="confirmed"))return "pending";
   if(active.some(o=>o.status==="deposit"))return "deposit";
   if(active.some(o=>o.status==="settled"))return "settled";
   return "done"; // 剩下的都已寄出，只是還沒手動結案
@@ -12274,8 +12293,9 @@ window.renderCustomers=function(){
   };
   const custPendingCount=c=>{
     const cOrds=orders.filter(o=>o.customerId?o.customerId===c.id:(o.communityName||o.buyerName||"").trim().toLowerCase()===(c.communityName||"").trim().toLowerCase());
-    // 「待訂金」跟「已付訂金但還沒出貨/對帳」都算優先處理，只有已付尾款、已寄出這種真正完成的訂單才不算
-    return cOrds.filter(o=>o.status==="pending"||o.status==="deposit").length;
+    // 「待訂金」跟「已付訂金但還沒出貨/對帳」都算優先處理，只有已付尾款、已寄出這種真正完成的訂單才不算；
+    // 商城訂單「確認」之後狀態是 confirmed，這個也還沒收錢/出貨，一樣算優先處理
+    return cOrds.filter(o=>o.status==="pending"||o.status==="confirmed"||o.status==="deposit").length;
   };
   const sortMode=window.G.custSortMode||"pending";
   let withPending=[],withoutPending=[];
@@ -12317,7 +12337,7 @@ window.renderCustomers=function(){
     });
     const cRawT=cO.filter(o=>o.orderType!=="quote").reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0);
     const cT=(cPctOrder?Math.round(cRawT*cPctOrder.sharedDiscountPercent/10):cRawT)-cDisc;
-    const cP=cO.filter(o=>o.status==="pending"&&o.orderType!=="quote").length;
+    const cP=cO.filter(o=>(o.status==="pending"||o.status==="confirmed")&&o.orderType!=="quote").length;
     const cQty=cO.filter(o=>o.orderType!=="quote").reduce((s,o)=>s+(o.qty||1),0);
     const cShippedQty=cO.filter(o=>o.orderType!=="quote"&&o.status==="shipped").reduce((s,o)=>s+(o.qty||1),0);
     const cUnshippedQty=cQty-cShippedQty;
@@ -13123,7 +13143,7 @@ window.copySingleDeposit=function(oid){
   const text=`【${cleanProductName((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品")}${o.spec?" ("+o.spec+")":""} ×${o.qty}】\n\n• 總金額 NT$${total.toLocaleString()}\n• 訂金 NT$${deposit.toLocaleString()}\n\n請匯款後告知後五碼，收到訂金後才會進行購買🙏`;
   if(!confirm(`複製訂金請款並記錄訂金 NT$${deposit.toLocaleString()}？\n（${cleanProductName((window.G.products.find(x=>x.id===o.productId)?.name)||o.productName||"商品")}${o.spec?" ("+o.spec+")":""} ×${o.qty}）`))return;
   // 自動記錄訂金
-  fbUpd("orders",oid,{depositAmt:deposit,status:o.status==="pending"?"deposit":o.status});
+  fbUpd("orders",oid,{depositAmt:deposit,status:(o.status==="pending"||o.status==="confirmed")?"deposit":o.status});
   navigator.clipboard?.writeText(text).then(()=>showToast("訂金請款已複製！")).catch(()=>{
     const ta=document.createElement("textarea");ta.value=text;ta.style.position="fixed";
     document.body.appendChild(ta);ta.focus();ta.select();
@@ -13156,8 +13176,9 @@ window.copyDepositOrder=function(cid,buyerKey){
     name=orders[0]?.communityName||orders[0]?.buyerName||"買家";
   }
   // 只算「待處理中」的訂單（還沒付尾款/寄出的），已經結清的不需要再收訂金；
-  // 已結案的也要排除——結案代表這批已經處理完了，不該再跟已結案的訂單要訂金
-  orders=orders.filter(o=>o.orderType!=="quote"&&(o.status==="pending"||o.status==="deposit")&&!o.batchClosed);
+  // 已結案的也要排除——結案代表這批已經處理完了，不該再跟已結案的訂單要訂金；
+  // 商城訂單「確認」之後狀態會變成 confirmed，這個也算「待收訂金」，不能漏掉
+  orders=orders.filter(o=>o.orderType!=="quote"&&(o.status==="pending"||o.status==="confirmed"||o.status==="deposit")&&!o.batchClosed);
   if(!orders.length){showToast("這位客人目前沒有待處理的訂單","warning");return;}
   const total=orders.reduce((s,o)=>s+(o.discountPrice||o.unitPrice||0)*o.qty,0);
   window.G._depositContext={orders,name,total};
@@ -13220,12 +13241,12 @@ window.markDepositReceived=async function(){
   // 但「已付訂金」這個狀態要整批訂單一起改，不然其他筆會卡在「待訂金」，導致客戶卡片顯示「狀態不一」
   const first=orders[0];
   if(first){
-    await fbUpdWithTimeout("orders",first.id,{depositAmt:dep,status:first.status==="pending"?"deposit":first.status});
+    await fbUpdWithTimeout("orders",first.id,{depositAmt:dep,status:(first.status==="pending"||first.status==="confirmed")?"deposit":first.status});
     for(let i=1;i<orders.length;i++){
       const o=orders[i];
       const upd={};
       if(o.depositAmt)upd.depositAmt=0;
-      if(o.status==="pending")upd.status="deposit";
+      if(o.status==="pending"||o.status==="confirmed")upd.status="deposit";
       if(Object.keys(upd).length)await fbUpdWithTimeout("orders",o.id,upd);
     }
   }
