@@ -490,6 +490,7 @@ body.live-mode .hide-live { display: none !important; }
       <button onclick="event.stopPropagation();closeCustToolsMenu();openBatchOrder()" style="display:block;width:100%;text-align:left;font-size:12px;color:#AD1457;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600">📋 喊單文字</button>
       <button onclick="event.stopPropagation();closeCustToolsMenu();showTripOrphanScan()" style="display:block;width:100%;text-align:left;font-size:12px;color:#92400E;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">✈️ 趟次異常</button>
       <button onclick="event.stopPropagation();closeCustToolsMenu();showTotalsCrossCheck()" style="display:block;width:100%;text-align:left;font-size:12px;color:#166534;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">🔍 三頁金額交叉核對</button>
+      <button onclick="event.stopPropagation();closeCustToolsMenu();showCartAbandons()" style="display:block;width:100%;text-align:left;font-size:12px;color:#7C3AED;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">🛒 尚未結帳訂單／棄單</button>
     </div>
   </div>
   <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#9C7A5A;margin-bottom:8px;cursor:pointer">
@@ -5417,6 +5418,68 @@ window.relinkOrphanOrders=async function(oidsStr,newProductId){
 // 統計頁則是用「另一個獨立的趟次篩選（statsTripFilter）」去算，
 // 跟客戶頁/對帳單頁共用的 tripFilter 不一定是同一個趟次，這是最常見「數字對不起來」的原因，
 // 不一定是真的算錯。這個工具把這些數字實際算一次給你看，不用自己心算猜。
+window.showCartAbandons=function(){
+  let modal=document.getElementById("modal-cart-abandons");
+  if(!modal){
+    modal=document.createElement("div");
+    modal.id="modal-cart-abandons";
+    modal.className="modal-overlay";
+    modal.style.cssText="display:none;position:fixed;inset:0;z-index:120;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;padding:16px";
+    modal.innerHTML=`<div style="background:white;border-radius:18px;width:100%;max-width:480px;max-height:85vh;display:flex;flex-direction:column">
+      <div style="padding:18px 20px 12px;border-bottom:1px solid #F0E6D0;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <h3 style="margin:0;font-size:15px;font-weight:900;color:#3D2010">🛒 尚未結帳訂單／棄單</h3>
+          <div style="font-size:10px;color:#9C7A5A;margin-top:2px">24小時內顯示「尚未結帳」，超過24小時才算「已棄單」</div>
+        </div>
+        <button onclick="document.getElementById('modal-cart-abandons').style.display='none'" style="background:none;border:none;font-size:20px;color:#9C7A5A;cursor:pointer">×</button>
+      </div>
+      <div id="cart-abandons-content" style="padding:14px 20px 20px;overflow-y:auto;flex:1"></div>
+    </div>`;
+    document.body.appendChild(modal);
+  }
+  modal.style.display="flex";
+  window.renderCartAbandons();
+};
+window.renderCartAbandons=async function(){
+  const box=document.getElementById("cart-abandons-content");
+  if(!box)return;
+  box.innerHTML=`<div style="text-align:center;padding:20px;color:#9C7A5A;font-size:12px">載入中…</div>`;
+  try{
+    const{getDocs,collection:col,query,where}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    const snap=await getDocs(query(col(db,"cart_abandons"),where("completed","==",false)));
+    const records=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.enteredCheckoutAt||0)-(a.enteredCheckoutAt||0));
+    if(!records.length){
+      box.innerHTML=`<div style="text-align:center;padding:30px 10px;color:#9C7A5A;font-size:12px">目前沒有紀錄 🎉</div>`;
+      return;
+    }
+    const now=Date.now();
+    const DAY_MS=24*60*60*1000;
+    // 24小時內：可能還在填表單猶豫，先叫「尚未結帳訂單」；超過24小時才真的算「已棄單」
+    const abandonedCount=records.filter(r=>now-(r.enteredCheckoutAt||0)>DAY_MS).length;
+    box.innerHTML=`<div style="font-size:11px;color:#9C7A5A;margin-bottom:10px">共 ${records.length} 筆（其中 ${abandonedCount} 筆已超過24小時）</div>`+
+      records.map(r=>{
+        const isAbandoned=now-(r.enteredCheckoutAt||0)>DAY_MS;
+        const dateStr=r.enteredCheckoutAt?new Date(r.enteredCheckoutAt).toLocaleString("zh-TW",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"}):"";
+        const statusBadge=isAbandoned
+          ?`<span style="font-size:9px;font-weight:700;background:#FDEDEC;color:#C0392B;border-radius:4px;padding:1px 6px">已棄單</span>`
+          :`<span style="font-size:9px;font-weight:700;background:#FFF3E0;color:#E65100;border-radius:4px;padding:1px 6px">尚未結帳訂單</span>`;
+        return `<div style="background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-size:12px;font-weight:700;color:#3D2010">${r.lineName||"未知客人"}</span>
+              ${statusBadge}
+            </div>
+            <span style="font-size:10px;color:#9C7A5A">${dateStr}</span>
+          </div>
+          <div style="font-size:11px;color:#5C3A1E;line-height:1.5;margin-bottom:4px">${r.itemsSummary||""}</div>
+          <div style="font-size:12px;font-weight:800;color:#E65100">參考金額 NT$${(r.total||0).toLocaleString()}</div>
+        </div>`;
+      }).join("");
+  }catch(e){
+    box.innerHTML=`<div style="text-align:center;padding:20px;color:#C0392B;font-size:12px">載入失敗：${e.message}</div>`;
+  }
+};
+
 window.showTotalsCrossCheck=function(){
   let modal=document.getElementById("modal-totals-crosscheck");
   if(!modal){

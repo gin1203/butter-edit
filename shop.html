@@ -777,6 +777,27 @@ function renderCartBar(){
 }
 
 // ── 詢問單（結帳頁）──────────────────────────────
+// 棄單追蹤：客人進到結帳頁的時候記一筆，如果之後真的送出訂單就標記完成，
+// 沒送出的就是「棄單」，方便你在後台看有多少人卡在這一步沒買
+async function trackCartAbandonment(){
+  if(!G.lineUser)return;
+  try{
+    const items=Object.values(G.cart);
+    if(!items.length)return;
+    const abandonId="abd_"+G.lineUser.userId.slice(0,16);
+    const itemsSummary=items.map(i=>`${cleanProductName(i.product.name)}${i.spec?"("+i.spec+")":""}×${i.qty}`).join("、");
+    const total=items.reduce((s,i)=>s+i.qty*(i.product.finalPrice||0),0);
+    await fsCreate("cart_abandons",abandonId,{
+      lineUserId:G.lineUser.userId,
+      lineName:G.lineUser.displayName||"",
+      itemsSummary,total,
+      itemCount:items.reduce((s,i)=>s+i.qty,0),
+      completed:false,
+      enteredCheckoutAt:Date.now(),
+    });
+  }catch(e){/* 追蹤失敗不影響購物流程 */}
+}
+
 async function goToCheckout(){
   if(!G.lineUser){lineLogin();return;}
   document.getElementById("catalog-view").style.display="none";
@@ -784,6 +805,7 @@ async function goToCheckout(){
   document.getElementById("main-header").style.display="none";
   document.getElementById("cart-bar").style.display="none";
   document.getElementById("checkout-view").style.display="block";
+  trackCartAbandonment(); // 記錄這次進到結帳頁，之後看有沒有真的送出訂單
   // 曾經下過單的客人（用同一個LINE帳號登入），自動帶入社群暱稱跟電話，不用每次重打
   if(!G.form)G.form={name:"",phone:"",communityName:"",lineId:"",note:""};
   if(!G.form.communityName||!G.form.phone){
@@ -971,6 +993,15 @@ async function submitOrder(){
       await decrementProductStock(p.id,item.specIndex,item.qty);
     }
 
+    // 訂單真的送出成功了，把剛才的棄單追蹤記錄標記成「已完成」，這樣後台看到的棄單清單才準確
+    // 這裡只能更新 completed 這兩個欄位，不能整個覆蓋，不然原本記錄的購物車明細會被洗掉
+    if(G.lineUser){
+      try{
+        const abandonId="abd_"+G.lineUser.userId.slice(0,16);
+        const url=`${BASE_URL}/cart_abandons/${abandonId}?updateMask.fieldPaths=completed&updateMask.fieldPaths=completedAt&key=${FIREBASE_API_KEY}`;
+        await fetch(url,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({fields:{completed:{booleanValue:true},completedAt:{integerValue:Date.now()}}})});
+      }catch(e){/* 標記失敗不影響訂單本身 */}
+    }
     showSuccess(items,items.reduce((s,i)=>s+i.qty*(i.product.finalPrice||0),0),community);
   }catch(e){
     console.error(e);
