@@ -1017,18 +1017,18 @@ body.live-mode .hide-live { display: none !important; }
       <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">🔢 最低購買倍數（如果商品有套用「2+1」類活動標籤，這裡會自動帶入，不需要手動填；只有想覆蓋才需要改）</label>
       <input type="number" inputmode="numeric" min="1" id="ep-multiple" placeholder="例如：3（不限制就留空）" style="width:100%;background:#FFF9F0;border:1px solid #FFCC80;border-radius:10px;padding:10px 14px;font-size:13px;outline:none;box-sizing:border-box"/>
     </div>
-    <!-- 顯示單價／促銷文字：給「3件300」這種固定折扣組合用，不是「買2送1」時才需要填 -->
+    <!-- 多入優惠組合：客人可以選「單件」或「組合價」，不是強迫湊倍數 -->
     <div style="display:flex;gap:8px;margin-bottom:10px">
       <div style="flex:1">
-        <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">💲 顯示單價（選填）</label>
-        <input type="number" inputmode="numeric" min="0" id="ep-display-price" placeholder="例如：120" style="width:100%;background:#FFF9F0;border:1px solid #FFCC80;border-radius:10px;padding:10px 14px;font-size:13px;outline:none;box-sizing:border-box"/>
+        <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">📦 組合件數（選填）</label>
+        <input type="number" inputmode="numeric" min="2" id="ep-bundle-qty" placeholder="例如：3" style="width:100%;background:#FFF9F0;border:1px solid #FFCC80;border-radius:10px;padding:10px 14px;font-size:13px;outline:none;box-sizing:border-box"/>
       </div>
       <div style="flex:1">
-        <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">🏷️ 促銷標籤文字（選填）</label>
-        <input type="text" id="ep-promo-label" placeholder="例如：3件$300" style="width:100%;background:#FFF9F0;border:1px solid #FFCC80;border-radius:10px;padding:10px 14px;font-size:13px;outline:none;box-sizing:border-box"/>
+        <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">💰 組合總價（選填）</label>
+        <input type="number" inputmode="numeric" min="0" id="ep-bundle-price" placeholder="例如：300" style="width:100%;background:#FFF9F0;border:1px solid #FFCC80;border-radius:10px;padding:10px 14px;font-size:13px;outline:none;box-sizing:border-box"/>
       </div>
     </div>
-    <div style="font-size:10px;color:#B08050;margin-top:-6px;margin-bottom:10px;line-height:1.5">💡 如果不是「買X送1」，而是像「一入120、三入300」這種固定折扣組合：上面「最低購買倍數」填3，這裡「顯示單價」填120（客人看到的單價）、「促銷標籤文字」填「3件$300」，系統結帳金額還是照原本設定的售價計算，不受這裡影響</div>
+    <div style="font-size:10px;color:#B08050;margin-top:-6px;margin-bottom:10px;line-height:1.5">💡 例如單件賣NT$120，但3件算NT$300比較划算：這裡「組合件數」填3、「組合總價」填300。商城會同時顯示「單件120」跟「3件組合300」兩個選項讓客人自己選，不是強迫要湊到3件才能買。口味/款式在組合模式下可以自由混搭。兩者都留空就是沒有組合優惠，正常照單件價格賣。</div>
     <!-- 商城商品說明：客人在商城詳情頁會直接看到，跟上面給自己看的內部備註是分開的 -->
     <div style="margin-bottom:10px">
       <label style="display:block;font-size:11px;font-weight:700;color:#E65100;margin-bottom:5px">🛍️ 商城商品說明（選填，客人在商城商品詳情頁會直接看到這段文字，例如尺寸、成分、使用方式）</label>
@@ -4046,10 +4046,10 @@ window.openModal=function(id,data){
       epRenderSpecs();
       const epMultipleInput=document.getElementById("ep-multiple");
       if(epMultipleInput)epMultipleInput.value=data.purchaseMultiple||data.promoDivisor||"";
-      const epDisplayPriceInput=document.getElementById("ep-display-price");
-      if(epDisplayPriceInput)epDisplayPriceInput.value=data.shopDisplayPrice||"";
-      const epPromoLabelInput=document.getElementById("ep-promo-label");
-      if(epPromoLabelInput)epPromoLabelInput.value=data.shopPromoLabel||"";
+      const epBundleQtyInput=document.getElementById("ep-bundle-qty");
+      if(epBundleQtyInput)epBundleQtyInput.value=data.bundleQty||"";
+      const epBundlePriceInput=document.getElementById("ep-bundle-price");
+      if(epBundlePriceInput)epBundlePriceInput.value=data.bundlePrice||"";
       const epShopDescInput=document.getElementById("ep-shop-description");
       if(epShopDescInput)epShopDescInput.value=data.shopDescription||"";
       window.G.epTierColorImages={};
@@ -6745,10 +6745,10 @@ window.saveEditProd=async function(){
   const promoGroup=document.getElementById("ep-promo-group")?.value.trim()||"";
   const weight=parseFloat(document.getElementById("ep-weight")?.value)||0;
   const purchaseMultipleVal=parseInt(document.getElementById("ep-multiple")?.value||"",10);
-  const shopDisplayPriceVal=parseFloat(document.getElementById("ep-display-price")?.value||"")||null;
-  const shopPromoLabelVal=(document.getElementById("ep-promo-label")?.value||"").trim();
+  const bundleQtyVal=parseInt(document.getElementById("ep-bundle-qty")?.value||"",10);
+  const bundlePriceVal=parseFloat(document.getElementById("ep-bundle-price")?.value||"")||null;
   const shopDescriptionVal=(document.getElementById("ep-shop-description")?.value||"").trim();
-  const upd={name,currency:editCur,currencySymbol:CURR[editCur]?.symbol||"₩",paymentMethod:editPm,foreignAmount:fa,originalAmount:originalAmt,promoDivisor,promoPct,promoGroup,beforeTax,afterTax,finalPrice:price,profit,margin,twPrice,rivalPrice,rivalPrices,url,specs:newSpecs,specStock:newSpecStock,purchaseMultiple:purchaseMultipleVal>1?purchaseMultipleVal:null,shopDisplayPrice:shopDisplayPriceVal,shopPromoLabel:shopPromoLabelVal,shopDescription:shopDescriptionVal,aliases:newAliases,note:newNote,catKey:newCatKey,category:newCatObj.label,emoji:newCatObj.emoji,flags:newFlags,channel:window.G.editChannel||"",weight};
+  const upd={name,currency:editCur,currencySymbol:CURR[editCur]?.symbol||"₩",paymentMethod:editPm,foreignAmount:fa,originalAmount:originalAmt,promoDivisor,promoPct,promoGroup,beforeTax,afterTax,finalPrice:price,profit,margin,twPrice,rivalPrice,rivalPrices,url,specs:newSpecs,specStock:newSpecStock,purchaseMultiple:purchaseMultipleVal>1?purchaseMultipleVal:null,bundleQty:bundleQtyVal>1?bundleQtyVal:null,bundlePrice:bundlePriceVal,shopDescription:shopDescriptionVal,aliases:newAliases,note:newNote,catKey:newCatKey,category:newCatObj.label,emoji:newCatObj.emoji,flags:newFlags,channel:window.G.editChannel||"",weight};
   const oldId=m.id; // 一定要在下面用到 oldId 之前先宣告好，不然會直接丟出錯誤、卡在上傳中出不來
   const saveBtn2=document.querySelector('button[onclick="saveEditProd()"]');
   const origBtnHtml2=saveBtn2?.innerHTML;

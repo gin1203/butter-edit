@@ -76,7 +76,7 @@ const FIREBASE_PROJECT="thebutter-2eb30";
 const FIREBASE_API_KEY="AIzaSyAt6Te8T9DggqFmhBzZz5iEKIXlPH11DpE";
 const BASE_URL=`https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT}/databases/(default)/documents`;
 const WORKER_URL="https://butter-ai.kueigin.workers.dev";
-const LINE_LOGIN_CHANNEL_ID="2011286886";
+const LINE_LOGIN_CHANNEL_ID="2011503020";
 const LINE_OA_ID="@995iznve"; // 官方帳號 Basic ID
 
 const G={
@@ -380,7 +380,8 @@ function renderGrid(){
     // 這裡反推回「原價」給客人看（100×3÷2=150），總金額算法完全不變，只是顯示的單價文字比較合理，
     // 不會讓客人誤以為單買一件也是100
     const pMultiple=getPurchaseMultiple(p);
-    const displayPrice=p.shopDisplayPrice||(pMultiple?Math.round(price*pMultiple/(pMultiple-1)):price);
+    const gridHasBundleChoice=!!(p.bundleQty>1&&p.bundlePrice>0&&hasSpecs);
+    const displayPrice=gridHasBundleChoice?price:(pMultiple?Math.round(price*pMultiple/(pMultiple-1)):price);
     const allSoldOut=hasSpecs&&specsArr.every((_,i)=>{const st=(p.specStock||[])[i];const n=(st===null||st===undefined||st==="")?null:Number(st);return n!=null&&n<=0;});
     // 價格顯示：未登入顯示鎖頭
     const priceHtml=G.lineUser
@@ -389,7 +390,7 @@ function renderGrid(){
     return `<div onclick="openDetail('${p.id}')" style="background:white;border-radius:14px;border:1px solid #E8D5B0;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;position:relative">
       ${totalInCart>0?`<div style="position:absolute;top:8px;right:8px;z-index:2;background:#F4845F;color:white;font-size:10px;font-weight:900;border-radius:99px;width:20px;height:20px;display:flex;align-items:center;justify-content:center">${totalInCart}</div>`:""}
       ${allSoldOut?`<div style="position:absolute;top:8px;left:8px;z-index:2;background:rgba(0,0,0,0.45);color:white;font-size:10px;font-weight:700;border-radius:6px;padding:2px 7px">售完</div>`:""}
-      ${!allSoldOut&&pMultiple?`<div style="position:absolute;top:8px;left:8px;z-index:2;background:#FF6B35;color:white;font-size:10px;font-weight:900;border-radius:6px;padding:2px 7px">${p.shopPromoLabel||`買${pMultiple-1}送1`}</div>`:""}
+      ${!allSoldOut&&gridHasBundleChoice?`<div style="position:absolute;top:8px;left:8px;z-index:2;background:#FF6B35;color:white;font-size:10px;font-weight:900;border-radius:6px;padding:2px 7px">${p.bundleQty}件優惠</div>`:(!allSoldOut&&pMultiple?`<div style="position:absolute;top:8px;left:8px;z-index:2;background:#FF6B35;color:white;font-size:10px;font-weight:900;border-radius:6px;padding:2px 7px">買${pMultiple-1}送1</div>`:"")}
       <div style="width:100%;aspect-ratio:1/1;background:#FAF8F5;overflow:hidden">
         ${p.photo?`<img src="${p.photo}" style="width:100%;height:100%;object-fit:cover" loading="lazy"/>`:`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px">${p.emoji||"📦"}</div>`}
       </div>
@@ -440,7 +441,17 @@ function renderDetail(){
   const hasSpecs=Array.isArray(p.specs)&&p.specs.length>0;
   const specsArr=hasSpecs?p.specs.filter(s=>s!=null&&String(s).trim()!==""):[];
   const pMultiple=getPurchaseMultiple(p);
-  const isMultiMode=!!(pMultiple&&hasSpecs); // 有設定「最低購買倍數」（或本身就有2+1標籤）才用多規格同時選購介面
+  // 兩種多入促銷邏輯：
+  // 1) hasBundleChoice：新的「可選組合價」，客人自己選單件或組合，不是強迫湊倍數
+  // 2) oldForcedMultiMode：舊的「買X送1」強制湊倍數模式（沒設定組合價的舊商品維持原本行為）
+  const hasBundleChoice=!!(p.bundleQty>1&&p.bundlePrice>0&&hasSpecs);
+  const oldForcedMultiMode=!hasBundleChoice&&!!(pMultiple&&hasSpecs);
+  if(hasBundleChoice){
+    G.buyMode=G.buyMode||{};
+    if(!G.buyMode[pid])G.buyMode[pid]="single";
+  }
+  const buyMode=hasBundleChoice?G.buyMode[pid]:(oldForcedMultiMode?"bundle":"single");
+  const isMultiMode=buyMode==="bundle"; // 目前是不是要顯示「多規格湊單」介面
   const selIdx=G.selectedSpec[pid]??0;
   const specImg=isMultiMode?(p.photo||""):((p.specImages||[])[selIdx]||"");
   const mainImg=specImg||p.photo||"";
@@ -448,10 +459,28 @@ function renderDetail(){
   const stock=(stockRaw===null||stockRaw===undefined||stockRaw==="")?null:Number(stockRaw);
   const soldOut=stock!=null&&stock<=0;
   const cartKey=hasSpecs?`${pid}::${selIdx}`:pid;
-  const price=p.finalPrice||0;
-  const displayPrice=p.shopDisplayPrice||(pMultiple?Math.round(price*pMultiple/(pMultiple-1)):price);
+  const price=p.finalPrice||0; // 單件的真實售價
+  const displayPrice=(!hasBundleChoice&&pMultiple)?Math.round(price*pMultiple/(pMultiple-1)):price; // 舊模式才需要反推價格
   const dqty=G.detailQty||1;
   const totalCartQty=Object.values(G.cart).reduce((s,i)=>s+i.qty,0);
+
+  // 購買方案選擇卡片：只有設定了「組合件數＋組合總價」的商品才會出現，客人自己選單件或組合
+  // 未登入不能看到價格，所以這個卡片也要等登入後才顯示
+  const buyModeSelector=(hasBundleChoice&&G.lineUser)?`
+    <div style="margin-bottom:16px">
+      <div style="font-size:12px;font-weight:700;color:#9C7A5A;margin-bottom:8px">選擇購買方案</div>
+      <div style="display:flex;gap:8px">
+        <button onclick="setBuyMode('${pid}','single')" style="flex:1;padding:12px 8px;border-radius:12px;border:2px solid ${buyMode==="single"?"#5C3A1E":"#E8D5B0"};background:${buyMode==="single"?"#5C3A1E":"white"};color:${buyMode==="single"?"white":"#3D2010"};cursor:pointer;text-align:center">
+          <div style="font-size:11px;font-weight:700;opacity:0.85">單件</div>
+          <div style="font-size:17px;font-weight:900;margin-top:2px">NT$${price.toLocaleString()}</div>
+        </button>
+        <button onclick="setBuyMode('${pid}','bundle')" style="flex:1;padding:12px 8px;border-radius:12px;border:2px solid ${buyMode==="bundle"?"#5C3A1E":"#E8D5B0"};background:${buyMode==="bundle"?"#5C3A1E":"white"};color:${buyMode==="bundle"?"white":"#3D2010"};cursor:pointer;text-align:center;position:relative">
+          <div style="position:absolute;top:-8px;right:8px;background:#FF6B35;color:white;font-size:9px;font-weight:900;padding:2px 6px;border-radius:99px">划算</div>
+          <div style="font-size:11px;font-weight:700;opacity:0.85">${p.bundleQty}件組合</div>
+          <div style="font-size:17px;font-weight:900;margin-top:2px">NT$${p.bundlePrice.toLocaleString()}</div>
+        </button>
+      </div>
+    </div>`:"";
 
   const specBtns=(hasSpecs&&!isMultiMode)?`
     <div style="margin-bottom:16px">
@@ -470,21 +499,25 @@ function renderDetail(){
       </div>
     </div>`:"";
 
-  // 多規格同時選購區塊（2+1這類活動用）：每個規格各自一個數量輸入框，湊到倍數才能加入購物車
+  // 多規格同時選購區塊：每個規格各自一個數量輸入框，湊到指定件數才能加入購物車
   let multiSpecBlock="";
   if(isMultiMode){
     G.multiSpecQty=G.multiSpecQty||{};
     if(!G.multiSpecQty[pid])G.multiSpecQty[pid]=new Array(specsArr.length).fill(0);
     const qtys=G.multiSpecQty[pid];
     const total=qtys.reduce((s,n)=>s+n,0);
-    const multiple=pMultiple;
+    const multiple=hasBundleChoice?p.bundleQty:pMultiple;
+    // 組合模式：湊滿件數是固定總價（例如3件300），用平均下來的單位金額做小計試算
+    // 舊模式：沿用原本「買X送1」的平均單價（price 已經是平均後的售價）
+    const unitPriceForCalc=hasBundleChoice?(p.bundlePrice/p.bundleQty):price;
     const remainder=total%multiple;
     const isValid=total>0&&remainder===0;
+    const badgeLabel=hasBundleChoice?`${multiple}件$${p.bundlePrice.toLocaleString()}`:`買${multiple-1}送1`;
     multiSpecBlock=`
     <div style="margin-bottom:16px">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
         <div style="font-size:12px;font-weight:700;color:#9C7A5A">選擇規格與數量</div>
-        <span style="font-size:10px;font-weight:700;background:#FFF3E0;color:#E65100;border-radius:4px;padding:1px 6px">${p.shopPromoLabel||`買${multiple-1}送1`}</span>
+        <span style="font-size:10px;font-weight:700;background:#FFF3E0;color:#E65100;border-radius:4px;padding:1px 6px">${badgeLabel}</span>
       </div>
       <div style="font-size:11px;color:#9C7A5A;margin-bottom:10px">口味/款式可以任選混搭</div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
@@ -510,7 +543,7 @@ function renderDetail(){
       <div style="display:flex;align-items:center;justify-content:space-between;background:${isValid?"#F0FFF4":"#FFF8E1"};border:1px solid ${isValid?"#A5D6A7":"#FFE082"};border-radius:10px;padding:10px 14px">
         <div>
           <div style="font-size:13px;font-weight:900;color:${isValid?"#2E7D32":"#7B5800"}">已選 ${total} 件</div>
-          ${total>0?`<div style="font-size:12px;font-weight:800;color:${isValid?"#2E7D32":"#7B5800"};margin-top:1px">小計 NT$${(price*total).toLocaleString()}</div>`:""}
+          ${total>0?`<div style="font-size:12px;font-weight:800;color:${isValid?"#2E7D32":"#7B5800"};margin-top:1px">小計 NT$${Math.round(unitPriceForCalc*total).toLocaleString()}</div>`:""}
         </div>
         <div style="font-size:11px;font-weight:700;color:${isValid?"#2E7D32":"#E65100"}">${total===0?`請選擇 ${multiple} 的倍數`:isValid?"✓ 可以加入購物車":`還差 ${multiple-remainder} 件才湊到 ${multiple} 的倍數`}</div>
       </div>
@@ -525,7 +558,8 @@ function renderDetail(){
     G.multiSpecQty=G.multiSpecQty||{};
     const qtys=G.multiSpecQty[pid]||new Array(specsArr.length).fill(0);
     const total=qtys.reduce((s,n)=>s+n,0);
-    const isValid=total>0&&total%pMultiple===0;
+    const activeMultiple=hasBundleChoice?p.bundleQty:pMultiple;
+    const isValid=total>0&&total%activeMultiple===0;
     bottomBtn=`<div style="display:flex;gap:8px">
       <button ${isValid?"":"disabled"} onclick="detailAddMultiSpecToCart('${pid}')" style="flex:1;background:${isValid?"white":"#F5F5F5"};color:${isValid?"#F4845F":"#BDBDBD"};border:2px solid ${isValid?"#F4845F":"#E8D5B0"};border-radius:12px;padding:14px;font-size:13px;font-weight:900;cursor:${isValid?"pointer":"not-allowed"}">加入購物車</button>
       <button ${isValid?"":"disabled"} onclick="detailAddMultiSpecToCart('${pid}',true)" style="flex:1;background:${isValid?"#F4845F":"#E8D5B0"};color:white;border:none;border-radius:12px;padding:14px;font-size:13px;font-weight:900;cursor:${isValid?"pointer":"not-allowed"}">立即購買</button>
@@ -566,9 +600,11 @@ function renderDetail(){
       <div style="font-size:10px;color:#9C7A5A;font-weight:700;margin-bottom:4px">${p.category||""}</div>
       <div style="font-size:18px;font-weight:900;color:#3D2010;line-height:1.3;margin-bottom:8px">${cleanProductName(p.name)}</div>
       ${p.shopDescription?`<div style="font-size:13px;color:#5C3A1E;line-height:1.7;white-space:pre-wrap;margin-bottom:16px">${p.shopDescription}</div>`:""}
-      ${G.lineUser
+      ${buyModeSelector}
+      ${!hasBundleChoice?(G.lineUser
         ?`<div style="margin-bottom:20px"><div style="font-size:22px;font-weight:900;color:#F4845F">NT$ ${displayPrice.toLocaleString()}</div></div>`
-        :`<div style="display:inline-flex;align-items:center;gap:6px;background:#F5F5F5;border-radius:8px;padding:8px 14px;margin-bottom:20px;cursor:pointer" onclick="lineLogin()"><span style="font-size:14px">🔒</span><span style="font-size:13px;font-weight:700;color:#9C7A5A">登入 LINE 查看價格</span></div>`}
+        :`<div style="display:inline-flex;align-items:center;gap:6px;background:#F5F5F5;border-radius:8px;padding:8px 14px;margin-bottom:20px;cursor:pointer" onclick="lineLogin()"><span style="font-size:14px">🔒</span><span style="font-size:13px;font-weight:700;color:#9C7A5A">登入 LINE 查看價格</span></div>`)
+        :(!G.lineUser?`<div style="display:inline-flex;align-items:center;gap:6px;background:#F5F5F5;border-radius:8px;padding:8px 14px;margin-bottom:20px;cursor:pointer" onclick="lineLogin()"><span style="font-size:14px">🔒</span><span style="font-size:13px;font-weight:700;color:#9C7A5A">登入 LINE 查看價格</span></div>`:"")}
       ${isMultiMode?multiSpecBlock:specBtns}
       ${(G.lineUser&&!soldOut&&!isMultiMode)?`
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
@@ -593,6 +629,13 @@ function renderDetail(){
 }
 
 // 多規格同時選購：調整某個規格的數量，會檢查庫存上限
+// 切換「單件」或「組合」購買方案
+function setBuyMode(pid,mode){
+  G.buyMode=G.buyMode||{};
+  G.buyMode[pid]=mode;
+  G.detailQty=1;
+  renderDetail();
+}
 function changeMultiSpecQty(pid,specIdx,delta){
   const p=G.products.find(x=>x.id===pid);if(!p)return;
   G.multiSpecQty=G.multiSpecQty||{};
@@ -613,17 +656,24 @@ function detailAddMultiSpecToCart(pid,buyNow){
   const specsArr=(p.specs||[]).filter(s=>s!=null&&String(s).trim()!=="");
   const qtys=(G.multiSpecQty||{})[pid]||[];
   const total=qtys.reduce((s,n)=>s+n,0);
-  const multiple=getPurchaseMultiple(p)||1;
+  const hasBundleChoice=!!(p.bundleQty>1&&p.bundlePrice>0);
+  const multiple=hasBundleChoice?p.bundleQty:(getPurchaseMultiple(p)||1);
   if(total===0||total%multiple!==0){
     showToast(`請選擇 ${multiple} 的倍數才能加入購物車`);
     return;
   }
+  // 組合模式：購物車裡存的商品要用「組合平均單價」計算，不能用單件的真實售價，
+  // 不然客人明明選了3件300的組合，購物車卻算成3件×120=360，多收錢了
+  const cartProduct=hasBundleChoice?{...p,finalPrice:p.bundlePrice/p.bundleQty}:p;
+  // 組合模式的購物車key要跟單件購買分開，不然同一個規格如果客人分別用「單件」跟「組合」
+  // 各買過一次，會共用同一個key互相蓋掉彼此的單價設定
+  const keySuffix=hasBundleChoice?"::bundle":"";
   specsArr.forEach((spec,i)=>{
     const qty=qtys[i]||0;
     if(qty<=0)return;
-    const cartKey=`${pid}::${i}`;
+    const cartKey=`${pid}::${i}${keySuffix}`;
     const cur=G.cart[cartKey]?.qty||0;
-    G.cart[cartKey]={qty:cur+qty,product:p,specIndex:i,spec};
+    G.cart[cartKey]={qty:cur+qty,product:cartProduct,specIndex:i,spec};
   });
   G.multiSpecQty[pid]=new Array(specsArr.length).fill(0);
   showToast(`已加入購物車`);
@@ -659,7 +709,9 @@ function saveCartToStorage(){
   try{
     const minimal={};
     for(const[key,item]of Object.entries(G.cart)){
-      minimal[key]={productId:item.product.id,specIndex:item.specIndex,spec:item.spec,qty:item.qty};
+      // 記錄這是不是「組合模式」加進來的，恢復的時候才知道要不要用組合平均單價，
+      // 不然重新整理頁面後，組合價的商品會變回單件真實售價，價格算錯
+      minimal[key]={productId:item.product.id,specIndex:item.specIndex,spec:item.spec,qty:item.qty,isBundle:key.endsWith("::bundle")};
     }
     localStorage.setItem("butter_cart",JSON.stringify(minimal));
   }catch(e){/* 存不進去就算了，不要影響購物流程 */}
@@ -673,7 +725,10 @@ function restoreCartFromStorage(){
     for(const[key,item]of Object.entries(minimal)){
       const product=G.products.find(p=>p.id===item.productId);
       if(!product)continue; // 商品可能已經下架，這種就不要恢復了
-      restored[key]={qty:item.qty,product,specIndex:item.specIndex,spec:item.spec};
+      const cartProduct=(item.isBundle&&product.bundleQty>1&&product.bundlePrice>0)
+        ?{...product,finalPrice:product.bundlePrice/product.bundleQty}
+        :product;
+      restored[key]={qty:item.qty,product:cartProduct,specIndex:item.specIndex,spec:item.spec};
     }
     G.cart=restored;
   }catch(e){/* 讀不到就當作空的購物車 */}
