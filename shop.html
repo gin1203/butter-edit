@@ -989,18 +989,18 @@ async function submitOrder(){
       }
     }
 
-    // 建立/更新客戶資料
+    // 建立/更新客戶資料：交給 Worker 處理，Worker 會先比對這個人是不是已經有舊的客戶資料
+    // （例如之前直接跟官方LINE聊過、你手動登記過），有的話直接沿用同一筆，不會重複建立
     let customerId;
     if(G.lineUser?.userId){
-      customerId="line_"+G.lineUser.userId.slice(0,16);
-      const existing=await fsGet("customers",customerId);
-      const merged=existing?{...existing}:{};
-      delete merged.id;
-      if(!merged.communityName)merged.communityName=community;
-      if(!merged.phone)merged.phone=phone;
-      if(!merged.lineUserId)merged.lineUserId=G.lineUser.userId;
-      if(!merged.lineName)merged.lineName=G.lineUser.displayName||"";
-      await fsCreate("customers",customerId,{...merged,communityName:community,phone,createdAt:merged.createdAt||Date.now()});
+      try{
+        const resp=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json","X-Service":"find-or-create-shop-customer"},body:JSON.stringify({userId:G.lineUser.userId,displayName:G.lineUser.displayName||"",community,phone})});
+        const data=await resp.json();
+        customerId=data.customerId||("line_"+G.lineUser.userId.slice(0,16));
+      }catch(e){
+        // Worker 那邊萬一出問題，還是要讓客人能正常下單，退回原本「用LINE帳號直接算ID」的做法
+        customerId="line_"+G.lineUser.userId.slice(0,16);
+      }
     } else {
       customerId="web_"+Date.now();
       await fsCreate("customers",customerId,{communityName:community,lineName:name,phone,note:"（商城下單）",createdAt:Date.now()});
