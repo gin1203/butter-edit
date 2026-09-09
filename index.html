@@ -412,7 +412,7 @@ body.live-mode .hide-live { display: none !important; }
   <div id="product-toolbar" style="display:flex;gap:6px;margin-bottom:8px;align-items:center">
     <button id="list-view-toggle" onclick="toggleListView()" style="background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:7px 12px;font-size:16px;cursor:pointer" title="切換顯示模式">☰</button>
     <div style="position:relative;flex:1">
-      <button onclick="event.stopPropagation();toggleListToolsMenu()" style="width:100%;padding:8px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #E8D5B0;background:#FAF8F5;color:#9C7A5A;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">⋯ 更多工具</button>
+      <button onclick="event.stopPropagation();toggleListToolsMenu()" style="width:100%;padding:8px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #E8D5B0;background:#FAF8F5;color:#9C7A5A;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">更多工具</button>
       <div id="list-tools-menu" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:white;border:1px solid #E8D5B0;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:20;overflow:hidden">
         <button onclick="event.stopPropagation();closeListToolsMenu();exportProductCSV()" style="display:block;width:100%;text-align:left;font-size:12px;color:#2980B9;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600">📤 匯出商品庫</button>
         <button onclick="event.stopPropagation();closeListToolsMenu();showStockPlan()" style="display:block;width:100%;text-align:left;font-size:12px;color:#E07B39;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">📋 備貨清單</button>
@@ -422,9 +422,9 @@ body.live-mode .hide-live { display: none !important; }
       </div>
     </div>
     <select id="list-sort-select" class="hide-live" onchange="setListSortMode(this.value)" style="flex:1;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 6px;font-size:12px;font-weight:700;color:#3D2010;outline:none;cursor:pointer;text-align:center;text-align-last:center">
-      <option value="default">🕐 上架順序</option>
-      <option value="sold">🔥 熱銷排行</option>
-      <option value="profit">💰 利潤高低</option>
+      <option value="default">上架順序</option>
+      <option value="sold">熱銷排行</option>
+      <option value="profit">利潤高低</option>
     </select>
     <select id="list-filter-select" onchange="setListFilterMode(this.value)" style="flex:1;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 6px;font-size:12px;font-weight:700;color:#3D2010;outline:none;cursor:pointer;text-align:center;text-align-last:center">
       <option value="all">全部商品</option>
@@ -486,12 +486,13 @@ body.live-mode .hide-live { display: none !important; }
   <div id="cust-status-tabs" style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:8px"></div>
   <div id="cust-filter-chips" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px"></div>
   <div style="position:relative;margin-bottom:8px">
-    <button onclick="event.stopPropagation();toggleCustToolsMenu()" style="width:100%;padding:8px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #E8D5B0;background:#FAF8F5;color:#9C7A5A;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">⋯ 更多工具</button>
+    <button onclick="event.stopPropagation();toggleCustToolsMenu()" style="width:100%;padding:8px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #E8D5B0;background:#FAF8F5;color:#9C7A5A;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">更多工具</button>
     <div id="cust-tools-menu" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:white;border:1px solid #E8D5B0;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:20;overflow:hidden">
       <button onclick="event.stopPropagation();closeCustToolsMenu();openBatchOrder()" style="display:block;width:100%;text-align:left;font-size:12px;color:#AD1457;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600">📋 喊單文字</button>
       <button onclick="event.stopPropagation();closeCustToolsMenu();showTripOrphanScan()" style="display:block;width:100%;text-align:left;font-size:12px;color:#92400E;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">✈️ 趟次異常</button>
       <button onclick="event.stopPropagation();closeCustToolsMenu();showTotalsCrossCheck()" style="display:block;width:100%;text-align:left;font-size:12px;color:#166534;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">🔍 三頁金額交叉核對</button>
       <button onclick="event.stopPropagation();closeCustToolsMenu();showCartAbandons()" style="display:block;width:100%;text-align:left;font-size:12px;color:#7C3AED;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">🛒 尚未結帳訂單／棄單</button>
+      <button onclick="event.stopPropagation();closeCustToolsMenu();showLineUserCleanup()" style="display:block;width:100%;text-align:left;font-size:12px;color:#0891B2;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">🧹 清理LINE使用者紀錄</button>
     </div>
   </div>
   <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#9C7A5A;margin-bottom:8px;cursor:pointer">
@@ -521,7 +522,7 @@ body.live-mode .hide-live { display: none !important; }
   </div>
   <!-- 匯出功能不常用，收進「更多工具」，平常不佔版面 -->
   <div style="position:relative;margin-bottom:12px">
-    <button onclick="event.stopPropagation();toggleInvToolsMenu()" style="width:100%;padding:8px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #E8D5B0;background:#FAF8F5;color:#9C7A5A;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">⋯ 更多工具</button>
+    <button onclick="event.stopPropagation();toggleInvToolsMenu()" style="width:100%;padding:8px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #E8D5B0;background:#FAF8F5;color:#9C7A5A;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">更多工具</button>
     <div id="inv-tools-menu" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:white;border:1px solid #E8D5B0;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:20;overflow:hidden">
       <button onclick="event.stopPropagation();closeInvToolsMenu();exportProductCSV()" style="display:block;width:100%;text-align:left;font-size:12px;color:#2980B9;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600">📤 匯出商品庫</button>
       <button onclick="event.stopPropagation();closeInvToolsMenu();exportShippingCSV()" style="display:block;width:100%;text-align:left;font-size:12px;color:#2980B9;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">📦 匯出買家對帳單</button>
@@ -5500,6 +5501,101 @@ window.deleteCartAbandon=async function(id){
     showToast("刪除失敗："+e.message,"error");
   }
 };
+window.showLineUserCleanup=function(){
+  let modal=document.getElementById("modal-line-user-cleanup");
+  if(!modal){
+    modal=document.createElement("div");
+    modal.id="modal-line-user-cleanup";
+    modal.className="modal-overlay";
+    modal.style.cssText="display:none;position:fixed;inset:0;z-index:120;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;padding:16px";
+    modal.innerHTML=`<div style="background:white;border-radius:18px;width:100%;max-width:480px;max-height:85vh;display:flex;flex-direction:column">
+      <div style="padding:18px 20px 12px;border-bottom:1px solid #F0E6D0">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div>
+            <h3 style="margin:0;font-size:15px;font-weight:900;color:#3D2010">🧹 清理LINE使用者紀錄</h3>
+            <div style="font-size:10px;color:#9C7A5A;margin-top:2px">刪除不需要的LINE帳號紀錄，能消除「同名」誤判警示</div>
+          </div>
+          <button onclick="document.getElementById('modal-line-user-cleanup').style.display='none'" style="background:none;border:none;font-size:20px;color:#9C7A5A;cursor:pointer">×</button>
+        </div>
+        <input id="line-user-cleanup-search" type="text" placeholder="搜尋LINE顯示名稱..." oninput="renderLineUserCleanup()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 12px;font-size:13px;outline:none;box-sizing:border-box"/>
+      </div>
+      <div id="line-user-cleanup-content" style="padding:14px 20px 20px;overflow-y:auto;flex:1"></div>
+    </div>`;
+    document.body.appendChild(modal);
+  }
+  modal.style.display="flex";
+  window.renderLineUserCleanup();
+};
+window.renderLineUserCleanup=async function(){
+  const box=document.getElementById("line-user-cleanup-content");
+  if(!box)return;
+  box.innerHTML=`<div style="text-align:center;padding:20px;color:#9C7A5A;font-size:12px">載入中…</div>`;
+  try{
+    const{getDocs,collection:col}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    const snap=await getDocs(col(db,"line_users"));
+    let records=snap.docs.map(d=>d.data());
+    const q=(document.getElementById("line-user-cleanup-search")?.value||"").trim().toLowerCase();
+    if(q)records=records.filter(r=>(r.displayName||"").toLowerCase().includes(q));
+    // 沒有搜尋文字時，優先顯示「同名超過1筆」的群組，方便你一眼找到造成警示的重複紀錄
+    if(!q){
+      const nameCounts={};
+      records.forEach(r=>{
+        const key=(r.displayName||"").trim().toLowerCase();
+        nameCounts[key]=(nameCounts[key]||0)+1;
+      });
+      records.sort((a,b)=>{
+        const ca=nameCounts[(a.displayName||"").trim().toLowerCase()]||0;
+        const cb=nameCounts[(b.displayName||"").trim().toLowerCase()]||0;
+        if(ca!==cb)return cb-ca; // 同名筆數多的排前面
+        return (b.updatedAt||0)-(a.updatedAt||0);
+      });
+    }
+    if(!records.length){
+      box.innerHTML=`<div style="text-align:center;padding:30px 10px;color:#9C7A5A;font-size:12px">${q?"找不到符合的紀錄":"目前沒有紀錄"}</div>`;
+      return;
+    }
+    const nameCounts2={};
+    records.forEach(r=>{const key=(r.displayName||"").trim().toLowerCase();nameCounts2[key]=(nameCounts2[key]||0)+1;});
+    box.innerHTML=`<div style="font-size:11px;color:#9C7A5A;margin-bottom:10px">共 ${records.length} 筆</div>`+
+      records.map(r=>{
+        const key=(r.displayName||"").trim().toLowerCase();
+        const isDup=nameCounts2[key]>1;
+        const dateStr=r.updatedAt?new Date(r.updatedAt).toLocaleDateString("zh-TW"):"";
+        return `<div style="background:${isDup?"#FFF8E1":"#FAF8F5"};border:1px solid ${isDup?"#FFE082":"#E8D5B0"};border-radius:10px;padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;gap:10px">
+          ${r.pictureUrl?`<img src="${r.pictureUrl}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0"/>`:`<div style="width:36px;height:36px;border-radius:50%;background:#E8D5B0;flex-shrink:0"></div>`}
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-size:13px;font-weight:700;color:#3D2010">${r.displayName||"（無名稱）"}</span>
+              ${isDup?`<span style="font-size:9px;font-weight:700;background:#F59E0B;color:white;padding:1px 6px;border-radius:99px">同名${nameCounts2[key]}筆</span>`:""}
+            </div>
+            <div style="font-size:10px;color:#9C7A5A">最後更新：${dateStr||"未知"}</div>
+          </div>
+          <button data-uid="${r.userId}" onclick="deleteLineUserRecord(this.dataset.uid)" style="flex-shrink:0;background:#FDEDEC;color:#C0392B;border:1px solid #F1948A;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer">刪除</button>
+        </div>`;
+      }).join("");
+  }catch(e){
+    box.innerHTML=`<div style="text-align:center;padding:20px;color:#C0392B;font-size:12px">載入失敗：${e.message}</div>`;
+  }
+};
+window.deleteLineUserRecord=async function(userId){
+  if(!confirm("確定刪除這筆LINE使用者紀錄？\n（只會刪除這筆識別紀錄，不會動到任何客戶或訂單資料）"))return;
+  try{
+    await fbDel("line_users",userId);
+    // 同步更新已經載入的 lineUserMap，不用重新整理頁面就能反映最新狀態
+    if(window.G.lineUserMap){
+      Object.keys(window.G.lineUserMap).forEach(key=>{
+        window.G.lineUserMap[key]=window.G.lineUserMap[key].filter(u=>u.userId!==userId);
+        if(!window.G.lineUserMap[key].length)delete window.G.lineUserMap[key];
+      });
+      renderCustomers();
+    }
+    window.renderLineUserCleanup();
+    showToast("已刪除");
+  }catch(e){
+    showToast("刪除失敗："+e.message,"error");
+  }
+};
+
 window.showTotalsCrossCheck=function(){
   let modal=document.getElementById("modal-totals-crosscheck");
   if(!modal){
