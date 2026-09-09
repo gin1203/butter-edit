@@ -881,7 +881,7 @@ function getCartPricing(items){
     if(!grp){
       const price=item.product.finalPrice||0;
       total+=price*item.qty;
-      pricingByCartKey[cartKey]={item,unitPrice:price,discounted:false,groupTag:tag};
+      pricingByCartKey[cartKey]={item,unitPrice:price,discounted:false,groupTag:tag,discountedQty:0,fullPriceQty:item.qty,itemTotal:price*item.qty};
       return;
     }
     // 這個商品的數量裡，優先扣掉還沒用完的折扣額度，額度用完之後剩下的算原價
@@ -897,7 +897,7 @@ function getCartPricing(items){
     // 顯示的單價用平均下來的金額，確保跟實際總價對得起來
     const discounted=discountedQty>0;
     const avgUnitPrice=item.qty>0?Math.round(itemTotal/item.qty):originalPrice;
-    pricingByCartKey[cartKey]={item,unitPrice:discounted?avgUnitPrice:originalPrice,discounted,groupTag:tag};
+    pricingByCartKey[cartKey]={item,unitPrice:discounted?avgUnitPrice:originalPrice,discounted,groupTag:tag,discountedQty,fullPriceQty,itemTotal,discountedUnitPrice:discountedPrice,originalPrice};
   });
   // 照原本 items 的順序輸出，畫面顯示順序才不會因為內部按價格排序而跳動
   const itemPricing=items.map(item=>{
@@ -1034,8 +1034,18 @@ function renderCartSummary(){
   const{total,itemPricing}=getCartPricing(items);
   const originalTotal=items.reduce((s,i)=>s+i.qty*(i.product.finalPrice||0),0);
   const savedAmount=originalTotal-total;
-  el.innerHTML=itemPricing.map(({item,unitPrice,discounted})=>{
+  el.innerHTML=itemPricing.map(({item,discounted,discountedQty,fullPriceQty,itemTotal,discountedUnitPrice,originalPrice})=>{
     const cartKey=item.specIndex!=null?`${item.product.id}::${item.specIndex}`:item.product.id;
+    const isMixed=discounted&&fullPriceQty>0; // 這一筆裡面有部分打折、部分沒打折
+    let priceLine;
+    if(!discounted){
+      priceLine=`<span style="color:#F4845F">NT$${(item.product.finalPrice||0).toLocaleString()}</span> × ${item.qty}`;
+    } else if(isMixed){
+      // 部分打折、部分沒打折：不要顯示模糊的平均單價，直接把兩種數量分開寫清楚
+      priceLine=`<span style="color:#E65100">${discountedQty}件優惠價NT$${discountedUnitPrice.toLocaleString()}</span> + <span style="color:#9C7A5A">${fullPriceQty}件原價NT$${originalPrice.toLocaleString()}</span>`;
+    } else {
+      priceLine=`<span style="color:#BDBDBD;text-decoration:line-through">NT$${(item.product.finalPrice||0).toLocaleString()}</span><span style="color:#E65100">NT$${discountedUnitPrice.toLocaleString()}</span> × ${item.qty}`;
+    }
     return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #FAF8F5">
       <div style="width:44px;height:44px;border-radius:8px;overflow:hidden;background:#FAF8F5;flex-shrink:0">
         ${item.product.photo?`<img src="${item.product.photo}" style="width:100%;height:100%;object-fit:cover"/>`:
@@ -1044,10 +1054,11 @@ function renderCartSummary(){
       <div style="flex:1;min-width:0">
         <div style="font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cleanProductName(item.product.name)}</div>
         ${item.spec?`<div style="font-size:11px;color:#9C7A5A">${item.spec}</div>`:""}
-        <div style="font-size:12px;font-weight:700;display:flex;align-items:center;gap:5px">
-          ${discounted?`<span style="color:#BDBDBD;text-decoration:line-through">NT$${(item.product.finalPrice||0).toLocaleString()}</span><span style="color:#E65100">NT$${unitPrice.toLocaleString()}</span>`:`<span style="color:#F4845F">NT$${unitPrice.toLocaleString()}</span>`} × ${item.qty}
-          ${discounted?`<span style="font-size:9px;font-weight:700;background:#FFF3E0;color:#E65100;border-radius:4px;padding:1px 5px">優惠中</span>`:""}
+        <div style="font-size:12px;font-weight:700;display:flex;align-items:center;gap:5px;flex-wrap:wrap">
+          ${priceLine}
+          ${discounted&&!isMixed?`<span style="font-size:9px;font-weight:700;background:#FFF3E0;color:#E65100;border-radius:4px;padding:1px 5px">優惠中</span>`:""}
         </div>
+        <div style="font-size:11px;color:#9C7A5A;margin-top:2px">小計 NT$${itemTotal.toLocaleString()}</div>
       </div>
       <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
         <button onclick="cartQty('${cartKey}',-1)" style="width:26px;height:26px;border:1px solid #E8D5B0;background:white;border-radius:6px;font-size:14px;font-weight:900;color:#5C3A1E;cursor:pointer">−</button>
