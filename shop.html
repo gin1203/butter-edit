@@ -167,12 +167,33 @@ async function fsQuery(col,field,value){
 }
 async function fsListShopProducts(){
   const url=`${BASE_URL}:runQuery?key=${FIREBASE_API_KEY}`;
-  const body={structuredQuery:{from:[{collectionId:"products"}],where:{fieldFilter:{field:{fieldPath:"shopVisible"},op:"EQUAL",value:{booleanValue:true}}},limit:1000}};
+  // 商品格子頁只需要這些輕量欄位就能顯示（名稱/價格/主圖/促銷資訊），
+  // 不需要每個規格各自的圖片（specImages 通常是整份資料裡最肥的部分，
+  // 客人真的點進某個商品的詳情頁時，才會另外用 fsGetFullProduct 抓那一個商品的完整資料）。
+  // 這樣同時瀏覽的客人越多、商品越多，省下的流量越可觀。
+  const fieldPaths=["name","finalPrice","photo","category","catKey","specs","specStock",
+    "purchaseMultiple","promoDivisor","bundleQty","bundlePrice","shopVisible","archived","weight"];
+  const body={structuredQuery:{
+    from:[{collectionId:"products"}],
+    where:{fieldFilter:{field:{fieldPath:"shopVisible"},op:"EQUAL",value:{booleanValue:true}}},
+    select:{fields:fieldPaths.map(f=>({fieldPath:f}))},
+    limit:1000,
+  }};
   const resp=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
   const data=await resp.json();
   const errEntry=Array.isArray(data)?data.find(r=>r.error):null;
   if(errEntry)throw new Error(errEntry.error?.message||"讀取商品失敗");
   return (data||[]).filter(r=>r.document).map(r=>fsDoc(r.document)).filter(p=>p.archived!==true);
+}
+// 客人點進商品詳情頁時，才抓這個商品的完整資料（含每個規格各自的圖片、商品說明等）。
+// 用列表頁已經有的輕量資料先當底，補上完整資料後蓋過去，這樣即使這次抓取失敗，
+// 至少列表頁原本的名稱/價格還在，畫面不會整個空白
+async function fsGetFullProduct(pid){
+  const full=await fsGet("products",pid);
+  if(!full)return null;
+  const idx=G.products.findIndex(p=>p.id===pid);
+  if(idx>=0)G.products[idx]={...G.products[idx],...full};
+  return full;
 }
 
 // ── LINE Login ─────────────────────────────────────
@@ -317,7 +338,11 @@ async function loadProducts(){
 let _productRefreshTimer=null;
 function startProductAutoRefresh(){
   clearInterval(_productRefreshTimer);
+  // 原本30秒重抓一次全部商品（含所有圖片），流量消耗太大，容易撞到 Firebase 免費方案的用量上限，
+  // 導致整個商城讀取失敗。改成5分鐘一次，而且分頁切到背景/離開時完全不抓，
+  // 大幅降低不必要的流量消耗
   _productRefreshTimer=setInterval(async()=>{
+    if(document.hidden)return; // 客人切到別的分頁/背景時，不要浪費流量重抓
     try{
       const fresh=await fsListShopProducts();
       G.products=fresh;
@@ -326,7 +351,7 @@ function startProductAutoRefresh(){
       if(onCatalog){renderCatTabs();renderGrid();}
       if(onDetail){renderDetail();}
     }catch(e){/* 背景更新失敗就算了，不要用錯誤訊息打擾客人，下次還會再試 */}
-  },30000);
+  },300000);
 }
 function showShopClosed(msg){
   document.getElementById("catalog-view").innerHTML=`
@@ -425,7 +450,7 @@ function renderGrid(){
 }
 
 // ── 詳情頁 ─────────────────────────────────────────
-function openDetail(pid){
+async function openDetail(pid){
   const p=G.products.find(x=>x.id===pid);if(!p)return;
   G.detailProduct=pid;
   G.selectedSpec=G.selectedSpec||{};
@@ -443,8 +468,22 @@ function openDetail(pid){
   document.getElementById("detail-view").style.display="block";
   document.getElementById("main-header").style.display="none";
   document.getElementById("cart-bar").style.display="none"; // 詳情頁自己底部就有按鈕，蓋住浮動購物車列避免互相遮擋
+  // 先用列表頁已經有的輕量資料立刻畫出來（名稱/價格看得到，不會空白等待），
+  // 每個規格各自的圖片、商品說明這些比較肥的欄位，另外抓一次補上去，
+  // 不用每次瀏覽商品格子就把「全部商品的所有規格圖片」都下載一次
   renderDetail();
   window.scrollTo(0,0);
+  if(!p._fullyLoaded){
+    try{
+      const full=await fsGetFullProduct(pid);
+      if(full){
+        full._fullyLoaded=true;
+        const idx=G.products.findIndex(x=>x.id===pid);
+        if(idx>=0)G.products[idx]._fullyLoaded=true;
+        if(G.detailProduct===pid)renderDetail(); // 客人可能已經滑走了，不是同一個商品才不用重畫
+      }
+    }catch(e){/* 抓不到完整資料就算了，至少列表頁的基本資訊還在，不會整個空白 */}
+  }
 }
 function closeDetail(){
   document.getElementById("detail-view").style.display="none";
