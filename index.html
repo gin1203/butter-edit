@@ -8570,6 +8570,83 @@ window.eoUpdateDiscountPreview=function(){
   }
 };
 
+// 手動新增訂單時，自動套用跨商品促銷折扣（例如任選2件95折）——
+// 跟商城端 getCartPricing 用同一套規則：先算出這批商品裡「湊成整數倍之後有幾件能打折」，
+// 折扣優先套用在比較貴的商品上，多出來的零頭（湊不成整數倍的部分）算原價。
+// 因為是代購模式（先收單、之後才去採購），客人可能分好幾次陸續加單，
+// 所以這裡不只看「這次新加的」，還會把這個客人「還沒出貨/結清」的舊訂單也一起抓進來合併計算，
+// 湊到門檻的話舊訂單的價格也會跟著回頭更新，不會因為分批下單就吃虧。
+async function applyCrossPromoToPendingItems(pendingItems,customerId){
+  // 先找出這批新商品裡，有沒有任何一個屬於跨商品促銷組合，完全沒有就不用查舊訂單，省一次查詢
+  const hasAnyPromo=pendingItems.some(item=>{
+    const p=window.G.products.find(x=>x.id===item.productId);
+    return !!(p?.crossPromoGroup||"").trim?.() || !!(p?.crossPromoGroup);
+  });
+  if(!hasAnyPromo)return;
+
+  // 這個客人「還沒出貨、還沒結清」的舊訂單，才算「還能回頭調整價格」的範圍——
+  // 已經出貨或已經付清尾款的訂單，代表這筆帳已經算清楚給客人看過了，不應該再默默改價格
+  const existingOrders=(window.G.orders||[]).filter(o=>
+    o.customerId===customerId&&o.status!=="shipped"&&o.status!=="settled"&&!o.batchClosed&&o.orderType!=="quote"
+  );
+  // 把舊訂單包裝成跟新商品一樣的格式，方便共用同一套計算邏輯；
+  // 用 unitPrice（原始售價）當基準重算，不要用 discountPrice，不然如果之前已經打過折，
+  // 這次重算會拿「已經打折的價格」當原價，越算越低
+  const existingAsItems=existingOrders.map(o=>({
+    _isExisting:true,_orderId:o.id,
+    productId:o.productId,unitPrice:o.unitPrice||o.discountPrice||0,qty:o.qty||1,
+  }));
+  const allItems=[...existingAsItems,...pendingItems];
+
+  const groups={};
+  allItems.forEach(item=>{
+    const p=window.G.products.find(x=>x.id===item.productId);
+    const tag=(p?.crossPromoGroup||"").trim();
+    if(!tag)return;
+    if(!groups[tag])groups[tag]={qty:0,minQty:p.crossPromoMinQty||2,pct:p.crossPromoPct||100};
+    groups[tag].qty+=item.qty;
+  });
+  if(!Object.keys(groups).length)return;
+  const discountBudget={};
+  Object.keys(groups).forEach(tag=>{
+    const g=groups[tag];
+    discountBudget[tag]=Math.floor(g.qty/g.minQty)*g.minQty;
+  });
+  const sorted=[...allItems].sort((a,b)=>(b.unitPrice||0)-(a.unitPrice||0));
+  const existingUpdates=[]; // 需要回頭更新的舊訂單
+  sorted.forEach(item=>{
+    const p=window.G.products.find(x=>x.id===item.productId);
+    const tag=(p?.crossPromoGroup||"").trim();
+    if(!tag)return;
+    const grp=groups[tag];
+    const remain=discountBudget[tag];
+    const discountedQty=Math.min(remain,item.qty);
+    const fullPriceQty=item.qty-discountedQty;
+    discountBudget[tag]-=discountedQty;
+    const originalPrice=item.unitPrice||0;
+    const discountedUnitPrice=Math.round(originalPrice*grp.pct/100);
+    const itemTotal=discountedUnitPrice*discountedQty+originalPrice*fullPriceQty;
+    const avgPrice=item.qty>0?Math.round(itemTotal/item.qty):originalPrice;
+    const note=discountedQty>0?`促銷折扣(${discountedQty}/${item.qty}件${grp.pct}折)`:"";
+    if(item._isExisting){
+      // 舊訂單的價格是不是真的有變動，有變才需要多寫一次 Firestore，沒變就不用動它
+      existingUpdates.push({orderId:item._orderId,discountPrice:avgPrice,total:itemTotal,note});
+    } else {
+      item.discountPrice=avgPrice;
+      item.total=itemTotal;
+      if(note)item.discountNote=item.discountNote?item.discountNote+"、"+note:note;
+    }
+  });
+  // 回頭更新舊訂單的價格
+  for(const u of existingUpdates){
+    const o=window.G.orders.find(x=>x.id===u.orderId);
+    if(o&&(o.discountPrice!==u.discountPrice||o.total!==u.total)){
+      const upd={discountPrice:u.discountPrice,total:u.total};
+      if(u.note)upd.discountNote=o.discountNote&&!o.discountNote.includes("促銷折扣")?o.discountNote+"、"+u.note:u.note;
+      await fbUpd("orders",u.orderId,upd);
+    }
+  }
+}
 window.saveAllEditOrders=async function(){
   const rows=document.querySelectorAll("#eo-order-list [data-oid]");
   const sharedDeposit=parseFloat(document.getElementById("eo-shared-deposit")?.value)||0;
@@ -8620,6 +8697,9 @@ window.saveAllEditOrders=async function(){
     const cid=window.G.activeEordCustId;
     const c=window.G.customers.find(x=>x.id===cid);
     const pending=window.G.eoPendingAdd||[];
+    // 存檔前先掃一次這批商品，有沒有湊到跨商品促銷組合的門檻，有的話自動調整售價，
+    // 順便也會回頭檢查這個客人之前還沒出貨/結清的舊訂單，一起合併計算
+    await applyCrossPromoToPendingItems(pending,cid);
     for(const item of pending){
       // 注意：這裡不要重新計算 tripId 去覆蓋掉！item.tripId 是「加入這個商品到訂單的當下」
       // 就已經算好、記在這個項目身上的正確趟次；如果存檔時又重算一次現在的趟次去蓋掉它，

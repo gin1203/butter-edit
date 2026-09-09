@@ -437,7 +437,7 @@ function renderGrid(){
     return `<div onclick="openDetail('${p.id}')" style="background:white;border-radius:14px;border:1px solid #E8D5B0;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;position:relative">
       ${totalInCart>0?`<div style="position:absolute;top:8px;right:8px;z-index:2;background:#F4845F;color:white;font-size:10px;font-weight:900;border-radius:99px;width:20px;height:20px;display:flex;align-items:center;justify-content:center">${totalInCart}</div>`:""}
       ${allSoldOut?`<div style="position:absolute;top:8px;left:8px;z-index:2;background:rgba(0,0,0,0.45);color:white;font-size:10px;font-weight:700;border-radius:6px;padding:2px 7px">售完</div>`:""}
-      ${!allSoldOut&&gridHasBundleChoice?`<div style="position:absolute;top:8px;left:8px;z-index:2;background:#FF6B35;color:white;font-size:10px;font-weight:900;border-radius:6px;padding:2px 7px">${p.bundleQty}件優惠</div>`:(!allSoldOut&&pMultiple?`<div style="position:absolute;top:8px;left:8px;z-index:2;background:#FF6B35;color:white;font-size:10px;font-weight:900;border-radius:6px;padding:2px 7px">買${pMultiple-1}送1</div>`:"")}
+      ${!allSoldOut&&gridHasBundleChoice?`<div style="position:absolute;top:8px;left:8px;z-index:2;background:#FF6B35;color:white;font-size:10px;font-weight:900;border-radius:6px;padding:2px 7px">${p.bundleQty}件優惠</div>`:(!allSoldOut&&pMultiple?`<div style="position:absolute;top:8px;left:8px;z-index:2;background:#FF6B35;color:white;font-size:10px;font-weight:900;border-radius:6px;padding:2px 7px">買${pMultiple-1}送1</div>`:(!allSoldOut&&p.crossPromoGroup?`<div style="position:absolute;top:8px;left:8px;z-index:2;background:#7C3AED;color:white;font-size:10px;font-weight:900;border-radius:6px;padding:2px 7px">任選${p.crossPromoMinQty||2}件${p.crossPromoPct||95}折</div>`:""))}
       <div style="width:100%;aspect-ratio:1/1;background:#FAF8F5;overflow:hidden">
         ${p.photo?`<img src="${p.photo}" style="width:100%;height:100%;object-fit:cover" loading="lazy"/>`:`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px">${p.emoji||"📦"}</div>`}
       </div>
@@ -524,6 +524,8 @@ function renderDetail(){
   const displayPrice=(!hasBundleChoice&&pMultiple)?Math.round(price*pMultiple/(pMultiple-1)):price; // 舊模式才需要反推價格
   const dqty=G.detailQty||1;
   const totalCartQty=Object.values(G.cart).reduce((s,i)=>s+i.qty,0);
+  // 跨商品促銷組合提示（例如任選2件95折），只要商品有貼這個代碼、而且登入了才顯示
+  const crossPromoHint=(p.crossPromoGroup&&G.lineUser)?`<div style="display:inline-flex;align-items:center;gap:4px;background:#EDE9FE;color:#7C3AED;border:1px solid #C4B5FD;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:700;margin-bottom:10px">🎯 任選${p.crossPromoMinQty||2}件${p.crossPromoPct||95}折（可跨商品混搭）</div>`:"";
 
   // 購買方案選擇卡片：只有設定了「組合件數＋組合總價」的商品才會出現，客人自己選單件或組合
   // 未登入不能看到價格，所以這個卡片也要等登入後才顯示
@@ -684,6 +686,7 @@ function renderDetail(){
       <div style="font-size:18px;font-weight:900;color:#3D2010;line-height:1.3;margin-bottom:8px">${cleanProductName(p.name)}</div>
       ${p.shopDescription?`<div style="font-size:13px;color:#5C3A1E;line-height:1.7;white-space:pre-wrap;margin-bottom:16px">${p.shopDescription}</div>`:""}
       ${buyModeSelector}
+      ${crossPromoHint}
       ${!hasBundleChoice?(G.lineUser
         ?`<div style="margin-bottom:20px"><div style="font-size:22px;font-weight:900;color:#F4845F">NT$ ${displayPrice.toLocaleString()}</div></div>`
         :`<div style="display:inline-flex;align-items:center;gap:6px;background:#F5F5F5;border-radius:8px;padding:8px 14px;margin-bottom:20px;cursor:pointer" onclick="lineLogin()"><span style="font-size:14px">🔒</span><span style="font-size:13px;font-weight:700;color:#9C7A5A">登入 LINE 查看價格</span></div>`)
