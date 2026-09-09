@@ -182,13 +182,9 @@ async function fsListShopProducts(){
   }};
   const resp=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
   const data=await resp.json();
-  console.log("[促銷除錯] 原始查詢回應：",data);
   const errEntry=Array.isArray(data)?data.find(r=>r.error):null;
   if(errEntry)throw new Error(errEntry.error?.message||"讀取商品失敗");
-  const result=(data||[]).filter(r=>r.document).map(r=>fsDoc(r.document)).filter(p=>p.archived!==true);
-  const testProduct=result.find(p=>p.id==="BGU001");
-  console.log("[促銷除錯] BGU001 解析後的資料：",testProduct);
-  return result;
+  return (data||[]).filter(r=>r.document).map(r=>fsDoc(r.document)).filter(p=>p.archived!==true);
 }
 // 客人點進商品詳情頁時，才抓這個商品的完整資料（含每個規格各自的圖片、商品說明等）。
 // 用列表頁已經有的輕量資料先當底，補上完整資料後蓋過去，這樣即使這次抓取失敗，
@@ -856,7 +852,8 @@ function detailBuyNow(pid,specIndex){
 // ── 購物車列 ───────────────────────────────────────
 // 跨商品促銷計算：不同商品只要貼了同一個「促銷群組代碼」，湊到指定件數，
 // 這些商品就會一起打折（例如任選2件95折），沒貼代碼的商品維持原價不受影響。
-// 回傳每個購物車項目「實際要算的單價」，以及折扣後的總金額。
+// 注意：只有湊成「最低件數的整數倍」才算數，例如任選2件一組，買3件的話只有2件享有折扣、
+// 剩下那1件零頭要算原價，不能因為「總數有達標過」就讓全部件數一直維持折扣。
 function getCartPricing(items){
   const groups={}; // groupTag -> {qty, minQty, pct}
   items.forEach(item=>{
@@ -865,14 +862,47 @@ function getCartPricing(items){
     if(!groups[tag])groups[tag]={qty:0,minQty:item.product.crossPromoMinQty||2,pct:item.product.crossPromoPct||100};
     groups[tag].qty+=item.qty;
   });
+  // 每個群組先算出「湊成整數倍之後，總共有幾件可以享受折扣」，多出來的零頭不算
+  const discountBudget={}; // groupTag -> 還剩幾件可以打折的額度
+  Object.keys(groups).forEach(tag=>{
+    const g=groups[tag];
+    discountBudget[tag]=Math.floor(g.qty/g.minQty)*g.minQty;
+  });
+  // 折扣優先套用在比較貴的商品上，客人省到的實際金額最大化，
+  // 零頭（沒湊到倍數、不能打折的部分）盡量落在比較便宜的商品身上——
+  // 這是市場上「任選N件打折」這類活動常見的慣例做法
+  const sortedItems=[...items].sort((a,b)=>(b.product.finalPrice||0)-(a.product.finalPrice||0));
   let total=0;
-  const itemPricing=items.map(item=>{
+  const pricingByCartKey={};
+  sortedItems.forEach(item=>{
     const tag=(item.product.crossPromoGroup||"").trim();
     const grp=tag?groups[tag]:null;
-    const discounted=!!(grp&&grp.qty>=grp.minQty);
-    const unitPrice=discounted?Math.round((item.product.finalPrice||0)*grp.pct/100):(item.product.finalPrice||0);
-    total+=unitPrice*item.qty;
-    return{item,unitPrice,discounted,groupTag:tag};
+    const cartKey=item.specIndex!=null?`${item.product.id}::${item.specIndex}`:item.product.id;
+    if(!grp){
+      const price=item.product.finalPrice||0;
+      total+=price*item.qty;
+      pricingByCartKey[cartKey]={item,unitPrice:price,discounted:false,groupTag:tag};
+      return;
+    }
+    // 這個商品的數量裡，優先扣掉還沒用完的折扣額度，額度用完之後剩下的算原價
+    const remain=discountBudget[tag];
+    const discountedQty=Math.min(remain,item.qty);
+    const fullPriceQty=item.qty-discountedQty;
+    discountBudget[tag]-=discountedQty;
+    const originalPrice=item.product.finalPrice||0;
+    const discountedPrice=Math.round(originalPrice*grp.pct/100);
+    const itemTotal=discountedPrice*discountedQty+originalPrice*fullPriceQty;
+    total+=itemTotal;
+    // 這件商品裡有一半以上的數量享有折扣，畫面上就當作「有優惠」處理；
+    // 顯示的單價用平均下來的金額，確保跟實際總價對得起來
+    const discounted=discountedQty>0;
+    const avgUnitPrice=item.qty>0?Math.round(itemTotal/item.qty):originalPrice;
+    pricingByCartKey[cartKey]={item,unitPrice:discounted?avgUnitPrice:originalPrice,discounted,groupTag:tag};
+  });
+  // 照原本 items 的順序輸出，畫面顯示順序才不會因為內部按價格排序而跳動
+  const itemPricing=items.map(item=>{
+    const cartKey=item.specIndex!=null?`${item.product.id}::${item.specIndex}`:item.product.id;
+    return pricingByCartKey[cartKey];
   });
   return{total,itemPricing};
 }
