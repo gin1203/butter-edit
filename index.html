@@ -417,7 +417,7 @@ body.live-mode .hide-live { display: none !important; }
       <div id="list-tools-menu" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:white;border:1px solid #E8D5B0;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:20;overflow:hidden">
         <button onclick="event.stopPropagation();closeListToolsMenu();exportProductCSV()" style="display:block;width:100%;text-align:left;font-size:12px;color:#2980B9;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600">📤 匯出商品庫</button>
         <button onclick="event.stopPropagation();closeListToolsMenu();showStockPlan()" style="display:block;width:100%;text-align:left;font-size:12px;color:#E07B39;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">📋 備貨清單</button>
-        <button onclick="event.stopPropagation();closeListToolsMenu();showPromoGroups()" style="display:block;width:100%;text-align:left;font-size:12px;color:#C0392B;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">🏷️ 行銷活動</button>
+        <button onclick="event.stopPropagation();closeListToolsMenu();showPromoGroups()" style="display:block;width:100%;text-align:left;font-size:12px;color:#C0392B;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">🏷️ 活動群組管理</button>
         <button onclick="event.stopPropagation();closeListToolsMenu();showDupProductScan()" style="display:block;width:100%;text-align:left;font-size:12px;color:#92400E;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">🔍 檢查重複</button>
         <button onclick="event.stopPropagation();closeListToolsMenu();showProductOrphanScan()" style="display:block;width:100%;text-align:left;font-size:12px;color:#943126;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">⚠️ 連結異常</button>
       </div>
@@ -1033,6 +1033,9 @@ body.live-mode .hide-live { display: none !important; }
       </div>
     </div>
     <div style="font-size:10px;color:#B08050;margin-top:-6px;margin-bottom:10px;line-height:1.5">💡 例如單件賣NT$120，但3件算NT$300比較划算：這裡「組合件數」填3、「組合總價」填300。商城會同時顯示「單件120」跟「3件組合300」兩個選項讓客人自己選，不是強迫要湊到3件才能買。口味/款式在組合模式下可以自由混搭。兩者都留空就是沒有組合優惠，正常照單件價格賣。</div>
+    <!-- 跨商品促銷（唯讀）：這個要透過「🎯 商城促銷組合」工具管理，不在這裡直接改，
+         避免兩個地方都能改同一份資料，容易互相蓋掉、搞混 -->
+    <div id="ep-cross-promo-status" style="margin-bottom:10px;font-size:11px;color:#9C7A5A;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px"></div>
     <!-- 商城商品說明：客人在商城詳情頁會直接看到，跟上面給自己看的內部備註是分開的 -->
     <div style="margin-bottom:10px">
       <label style="display:block;font-size:11px;font-weight:700;color:#E65100;margin-bottom:5px">🛍️ 商城商品說明（選填，客人在商城商品詳情頁會直接看到這段文字，例如尺寸、成分、使用方式）</label>
@@ -4054,6 +4057,15 @@ window.openModal=function(id,data){
       if(epBundleQtyInput)epBundleQtyInput.value=data.bundleQty||"";
       const epBundlePriceInput=document.getElementById("ep-bundle-price");
       if(epBundlePriceInput)epBundlePriceInput.value=data.bundlePrice||"";
+      const epCrossPromoStatus=document.getElementById("ep-cross-promo-status");
+      if(epCrossPromoStatus){
+        if(data.crossPromoGroup){
+          const bundleName=(window.G.promoBundlesCache||{})[data.crossPromoGroup]?.name||data.crossPromoGroup;
+          epCrossPromoStatus.innerHTML=`🎯 目前屬於促銷組合「${bundleName}」（任選${data.crossPromoMinQty||2}件${data.crossPromoPct||95}折）<br>要調整請到「更多工具 → 🏷️ 活動群組管理 → 折扣群組」管理`;
+        } else {
+          epCrossPromoStatus.textContent="🎯 目前沒有加入任何跨商品促銷組合（要設定請到「更多工具 → 🏷️ 活動群組管理 → 折扣群組」）";
+        }
+      }
       const epShopDescInput=document.getElementById("ep-shop-description");
       if(epShopDescInput)epShopDescInput.value=data.shopDescription||"";
       window.G.epTierColorImages={};
@@ -6261,6 +6273,10 @@ onSnapshot(collection(db,"customers"),s=>{
     renderIfActiveElseMarkDirty("customers",renderCustomers);
   }catch(e){console.warn("line_users載入失敗",e);}
 })();
+onSnapshot(collection(db,"promoBundles"),s=>{
+  window.G.promoBundlesCache={};
+  s.docs.forEach(d=>{window.G.promoBundlesCache[d.id]=d.data();});
+});
 onSnapshot(collection(db,"trips"),s=>{
   window.G.trips=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>b.startDate>a.startDate?1:-1);
   renderTripList();renderTripBars();renderTripHistory();
@@ -9119,8 +9135,232 @@ window.pgStartNewGroup=function(){
   if(inp)inp.value="";
   renderPromoGroups();
 };
+// ══════ 商城促銷組合管理（跨商品湊件數打折，例如任選2件95折）══════
+// 資料模型：promoBundles/{bundleId} 存組合本身的設定（名稱/最低件數/折扣），
+// 底下的 productIds 記錄哪些商品加入了這個組合。
+// 為了不用改動 shop.html 那邊已經寫好的折扣計算邏輯（它是直接讀商品自己身上的
+// crossPromoGroup/crossPromoMinQty/crossPromoPct 這三個欄位），
+// 這裡改組合設定或增減商品時，會同步「灌」到每個成員商品自己身上，
+// 商城端完全不用知道「組合」這個概念存在，維持原本簡單的讀取方式。
+// 保留這個名稱是給選單按鈕呼叫用的，直接導到整合過的入口、切到折扣分頁
+window.showPromoBundles=function(){
+  showPromoGroups();
+  switchPromoGroupTab("discount");
+};
+window.renderPromoBundleList=async function(){
+  const listBox=document.getElementById("promo-bundle-list-content");
+  if(!listBox)return;
+  listBox.innerHTML="載入中…";
+  const{getDocs,collection:col}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+  const snap=await getDocs(col(db,"promoBundles"));
+  const bundles=snap.docs.map(d=>({id:d.id,...d.data()}));
+  if(!bundles.length){
+    listBox.innerHTML=`<div style="text-align:center;padding:20px 10px;color:#9C7A5A;font-size:12px">還沒有建立任何折扣組合</div>`;
+    return;
+  }
+  listBox.innerHTML=bundles.map(b=>`<div onclick="openPromoBundleEditor('${b.id}')" style="background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer">
+    <div style="font-size:13px;font-weight:700;color:#3D2010;margin-bottom:3px">${b.name||"（未命名）"}</div>
+    <div style="font-size:11px;color:#9C7A5A">任選 ${b.minQty||2} 件 ${b.discountPct||95}折扣％　·　${(b.productIds||[]).length} 件商品</div>
+  </div>`).join("");
+};
+window.openPromoBundleEditor=async function(bundleId){
+  window.G.editingBundleId=bundleId;
+  let modal=document.getElementById("modal-promo-bundle-editor");
+  if(!modal){
+    modal=document.createElement("div");
+    modal.id="modal-promo-bundle-editor";
+    modal.className="modal-overlay";
+    modal.style.cssText="display:none;position:fixed;inset:0;z-index:130;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;padding:16px";
+    document.body.appendChild(modal);
+  }
+  modal.style.display="flex";
+  let bundle={name:"",minQty:2,discountPct:95,productIds:[]};
+  if(bundleId){
+    const{getDoc,doc}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    const snap=await getDoc(doc(db,"promoBundles",bundleId));
+    if(snap.exists())bundle={...bundle,...snap.data()};
+  }
+  window.G.editingBundleDraft=bundle;
+  modal.innerHTML=`<div style="background:white;border-radius:18px;width:100%;max-width:480px;max-height:85vh;display:flex;flex-direction:column">
+    <div style="padding:18px 20px 12px;border-bottom:1px solid #F0E6D0;display:flex;justify-content:space-between;align-items:center">
+      <h3 style="margin:0;font-size:15px;font-weight:900;color:#3D2010">${bundleId?"編輯折扣組合":"建立折扣組合"}</h3>
+      <div style="display:flex;gap:10px;align-items:center">
+        ${bundleId?`<button onclick="deletePromoBundle('${bundleId}')" style="background:none;border:none;color:#C0392B;font-size:12px;font-weight:700;cursor:pointer">🗑️ 刪除</button>`:""}
+        <button onclick="document.getElementById('modal-promo-bundle-editor').style.display='none'" style="background:none;border:none;font-size:20px;color:#9C7A5A;cursor:pointer">×</button>
+      </div>
+    </div>
+    <div style="padding:16px 20px;overflow-y:auto;flex:1">
+      <div style="margin-bottom:10px">
+        <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">組合名稱</label>
+        <input id="pb-name" type="text" value="${bundle.name||""}" placeholder="例如：夏季任選折扣" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;font-size:13px;outline:none;box-sizing:border-box"/>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <div style="flex:1">
+          <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">最低件數</label>
+          <input id="pb-min-qty" type="number" min="2" value="${bundle.minQty||2}" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;font-size:13px;outline:none;box-sizing:border-box"/>
+        </div>
+        <div style="flex:1">
+          <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">折扣（％，例如95=95折）</label>
+          <input id="pb-discount-pct" type="number" min="1" max="99" value="${bundle.discountPct||95}" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;font-size:13px;outline:none;box-sizing:border-box"/>
+        </div>
+      </div>
+      <div style="border-top:1px solid #F0E6D0;padding-top:12px">
+        <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:6px">搜尋商品加入這個組合</label>
+        <input id="pb-search" type="text" placeholder="搜尋商品名稱..." oninput="renderPromoBundleSearch()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:9px 12px;font-size:13px;outline:none;box-sizing:border-box;margin-bottom:10px"/>
+        <div id="pb-search-results" style="margin-bottom:14px"></div>
+        <div style="font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:6px">已加入的商品（${(bundle.productIds||[]).length}）</div>
+        <div id="pb-member-list"></div>
+      </div>
+    </div>
+    <div style="padding:12px 20px 18px">
+      <button onclick="savePromoBundle()" style="width:100%;background:#7C3AED;color:white;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer">儲存</button>
+    </div>
+  </div>`;
+  renderPromoBundleMemberList();
+};
+window.renderPromoBundleSearch=function(){
+  const q=(document.getElementById("pb-search")?.value||"").trim().toLowerCase();
+  const box=document.getElementById("pb-search-results");
+  if(!box)return;
+  window.G.pbSearchChecked=window.G.pbSearchChecked||new Set();
+  if(!q){box.innerHTML="";return;}
+  const memberIds=window.G.editingBundleDraft.productIds||[];
+  const matches=(window.G.products||[]).filter(p=>!p.archived&&p.name.toLowerCase().includes(q)&&!memberIds.includes(p.id)).slice(0,30);
+  if(!matches.length){box.innerHTML=`<div style="font-size:12px;color:#9C7A5A;padding:6px 0">找不到符合的商品</div>`;return;}
+  box.innerHTML=`<div style="max-height:220px;overflow-y:auto;border:1px solid #E8D5B0;border-radius:8px;padding:4px 8px">
+    <label style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #E8D5B0;cursor:pointer;margin-bottom:2px">
+      <input type="checkbox" id="pb-select-all" onchange="togglePbSelectAll(this.checked)" style="width:16px;height:16px;flex-shrink:0"/>
+      <span style="flex:1;font-size:12px;font-weight:700;color:#7C3AED">全選（本次搜尋結果共${matches.length}件）</span>
+    </label>
+    ${matches.map(p=>`<label style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #FAF8F5;cursor:pointer">
+      <input type="checkbox" class="pb-item-check" data-pid="${p.id}" onchange="togglePbSearchCheck(this.dataset.pid,this.checked)" ${window.G.pbSearchChecked.has(p.id)?"checked":""} style="width:16px;height:16px;flex-shrink:0"/>
+      <span style="flex:1;font-size:12px;font-weight:700;color:#3D2010;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</span>
+    </label>`).join("")}
+  </div>
+  <button onclick="addCheckedProductsToPromoBundle()" style="width:100%;margin-top:8px;background:#7C3AED;color:white;border:none;border-radius:8px;padding:9px;font-size:12px;font-weight:700;cursor:pointer">加入已勾選（${window.G.pbSearchChecked.size}）</button>`;
+};
+window.togglePbSelectAll=function(checked){
+  window.G.pbSearchChecked=window.G.pbSearchChecked||new Set();
+  document.querySelectorAll(".pb-item-check").forEach(cb=>{
+    cb.checked=checked;
+    if(checked)window.G.pbSearchChecked.add(cb.dataset.pid);
+    else window.G.pbSearchChecked.delete(cb.dataset.pid);
+  });
+  const btn=document.querySelector('#pb-search-results button');
+  if(btn)btn.textContent=`加入已勾選（${window.G.pbSearchChecked.size}）`;
+};
+window.togglePbSearchCheck=function(pid,checked){
+  window.G.pbSearchChecked=window.G.pbSearchChecked||new Set();
+  if(checked)window.G.pbSearchChecked.add(pid);
+  else window.G.pbSearchChecked.delete(pid);
+  // 只更新按鈕上的數字，不要整個重畫，不然勾選到一半畫面重整會很跳
+  const btn=document.querySelector('#pb-search-results button');
+  if(btn)btn.textContent=`加入已勾選（${window.G.pbSearchChecked.size}）`;
+};
+window.addCheckedProductsToPromoBundle=function(){
+  const draft=window.G.editingBundleDraft;
+  draft.productIds=draft.productIds||[];
+  (window.G.pbSearchChecked||new Set()).forEach(pid=>{
+    if(!draft.productIds.includes(pid))draft.productIds.push(pid);
+  });
+  window.G.pbSearchChecked=new Set();
+  document.getElementById("pb-search").value="";
+  document.getElementById("pb-search-results").innerHTML="";
+  renderPromoBundleMemberList();
+  showToast("已加入");
+};
+window.removeProductFromPromoBundle=function(pid){
+  const draft=window.G.editingBundleDraft;
+  draft.productIds=(draft.productIds||[]).filter(id=>id!==pid);
+  renderPromoBundleMemberList();
+};
+window.renderPromoBundleMemberList=function(){
+  const box=document.getElementById("pb-member-list");
+  if(!box)return;
+  const draft=window.G.editingBundleDraft;
+  const members=(draft.productIds||[]).map(id=>window.G.products.find(p=>p.id===id)).filter(Boolean);
+  const countLabel=document.querySelector('[style*="已加入的商品"]');
+  if(!members.length){box.innerHTML=`<div style="font-size:12px;color:#9C7A5A">還沒有商品加入</div>`;return;}
+  box.innerHTML=members.map(p=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #FAF8F5">
+    <div style="flex:1;font-size:12px;font-weight:700;color:#3D2010;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</div>
+    <button data-pid="${p.id}" onclick="removeProductFromPromoBundle(this.dataset.pid)" style="flex-shrink:0;background:#FDEDEC;color:#C0392B;border:1px solid #F1948A;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">移除</button>
+  </div>`).join("");
+};
+window.savePromoBundle=async function(){
+  const name=(document.getElementById("pb-name")?.value||"").trim();
+  const minQty=parseInt(document.getElementById("pb-min-qty")?.value||"2",10);
+  const discountPct=parseInt(document.getElementById("pb-discount-pct")?.value||"95",10);
+  if(!name){showToast("請填寫組合名稱","warning");return;}
+  const draft=window.G.editingBundleDraft;
+  const productIds=draft.productIds||[];
+  const bundleId=window.G.editingBundleId||("bundle_"+Date.now());
+  try{
+    await fbSet("promoBundles",bundleId,{name,minQty,discountPct,productIds});
+    // 灌到每個成員商品身上，商城端才讀得到——這是跟商城溝通的唯一橋樑
+    for(const pid of productIds){
+      await fbUpd("products",pid,{crossPromoGroup:bundleId,crossPromoMinQty:minQty,crossPromoPct:discountPct});
+      const p=window.G.products.find(x=>x.id===pid);
+      if(p){p.crossPromoGroup=bundleId;p.crossPromoMinQty=minQty;p.crossPromoPct=discountPct;}
+    }
+    // 如果這次編輯把某些商品從組合裡移除了，要把那些商品身上的促銷欄位清掉，
+    // 不然它們會一直「記得」自己屬於這個組合，即使組合清單裡已經沒有它們了
+    if(window.G.editingBundleId){
+      const{getDoc,doc}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+      const oldSnap=await getDoc(doc(db,"promoBundles",window.G.editingBundleId));
+      const oldMembers=oldSnap.exists()?(oldSnap.data().productIds||[]):[];
+      const removed=oldMembers.filter(id=>!productIds.includes(id));
+      for(const pid of removed){
+        await fbUpd("products",pid,{crossPromoGroup:null,crossPromoMinQty:null,crossPromoPct:null});
+        const p=window.G.products.find(x=>x.id===pid);
+        if(p){p.crossPromoGroup=null;p.crossPromoMinQty=null;p.crossPromoPct=null;}
+      }
+    }
+    showToast("✅ 折扣組合已儲存");
+    document.getElementById("modal-promo-bundle-editor").style.display="none";
+    renderPromoBundleList();
+  }catch(e){
+    showToast("儲存失敗："+e.message,"error");
+  }
+};
+window.deletePromoBundle=async function(bundleId){
+  if(!confirm("確定刪除這個折扣組合？\n底下所有商品會恢復原價，不再享有折扣。"))return;
+  try{
+    const{getDoc,doc}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    const snap=await getDoc(doc(db,"promoBundles",bundleId));
+    const members=snap.exists()?(snap.data().productIds||[]):[];
+    for(const pid of members){
+      await fbUpd("products",pid,{crossPromoGroup:null,crossPromoMinQty:null,crossPromoPct:null});
+      const p=window.G.products.find(x=>x.id===pid);
+      if(p){p.crossPromoGroup=null;p.crossPromoMinQty=null;p.crossPromoPct=null;}
+    }
+    await fbDel("promoBundles",bundleId);
+    showToast("已刪除折扣組合");
+    document.getElementById("modal-promo-bundle-editor").style.display="none";
+    renderPromoBundleList();
+  }catch(e){
+    showToast("刪除失敗："+e.message,"error");
+  }
+};
+
+window.switchPromoGroupTab=function(tab){
+  const costBtn=document.getElementById("pg-tab-cost");
+  const discBtn=document.getElementById("pg-tab-discount");
+  const costPanel=document.getElementById("pg-panel-cost");
+  const discPanel=document.getElementById("pg-panel-discount");
+  if(tab==="cost"){
+    costBtn.style.background="#5C3A1E";costBtn.style.color="white";
+    discBtn.style.background="transparent";discBtn.style.color="#9C7A5A";
+    costPanel.style.display="block";discPanel.style.display="none";
+  } else {
+    discBtn.style.background="#7C3AED";discBtn.style.color="white";
+    costBtn.style.background="transparent";costBtn.style.color="#9C7A5A";
+    discPanel.style.display="block";costPanel.style.display="none";
+    renderPromoBundleList();
+  }
+};
 window.showPromoGroups=function(){
   document.getElementById("modal-promo-groups").style.display="flex";
+  switchPromoGroupTab("cost");
   renderPromoGroups();
 };
 window.renderPromoGroups=function(){
@@ -16266,17 +16506,29 @@ window.swUpdate = function(){
 <!-- 行銷活動 Modal -->
 <div id="modal-promo-groups" class="modal-overlay" style="display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,0.45);align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
   <div style="background:white;border-radius:20px;width:100%;max-width:560px;padding:24px;margin:auto">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <h3 style="margin:0;font-size:16px;font-weight:900;color:#3D2010">🎯 行銷活動總覽</h3>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <h3 style="margin:0;font-size:16px;font-weight:900;color:#3D2010">🎯 活動群組管理</h3>
       <button onclick="document.getElementById('modal-promo-groups').style.display='none'" style="font-size:24px;color:#9C7A5A;background:none;border:none;cursor:pointer">×</button>
     </div>
-    <div style="font-size:11px;color:#9C7A5A;margin-bottom:14px">同一個「活動群組」名稱的商品，喊單時可以互相混搭口味。這裡列出目前有設定活動群組的所有商品。</div>
-    <div style="border:1.5px dashed #D8C4A0;border-radius:12px;padding:12px;margin-bottom:18px;background:#FFFDF8;display:flex;gap:8px;align-items:center">
-      <span style="font-size:16px;flex-shrink:0">✨</span>
-      <input type="text" id="pg-new-group-name" placeholder="輸入新活動群組名稱，例如：洋芋片系列2+1" onkeydown="if(event.key==='Enter'){event.preventDefault();pgStartNewGroup();}" style="flex:1;font-size:12px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:8px 12px;outline:none;box-sizing:border-box"/>
-      <button onclick="pgStartNewGroup()" style="background:#C5A880;color:white;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;white-space:nowrap">建立</button>
+    <!-- 分頁籤：底層資料完全分開，只是共用同一個入口跟操作習慣 -->
+    <div style="display:flex;gap:6px;background:#FAF8F5;border-radius:10px;padding:4px;margin-bottom:16px">
+      <button id="pg-tab-cost" onclick="switchPromoGroupTab('cost')" style="flex:1;padding:8px;border-radius:8px;border:none;font-size:12px;font-weight:700;cursor:pointer;background:#5C3A1E;color:white">成本群組</button>
+      <button id="pg-tab-discount" onclick="switchPromoGroupTab('discount')" style="flex:1;padding:8px;border-radius:8px;border:none;font-size:12px;font-weight:700;cursor:pointer;background:transparent;color:#9C7A5A">折扣群組</button>
     </div>
-    <div id="promo-groups-content"></div>
+    <div id="pg-panel-cost">
+      <div style="font-size:11px;color:#9C7A5A;margin-bottom:14px">同一個「活動群組」名稱的商品，喊單時可以互相混搭口味。這裡列出目前有設定活動群組的所有商品。</div>
+      <div style="border:1.5px dashed #D8C4A0;border-radius:12px;padding:12px;margin-bottom:18px;background:#FFFDF8;display:flex;gap:8px;align-items:center">
+        <span style="font-size:16px;flex-shrink:0">✨</span>
+        <input type="text" id="pg-new-group-name" placeholder="輸入新活動群組名稱，例如：洋芋片系列2+1" onkeydown="if(event.key==='Enter'){event.preventDefault();pgStartNewGroup();}" style="flex:1;font-size:12px;background:white;border:1px solid #E8D5B0;border-radius:8px;padding:8px 12px;outline:none;box-sizing:border-box"/>
+        <button onclick="pgStartNewGroup()" style="background:#C5A880;color:white;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;white-space:nowrap">建立</button>
+      </div>
+      <div id="promo-groups-content"></div>
+    </div>
+    <div id="pg-panel-discount" style="display:none">
+      <div style="font-size:11px;color:#9C7A5A;margin-bottom:14px">跨商品湊件數打折（例如任選2件95折），跟左邊「成本群組」是不同機制、不同資料，互不影響。</div>
+      <div id="promo-bundle-list-content">載入中…</div>
+      <button onclick="openPromoBundleEditor(null)" style="width:100%;background:#7C3AED;color:white;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;margin-top:6px">＋ 建立新折扣組合</button>
+    </div>
   </div>
 </div>
 
