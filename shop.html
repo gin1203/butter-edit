@@ -43,6 +43,7 @@
   </div>
 
   <div id="catalog-view" style="padding:14px 16px">
+    <div id="shop-description-banner" style="margin-bottom:10px"></div>
     <div id="product-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px"></div>
   </div>
 
@@ -287,12 +288,13 @@ function getPurchaseMultiple(p){
 
 // ── 商品載入 ───────────────────────────────────────
 async function loadProducts(){
-  // 先檢查賣場是否開啟
+  // 先檢查賣場是否開啟，順便把商城說明（營業時間/出貨規則等）一起抓回來
   try{
     const resp=await fetch(`${BASE_URL}/settings/shop?key=${FIREBASE_API_KEY}`);
     if(resp.ok){
       const data=await resp.json();
       const shopOpen=data.fields?.shopOpen?.booleanValue;
+      G.shopDescription=data.fields?.shopDescription?.stringValue||"";
       if(shopOpen===false){
         showShopClosed(data.fields?.closedMessage?.stringValue||"");
         return;
@@ -303,6 +305,7 @@ async function loadProducts(){
   catch(e){console.error(e);showToast("商品載入失敗："+e.message);}
   restoreCartFromStorage(); // 商品資料齊全了，才能把存起來的購物車內容對照回完整商品資訊
   G.loaded=true;
+  renderShopDescriptionBanner();
   renderCatTabs();
   renderGrid();
   renderCartBar();
@@ -346,6 +349,21 @@ function renderCatTabs(){
 function setCat(key){G.cat=key;renderCatTabs();renderGrid();}
 
 // ── 商品格子 ───────────────────────────────────────
+// 商城說明橫幅（營業時間/出貨規則等）：預設收合，只顯示一行摘要，點了才展開完整內容，
+// 不然這種說明文字通常偏長，會把商品格子往下推很多
+function renderShopDescriptionBanner(){
+  const box=document.getElementById("shop-description-banner");
+  if(!box)return;
+  if(!G.shopDescription){box.innerHTML="";return;}
+  const isExpanded=!!G.shopDescExpanded;
+  box.innerHTML=`<div style="background:white;border:1px solid #E8D5B0;border-radius:10px;overflow:hidden">
+    <button onclick="G.shopDescExpanded=!G.shopDescExpanded;renderShopDescriptionBanner()" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;background:none;border:none;padding:10px 12px;cursor:pointer;text-align:left">
+      <span style="font-size:12px;font-weight:700;color:#5C3A1E">📌 商城須知</span>
+      <span style="font-size:11px;color:#9C7A5A;flex-shrink:0">${isExpanded?"收起 ▲":"展開 ▼"}</span>
+    </button>
+    ${isExpanded?`<div style="padding:0 12px 12px;font-size:12px;color:#5C3A1E;line-height:1.7;white-space:pre-wrap">${G.shopDescription}</div>`:""}
+  </div>`;
+}
 function renderGrid(){
   const grid=document.getElementById("product-grid");
   if(!G.loaded){

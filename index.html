@@ -96,6 +96,7 @@ body.live-mode .hide-live { display: none !important; }
     <div style="display:flex;gap:6px;margin-bottom:6px">
       <button onclick="openQuickAdd()" style="flex:1;background:#A5D6A7;color:#2E7D32;border:none;border-radius:12px;padding:9px 4px;font-size:13px;font-weight:700;cursor:pointer">✨ 快速上架</button>
       <button id="shop-toggle-btn" onclick="toggleShopOpen()" style="flex:1;background:#EEE;color:#999;border:none;border-radius:12px;padding:9px 4px;font-size:12px;font-weight:700;cursor:pointer">⏳ 讀取中…</button>
+      <button onclick="openShopDescriptionEditor()" style="flex-shrink:0;background:#EEE;color:#999;border:none;border-radius:12px;padding:9px 12px;font-size:12px;font-weight:700;cursor:pointer">📝 商城說明</button>
     </div>
     <div id="nav-bar" style="display:flex;gap:3px;background:#E8D5B0;padding:4px;border-radius:14px">
       <button id="nav-list"    onclick="showTab('list')"        style="flex:1;display:flex;flex-direction:column;align-items:center;padding:6px 2px;border-radius:10px;font-size:9px;font-weight:700;border:none;cursor:pointer;background:#5C3A1E;color:#F5E6C8"><span style="font-size:15px">📋</span>商品</button>
@@ -6529,6 +6530,58 @@ window.batchSetShopVisible=async function(visible){
 // 開啟/關閉客人看到的商城頁面（shop.html）：
 // 狀態存在 Firestore 的 settings/shop 文件裡的 shopOpen 欄位，
 // shop.html 每次載入都會先讀這個，false 就顯示「暫停接單」頁面
+// 商城說明編輯（營業時間、出貨規則、退換貨政策這類客人一進商城就該看到的說明）
+window.openShopDescriptionEditor=async function(){
+  let modal=document.getElementById("modal-shop-description");
+  if(!modal){
+    modal=document.createElement("div");
+    modal.id="modal-shop-description";
+    modal.className="modal-overlay";
+    modal.style.cssText="display:none;position:fixed;inset:0;z-index:120;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;padding:16px";
+    modal.innerHTML=`<div style="background:white;border-radius:18px;width:100%;max-width:480px;max-height:85vh;display:flex;flex-direction:column">
+      <div style="padding:18px 20px 12px;border-bottom:1px solid #F0E6D0;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <h3 style="margin:0;font-size:15px;font-weight:900;color:#3D2010">📝 商城說明</h3>
+          <div style="font-size:10px;color:#9C7A5A;margin-top:2px">例如營業時間、出貨規則、退換貨政策，客人一進商城就會看到</div>
+        </div>
+        <button onclick="document.getElementById('modal-shop-description').style.display='none'" style="background:none;border:none;font-size:20px;color:#9C7A5A;cursor:pointer">×</button>
+      </div>
+      <div style="padding:16px 20px;overflow-y:auto;flex:1">
+        <textarea id="shop-description-textarea" rows="8" placeholder="例如：\n📦 出貨時間：每週二、五出貨\n💰 付款方式：LINE Pay / 銀行轉帳\n↩️ 退換貨：商品有瑕疵才接受退換，請於收到商品3天內告知" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:12px 14px;font-size:13px;outline:none;box-sizing:border-box;resize:vertical;line-height:1.6"></textarea>
+      </div>
+      <div style="padding:12px 20px 18px">
+        <button onclick="saveShopDescription()" style="width:100%;background:#C5A880;color:white;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer">儲存</button>
+      </div>
+    </div>`;
+    document.body.appendChild(modal);
+  }
+  modal.style.display="flex";
+  const textarea=document.getElementById("shop-description-textarea");
+  textarea.value="載入中…";
+  try{
+    const {doc,getDoc}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    const snap=await getDoc(doc(db,"settings","shop"));
+    textarea.value=snap.exists()?(snap.data().shopDescription||""):"";
+  }catch(e){
+    textarea.value="";
+    showToast("讀取失敗："+e.message,"error");
+  }
+};
+window.saveShopDescription=async function(){
+  const textarea=document.getElementById("shop-description-textarea");
+  const btn=event?.target;
+  try{
+    if(btn){btn.disabled=true;btn.textContent="儲存中…";}
+    const {doc,setDoc}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    await setDoc(doc(db,"settings","shop"),{shopDescription:textarea.value,updatedAt:Date.now()},{merge:true});
+    document.getElementById("modal-shop-description").style.display="none";
+    showToast("✅ 商城說明已更新");
+  }catch(e){
+    showToast("儲存失敗："+e.message,"error");
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent="儲存";}
+  }
+};
 window.loadShopOpenState=async function(){
   const btn=document.getElementById("shop-toggle-btn");
   if(!btn)return;
@@ -6561,7 +6614,7 @@ window.toggleShopOpen=async function(){
   try{
     btn.textContent="更新中…";btn.disabled=true;
     const {doc,setDoc}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
-    await setDoc(doc(db,"settings","shop"),{shopOpen:next,updatedAt:Date.now()});
+    await setDoc(doc(db,"settings","shop"),{shopOpen:next,updatedAt:Date.now()},{merge:true});
     window._shopOpen=next;
     btn.textContent=next?"🟢 賣場開啟中（點我關閉）":"🔴 賣場已關閉（點我開啟）";
     btn.style.background=next?"#E8F5E9":"#FDEDEC";
