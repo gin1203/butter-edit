@@ -494,6 +494,7 @@ body.live-mode .hide-live { display: none !important; }
       <button onclick="event.stopPropagation();closeCustToolsMenu();showTotalsCrossCheck()" style="display:block;width:100%;text-align:left;font-size:12px;color:#166534;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">🔍 三頁金額交叉核對</button>
       <button onclick="event.stopPropagation();closeCustToolsMenu();showCartAbandons()" style="display:block;width:100%;text-align:left;font-size:12px;color:#7C3AED;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">🛒 尚未結帳訂單／棄單</button>
       <button onclick="event.stopPropagation();closeCustToolsMenu();showLineUserCleanup()" style="display:block;width:100%;text-align:left;font-size:12px;color:#0891B2;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">🧹 清理LINE使用者紀錄</button>
+      <button onclick="event.stopPropagation();closeCustToolsMenu();showMergeCustomers()" style="display:block;width:100%;text-align:left;font-size:12px;color:#B91C1C;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">🔗 合併重複客戶</button>
     </div>
   </div>
   <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#9C7A5A;margin-bottom:8px;cursor:pointer">
@@ -5606,6 +5607,139 @@ window.deleteLineUserRecord=async function(userId){
     showToast("已刪除");
   }catch(e){
     showToast("刪除失敗："+e.message,"error");
+  }
+};
+
+// ══════ 合併重複客戶 ══════
+// 同一個真人，可能因為不同管道（商城登入/官方LINE聊天/手動登記）分別建立了好幾筆客戶資料，
+// 這個工具讓你搜尋名字、勾一個「保留哪一筆當主要客戶」，其他重複的訂單全部轉移過去，
+// 重複的客戶記錄本身刪掉，之後搜尋就不會再看到分不清楚是哪個的重複名單
+window.showMergeCustomers=function(){
+  let modal=document.getElementById("modal-merge-customers");
+  if(!modal){
+    modal=document.createElement("div");
+    modal.id="modal-merge-customers";
+    modal.className="modal-overlay";
+    modal.style.cssText="display:none;position:fixed;inset:0;z-index:120;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;padding:16px";
+    modal.innerHTML=`<div style="background:white;border-radius:18px;width:100%;max-width:480px;max-height:85vh;display:flex;flex-direction:column">
+      <div style="padding:18px 20px 12px;border-bottom:1px solid #F0E6D0;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <h3 style="margin:0;font-size:15px;font-weight:900;color:#3D2010">🔗 合併重複客戶</h3>
+          <div style="font-size:10px;color:#9C7A5A;margin-top:2px">自動掃描名字相同的客戶，也可以手動搜尋</div>
+        </div>
+        <button onclick="document.getElementById('modal-merge-customers').style.display='none'" style="background:none;border:none;font-size:20px;color:#9C7A5A;cursor:pointer">×</button>
+      </div>
+      <div style="padding:14px 20px 0">
+        <input id="mc-search" type="text" placeholder="或手動搜尋社群暱稱/LINE名稱..." oninput="renderMergeCustomerSearch()" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:9px 12px;font-size:13px;outline:none;box-sizing:border-box"/>
+      </div>
+      <div id="mc-content" style="padding:14px 20px 20px;overflow-y:auto;flex:1"></div>
+    </div>`;
+    document.body.appendChild(modal);
+  }
+  modal.style.display="flex";
+  document.getElementById("mc-search").value="";
+  renderMergeCustomerAutoScan();
+};
+// 自動掃描：把「社群暱稱」或「LINE名稱」完全相同的客戶抓成一組，列出所有疑似重複的名單
+window.renderMergeCustomerAutoScan=function(){
+  const box=document.getElementById("mc-content");
+  if(!box)return;
+  const custs=window.G.customers||[];
+  const groupsByKey={};
+  custs.forEach(c=>{
+    [c.communityName,c.lineName].forEach(name=>{
+      const key=(name||"").trim().toLowerCase();
+      if(!key)return;
+      if(!groupsByKey[key])groupsByKey[key]=new Set();
+      groupsByKey[key].add(c.id);
+    });
+  });
+  // 同一群組可能因為社群暱稱、LINE名稱各自比對到，合併掉重複算到的組合
+  const seenSets=new Set();
+  const dupGroups=[];
+  Object.values(groupsByKey).forEach(idSet=>{
+    if(idSet.size<2)return;
+    const key=[...idSet].sort().join(",");
+    if(seenSets.has(key))return;
+    seenSets.add(key);
+    dupGroups.push([...idSet].map(id=>custs.find(c=>c.id===id)).filter(Boolean));
+  });
+  if(!dupGroups.length){
+    box.innerHTML=`<div style="text-align:center;padding:24px 10px;color:#9C7A5A;font-size:12px">🎉 沒有掃到疑似重複的客戶<br>（也可以用上面的搜尋框手動找）</div>`;
+    return;
+  }
+  box.innerHTML=`<div style="font-size:11px;color:#9C7A5A;margin-bottom:10px">掃到 ${dupGroups.length} 組疑似重複，點一組展開處理</div>`+
+    dupGroups.map((group,i)=>{
+      const label=group[0].communityName||group[0].lineName||"（無名稱）";
+      return `<div onclick="openMergeGroup(${i})" style="background:#FEF3E2;border:1px solid #F5C77E;border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer">
+        <div style="font-size:13px;font-weight:700;color:#3D2010">${label}　<span style="font-size:11px;color:#B91C1C;font-weight:700">${group.length}筆重複</span></div>
+        <div style="font-size:10px;color:#9C7A5A;margin-top:2px">點擊展開，選擇要保留哪一筆</div>
+      </div>`;
+    }).join("");
+  window.G.mcDupGroups=dupGroups;
+};
+window.openMergeGroup=function(i){
+  const group=window.G.mcDupGroups[i];
+  if(!group)return;
+  window.G.mcSelectedPrimary=group[0].id;
+  renderMergeCustomerList(group.map(c=>c.id),true);
+};
+window.renderMergeCustomerSearch=function(){
+  const q=(document.getElementById("mc-search")?.value||"").trim().toLowerCase();
+  const box=document.getElementById("mc-content");
+  if(!box)return;
+  if(!q){renderMergeCustomerAutoScan();return;}
+  const matches=(window.G.customers||[]).filter(c=>
+    (c.communityName||"").toLowerCase().includes(q)||(c.lineName||"").toLowerCase().includes(q)
+  );
+  if(matches.length<2){
+    box.innerHTML=`<div style="text-align:center;padding:20px 10px;color:#9C7A5A;font-size:12px">${matches.length===0?"找不到符合的客戶":"只找到1筆，沒有重複的可以合併"}</div>`;
+    return;
+  }
+  window.G.mcSelectedPrimary=matches[0].id;
+  renderMergeCustomerList(matches.map(c=>c.id),false);
+};
+window.renderMergeCustomerList=function(ids,fromScan){
+  const box=document.getElementById("mc-content");
+  if(!box)return;
+  const matches=ids.map(id=>window.G.customers.find(c=>c.id===id)).filter(Boolean);
+  const backBtn=fromScan?`<button onclick="renderMergeCustomerAutoScan()" style="background:none;border:none;color:#9C7A5A;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:10px">← 返回列表</button>`:"";
+  box.innerHTML=backBtn+`<div style="font-size:11px;color:#9C7A5A;margin-bottom:10px">勾選要保留當「主要客戶」的那一筆，其他的訂單會轉移過去、其餘客戶資料會被刪除</div>`+
+    matches.map(c=>{
+      const orderCount=(window.G.orders||[]).filter(o=>o.customerId===c.id).length;
+      const isPrimary=window.G.mcSelectedPrimary===c.id;
+      return `<label style="display:flex;align-items:center;gap:10px;background:${isPrimary?"#FEF3E2":"#FAF8F5"};border:1px solid ${isPrimary?"#F5C77E":"#E8D5B0"};border-radius:10px;padding:10px 12px;margin-bottom:8px;cursor:pointer">
+        <input type="radio" name="mc-primary" value="${c.id}" ${isPrimary?"checked":""} onchange="window.G.mcSelectedPrimary='${c.id}';renderMergeCustomerList(${JSON.stringify(ids)},${fromScan})" style="width:16px;height:16px;flex-shrink:0"/>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:700;color:#3D2010">${c.communityName||"（無社群暱稱）"} <span style="font-size:11px;color:#9C7A5A;font-weight:400">LINE：${c.lineName||"無"}</span></div>
+          <div style="font-size:10px;color:#9C7A5A;margin-top:2px">📞${c.phone||"無電話"}　·　${orderCount}筆訂單　·　ID: ${c.id}${isPrimary?"　⭐主要客戶":""}</div>
+        </div>
+      </label>`;
+    }).join("")+
+    `<button onclick="doMergeCustomers(${JSON.stringify(ids)})" style="width:100%;margin-top:8px;background:#B91C1C;color:white;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer">合併（保留⭐那一筆，其餘刪除）</button>`;
+};
+window.doMergeCustomers=async function(allIds){
+  const primaryId=window.G.mcSelectedPrimary;
+  const toMerge=allIds.filter(id=>id!==primaryId);
+  if(!toMerge.length){showToast("沒有其他重複的可以合併","warning");return;}
+  const primaryName=window.G.customers.find(c=>c.id===primaryId)?.communityName||primaryId;
+  if(!confirm(`確定把 ${toMerge.length} 筆重複客戶的訂單，全部轉移到「${primaryName}」底下，並刪除這些重複的客戶資料？\n\n這個動作沒辦法復原，請確認選對主要客戶。`))return;
+  try{
+    let movedOrders=0;
+    for(const oldId of toMerge){
+      const orders=(window.G.orders||[]).filter(o=>o.customerId===oldId);
+      for(const o of orders){
+        await fbUpd("orders",o.id,{customerId:primaryId});
+        movedOrders++;
+      }
+      await fbDel("customers",oldId);
+    }
+    window.G.mcSelectedPrimary=null;
+    document.getElementById("modal-merge-customers").style.display="none";
+    showToast(`✅ 已合併，轉移了 ${movedOrders} 筆訂單，刪除了 ${toMerge.length} 筆重複客戶`);
+    renderCustomers();
+  }catch(e){
+    showToast("合併失敗："+e.message,"error");
   }
 };
 
