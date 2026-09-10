@@ -4379,6 +4379,10 @@ window.renderIfActiveElseMarkDirty=function(tabName,renderFn){
 const TAB_RENDER_MAP={list:()=>renderList(),customers:()=>renderCustomers(),invoice:()=>renderInvoice()};
 window.showTab=function(tab){
   window.G.tab=tab;
+  if(tab==="stats"&&!window.G._expensesLoadedOnce){
+    window.G._expensesLoadedOnce=true;
+    loadExpensesOnce();
+  }
   document.querySelectorAll(".tab-page").forEach(el=>el.classList.remove("active"));
   const tp=document.getElementById("tab-"+tab);if(tp)tp.classList.add("active");
   // 切過去發現這個分頁是「待更新」狀態，這時候才真的補畫一次
@@ -6391,11 +6395,21 @@ onSnapshot(collection(db,"products"),s=>{
     renderIfActiveElseMarkDirty("invoice",renderInvoice);
   },500);
 });
-onSnapshot(collection(db,"promoGroupMeta"),s=>{
-  window.G.promoGroupMeta={};
-  s.docs.forEach(d=>{window.G.promoGroupMeta[d.id]=d.data();});
-  if(document.getElementById("modal-promo-groups")?.style.display==="flex")renderPromoGroups();
-});
+// promoGroupMeta / promoBundles：只有打開「活動群組管理」彈窗才用得到，
+// 不需要隨時保持監聽，改成打開彈窗的時候才抓一次
+window.G.promoGroupMeta={};
+window.G.promoBundlesCache={};
+async function loadPromoGroupDataOnce(){
+  try{
+    const{getDocs,collection:col}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    const[metaSnap,bundleSnap]=await Promise.all([getDocs(col(db,"promoGroupMeta")),getDocs(col(db,"promoBundles"))]);
+    window.G.promoGroupMeta={};
+    metaSnap.docs.forEach(d=>{window.G.promoGroupMeta[d.id]=d.data();});
+    window.G.promoBundlesCache={};
+    bundleSnap.docs.forEach(d=>{window.G.promoBundlesCache[d.id]=d.data();});
+  }catch(e){console.warn("促銷群組資料載入失敗",e);}
+}
+window.loadPromoGroupDataOnce=loadPromoGroupDataOnce;
 window.G._customersMap=window.G._customersMap||{};
 onSnapshot(collection(db,"customers"),s=>{
   window.G._syncFlags.customers={fromCache:s.metadata.fromCache,pending:s.metadata.hasPendingWrites};
@@ -6422,10 +6436,6 @@ onSnapshot(collection(db,"customers"),s=>{
     renderIfActiveElseMarkDirty("customers",renderCustomers);
   }catch(e){console.warn("line_users載入失敗",e);}
 })();
-onSnapshot(collection(db,"promoBundles"),s=>{
-  window.G.promoBundlesCache={};
-  s.docs.forEach(d=>{window.G.promoBundlesCache[d.id]=d.data();});
-});
 onSnapshot(collection(db,"trips"),s=>{
   window.G.trips=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>b.startDate>a.startDate?1:-1);
   renderTripList();renderTripBars();renderTripHistory();
@@ -9594,8 +9604,9 @@ window.switchPromoGroupTab=function(tab){
     renderPromoBundleList();
   }
 };
-window.showPromoGroups=function(){
+window.showPromoGroups=async function(){
   document.getElementById("modal-promo-groups").style.display="flex";
+  await loadPromoGroupDataOnce();
   switchPromoGroupTab("cost");
   renderPromoGroups();
 };
@@ -10311,12 +10322,20 @@ window.G.psHistory=[];
 // 依時間自動判斷訂單屬於哪趟
 // ── 帳號角色管理 ──────────────────────────────────────────────────────
 window.G.roles=[];
-onSnapshot(collection(db,"roles"),s=>{
-  window.G.roles=s.docs.map(d=>({uid:d.id,...d.data()}));
-  renderRoleList();
-  const cu=auth.currentUser;
-  if(cu){const r=window.G.roles.find(x=>x.uid===cu.uid);if(r)applyRoleUI(r.role);}
-});
+// 這份資料很少變動（不常新增/刪除員工帳號），不需要一直保持即時監聽浪費流量，
+// 改成只在登入時抓一次；如果之後改了角色權限，重新整理頁面就能看到最新狀態
+async function loadRolesOnce(){
+  try{
+    const{getDocs,collection:col}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    const s=await getDocs(col(db,"roles"));
+    window.G.roles=s.docs.map(d=>({uid:d.id,...d.data()}));
+    renderRoleList();
+    const cu=auth.currentUser;
+    if(cu){const r=window.G.roles.find(x=>x.uid===cu.uid);if(r)applyRoleUI(r.role);}
+  }catch(e){console.warn("roles載入失敗",e);}
+}
+loadRolesOnce();
+window.reloadRoles=loadRolesOnce; // 如果之後有改角色的地方需要手動重新整理，可以呼叫這個
 
 // 建立帳號（自動登入後再切回老闆）
 ;
@@ -10359,11 +10378,17 @@ if(!window.G.expenses)window.G.expenses={};  // {tripId: [{label,amount}]}
 ;
 ;
 
-// 載入費用
-onSnapshot(collection(db,"expenses"),s=>{
-  s.docs.forEach(d=>{window.G.expenses[d.id]=d.data().items||[];});
-  if(window.G.tab==="stats")renderStats();
-});
+// 載入費用——只有統計頁會用到，不需要一直保持監聽，改成切到統計頁時才抓一次
+if(!window.G.expenses)window.G.expenses={};
+async function loadExpensesOnce(){
+  try{
+    const{getDocs,collection:col}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    const s=await getDocs(col(db,"expenses"));
+    s.docs.forEach(d=>{window.G.expenses[d.id]=d.data().items||[];});
+    if(window.G.tab==="stats")renderStats();
+  }catch(e){console.warn("expenses載入失敗",e);}
+}
+window.loadExpensesOnce=loadExpensesOnce;
 
 ;
 
@@ -10654,6 +10679,7 @@ window.createAccount=async function(){
     const newUid=cred.user.uid;
     // 儲存角色
     await fbSet("roles",newUid,{role,username,createdAt:Date.now()});
+    await reloadRoles(); // roles改成用到才抓一次，這裡新增完要手動重抓一次才會反映在畫面上
     // 切回老闆帳號
     await signInWithEmailAndPassword(auth,curEmail,curPwd);
     document.getElementById("new-username").value="";
