@@ -135,6 +135,24 @@ async function fsCreate(col,id,data){
   if(!resp.ok)throw new Error("寫入失敗");
   return resp.json();
 }
+// 代購模式：客人可能分好幾次陸續下單，湊跨商品促銷組合的折扣時，
+// 要把這個客人「還沒出貨/結清」的舊訂單也一起抓進來合併計算，
+// 已經出貨或已經結清的訂單不動它，避免默默改掉已經算清楚給客人看過的帳
+async function fsGetCustomerActiveOrders(customerId){
+  if(!customerId)return[];
+  try{
+    const url=`${BASE_URL}:runQuery?key=${FIREBASE_API_KEY}`;
+    const body={structuredQuery:{
+      from:[{collectionId:"orders"}],
+      where:{fieldFilter:{field:{fieldPath:"customerId"},op:"EQUAL",value:{stringValue:customerId}}},
+      limit:200,
+    }};
+    const resp=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    const data=await resp.json();
+    const all=(data||[]).filter(r=>r.document).map(r=>fsDoc(r.document));
+    return all.filter(o=>o.status!=="shipped"&&o.status!=="settled"&&o.status!=="cancelled"&&!o.batchClosed);
+  }catch(e){return[];}
+}
 async function fsGet(col,id){
   const resp=await fetch(`${BASE_URL}/${col}/${id}?key=${FIREBASE_API_KEY}`);
   if(resp.status!==200)return null;
@@ -173,7 +191,7 @@ async function fsListShopProducts(){
   // 這樣同時瀏覽的客人越多、商品越多，省下的流量越可觀。
   const fieldPaths=["name","finalPrice","photo","category","catKey","specs","specStock",
     "purchaseMultiple","promoDivisor","bundleQty","bundlePrice","shopVisible","archived","weight",
-    "crossPromoGroup","crossPromoMinQty","crossPromoPct"];
+    "crossPromoGroup","crossPromoMinQty","crossPromoPct","shopListedAt"];
   const body={structuredQuery:{
     from:[{collectionId:"products"}],
     where:{fieldFilter:{field:{fieldPath:"shopVisible"},op:"EQUAL",value:{booleanValue:true}}},
@@ -430,6 +448,9 @@ function renderGrid(){
     const gridHasBundleChoice=!!(p.bundleQty>1&&p.bundlePrice>0&&hasSpecs);
     const displayPrice=gridHasBundleChoice?price:(pMultiple?Math.round(price*pMultiple/(pMultiple-1)):price);
     const allSoldOut=hasSpecs&&specsArr.every((_,i)=>{const st=(p.specStock||[])[i];const n=(st===null||st===undefined||st==="")?null:Number(st);return n!=null&&n<=0;});
+    // 新品判斷：從「最近一次上架」算起7天內都算新品，如果下架過一段時間又重新上架，
+    // shopListedAt 會被後台更新成最新的時間，等於重新開始算7天
+    const isNewProduct=!!(p.shopListedAt&&(Date.now()-p.shopListedAt)<7*24*60*60*1000);
     // 價格顯示：未登入顯示鎖頭
     const priceHtml=G.lineUser
       ?`<div style="font-size:15px;font-weight:900;color:#F4845F;margin-top:auto">NT$ ${displayPrice.toLocaleString()}</div>`
@@ -437,7 +458,8 @@ function renderGrid(){
     return `<div onclick="openDetail('${p.id}')" style="background:white;border-radius:14px;border:1px solid #E8D5B0;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;position:relative">
       ${totalInCart>0?`<div style="position:absolute;top:8px;right:8px;z-index:2;background:#F4845F;color:white;font-size:10px;font-weight:900;border-radius:99px;width:20px;height:20px;display:flex;align-items:center;justify-content:center">${totalInCart}</div>`:""}
       ${allSoldOut?`<div style="position:absolute;top:8px;left:8px;z-index:2;background:rgba(0,0,0,0.45);color:white;font-size:10px;font-weight:700;border-radius:6px;padding:2px 7px">售完</div>`:""}
-      ${!allSoldOut&&gridHasBundleChoice?`<div style="position:absolute;top:8px;left:8px;z-index:2;background:#FF6B35;color:white;font-size:10px;font-weight:900;border-radius:6px;padding:2px 7px">${p.bundleQty}件優惠</div>`:(!allSoldOut&&pMultiple?`<div style="position:absolute;top:8px;left:8px;z-index:2;background:#FF6B35;color:white;font-size:10px;font-weight:900;border-radius:6px;padding:2px 7px">買${pMultiple-1}送1</div>`:(!allSoldOut&&p.crossPromoGroup?`<div style="position:absolute;top:8px;left:8px;z-index:2;background:#7C3AED;color:white;font-size:10px;font-weight:900;border-radius:6px;padding:2px 7px">任選${p.crossPromoMinQty||2}件${p.crossPromoPct||95}折</div>`:""))}
+      ${!allSoldOut&&gridHasBundleChoice?`<div style="position:absolute;top:8px;left:8px;z-index:2;background:#FF6B35;color:white;font-size:10px;font-weight:900;border-radius:6px;padding:2px 7px">${p.bundleQty}件優惠</div>`:(!allSoldOut&&pMultiple?`<div style="position:absolute;top:8px;left:8px;z-index:2;background:#FF6B35;color:white;font-size:10px;font-weight:900;border-radius:6px;padding:2px 7px">買${pMultiple-1}送1</div>`:(!allSoldOut&&p.crossPromoGroup?`<div style="position:absolute;top:8px;left:8px;z-index:2;background:#B08968;color:white;font-size:10px;font-weight:900;border-radius:6px;padding:2px 7px">任選${p.crossPromoMinQty||2}件${p.crossPromoPct||95}折</div>`:""))}
+      ${isNewProduct?`<div style="position:absolute;bottom:8px;left:8px;z-index:2;background:#06C755;color:white;font-size:10px;font-weight:900;border-radius:6px;padding:2px 7px">✨ 新品</div>`:""}
       <div style="width:100%;aspect-ratio:1/1;background:#FAF8F5;overflow:hidden">
         ${p.photo?`<img src="${p.photo}" style="width:100%;height:100%;object-fit:cover" loading="lazy"/>`:`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px">${p.emoji||"📦"}</div>`}
       </div>
@@ -525,7 +547,7 @@ function renderDetail(){
   const dqty=G.detailQty||1;
   const totalCartQty=Object.values(G.cart).reduce((s,i)=>s+i.qty,0);
   // 跨商品促銷組合提示（例如任選2件95折），只要商品有貼這個代碼、而且登入了才顯示
-  const crossPromoHint=(p.crossPromoGroup&&G.lineUser)?`<div style="display:inline-flex;align-items:center;gap:4px;background:#EDE9FE;color:#7C3AED;border:1px solid #C4B5FD;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:700;margin-bottom:10px">🎯 任選${p.crossPromoMinQty||2}件${p.crossPromoPct||95}折（可跨商品混搭）</div>`:"";
+  const crossPromoHint=(p.crossPromoGroup&&G.lineUser)?`<div style="display:inline-flex;align-items:center;gap:4px;background:#FAF3EC;color:#8A6D52;border:1px solid #E8D5B0;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:700;margin-bottom:10px">🎯 任選${p.crossPromoMinQty||2}件${p.crossPromoPct||95}折（可跨商品混搭）</div>`:"";
 
   // 購買方案選擇卡片：只有設定了「組合件數＋組合總價」的商品才會出現，客人自己選單件或組合
   // 未登入不能看到價格，所以這個卡片也要等登入後才顯示
@@ -1097,6 +1119,53 @@ function showCheckoutError(msg){
   const el=document.getElementById("checkout-error");
   if(el){el.textContent=msg;el.style.display="block";}
 }
+// 代購模式：客人分好幾次下單湊促銷折扣時，把新商品跟這個客人「還沒出貨/結清」的舊訂單
+// 一起合併計算，跟商城的 getCartPricing 用同一套「貴的優先、零頭算原價」規則。
+// 回傳新商品各自的價格，以及舊訂單裡價格有變動、需要回頭更新的清單。
+function computeCrossPromoWithExisting(cartItems,existingOrders){
+  const newAsItems=cartItems.map((item,i)=>({_isNew:true,_idx:i,productId:item.product.id,unitPrice:item.product.finalPrice||0,qty:item.qty,_product:item.product}));
+  const existingAsItems=existingOrders.map(o=>({_isExisting:true,_orderId:o.id,productId:o.productId,unitPrice:o.unitPrice||o.discountPrice||0,qty:o.qty||1}));
+  const allItems=[...existingAsItems,...newAsItems];
+  const groups={};
+  allItems.forEach(item=>{
+    const p=item._isNew?item._product:G.products.find(x=>x.id===item.productId);
+    const tag=(p?.crossPromoGroup||"").trim();
+    if(!tag)return;
+    if(!groups[tag])groups[tag]={qty:0,minQty:p.crossPromoMinQty||2,pct:p.crossPromoPct||100};
+    groups[tag].qty+=item.qty;
+  });
+  const discountBudget={};
+  Object.keys(groups).forEach(tag=>{
+    const g=groups[tag];
+    discountBudget[tag]=Math.floor(g.qty/g.minQty)*g.minQty;
+  });
+  const sorted=[...allItems].sort((a,b)=>(b.unitPrice||0)-(a.unitPrice||0));
+  const newItemPricing=new Array(cartItems.length);
+  const existingUpdates=[];
+  sorted.forEach(item=>{
+    const p=item._isNew?item._product:G.products.find(x=>x.id===item.productId);
+    const tag=(p?.crossPromoGroup||"").trim();
+    const originalPrice=item.unitPrice||0;
+    if(!tag){
+      if(item._isNew)newItemPricing[item._idx]={unitPrice:originalPrice,discounted:false};
+      return;
+    }
+    const grp=groups[tag];
+    const remain=discountBudget[tag];
+    const discountedQty=Math.min(remain,item.qty);
+    const fullPriceQty=item.qty-discountedQty;
+    discountBudget[tag]-=discountedQty;
+    const discountedUnitPrice=Math.round(originalPrice*grp.pct/100);
+    const itemTotal=discountedUnitPrice*discountedQty+originalPrice*fullPriceQty;
+    const avgPrice=item.qty>0?Math.round(itemTotal/item.qty):originalPrice;
+    if(item._isNew){
+      newItemPricing[item._idx]={unitPrice:avgPrice,discounted:discountedQty>0};
+    } else {
+      existingUpdates.push({orderId:item._orderId,unitPrice:avgPrice,total:itemTotal,discounted:discountedQty>0});
+    }
+  });
+  return{newItemPricing,existingUpdates};
+}
 async function submitOrder(){
   if(!G.form)G.form={};
   const name=(document.getElementById("f-name")?.value||"").trim();
@@ -1147,14 +1216,17 @@ async function submitOrder(){
     }
 
     // 寫訂單：如果有湊到跨商品促銷折扣，這裡寫進去的單價要是「打完折之後的實際單價」，
-    // 不能還是寫原價，不然後台看到的訂單金額會跟客人實際付的錢對不起來
-    const{itemPricing}=getCartPricing(items);
+    // 不能還是寫原價，不然後台看到的訂單金額會跟客人實際付的錢對不起來。
+    // 因為是代購模式，客人可能分好幾次下單，這裡會把這個客人還沒出貨/結清的舊訂單也抓進來一起算，
+    // 湊到門檻的話舊訂單的價格也會回頭更新。
+    const existingOrders=await fsGetCustomerActiveOrders(customerId);
+    const{newItemPricing,existingUpdates}=computeCrossPromoWithExisting(items,existingOrders);
     const groupTs=Date.now();
     const orderIds=[];
     for(let i=0;i<items.length;i++){
       const item=items[i];
       const p=item.product;
-      const actualUnitPrice=itemPricing[i].unitPrice;
+      const actualUnitPrice=newItemPricing[i]?newItemPricing[i].unitPrice:(p.finalPrice||0);
       const orderId=`web_${groupTs}_${i}`;
       orderIds.push(orderId);
       await fsCreate("orders",orderId,{
@@ -1167,6 +1239,16 @@ async function submitOrder(){
         note,purchased:false,createdAt:groupTs,
       });
       await decrementProductStock(p.id,item.specIndex,item.qty);
+    }
+    // 回頭更新這個客人之前下的舊訂單，如果這次湊單讓它們也符合折扣資格了
+    for(const u of existingUpdates){
+      const old=existingOrders.find(o=>o.id===u.orderId);
+      if(old&&(old.unitPrice!==u.unitPrice||old.total!==u.total)){
+        try{
+          const patchUrl=`${BASE_URL}/orders/${u.orderId}?updateMask.fieldPaths=unitPrice&updateMask.fieldPaths=total&key=${FIREBASE_API_KEY}`;
+          await fetch(patchUrl,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({fields:{unitPrice:jsToFs(u.unitPrice),total:jsToFs(u.total)}})});
+        }catch(e){/* 回頭更新失敗不影響這次新訂單本身 */}
+      }
     }
 
     // 訂單真的送出成功了，把剛才的棄單追蹤記錄標記成「已完成」，這樣後台看到的棄單清單才準確
