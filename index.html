@@ -5734,10 +5734,21 @@ window.doMergeCustomers=async function(allIds){
   const toMerge=allIds.filter(id=>id!==primaryId);
   if(!toMerge.length){showToast("沒有其他重複的可以合併","warning");return;}
   const primaryName=window.G.customers.find(c=>c.id===primaryId)?.communityName||primaryId;
-  if(!confirm(`確定把 ${toMerge.length} 筆重複客戶的訂單，全部轉移到「${primaryName}」底下，並刪除這些重複的客戶資料？\n\n這些客戶的 LINE 編碼會保留成「備用編碼」，以後不管用哪個LINE帳號聯絡都認得出是同一人，不會再長出新的重複資料。\n\n這個動作沒辦法復原，請確認選對主要客戶。`))return;
+  if(!confirm(`確定把 ${toMerge.length} 筆重複客戶的訂單，全部轉移到「${primaryName}」底下，並刪除這些重複的客戶資料？\n\n這些客戶的 LINE 編碼會保留成「備用編碼」；如果主要客戶缺少的資料（社群暱稱、電話、備註），會從被合併的那幾筆補過來，不會平白遺失。\n\n這個動作沒辦法復原，請確認選對主要客戶。`))return;
   try{
     const primary=window.G.customers.find(c=>c.id===primaryId);
     const altIds=new Set(primary?.altLineUserIds||[]);
+    // 主要客戶如果缺少這些欄位，從被合併掉的那幾筆裡補過來，不能因為選了「商城登入自動建立」
+    // 當主要客戶（通常社群暱稱是空的），就把舊客戶已經填好的資料平白弄丟
+    const fillFields={};
+    ["communityName","phone","note"].forEach(field=>{
+      if(!primary?.[field]){
+        for(const oldId of toMerge){
+          const oldCust=window.G.customers.find(c=>c.id===oldId);
+          if(oldCust?.[field]){fillFields[field]=oldCust[field];break;}
+        }
+      }
+    });
     let movedOrders=0;
     for(const oldId of toMerge){
       const oldCust=window.G.customers.find(c=>c.id===oldId);
@@ -5752,10 +5763,14 @@ window.doMergeCustomers=async function(allIds){
       }
       await fbDel("customers",oldId);
     }
-    if(altIds.size)await fbUpd("customers",primaryId,{altLineUserIds:[...altIds]});
+    const finalUpd={};
+    if(altIds.size)finalUpd.altLineUserIds=[...altIds];
+    Object.assign(finalUpd,fillFields);
+    if(Object.keys(finalUpd).length)await fbUpd("customers",primaryId,finalUpd);
     window.G.mcSelectedPrimary=null;
     document.getElementById("modal-merge-customers").style.display="none";
-    showToast(`✅ 已合併，轉移了 ${movedOrders} 筆訂單，刪除了 ${toMerge.length} 筆重複客戶，備用LINE編碼已保留`);
+    const filledNote=Object.keys(fillFields).length?`，並補上了缺少的資料（${Object.keys(fillFields).join("、")}）`:"";
+    showToast(`✅ 已合併，轉移了 ${movedOrders} 筆訂單，刪除了 ${toMerge.length} 筆重複客戶${filledNote}`);
     renderCustomers();
   }catch(e){
     showToast("合併失敗："+e.message,"error");
