@@ -53,6 +53,7 @@
 
   <div id="catalog-view" style="padding:14px 16px">
     <div id="shop-description-banner" style="margin-bottom:10px"></div>
+    <div id="new-product-strip"></div>
     <div id="catalog-back-link"></div>
     <div id="product-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px"></div>
   </div>
@@ -399,6 +400,7 @@ async function loadProducts(){
   restoreCartFromStorage(); // 商品資料齊全了，才能把存起來的購物車內容對照回完整商品資訊
   G.loaded=true;
   renderShopDescriptionBanner();
+  renderNewProductStrip();
   renderCatTabs();
   renderGrid();
   renderCartBar();
@@ -431,7 +433,7 @@ function startProductAutoRefresh(){
       G.products=fresh;
       const onCatalog=document.getElementById("catalog-view").style.display!=="none";
       const onDetail=document.getElementById("detail-view").style.display!=="none";
-      if(onCatalog){renderCatTabs();renderGrid();}
+      if(onCatalog){renderNewProductStrip();renderCatTabs();renderGrid();}
       if(onDetail){renderDetail();}
     }catch(e){/* 背景更新失敗就算了，不要用錯誤訊息打擾客人，下次還會再試 */}
   },300000);
@@ -510,7 +512,7 @@ function renderSideDrawer(){
 
   const hotCount=products.filter(p=>(p.soldCount||0)>0).length;
   const discountCount=products.filter(p=>p.crossPromoGroup||(p.bundleQty>1&&p.bundlePrice>0)||p.purchaseMultiple||p.promoDivisor).length;
-  const newCount=products.filter(p=>p.shopListedAt&&(now-p.shopListedAt)<7*24*60*60*1000).length;
+  const newCount=products.filter(p=>p.shopListedAt&&(now-p.shopListedAt)<10*24*60*60*1000).length;
   const favCount=getFavorites().length;
   const recentCount=getRecentlyViewed().filter(id=>products.some(p=>p.id===id)).length;
   const featuredCount=products.filter(p=>p.featured).length;
@@ -571,6 +573,60 @@ function setCat(key){G.cat=key;G.catalogFilter=null;renderCatTabs();renderGrid()
 // ── 商品格子 ───────────────────────────────────────
 // 商城說明橫幅（營業時間/出貨規則等）：預設收合，只顯示一行摘要，點了才展開完整內容，
 // 不然這種說明文字通常偏長，會把商品格子往下推很多
+// 新品橫向預覽：不用點側欄，一打開商城就能在首頁最上方看到最近上架的新品，
+// 完全沒有新品的話這區塊不顯示，不佔版面
+function renderNewProductStrip(){
+  const box=document.getElementById("new-product-strip");
+  if(!box)return;
+  const now=Date.now();
+  const newProducts=(G.products||[]).filter(p=>!p.archived&&p.shopListedAt&&(now-p.shopListedAt)<10*24*60*60*1000);
+  if(!newProducts.length){box.innerHTML="";return;}
+  box.innerHTML=`<div style="background:#FFFDF9;border:1px solid #F0E0C0;border-radius:14px;padding:12px 0 14px;margin-bottom:12px;position:relative">
+    <div style="font-size:12px;font-weight:900;color:#8A6D52;margin-bottom:10px;padding:0 14px;display:flex;align-items:center;gap:5px">
+      <span style="display:inline-flex;align-items:center;justify-content:center;background:#06C755;color:white;border-radius:99px;width:16px;height:16px;font-size:9px;font-weight:900">N</span>
+      新品上架
+    </div>
+    <div style="position:relative">
+      <button onclick="scrollNewProductStrip(-1)" style="display:none" id="new-strip-left" class="new-strip-arrow">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div id="new-strip-scroll" class="scrollbar-none" style="display:flex;gap:12px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 14px 2px;scroll-snap-type:x proximity;scroll-behavior:smooth">
+        ${newProducts.map(p=>`<div onclick="openDetail('${p.id}')" style="flex-shrink:0;width:76px;cursor:pointer;scroll-snap-align:start">
+          <div style="width:76px;height:76px;border-radius:16px;overflow:hidden;background:white;border:1px solid #E8D5B0;padding:8px;box-sizing:border-box;display:flex;align-items:center;justify-content:center">
+            ${p.photo?`<img src="${p.photo}" style="max-width:100%;max-height:100%;object-fit:contain" loading="lazy"/>`:`<div style="font-size:24px">${p.emoji||"📦"}</div>`}
+          </div>
+          <div style="font-size:10px;color:#5C3A1E;margin-top:6px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cleanProductName(p.name)}</div>
+        </div>`).join("")}
+      </div>
+      <button onclick="scrollNewProductStrip(1)" id="new-strip-right" class="new-strip-arrow">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+  </div>
+  <style>
+    .new-strip-arrow{position:absolute;top:22px;width:34px;height:34px;border-radius:50%;background:white;border:1px solid #D9C39C;color:#5C3A1E;box-shadow:0 2px 8px rgba(0,0,0,0.15);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2}
+    .new-strip-arrow:hover{background:#FAF3EA}
+    #new-strip-left{left:0}
+    #new-strip-right{right:0}
+    @media(hover:none){.new-strip-arrow{display:none!important}} /* 觸控裝置本來就能直接滑，不需要箭頭按鈕多佔畫面 */
+  </style>`;
+  updateNewStripArrows();
+  document.getElementById("new-strip-scroll")?.addEventListener("scroll",updateNewStripArrows);
+}
+// 左箭頭只有在「還能往左滑」的時候才顯示，滑到最左邊就自動隱藏，不會讓人誤以為還能繼續滑
+function updateNewStripArrows(){
+  const scroller=document.getElementById("new-strip-scroll");
+  const leftBtn=document.getElementById("new-strip-left");
+  const rightBtn=document.getElementById("new-strip-right");
+  if(!scroller||!leftBtn||!rightBtn)return;
+  leftBtn.style.display=scroller.scrollLeft>10?"flex":"none";
+  rightBtn.style.display=(scroller.scrollWidth-scroller.clientWidth-scroller.scrollLeft>10)?"flex":"none";
+}
+function scrollNewProductStrip(dir){
+  const scroller=document.getElementById("new-strip-scroll");
+  if(!scroller)return;
+  scroller.scrollBy({left:dir*160,behavior:"smooth"});
+}
 function renderShopDescriptionBanner(){
   const box=document.getElementById("shop-description-banner");
   if(!box)return;
@@ -619,7 +675,7 @@ function renderGrid(){
     let mFilter=true;
     if(G.catalogFilter==="hot")mFilter=(p.soldCount||0)>0;
     else if(G.catalogFilter==="discount")mFilter=!!(p.crossPromoGroup||(p.bundleQty>1&&p.bundlePrice>0)||p.purchaseMultiple||p.promoDivisor);
-    else if(G.catalogFilter==="new")mFilter=!!(p.shopListedAt&&(now-p.shopListedAt)<7*24*60*60*1000);
+    else if(G.catalogFilter==="new")mFilter=!!(p.shopListedAt&&(now-p.shopListedAt)<10*24*60*60*1000);
     else if(G.catalogFilter==="favorites")mFilter=favIds.includes(p.id);
     else if(G.catalogFilter==="recent")mFilter=recentIds.includes(p.id);
     else if(G.catalogFilter==="featured")mFilter=!!p.featured;
@@ -647,9 +703,9 @@ function renderGrid(){
     const gridHasBundleChoice=!!(p.bundleQty>1&&p.bundlePrice>0&&hasSpecs);
     const displayPrice=gridHasBundleChoice?price:(pMultiple?Math.round(price*pMultiple/(pMultiple-1)):price);
     const allSoldOut=hasSpecs&&specsArr.every((_,i)=>{const st=(p.specStock||[])[i];const n=(st===null||st===undefined||st==="")?null:Number(st);return n!=null&&n<=0;});
-    // 新品判斷：從「最近一次上架」算起7天內都算新品，如果下架過一段時間又重新上架，
-    // shopListedAt 會被後台更新成最新的時間，等於重新開始算7天
-    const isNewProduct=!!(p.shopListedAt&&(Date.now()-p.shopListedAt)<7*24*60*60*1000);
+    // 新品判斷：從「最近一次上架」算起10天內都算新品，如果下架過一段時間又重新上架，
+    // shopListedAt 會被後台更新成最新的時間，等於重新開始算10天
+    const isNewProduct=!!(p.shopListedAt&&(Date.now()-p.shopListedAt)<10*24*60*60*1000);
     // 價格顯示：未登入顯示鎖頭
     const priceHtml=G.lineUser
       ?`<div style="font-size:15px;font-weight:900;color:#F4845F;margin-top:auto">NT$ ${displayPrice.toLocaleString()}</div>`
@@ -970,7 +1026,7 @@ function renderDetail(){
         <div style="font-size:12px;font-weight:700;color:#9C7A5A">數量</div>
         <div style="display:flex;align-items:center;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;overflow:hidden">
           <button onclick="changeDetailQty(-1)" style="width:36px;height:36px;border:none;background:none;font-size:18px;font-weight:900;color:#5C3A1E;cursor:pointer">−</button>
-          <span style="font-size:15px;font-weight:900;min-width:28px;text-align:center">${dqty}</span>
+          <input type="text" inputmode="numeric" value="${dqty}" onchange="setDetailQty(this.value)" onclick="event.stopPropagation()" style="width:40px;height:36px;border:none;background:none;font-size:15px;font-weight:900;text-align:center;outline:none;padding:0"/>
           <button onclick="changeDetailQty(1)" style="width:36px;height:36px;border:none;background:none;font-size:18px;font-weight:900;color:#5C3A1E;cursor:pointer">+</button>
         </div>
         ${stock!=null&&stock<=5?`<div style="font-size:11px;color:#E65100;font-weight:700">僅剩 ${stock} 件</div>`:""}
@@ -1066,6 +1122,20 @@ function changeDetailQty(delta){
   const stockRaw=hasSpecs?(p.specStock||[])[selIdx]:null;
   const stock=(stockRaw===null||stockRaw===undefined||stockRaw==="")?null:Number(stockRaw);
   let next=Math.max(1,(G.detailQty||1)+delta);
+  if(stock!=null&&next>stock){showToast(`庫存只剩 ${stock} 件`);next=stock;}
+  G.detailQty=next;
+  renderDetail();
+}
+// 客人直接在數量欄位打數字（不是只能點加減按鈕），一樣要檢查庫存上限、還有不能小於1
+function setDetailQty(val){
+  const pid=G.detailProduct;
+  const p=G.products.find(x=>x.id===pid);if(!p)return;
+  const hasSpecs=Array.isArray(p.specs)&&p.specs.length>0;
+  const selIdx=G.selectedSpec[pid]??0;
+  const stockRaw=hasSpecs?(p.specStock||[])[selIdx]:null;
+  const stock=(stockRaw===null||stockRaw===undefined||stockRaw==="")?null:Number(stockRaw);
+  let next=parseInt(val,10);
+  if(isNaN(next)||next<1)next=1;
   if(stock!=null&&next>stock){showToast(`庫存只剩 ${stock} 件`);next=stock;}
   G.detailQty=next;
   renderDetail();
@@ -1352,7 +1422,7 @@ function renderCartSummary(){
       </div>
       <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
         <button onclick="cartQty('${cartKey}',-1)" style="width:26px;height:26px;border:1px solid #E8D5B0;background:white;border-radius:6px;font-size:14px;font-weight:900;color:#5C3A1E;cursor:pointer">−</button>
-        <span style="font-size:13px;font-weight:900;min-width:18px;text-align:center">${item.qty}</span>
+        <input type="text" inputmode="numeric" value="${item.qty}" onchange="cartSetQty('${cartKey}',this.value)" style="width:32px;height:26px;border:1px solid #E8D5B0;border-radius:6px;font-size:13px;font-weight:900;text-align:center;outline:none;padding:0"/>
         <button onclick="cartQty('${cartKey}',1)" style="width:26px;height:26px;border:none;background:#5C3A1E;color:white;border-radius:6px;font-size:14px;font-weight:900;cursor:pointer">+</button>
         <button onclick="cartRemove('${cartKey}')" style="width:26px;height:26px;border:none;background:#FDEDEC;color:#C0392B;border-radius:6px;font-size:14px;cursor:pointer;margin-left:2px">×</button>
       </div>
@@ -1370,6 +1440,15 @@ function renderCartSummary(){
 function cartQty(cartKey,delta){
   const entry=G.cart[cartKey];if(!entry)return;
   const next=Math.max(0,(entry.qty||0)+delta);
+  if(next===0)delete G.cart[cartKey];
+  else G.cart[cartKey]={...entry,qty:next};
+  renderCartSummary();renderCartBar();
+}
+// 客人直接在購物車數量欄位打數字，打0或空白就當作要刪除這項
+function cartSetQty(cartKey,val){
+  const entry=G.cart[cartKey];if(!entry)return;
+  let next=parseInt(val,10);
+  if(isNaN(next)||next<0)next=entry.qty; // 打了看不懂的內容，退回原本的數字，不要讓畫面出現NaN
   if(next===0)delete G.cart[cartKey];
   else G.cart[cartKey]={...entry,qty:next};
   renderCartSummary();renderCartBar();
