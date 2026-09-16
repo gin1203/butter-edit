@@ -23,6 +23,9 @@
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <div style="font-size:19px;font-weight:900;color:#5C3A1E;cursor:pointer" onclick="backToCatalog();closeDetail();">🧈 THE BUTTER</div>
       <div style="display:flex;align-items:center;gap:2px">
+        <button onclick="toggleSideDrawer(true)" style="background:none;border:none;cursor:pointer;padding:6px;color:#5C3A1E">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
         <button id="header-member-btn" onclick="headerMemberClick()" style="background:none;border:none;cursor:pointer;padding:6px;color:#5C3A1E">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         </button>
@@ -36,10 +39,16 @@
     <div id="line-banner" style="margin-bottom:8px"></div>
     <input id="search-input" type="text" placeholder="🔍 搜尋商品名稱..." oninput="onSearchInput()" style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:9px 14px;font-size:14px;outline:none;box-sizing:border-box;margin-bottom:8px"/>
     <div id="cat-tabs" class="scrollbar-none" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:2px"></div>
-    <!-- 聯絡客服 -->
-    <a href="https://line.me/R/ti/p/%40995iznve" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:6px;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:8px;font-size:12px;font-weight:700;color:#5C3A1E;text-decoration:none;margin-top:8px">
-      💬 有問題？點我聯絡客服
-    </a>
+  </div>
+
+  <!-- 側欄選單（折扣商品/新品/熱銷/分類/收藏），預設隱藏在畫面外，點開才滑進來 -->
+  <div id="side-drawer-overlay" onclick="toggleSideDrawer(false)" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:90"></div>
+  <div id="side-drawer" style="position:fixed;top:0;left:-320px;bottom:0;width:300px;max-width:85vw;background:#FDFBF7;z-index:91;transition:left 0.25s ease;overflow-y:auto;box-shadow:2px 0 12px rgba(0,0,0,0.1)">
+    <div style="padding:16px;border-bottom:1px solid #E8D5B0;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#FDFBF7;z-index:1">
+      <div style="font-size:16px;font-weight:900;color:#5C3A1E">🧈 THE BUTTER</div>
+      <button onclick="toggleSideDrawer(false)" style="background:none;border:none;font-size:22px;color:#9C7A5A;cursor:pointer">×</button>
+    </div>
+    <div id="side-drawer-content" style="padding:8px 0 24px"></div>
   </div>
 
   <div id="catalog-view" style="padding:14px 16px">
@@ -163,18 +172,28 @@ async function fsGet(col,id){
 // 兩個人幾乎同時下單也不會完全準確，但至少比完全不扣好很多），
 // 只扣「有設定庫存上限」的規格，設定「不限量」（留空）的規格不動它
 async function decrementProductStock(productId,specIndex,qty){
-  if(specIndex==null||specIndex<0)return; // 沒有規格的商品，目前沒有庫存欄位可以扣
   try{
     const fresh=await fsGet("products",productId);
-    if(!fresh||!Array.isArray(fresh.specStock))return;
-    const stockArr=[...fresh.specStock];
-    const cur=stockArr[specIndex];
-    if(cur===null||cur===undefined||cur===""){return;} // 這個規格是不限量，不用扣
-    stockArr[specIndex]=Math.max(0,Number(cur)-qty);
-    const values=stockArr.map(s=>(s===""||s===null||s===undefined)?{stringValue:""}:{stringValue:String(s)});
-    const url=`${BASE_URL}/products/${productId}?updateMask.fieldPaths=specStock&key=${FIREBASE_API_KEY}`;
-    await fetch(url,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({fields:{specStock:{arrayValue:{values}}}})});
-  }catch(e){console.error("扣庫存失敗（不影響訂單本身）：",e);}
+    if(!fresh)return;
+    const upd={};
+    // 熱銷排行用的累計銷量，不管這個商品有沒有規格都要算，跟庫存扣減是兩件事
+    upd.soldCount=(Number(fresh.soldCount)||0)+(qty||1);
+    if(specIndex!=null&&specIndex>=0&&Array.isArray(fresh.specStock)){
+      const stockArr=[...fresh.specStock];
+      const cur=stockArr[specIndex];
+      if(cur!==null&&cur!==undefined&&cur!==""){ // 這個規格設定不限量的話，不用扣庫存，但銷量還是要算
+        stockArr[specIndex]=Math.max(0,Number(cur)-qty);
+        upd.specStock=stockArr;
+      }
+    }
+    const fields={soldCount:{integerValue:upd.soldCount}};
+    if(upd.specStock){
+      fields.specStock={arrayValue:{values:upd.specStock.map(s=>(s===""||s===null||s===undefined)?{stringValue:""}:{stringValue:String(s)})}};
+    }
+    const maskFields=Object.keys(upd).map(k=>`updateMask.fieldPaths=${k}`).join("&");
+    const url=`${BASE_URL}/products/${productId}?${maskFields}&key=${FIREBASE_API_KEY}`;
+    await fetch(url,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({fields})});
+  }catch(e){console.error("扣庫存/累計銷量失敗（不影響訂單本身）：",e);}
 }
 async function fsQuery(col,field,value){
   const url=`${BASE_URL}:runQuery?key=${FIREBASE_API_KEY}`;
@@ -191,7 +210,7 @@ async function fsListShopProducts(){
   // 這樣同時瀏覽的客人越多、商品越多，省下的流量越可觀。
   const fieldPaths=["name","finalPrice","photo","category","catKey","specs","specStock",
     "purchaseMultiple","promoDivisor","bundleQty","bundlePrice","shopVisible","archived","weight",
-    "crossPromoGroup","crossPromoMinQty","crossPromoPct","shopListedAt"];
+    "crossPromoGroup","crossPromoMinQty","crossPromoPct","shopListedAt","soldCount","featured"];
   const body={structuredQuery:{
     from:[{collectionId:"products"}],
     where:{fieldFilter:{field:{fieldPath:"shopVisible"},op:"EQUAL",value:{booleanValue:true}}},
@@ -338,6 +357,19 @@ function getPurchaseMultiple(p){
 }
 
 // ── 商品載入 ───────────────────────────────────────
+// 本梯次截止倒數：只有打開側欄才查一次，不用每次載入商城都問一次，省流量
+async function fetchActiveTrip(){
+  try{
+    const today=new Date().toISOString().split("T")[0];
+    const url=`${BASE_URL}:runQuery?key=${FIREBASE_API_KEY}`;
+    const body={structuredQuery:{from:[{collectionId:"trips"}],limit:50}};
+    const resp=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    const data=await resp.json();
+    const trips=(data||[]).filter(r=>r.document).map(r=>fsDoc(r.document));
+    // 優先找「今天」剛好落在起訖區間內的趟次，符合條件的通常就是目前這一梯正在收單的
+    return trips.find(t=>t.startDate&&t.endDate&&today>=t.startDate&&today<=t.endDate)||null;
+  }catch(e){return null;}
+}
 async function loadProducts(){
   // 先檢查賣場是否開啟，順便把商城說明（營業時間/出貨規則等）一起抓回來
   try{
@@ -397,6 +429,127 @@ function showShopClosed(msg){
     </div>`;
 }
 function onSearchInput(){G.search=document.getElementById("search-input").value.trim().toLowerCase();renderGrid();}
+// ══════ 側欄選單：折扣商品／新品／熱銷排行／分類跳轉／我的收藏 ══════
+function toggleSideDrawer(open){
+  const drawer=document.getElementById("side-drawer");
+  const overlay=document.getElementById("side-drawer-overlay");
+  if(!drawer||!overlay)return;
+  if(open){
+    overlay.style.display="block";
+    drawer.style.left="0";
+    renderSideDrawer();
+    // 趟次截止倒數只有打開側欄才查，不用每次載入商城就先問一次，省流量；
+    // 先用已經抓過的快取畫面，抓到新資料才補上去，不會讓側欄卡住等資料回來
+    if(!G._activeTripFetched){
+      G._activeTripFetched=true;
+      fetchActiveTrip().then(trip=>{
+        G._activeTrip=trip;
+        if(document.getElementById("side-drawer")?.style.left==="0px")renderSideDrawer();
+      });
+    }
+  } else {
+    drawer.style.left="-320px";
+    G.drawerView=null; // 關閉後重置，下次打開一律從主選單開始，不會卡在分類瀏覽子畫面
+    setTimeout(()=>{overlay.style.display="none";},250);
+  }
+}
+// 我的收藏：存在瀏覽器本機（localStorage），跟這台裝置綁定，不需要登入也能收藏
+// 最近瀏覽：記錄客人剛才看過哪些商品，方便滑了一圈之後回頭找，不用重新搜尋
+function getRecentlyViewed(){
+  try{return JSON.parse(localStorage.getItem("butter_recent")||"[]");}catch(e){return[];}
+}
+function addToRecentlyViewed(pid){
+  let recent=getRecentlyViewed().filter(id=>id!==pid);
+  recent.unshift(pid); // 最新看的排最前面
+  recent=recent.slice(0,20); // 最多留20筆，不要無限累積
+  localStorage.setItem("butter_recent",JSON.stringify(recent));
+}
+function getFavorites(){
+  try{return JSON.parse(localStorage.getItem("butter_favorites")||"[]");}catch(e){return[];}
+}
+function toggleFavorite(pid,event){
+  event?.stopPropagation();
+  let favs=getFavorites();
+  if(favs.includes(pid))favs=favs.filter(id=>id!==pid);
+  else favs.push(pid);
+  localStorage.setItem("butter_favorites",JSON.stringify(favs));
+  renderGrid();
+  if(G.detailProduct===pid)renderDetail();
+  if(document.getElementById("side-drawer")?.style.left==="0px")renderSideDrawer();
+}
+function renderSideDrawer(){
+  const box=document.getElementById("side-drawer-content");
+  if(!box)return;
+  const products=(G.products||[]).filter(p=>!p.archived);
+  const now=Date.now();
+
+  const row=(label,count,onclick)=>`<button onclick="${onclick}" style="width:100%;display:flex;align-items:center;justify-content:space-between;background:none;border:none;border-bottom:1px solid #F0E6D0;padding:14px 16px;cursor:pointer;text-align:left">
+    <span style="font-size:14px;font-weight:700;color:#3D2010">${label}</span>
+    <span style="display:flex;align-items:center;gap:6px">
+      ${count!=null?`<span style="font-size:11px;color:#9C7A5A">${count}</span>`:""}
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B0A08C" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </span>
+  </button>`;
+
+  if(G.drawerView==="categories"){
+    const categories=[...new Set(products.map(p=>p.category).filter(Boolean))];
+    box.innerHTML=
+      `<button onclick="G.drawerView=null;renderSideDrawer()" style="width:100%;display:flex;align-items:center;gap:6px;background:none;border:none;border-bottom:1px solid #F0E6D0;padding:14px 16px;cursor:pointer;text-align:left;color:#9C7A5A;font-size:13px;font-weight:700">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9C7A5A" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>返回
+      </button>`+
+      categories.map(c=>row(c,null,`toggleSideDrawer(false);backToCatalog();setCat('${c.replace(/'/g,"\\'")}')`)).join("");
+    return;
+  }
+
+  const hotCount=products.filter(p=>(p.soldCount||0)>0).length;
+  const discountCount=products.filter(p=>p.crossPromoGroup||(p.bundleQty>1&&p.bundlePrice>0)||p.purchaseMultiple||p.promoDivisor).length;
+  const newCount=products.filter(p=>p.shopListedAt&&(now-p.shopListedAt)<7*24*60*60*1000).length;
+  const favCount=getFavorites().length;
+  const recentCount=getRecentlyViewed().filter(id=>products.some(p=>p.id===id)).length;
+  const featuredCount=products.filter(p=>p.featured).length;
+  const categoryCount=[...new Set(products.map(p=>p.category).filter(Boolean))].length;
+
+  // 本梯次截止倒數：還沒查過的時候先不顯示，查到之後（不管有沒有找到進行中的趟次）才決定要不要顯示這個橫幅
+  let countdownBanner="";
+  if(G._activeTrip&&G._activeTrip.endDate){
+    const endDate=new Date(G._activeTrip.endDate+"T23:59:59");
+    const daysLeft=Math.ceil((endDate-now)/(24*60*60*1000));
+    if(daysLeft>=0){
+      countdownBanner=`<div style="margin:10px 16px 4px;background:#FAF3EA;border:1px solid #E8D5B0;border-radius:10px;padding:12px 14px">
+        <div style="font-size:11px;color:#9C7A5A;margin-bottom:2px">${G._activeTrip.name||"本梯次"}截止倒數</div>
+        <div style="font-size:18px;font-weight:900;color:#B0522D">${daysLeft===0?"今天截止！":`剩 ${daysLeft} 天`}</div>
+      </div>`;
+    }
+  }
+
+  box.innerHTML=
+    countdownBanner+
+    (featuredCount?row("精選推薦",featuredCount,"showFilteredCatalog('featured')"):"")+
+    (hotCount?row("熱銷排行",hotCount,"showFilteredCatalog('hot')"):"")+
+    row("折扣商品",discountCount,"showFilteredCatalog('discount')")+
+    row("新品上架",newCount,"showFilteredCatalog('new')")+
+    (recentCount?row("最近瀏覽",recentCount,"showFilteredCatalog('recent')"):"")+
+    row("我的收藏",favCount,"showFilteredCatalog('favorites')")+
+    row("分類瀏覽",categoryCount,"G.drawerView='categories';renderSideDrawer()")+
+    `<div style="padding:18px 16px 0">
+      <a href="https://line.me/R/ti/p/%40995iznve" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:6px;background:#06C755;border-radius:10px;padding:10px;font-size:12px;font-weight:700;color:white;text-decoration:none">
+        加官方LINE好友
+      </a>
+    </div>`;
+}
+// 點側欄的分類標題，不是直接攤開清單，而是切換商品格子頁去顯示那個分類的內容，
+// 這樣客人看到的畫面跟平常逛商品格子一樣熟悉，不會多一種「側欄裡面的清單」要適應
+function showFilteredCatalog(type){
+  toggleSideDrawer(false);
+  backToCatalog();
+  G.catalogFilter=type;
+  G.cat="all";
+  document.getElementById("search-input").value="";
+  G.search="";
+  renderCatTabs();
+  renderGrid();
+  window.scrollTo(0,0);
+}
 function renderCatTabs(){
   const el=document.getElementById("cat-tabs");
   const cats=[...new Set(G.products.map(p=>p.category).filter(Boolean))];
@@ -406,7 +559,7 @@ function renderCatTabs(){
     return `<button onclick="setCat('${key.replace(/'/g,"\\'")}')" style="flex-shrink:0;padding:7px 14px;border-radius:99px;font-size:12px;font-weight:700;border:1px solid ${active?"#5C3A1E":"#E8D5B0"};background:${active?"#5C3A1E":"white"};color:${active?"#F5E6C8":"#9C7A5A"};cursor:pointer">${label}</button>`;
   }).join("");
 }
-function setCat(key){G.cat=key;renderCatTabs();renderGrid();}
+function setCat(key){G.cat=key;G.catalogFilter=null;renderCatTabs();renderGrid();}
 
 // ── 商品格子 ───────────────────────────────────────
 // 商城說明橫幅（營業時間/出貨規則等）：預設收合，只顯示一行摘要，點了才展開完整內容，
@@ -441,14 +594,28 @@ function renderGrid(){
     return;
   }
   const q=G.search;
-  const filtered=G.products.filter(p=>{
+  const now=Date.now();
+  const favIds=getFavorites();
+  const recentIds=getRecentlyViewed();
+  let filtered=G.products.filter(p=>{
     const mCat=G.cat==="all"||p.category===G.cat;
     const mQ=!q||(p.name||"").toLowerCase().includes(q)||(p.id||"").toLowerCase().includes(q);
-    return mCat&&mQ;
+    let mFilter=true;
+    if(G.catalogFilter==="hot")mFilter=(p.soldCount||0)>0;
+    else if(G.catalogFilter==="discount")mFilter=!!(p.crossPromoGroup||(p.bundleQty>1&&p.bundlePrice>0)||p.purchaseMultiple||p.promoDivisor);
+    else if(G.catalogFilter==="new")mFilter=!!(p.shopListedAt&&(now-p.shopListedAt)<7*24*60*60*1000);
+    else if(G.catalogFilter==="favorites")mFilter=favIds.includes(p.id);
+    else if(G.catalogFilter==="recent")mFilter=recentIds.includes(p.id);
+    else if(G.catalogFilter==="featured")mFilter=!!p.featured;
+    return mCat&&mQ&&mFilter;
   });
+  // 最近瀏覽要照「看的時間」排序（最新看的排最前面），不是商品原本的順序
+  if(G.catalogFilter==="recent"){
+    filtered=filtered.sort((a,b)=>recentIds.indexOf(a.id)-recentIds.indexOf(b.id));
+  }
   if(!filtered.length){
     grid.style.display="block";
-    grid.innerHTML=`<div style="grid-column:1/-1;background:white;border-radius:14px;padding:48px 20px;text-align:center;border:1px solid #E8D5B0"><div style="font-size:28px">🛒</div><div style="font-weight:700;margin-top:8px">${G.products.length===0?"目前還沒有上架商品":"找不到符合的商品"}</div></div>`;
+    grid.innerHTML=`<div style="grid-column:1/-1;background:white;border-radius:14px;padding:48px 20px;text-align:center;border:1px solid #E8D5B0"><div style="font-size:28px">🛒</div><div style="font-weight:700;margin-top:8px">${G.catalogFilter?"這個分類目前沒有商品":G.products.length===0?"目前還沒有上架商品":"找不到符合的商品"}</div></div>`;
     return;
   }
   grid.style.display="grid";
@@ -476,6 +643,9 @@ function renderGrid(){
       ${allSoldOut?`<div style="position:absolute;top:8px;left:8px;z-index:2;background:rgba(0,0,0,0.45);color:white;font-size:10px;font-weight:700;border-radius:6px;padding:2px 7px">售完</div>`:""}
       ${!allSoldOut&&gridHasBundleChoice?`<div style="position:absolute;top:8px;left:8px;z-index:2;background:#FF6B35;color:white;font-size:10px;font-weight:900;border-radius:6px;padding:2px 7px">${p.bundleQty}件優惠</div>`:(!allSoldOut&&pMultiple?`<div style="position:absolute;top:8px;left:8px;z-index:2;background:#FF6B35;color:white;font-size:10px;font-weight:900;border-radius:6px;padding:2px 7px">買${pMultiple-1}送1</div>`:(!allSoldOut&&p.crossPromoGroup?`<div style="position:absolute;top:8px;left:8px;z-index:2;background:#B08968;color:white;font-size:10px;font-weight:900;border-radius:6px;padding:2px 7px">任選${p.crossPromoMinQty||2}件${p.crossPromoPct||95}折</div>`:""))}
       ${isNewProduct?`<div style="position:absolute;bottom:8px;left:8px;z-index:2;background:#06C755;color:white;font-size:10px;font-weight:900;border-radius:6px;padding:2px 7px">✨ 新品</div>`:""}
+      <button onclick="toggleFavorite('${p.id}',event)" style="position:absolute;bottom:8px;right:8px;z-index:2;background:rgba(255,255,255,0.9);border:none;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="${getFavorites().includes(p.id)?'#F4845F':'none'}" stroke="${getFavorites().includes(p.id)?'#F4845F':'#9C7A5A'}" stroke-width="2"><path d="M20.8 4.6c-1.8-1.8-4.7-1.8-6.5 0L12 6.9l-2.3-2.3c-1.8-1.8-4.7-1.8-6.5 0-1.8 1.8-1.8 4.7 0 6.5L12 20.8l8.8-8.8c1.8-1.8 1.8-4.7 0-6.5z"/></svg>
+      </button>
       <div style="width:100%;aspect-ratio:1/1;background:#FAF8F5;overflow:hidden">
         ${p.photo?`<img src="${p.photo}" style="width:100%;height:100%;object-fit:cover" loading="lazy"/>`:`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px">${p.emoji||"📦"}</div>`}
       </div>
@@ -492,6 +662,7 @@ function renderGrid(){
 async function openDetail(pid){
   const p=G.products.find(x=>x.id===pid);if(!p)return;
   G.detailProduct=pid;
+  addToRecentlyViewed(pid);
   // 網址列跟著更新，這樣重新整理頁面才會記得剛才在看哪個商品，不會跳回商城首頁
   history.pushState({pid},"",`${location.pathname}?p=${pid}`);
   G.selectedSpec=G.selectedSpec||{};
@@ -746,9 +917,14 @@ function renderDetail(){
       <div style="font-size:10px;color:#9C7A5A;font-weight:700;margin-bottom:4px">${p.category||""}</div>
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
         <div style="font-size:18px;font-weight:900;color:#3D2010;line-height:1.3">${cleanProductName(p.name)}</div>
-        <button onclick="shareProductLink('${p.id}')" style="flex-shrink:0;display:flex;align-items:center;gap:4px;background:#FAF3EA;border:1px solid #E8D5B0;border-radius:99px;padding:5px 10px;cursor:pointer;color:#8A6D52;font-size:11px;font-weight:700">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg>分享
-        </button>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button onclick="toggleFavorite('${p.id}',event)" style="flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#FAF3EA;border:1px solid #E8D5B0;border-radius:99px;width:30px;height:30px;cursor:pointer">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="${getFavorites().includes(p.id)?'#F4845F':'none'}" stroke="${getFavorites().includes(p.id)?'#F4845F':'#8A6D52'}" stroke-width="2"><path d="M20.8 4.6c-1.8-1.8-4.7-1.8-6.5 0L12 6.9l-2.3-2.3c-1.8-1.8-4.7-1.8-6.5 0-1.8 1.8-1.8 4.7 0 6.5L12 20.8l8.8-8.8c1.8-1.8 1.8-4.7 0-6.5z"/></svg>
+          </button>
+          <button onclick="shareProductLink('${p.id}')" style="flex-shrink:0;display:flex;align-items:center;gap:4px;background:#FAF3EA;border:1px solid #E8D5B0;border-radius:99px;padding:5px 10px;cursor:pointer;color:#8A6D52;font-size:11px;font-weight:700">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg>分享
+          </button>
+        </div>
       </div>
       ${p.shopDescription?`<div style="font-size:13px;color:#5C3A1E;line-height:1.7;white-space:pre-wrap;margin-bottom:16px">${p.shopDescription}</div>`:""}
       ${buyModeSelector}
@@ -1048,6 +1224,7 @@ function backToCatalog(){
   document.getElementById("catalog-view").style.display="block";
   document.getElementById("main-header").style.display="block";
   G.detailProduct=null;
+  G.catalogFilter=null;
   if(location.search.includes("p="))history.pushState({},"",location.pathname);
   renderCartBar();
   window.scrollTo(0,0);
