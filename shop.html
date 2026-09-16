@@ -250,7 +250,13 @@ async function handleLineLoginCallback(){
   if(!code)return;
   const savedState=localStorage.getItem("butter_line_state");
   history.replaceState({},"",location.pathname);
-  if(!state||state!==savedState){showToast("LINE登入驗證失敗，請重試");return;}
+  if(!state||state!==savedState){
+    // 網址上如果殘留著舊的登入驗證參數（例如瀏覽器快取、書籤存到帶參數的網址），
+    // 這裡驗證會失敗，但如果客人本來就已經是登入狀態，這種失敗不用特別提醒，
+    // 免得讓已經登入好好的人反而緊張，以為自己被登出或哪裡出問題
+    if(!G.lineUser)showToast("LINE登入驗證失敗，請重試");
+    return;
+  }
   try{
     const resp=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json","X-Service":"line-login-exchange"},body:JSON.stringify({code,redirectUri:lineLoginRedirectUri()})});
     const data=await resp.json();
@@ -566,7 +572,10 @@ function renderDetail(){
   const buyMode=hasBundleChoice?G.buyMode[pid]:(oldForcedMultiMode?"bundle":"single");
   const isMultiMode=buyMode==="bundle"; // 目前是不是要顯示「多規格湊單」介面
   const selIdx=G.selectedSpec[pid]??0;
-  const specImg=isMultiMode?(p.photo||""):((p.specImages||[])[selIdx]||"");
+  const hasExplicitlyChosenSpec=!!(G.specExplicitlyChosen&&G.specExplicitlyChosen[pid]);
+  // 主圖預設顯示商品主照片，客人真的自己點過某個規格之後，主圖才切換成那個規格的照片，
+  // 不然一進詳情頁就自動選中第一個規格、直接顯示規格照片，會看不到商品原本的主照片
+  const specImg=isMultiMode?(p.photo||""):(hasExplicitlyChosenSpec?((p.specImages||[])[selIdx]||""):"");
   const mainImg=specImg||p.photo||"";
   const stockRaw=hasSpecs?(p.specStock||[])[selIdx]:null;
   const stock=(stockRaw===null||stockRaw===undefined||stockRaw==="")?null:Number(stockRaw);
@@ -717,9 +726,6 @@ function renderDetail(){
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>返回
       </button>
       <div style="flex:1"></div>
-      <button onclick="shareProductLink('${p.id}')" style="background:none;border:none;cursor:pointer;padding:4px;color:#5C3A1E">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg>
-      </button>
       <button id="detail-member-btn" style="background:none;border:none;cursor:pointer;padding:4px;color:#5C3A1E">
         ${G.lineUser&&G.lineUser.pictureUrl?`<img src="${G.lineUser.pictureUrl}" style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:2px solid #06C755"/>`:`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`}
       </button>
@@ -738,7 +744,12 @@ function renderDetail(){
     <!-- 商品資訊 -->
     <div style="padding:16px 16px 140px">
       <div style="font-size:10px;color:#9C7A5A;font-weight:700;margin-bottom:4px">${p.category||""}</div>
-      <div style="font-size:18px;font-weight:900;color:#3D2010;line-height:1.3;margin-bottom:8px">${cleanProductName(p.name)}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
+        <div style="font-size:18px;font-weight:900;color:#3D2010;line-height:1.3">${cleanProductName(p.name)}</div>
+        <button onclick="shareProductLink('${p.id}')" style="flex-shrink:0;display:flex;align-items:center;gap:4px;background:#FAF3EA;border:1px solid #E8D5B0;border-radius:99px;padding:5px 10px;cursor:pointer;color:#8A6D52;font-size:11px;font-weight:700">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg>分享
+        </button>
+      </div>
       ${p.shopDescription?`<div style="font-size:13px;color:#5C3A1E;line-height:1.7;white-space:pre-wrap;margin-bottom:16px">${p.shopDescription}</div>`:""}
       ${buyModeSelector}
       ${crossPromoHint}
@@ -835,6 +846,8 @@ function detailAddMultiSpecToCart(pid,buyNow){
 function detailSelectSpec(pid,idx){
   G.selectedSpec=G.selectedSpec||{};
   G.selectedSpec[pid]=idx;
+  G.specExplicitlyChosen=G.specExplicitlyChosen||{};
+  G.specExplicitlyChosen[pid]=true; // 客人真的自己點過規格了，這時候主圖才可以跟著換成該規格的照片
   G.detailQty=1;
   renderDetail();
 }
