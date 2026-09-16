@@ -220,6 +220,11 @@ function lineLoginRedirectUri(){return "https://gin1203.github.io/butter-edit/sh
 function lineLogin(){
   const state=Math.random().toString(36).slice(2)+Date.now();
   localStorage.setItem("butter_line_state",state);
+  // 如果客人是從「分享某個商品的連結」點進來、還沒登入才去點登入，
+  // 登入完成跳回來的網址是固定的（不會帶著原本那個商品ID），
+  // 先把這個資訊存起來，登入完成後才能正確跳回原本那個商品，而不是跳回普通的商品格子頁
+  const sharedPid=new URLSearchParams(location.search).get("p");
+  if(sharedPid)localStorage.setItem("butter_pending_product",sharedPid);
   const params=new URLSearchParams({response_type:"code",client_id:LINE_LOGIN_CHANNEL_ID,redirect_uri:lineLoginRedirectUri(),state,scope:"profile openid"});
   location.href="https://access.line.me/oauth2/v2.1/authorize?"+params.toString();
 }
@@ -350,6 +355,11 @@ async function loadProducts(){
   renderGrid();
   renderCartBar();
   startProductAutoRefresh(); // 背景定期重新抓取商品資料，價格/庫存改了客人不用手動整理頁面
+  // 如果網址帶著 ?p=商品ID（分享連結進來的），直接跳到那個商品的詳情頁，不用先逛過整個商城；
+  // 如果是剛登入完跳回來的（原本網址上的商品ID沒有跟著回來），改看剛才登入前存的那個
+  const sharedPid=new URLSearchParams(location.search).get("p")||localStorage.getItem("butter_pending_product");
+  localStorage.removeItem("butter_pending_product");
+  if(sharedPid&&G.products.find(x=>x.id===sharedPid))openDetail(sharedPid);
 }
 // 每 30 秒偷偷重新抓一次商品資料（改價格、改庫存後，客人畫面上會自動跟著更新，
 // 不用手動重新整理）。只有在「商品格子」或「商品詳情頁」的時候才更新畫面，
@@ -476,6 +486,8 @@ function renderGrid(){
 async function openDetail(pid){
   const p=G.products.find(x=>x.id===pid);if(!p)return;
   G.detailProduct=pid;
+  // 網址列跟著更新，這樣重新整理頁面才會記得剛才在看哪個商品，不會跳回商城首頁
+  history.pushState({pid},"",`${location.pathname}?p=${pid}`);
   G.selectedSpec=G.selectedSpec||{};
   if(G.selectedSpec[pid]==null)G.selectedSpec[pid]=0;
   G.detailQty=1;
@@ -513,8 +525,26 @@ function closeDetail(){
   document.getElementById("catalog-view").style.display="block";
   document.getElementById("main-header").style.display="block";
   G.detailProduct=null;
+  // 離開詳情頁，網址列也跟著清掉，不然反過來會變成「明明在逛首頁，重新整理卻跳回商品詳情頁」
+  if(location.search.includes("p="))history.pushState({},"",location.pathname);
   renderGrid();renderCartBar();
   window.scrollTo(0,0);
+}
+// 分享單一商品連結：手機上優先用系統原生的分享選單（可以直接選LINE、簡訊等），
+// 沒有這個功能的話（大部分電腦瀏覽器）就退回「複製連結」，一樣能貼去LINE分享
+function shareProductLink(pid){
+  const p=G.products.find(x=>x.id===pid);
+  const url=`${location.origin}${location.pathname}?p=${pid}`;
+  const shareText=p?cleanProductName(p.name):"";
+  if(navigator.share){
+    navigator.share({title:shareText,text:shareText,url}).catch(()=>{});
+  } else if(navigator.clipboard){
+    navigator.clipboard.writeText(url).then(()=>showToast("連結已複製，貼給朋友分享吧！")).catch(()=>{
+      prompt("複製這個連結分享：",url);
+    });
+  } else {
+    prompt("複製這個連結分享：",url);
+  }
 }
 function renderDetail(){
   const pid=G.detailProduct;
@@ -687,6 +717,9 @@ function renderDetail(){
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>返回
       </button>
       <div style="flex:1"></div>
+      <button onclick="shareProductLink('${p.id}')" style="background:none;border:none;cursor:pointer;padding:4px;color:#5C3A1E">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg>
+      </button>
       <button id="detail-member-btn" style="background:none;border:none;cursor:pointer;padding:4px;color:#5C3A1E">
         ${G.lineUser&&G.lineUser.pictureUrl?`<img src="${G.lineUser.pictureUrl}" style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:2px solid #06C755"/>`:`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`}
       </button>
@@ -1002,6 +1035,7 @@ function backToCatalog(){
   document.getElementById("catalog-view").style.display="block";
   document.getElementById("main-header").style.display="block";
   G.detailProduct=null;
+  if(location.search.includes("p="))history.pushState({},"",location.pathname);
   renderCartBar();
   window.scrollTo(0,0);
 }
@@ -1413,6 +1447,19 @@ async function init(){
 }
 // 回到頂部按鈕：只在商品格子頁、往下滑超過一定距離才出現，
 // 詳情頁/結帳頁不顯示（那些頁面已經有自己的固定底部按鈕，不要疊在一起）
+// 處理瀏覽器「上一頁/下一頁」按鈕：網址列變了，畫面也要跟著切換，不然兩邊會對不起來
+window.addEventListener("popstate",()=>{
+  const pid=new URLSearchParams(location.search).get("p");
+  if(pid&&G.products?.find(x=>x.id===pid)){
+    if(G.detailProduct!==pid){G.detailProduct=pid;renderDetail();document.getElementById("catalog-view").style.display="none";document.getElementById("detail-view").style.display="block";document.getElementById("main-header").style.display="none";document.getElementById("cart-bar").style.display="none";}
+  } else if(G.detailProduct){
+    document.getElementById("detail-view").style.display="none";
+    document.getElementById("catalog-view").style.display="block";
+    document.getElementById("main-header").style.display="block";
+    G.detailProduct=null;
+    renderGrid();renderCartBar();
+  }
+});
 window.addEventListener("scroll",()=>{
   const btn=document.getElementById("back-to-top-btn");
   if(!btn)return;
