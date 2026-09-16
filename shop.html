@@ -13,6 +13,11 @@
   button,input,select,textarea{font-family:inherit}
   ::-webkit-scrollbar{display:none}
   .scrollbar-none{scrollbar-width:none}
+  .new-strip-arrow{position:absolute;top:22px;width:34px;height:34px;border-radius:50%;background:white;border:1px solid #D9C39C;color:#5C3A1E;box-shadow:0 2px 8px rgba(0,0,0,0.15);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2}
+  .new-strip-arrow:hover{background:#FAF3EA}
+  #new-strip-left,#related-strip-left{left:0}
+  #new-strip-right,#related-strip-right{right:0}
+  @media(hover:none){.new-strip-arrow{display:none!important}} /* 觸控裝置本來就能直接滑，不需要箭頭按鈕多佔畫面 */
 </style>
 </head>
 <body>
@@ -381,6 +386,65 @@ async function fetchLatestTrip(){
     return past[0]||null;
   }catch(e){return null;}
 }
+// 子分類判斷：跟後台用同一套規則，靠商品名稱裡的關鍵字自動判斷更細的分類
+// （例如「食品」這個大分類底下，還能細分出「泡麵」「餅乾」「飲料」等等），
+// 「你可能也喜歡」用這個去配對，才不會把泡麵跟餅乾這種不相干的東西混在一起推薦。
+// 這裡只搬了固定的基礎規則，後台如果有另外新增「自訂子分類」不會同步過來，這是唯一的落差。
+const SHOP_SUBCAT_MAP={
+  food:[
+    {key:"海苔",kw:["海苔","魚乾","魷魚","乾貨"]},
+    {key:"泡麵",kw:["泡麵","拉麵","炒麵","炒碼麵","醬麵","炸醬麵","拌麵","湯麵","涼麵","冷麵","乾麵","油麵","刀削麵","蕎麥麵","蒟蒻麵","寬麵","速食麵","即食麵","杯麵","年糕麵","冬粉","烏龍","河粉","義大利麵","義大利麪","pasta","spaghetti","noodle"]},
+    {key:"堅果",kw:["堅果","杏仁","腰果","核桃","果乾","草莓乾","芒果乾","蔓越莓","凍乾","水果乾"]},
+    {key:"調味",kw:["醬","調味","辣椒","味噌","芥末","醋","食鹽","海鹽","岩鹽","橄欖油","麻油","香油","砂糖包"]},
+    {key:"湯底",kw:["高湯","高湯錠","高湯塊","湯底","湯磚","湯錠","柴魚精","昆布高湯","大醬湯","味噌湯","海鮮湯","蔘雞湯","雪濃湯","牛骨湯","部隊鍋","泡菜鍋","鍋底"]},
+    {key:"餅乾",kw:["餅乾","洋芋片","薯片","爆米花","糖果","咖啡糖","軟糖","脆片","貝果","堅果脆","蝴蝶餅","扭結餅","蝴蝶酥","千層酥","焦糖餅","雪花酥","雪花","威化","oreo","奧利奧","wafer","pretzel","gummy","chip","cookie","snack","涼糖","薄荷糖","薄荷涼糖","硬糖","喉糖","巧克力球","巧克力棒","糖","甜甜圈","燕麥酥","燕麥","donut"]},
+    {key:"飲料",kw:["飲料","果汁","咖啡","茶飲","汽水","能量飲","乳酸菌飲","優酪乳","蒟蒻飲"]},
+    {key:"沖泡",kw:["沖泡","搖搖飲","蛋白飲","高蛋白","蛋白粉","乳清","奶昔粉","代餐","益生菌粉","酵素粉"]},
+    {key:"果凍",kw:["果凍","布丁","jelly","pudding"]},
+    {key:"麻糬",kw:["麻糬","年糕","糯米"]},
+    {key:"甜點",kw:["甜點","蛋糕","布朗尼","杜拜","生巧克力","可頌","泡芙","馬卡龍","鬆餅","waffle","cake","派","pie"]},
+    {key:"優格",kw:["優格","乳酪","起司","牛奶","乳飲","豆漿","優酪"]},
+  ],
+  beauty:[
+    {key:"痘痘",kw:["痘痘貼","痘貼","痘痘","粉刺","黑頭","導出液","藥局","眼藥水","隱形眼鏡","滴眼液","人工淚液","水楊酸","去疤","疤痕","修復膏","修復軟膏","萬用修復","軟膏","蚊蟲叮咬","皮膚炎","祛斑","淡斑","褪黑"]},
+    {key:"防曬",kw:["防曬","sunscreen","sun cream","spf"]},
+    {key:"護髮",kw:["護髮","養髮","頭皮","頭髮","洗髮","潤髮","髮膜","haircare","shampoo"]},
+    {key:"面膜",kw:["面膜","mask","sheet mask","棉片","化妝棉","cotton pad"]},
+    {key:"保濕",kw:["保濕","乳液","面霜","face cream","水乳","精華","essence","serum","安瓶"]},
+    {key:"眼霜",kw:["眼霜","眼膜","眼部","eye cream","eye"]},
+    {key:"清潔",kw:["洗面","清潔","卸妝","泡沫","foam","cleanser","toner","化妝水"]},
+    {key:"彩妝",kw:["唇膏","口紅","粉底","氣墊","眼影","睫毛","腮紅","修容","妝前","妝前乳","primer","定妝","遮瑕","臥蠶","眼線"]},
+    {key:"身體",kw:["身體乳","body lotion","hand cream","護手","沐浴","浴鹽"]},
+    {key:"香水",kw:["香水","perfume","香氛","body mist","身體噴霧","香精","淡香精","淡香水"]},
+    {key:"保健",kw:["益生菌","乳酸菌","維他命","綜合維他命","B群","膠原蛋白","魚油","葉黃素","鈣片","酵素","紅蔘","人蔘","蜂膠","牛樟芝","保健食品","健康食品","營養品","營養補給","瘦身","瘦身錠","塑身","塑身錠","燃脂","代謝錠"]},
+    {key:"美容儀器",kw:["美容儀","導入儀","導出儀","booster","microcurrent","微電流","音波儀","筋膜儀","按摩儀","脫毛儀","洗臉機","潔顏儀","洗顏機","光療儀"]},
+  ],
+  daiso:[
+    {key:"衛生保健",kw:["ok繃","OK繃","衛生棉","棉條","保健","維他命","體溫計","痠痛貼布","酸痛貼布","口罩","刮痧板","耳塞"]},
+    {key:"美妝保養",kw:["防曬","精華","乳液","面霜","護手霜","護唇膏","身體乳","洗面乳","卸妝","面膜","化妝水","眼霜","霜"]},
+    {key:"美妝工具",kw:["棉花棒","化妝棉","海綿","刷具","美妝蛋","梳子"]},
+    {key:"清潔用品",kw:["清潔劑","洗衣","除菌","消毒","酒精","芳香劑","除臭","洗碗精","去污"]},
+    {key:"旅行用品",kw:["行李袋","行李箱","盥洗包","防水袋","腰包","旅行分裝"]},
+    {key:"文具",kw:["文具","筆","本子","便利貼","膠帶","剪刀","尺"]},
+    {key:"廚房",kw:["廚房","鍋","碗","筷","保鮮","便當","瀝水"]},
+    {key:"收納",kw:["收納","整理","掛鉤","夾子","置物"]},
+    {key:"3C配件",kw:["充電線","充電器","滑鼠","鍵盤","傳輸線","集線器","行動電源","耳機","手機架","支架","延長線"]},
+    {key:"布類家紡",kw:["毛巾","浴巾","枕頭","棉被","抱枕","襪子","地墊","踏墊"]},
+  ],
+};
+function getShopSubcat(name,catKey){
+  const n=(name||"").toLowerCase();
+  const rules=SHOP_SUBCAT_MAP[catKey]||[];
+  const sugarNegations=["低糖","無糖","代糖","零糖","減糖","减糖"];
+  const hasSugarNegation=sugarNegations.some(w=>n.includes(w));
+  for(const r of rules){
+    if(r.kw.some(k=>{
+      if(k==="糖"&&hasSugarNegation)return false;
+      return n.includes(k.toLowerCase());
+    }))return r.key;
+  }
+  return null;
+}
 async function loadProducts(){
   // 先檢查賣場是否開啟，順便把商城說明（營業時間/出貨規則等）一起抓回來
   try{
@@ -582,7 +646,7 @@ function renderNewProductStrip(){
   const newProducts=(G.products||[]).filter(p=>!p.archived&&p.shopListedAt&&(now-p.shopListedAt)<10*24*60*60*1000);
   if(!newProducts.length){box.innerHTML="";return;}
   box.innerHTML=`<div style="background:#FFFDF9;border:1px solid #F0E0C0;border-radius:14px;padding:12px 0 14px;margin-bottom:12px;position:relative">
-    <div style="font-size:12px;font-weight:900;color:#8A6D52;margin-bottom:10px;padding:0 14px;display:flex;align-items:center;gap:5px">
+    <div style="font-size:12px;font-weight:900;color:#8A6D52;margin-bottom:10px;padding:0 18px;display:flex;align-items:center;gap:5px">
       <span style="display:inline-flex;align-items:center;justify-content:center;background:#06C755;color:white;border-radius:99px;width:16px;height:16px;font-size:9px;font-weight:900">N</span>
       新品上架
     </div>
@@ -590,7 +654,7 @@ function renderNewProductStrip(){
       <button onclick="scrollNewProductStrip(-1)" style="display:none" id="new-strip-left" class="new-strip-arrow">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
-      <div id="new-strip-scroll" class="scrollbar-none" style="display:flex;gap:12px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 14px 2px;scroll-snap-type:x proximity;scroll-behavior:smooth">
+      <div id="new-strip-scroll" class="scrollbar-none" style="display:flex;gap:12px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 18px 2px;scroll-snap-type:x proximity;scroll-behavior:smooth">
         ${newProducts.map(p=>`<div onclick="openDetail('${p.id}')" style="flex-shrink:0;width:76px;cursor:pointer;scroll-snap-align:start">
           <div style="width:76px;height:76px;border-radius:16px;overflow:hidden;background:white;border:1px solid #E8D5B0;padding:8px;box-sizing:border-box;display:flex;align-items:center;justify-content:center">
             ${p.photo?`<img src="${p.photo}" style="max-width:100%;max-height:100%;object-fit:contain" loading="lazy"/>`:`<div style="font-size:24px">${p.emoji||"📦"}</div>`}
@@ -602,22 +666,16 @@ function renderNewProductStrip(){
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
       </button>
     </div>
-  </div>
-  <style>
-    .new-strip-arrow{position:absolute;top:22px;width:34px;height:34px;border-radius:50%;background:white;border:1px solid #D9C39C;color:#5C3A1E;box-shadow:0 2px 8px rgba(0,0,0,0.15);cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2}
-    .new-strip-arrow:hover{background:#FAF3EA}
-    #new-strip-left{left:0}
-    #new-strip-right{right:0}
-    @media(hover:none){.new-strip-arrow{display:none!important}} /* 觸控裝置本來就能直接滑，不需要箭頭按鈕多佔畫面 */
-  </style>`;
-  updateNewStripArrows();
-  document.getElementById("new-strip-scroll")?.addEventListener("scroll",updateNewStripArrows);
+  </div>`;
+  updateStripArrows("new-strip");
+  document.getElementById("new-strip-scroll")?.addEventListener("scroll",()=>updateStripArrows("new-strip"));
 }
-// 左箭頭只有在「還能往左滑」的時候才顯示，滑到最左邊就自動隱藏，不會讓人誤以為還能繼續滑
-function updateNewStripArrows(){
-  const scroller=document.getElementById("new-strip-scroll");
-  const leftBtn=document.getElementById("new-strip-left");
-  const rightBtn=document.getElementById("new-strip-right");
+// 左箭頭只有在「還能往左滑」的時候才顯示，滑到最左邊就自動隱藏，不會讓人誤以為還能繼續滑；
+// 這個函式共用給「新品上架」跟「相關商品推薦」兩個橫向捲動區塊，用id前綴區分是哪一個
+function updateStripArrows(prefix){
+  const scroller=document.getElementById(prefix+"-scroll");
+  const leftBtn=document.getElementById(prefix+"-left");
+  const rightBtn=document.getElementById(prefix+"-right");
   if(!scroller||!leftBtn||!rightBtn)return;
   leftBtn.style.display=scroller.scrollLeft>10?"flex":"none";
   rightBtn.style.display=(scroller.scrollWidth-scroller.clientWidth-scroller.scrollLeft>10)?"flex":"none";
@@ -626,6 +684,11 @@ function scrollNewProductStrip(dir){
   const scroller=document.getElementById("new-strip-scroll");
   if(!scroller)return;
   scroller.scrollBy({left:dir*160,behavior:"smooth"});
+}
+function scrollRelatedStrip(dir){
+  const scroller=document.getElementById("related-strip-scroll");
+  if(!scroller)return;
+  scroller.scrollBy({left:dir*180,behavior:"smooth"});
 }
 function renderShopDescriptionBanner(){
   const box=document.getElementById("shop-description-banner");
@@ -806,6 +869,59 @@ function shareProductLink(pid){
   } else {
     prompt("複製這個連結分享：",url);
   }
+}
+// 詳情頁下方的推薦區塊：
+// 1) 這個商品如果有跨商品促銷組合，優先推薦「同一個組合裡的其他商品」——
+//    客人剛好在看這個商品時，直接告訴他湊哪些東西可以一起打折，比只顯示一句提示更有幫助
+// 2) 沒有促銷組合的話，退回顯示「同分類的其他商品」，單純增加曝光、延長瀏覽
+// 3) 兩種都找不到符合的商品，這個區塊完全不顯示
+function renderRelatedProductsHtml(p){
+  const others=(G.products||[]).filter(x=>x.id!==p.id&&!x.archived);
+  let related=[];
+  let title="🛍️ 你可能也喜歡";
+  if(p.crossPromoGroup){
+    related=others.filter(x=>x.crossPromoGroup===p.crossPromoGroup);
+    title=`🎯 一起湊折扣（任選${p.crossPromoMinQty||2}件${p.crossPromoPct||95}折）`;
+  }
+  // 優先用「子分類」配對（例如泡麵/餅乾這種更細的分類），比大分類準確很多，
+  // 才不會點泡麵卻推薦到餅乾這種不相干的東西
+  if(!related.length&&p.catKey){
+    const pSubcat=getShopSubcat(p.name,p.catKey);
+    if(pSubcat){
+      related=others.filter(x=>x.catKey===p.catKey&&getShopSubcat(x.name,x.catKey)===pSubcat);
+      title="🛍️ 你可能也喜歡";
+    }
+  }
+  // 子分類配不到（例如商品名稱沒有對到任何關鍵字），才退回用大分類
+  if(!related.length&&p.category){
+    related=others.filter(x=>x.category===p.category);
+    title="🛍️ 你可能也喜歡";
+  }
+  related=related.slice(0,10);
+  if(!related.length)return "";
+  return `<div style="margin:8px -16px 0;padding:14px 0 4px;border-top:1px solid #F0E6D0;position:relative">
+    <div style="font-size:13px;font-weight:900;color:#3D2010;margin-bottom:10px;padding:0 16px">${title}</div>
+    <div style="position:relative">
+      <button onclick="scrollRelatedStrip(-1)" id="related-strip-left" class="new-strip-arrow" style="display:none">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div id="related-strip-scroll" class="scrollbar-none" style="display:flex;gap:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 16px 4px;scroll-behavior:smooth">
+        ${related.map(rp=>{
+          const rPrice=rp.finalPrice||0;
+          return `<div onclick="event.stopPropagation();openDetail('${rp.id}')" style="flex-shrink:0;width:104px;cursor:pointer">
+            <div style="width:104px;height:104px;border-radius:12px;overflow:hidden;background:#FAF8F5;border:1px solid #E8D5B0">
+              ${rp.photo?`<img src="${rp.photo}" style="width:100%;height:100%;object-fit:cover" loading="lazy"/>`:`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:28px">${rp.emoji||"📦"}</div>`}
+            </div>
+            <div style="font-size:11px;color:#3D2010;margin-top:5px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3">${cleanProductName(rp.name)}</div>
+            ${G.lineUser?`<div style="font-size:11px;font-weight:900;color:#F4845F;margin-top:2px">NT$${rPrice.toLocaleString()}</div>`:""}
+          </div>`;
+        }).join("")}
+      </div>
+      <button onclick="scrollRelatedStrip(1)" id="related-strip-right" class="new-strip-arrow">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+  </div>`;
 }
 function renderDetail(){
   const pid=G.detailProduct;
@@ -1031,6 +1147,7 @@ function renderDetail(){
         </div>
         ${stock!=null&&stock<=5?`<div style="font-size:11px;color:#E65100;font-weight:700">僅剩 ${stock} 件</div>`:""}
       </div>`:""}
+      ${renderRelatedProductsHtml(p)}
     </div>
 
     <!-- 底部按鈕 -->
@@ -1041,6 +1158,8 @@ function renderDetail(){
   document.getElementById("detail-back-btn")?.addEventListener("click",closeDetail);
   document.getElementById("detail-member-btn")?.addEventListener("click",headerMemberClick);
   document.getElementById("detail-cart-btn")?.addEventListener("click",headerCartClick);
+  updateStripArrows("related-strip");
+  document.getElementById("related-strip-scroll")?.addEventListener("scroll",()=>updateStripArrows("related-strip"));
 }
 
 // 多規格同時選購：調整某個規格的數量，會檢查庫存上限
