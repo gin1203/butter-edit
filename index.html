@@ -7859,40 +7859,44 @@ window.addOrder=async function(){
   let totalKinds=0;
   let lastSpecLabel="";
 
+  // 先把這批全部要登記的商品收集起來（還不寫入），才能一次套用跨商品促銷折扣，
+  // 不然分開三段各自寫入的話，這幾樣商品互相湊單的折扣會算不到
+  const itemsToCreate=[];
   const specSel=window.G.moSpecSel||{};
   const specKeys=Object.keys(specSel);
   if(specKeys.length>=2){
-    // 一次喊多個規格：每個選中的規格各自用自己設定的數量，各建一筆訂單
-    let idx=0;
     for(const s of specKeys){
-      const q=specSel[s]||1;
-      const oid="O"+Date.now()+"_s"+(idx++);
-      await fbSet("orders",oid,{productId,productName:cleanProductName(prod.name),productEmoji:prod.emoji,customerId,communityName,lineName,buyerName:communityName||lineName,qty:q,unitPrice:prod.finalPrice,total:prod.finalPrice*q,status:"pending",tripId,orderType,spec:s,purchased:orderType==="onsite",costSnapshot:onsiteCost,paymentMethodSnapshot:pmThisBatch,createdAt:Date.now()});
-      totalKinds++;
+      itemsToCreate.push({productId,productObj:prod,spec:s,qty:specSel[s]||1,unitPrice:prod.finalPrice,costSnapshot:onsiteCost});
     }
     lastSpecLabel=`（${specKeys.join("、")}）`;
+    totalKinds+=specKeys.length;
   } else {
     const spec=specKeys[0]||document.getElementById("mo-spec")?.value.trim()||"";
     const qtyFinal=specKeys.length===1?(specSel[specKeys[0]]||1):qty;
-    // 有多個規格選項時，必須選擇規格才能登記
     if(prod?.specs?.length>1&&!spec){showToast("請先選擇規格！","error");return;}
-    const id="O"+Date.now();
-    await fbSet("orders",id,{productId,productName:cleanProductName(prod.name),productEmoji:prod.emoji,customerId,communityName,lineName,buyerName:communityName||lineName,qty:qtyFinal,unitPrice:prod.finalPrice,total:prod.finalPrice*qtyFinal,status:"pending",tripId,orderType,spec,purchased:orderType==="onsite",costSnapshot:onsiteCost,paymentMethodSnapshot:pmThisBatch,createdAt:Date.now()});
-    if(spec)addSpecToProductIfNew(productId,spec,window.G.moCustomSpecPhoto);
+    itemsToCreate.push({productId,productObj:prod,spec,qty:qtyFinal,unitPrice:prod.finalPrice,costSnapshot:onsiteCost,_addSpec:spec});
     totalKinds=1;
     lastSpecLabel=spec?" ("+spec+")":"";
   }
-
-  // 混搭口味：同一活動下勾選的其他商品，一次登記完成，不用再開一次視窗
   const mixItems=window.G.moMixItems||[];
-  let mixIdx=0;
   for(const item of mixItems){
     const sp=window.G.products.find(x=>x.id===item.productId);if(!sp)continue;
-    const mixId="O"+Date.now()+"_m"+(mixIdx++);
-    const mixSpec=item.spec||"";
     const mixCost=orderType==="onsite"?calcCost(sp.foreignAmount||sp.krw||0,sp.currency||"KRW",window.isDutyFreeChannel(sp.channel,sp.flags?.noTaxRefund),pmThisBatch).afterTax:null;
-    await fbSet("orders",mixId,{productId:sp.id,productName:cleanProductName(sp.name),productEmoji:sp.emoji,customerId,communityName,lineName,buyerName:communityName||lineName,qty:item.qty,unitPrice:sp.finalPrice,total:sp.finalPrice*item.qty,status:"pending",tripId,orderType,spec:mixSpec,purchased:orderType==="onsite",costSnapshot:mixCost,paymentMethodSnapshot:orderType==="onsite"?pmThisBatch:null,createdAt:Date.now()});
+    itemsToCreate.push({productId:sp.id,productObj:sp,spec:item.spec||"",qty:item.qty,unitPrice:sp.finalPrice,costSnapshot:mixCost,_isMix:true});
     totalKinds++;
+  }
+
+  // 一次套用跨商品促銷折扣（例如任選2件95折），會把這個客人還沒出貨/結清的舊訂單也一起合併計算
+  await applyCrossPromoToPendingItems(itemsToCreate,customerId);
+
+  let idx=0;
+  for(const it of itemsToCreate){
+    const oid="O"+Date.now()+"_"+(idx++);
+    const actualUnitPrice=it.discountPrice??it.unitPrice;
+    const actualTotal=it.total??(it.unitPrice*it.qty);
+    await fbSet("orders",oid,{productId:it.productId,productName:cleanProductName(it.productObj.name),productEmoji:it.productObj.emoji,customerId,communityName,lineName,buyerName:communityName||lineName,qty:it.qty,unitPrice:actualUnitPrice,total:actualTotal,status:"pending",tripId,orderType,spec:it.spec,purchased:orderType==="onsite",costSnapshot:it.costSnapshot,paymentMethodSnapshot:it._isMix?(orderType==="onsite"?pmThisBatch:null):pmThisBatch,createdAt:Date.now(),discountNote:it.discountNote||undefined});
+    await decrementShopStockForManualOrder(it.productId,it.spec,it.qty);
+    if(it._addSpec)addSpecToProductIfNew(it.productId,it._addSpec,window.G.moCustomSpecPhoto);
   }
   window.G.moMixItems=[];
   window.G.moSpecSel={};
@@ -9347,6 +9351,8 @@ window.boConfirm=async function(){
   const communityName=cust?.communityName||custName;
 
   let count=0;
+  // 先收集這批要建立的訂單，一次套用跨商品促銷折扣，再逐一寫入
+  const itemsToCreate=[];
   for(let i=0;i<parsed.length;i++){
     const chk=document.getElementById("bo-check-"+i);
     if(!chk?.checked)continue;
@@ -9354,16 +9360,23 @@ window.boConfirm=async function(){
     if(!item.productId)continue;
     const p=products.find(x=>x.id===item.productId);
     if(!p)continue;
-    const id="ord_"+Date.now()+"_"+i;
     const batchCost=orderType==="onsite"?calcCost(p.foreignAmount||p.krw||0,p.currency||"KRW",window.isDutyFreeChannel(p.channel,p.flags?.noTaxRefund),p.paymentMethod||"card").afterTax:null;
+    itemsToCreate.push({productId:item.productId,productObj:p,spec:item.spec||"",qty:item.qty,unitPrice:p.finalPrice,costSnapshot:batchCost,_origIdx:i});
+  }
+  await applyCrossPromoToPendingItems(itemsToCreate,customerId);
+  for(const it of itemsToCreate){
+    const id="ord_"+Date.now()+"_"+it._origIdx;
+    const actualUnitPrice=it.discountPrice??it.unitPrice;
+    const actualTotal=it.total??(it.unitPrice*it.qty);
     await fbSet("orders",id,{
-      productId:item.productId,productName:p.name,productEmoji:p.emoji,
+      productId:it.productId,productName:it.productObj.name,productEmoji:it.productObj.emoji,
       customerId,communityName,lineName:lineName||"",buyerName:communityName,
-      qty:item.qty,unitPrice:p.finalPrice,total:p.finalPrice*item.qty,
-      status:"pending",tripId,orderType,spec:item.spec||"",purchased:orderType==="onsite",
-      costSnapshot:batchCost,
-      createdAt:Date.now()+(i*1000)
+      qty:it.qty,unitPrice:actualUnitPrice,total:actualTotal,
+      status:"pending",tripId,orderType,spec:it.spec,purchased:orderType==="onsite",
+      costSnapshot:it.costSnapshot,discountNote:it.discountNote||undefined,
+      createdAt:Date.now()+(it._origIdx*1000)
     });
+    await decrementShopStockForManualOrder(it.productId,it.spec,it.qty);
     count++;
   }
   closeModal("modal-batch-order");
@@ -16226,7 +16239,12 @@ window.qaLiveAddMoreOrder=async function(){
   const pmForThis=orderType==="onsite"?await askPaymentMethodModal():null;
   const onsiteCost=orderType==="onsite"?calcCost(prod.foreignAmount,prod.currency,window.isDutyFreeChannel(prod.channel,prod.flags?.noTaxRefund),pmForThis).afterTax:null;
   const oid="O"+Date.now();
-  await fbSet("orders",oid,{productId:prod.id,productName:cleanProductName(prod.name),productEmoji:prod.emoji||"📦",customerId,communityName,lineName,buyerName:communityName||lineName,qty,unitPrice:prod.finalPrice,total:prod.finalPrice*qty,status:"pending",tripId,orderType,spec:"",purchased:orderType==="onsite",costSnapshot:onsiteCost,paymentMethodSnapshot:pmForThis,createdAt:Date.now()});
+  const _qlItem={productId:prod.id,productObj:prod,spec:"",qty,unitPrice:prod.finalPrice};
+  await applyCrossPromoToPendingItems([_qlItem],customerId);
+  const _qlUnitPrice=_qlItem.discountPrice??_qlItem.unitPrice;
+  const _qlTotal=_qlItem.total??(_qlItem.unitPrice*qty);
+  await fbSet("orders",oid,{productId:prod.id,productName:cleanProductName(prod.name),productEmoji:prod.emoji||"📦",customerId,communityName,lineName,buyerName:communityName||lineName,qty,unitPrice:_qlUnitPrice,total:_qlTotal,status:"pending",tripId,orderType,spec:"",purchased:orderType==="onsite",costSnapshot:onsiteCost,paymentMethodSnapshot:pmForThis,createdAt:Date.now(),discountNote:_qlItem.discountNote||undefined});
+  await decrementShopStockForManualOrder(prod.id,"",qty);
   window.G.qaLiveMoreCount++;
   const orderTypeLabel=orderType==="onsite"?"🛍️現場":orderType==="quote"?"📋待報價":"📱記事本+1";
   const listEl=document.getElementById("qa-live-more-list");
@@ -16332,7 +16350,12 @@ window.qaLiveSave=async function(){
       const pmForThis=orderType==="onsite"?await askPaymentMethodModal():null;
       const onsiteCost=orderType==="onsite"?calcCost(prod.foreignAmount,prod.currency,window.isDutyFreeChannel(prod.channel,prod.flags?.noTaxRefund),pmForThis).afterTax:null;
       const oid="O"+Date.now();
-      await fbSet("orders",oid,{productId:id,productName:cleanProductName(prod.name),productEmoji:prod.emoji||"📦",customerId,communityName,lineName,buyerName:communityName||lineName,qty,unitPrice:prod.finalPrice,total:prod.finalPrice*qty,status:"pending",tripId,orderType,spec:"",purchased:orderType==="onsite",costSnapshot:onsiteCost,paymentMethodSnapshot:pmForThis,createdAt:Date.now()});
+      const _qaItem={productId:id,productObj:prod,spec:"",qty,unitPrice:prod.finalPrice};
+      await applyCrossPromoToPendingItems([_qaItem],customerId);
+      const _qaUnitPrice=_qaItem.discountPrice??_qaItem.unitPrice;
+      const _qaTotal=_qaItem.total??(_qaItem.unitPrice*qty);
+      await fbSet("orders",oid,{productId:id,productName:cleanProductName(prod.name),productEmoji:prod.emoji||"📦",customerId,communityName,lineName,buyerName:communityName||lineName,qty,unitPrice:_qaUnitPrice,total:_qaTotal,status:"pending",tripId,orderType,spec:"",purchased:orderType==="onsite",costSnapshot:onsiteCost,paymentMethodSnapshot:pmForThis,createdAt:Date.now(),discountNote:_qaItem.discountNote||undefined});
+      await decrementShopStockForManualOrder(id,"",qty);
       const orderTypeLabel=orderType==="onsite"?"🛍️現場":orderType==="quote"?"📋待報價":"📱記事本+1";
       showToast(`⚡ 已上架：${name}，並幫 ${communityName||lineName} 登記 ${orderTypeLabel}`);
       setTimeout(()=>{renderCustomers();renderInvoice();},600);
@@ -16569,11 +16592,15 @@ window.saveQuickAdd=async function(){
       let orderSpecLabel="";
       if(specKeys.length>=2){
         // 一次喊多個規格：每個選中的規格各自用自己設定的數量，各建一筆訂單
+        const _itemsToCreate=specKeys.map(s=>({productId:id,productObj:{name,emoji:catObj?.emoji||"📦"},spec:s,qty:specSel[s]||1,unitPrice:finalPrice}));
+        await applyCrossPromoToPendingItems(_itemsToCreate,customerId);
         let idx=0;
-        for(const s of specKeys){
-          const q=specSel[s]||1;
+        for(const it of _itemsToCreate){
           const oid="O"+Date.now()+"_s"+(idx++);
-          await fbSet("orders",oid,{productId:id,productName:cleanProductName(name),productEmoji:catObj?.emoji||"📦",customerId,communityName,lineName,buyerName:communityName||lineName,qty:q,unitPrice:finalPrice,total:finalPrice*q,status:"pending",tripId,orderType,spec:s,purchased:orderType==="onsite",costSnapshot:onsiteCost,paymentMethodSnapshot:pmForThis,createdAt:Date.now()});
+          const actualUnitPrice=it.discountPrice??it.unitPrice;
+          const actualTotal=it.total??(it.unitPrice*it.qty);
+          await fbSet("orders",oid,{productId:id,productName:cleanProductName(name),productEmoji:catObj?.emoji||"📦",customerId,communityName,lineName,buyerName:communityName||lineName,qty:it.qty,unitPrice:actualUnitPrice,total:actualTotal,status:"pending",tripId,orderType,spec:it.spec,purchased:orderType==="onsite",costSnapshot:onsiteCost,paymentMethodSnapshot:pmForThis,createdAt:Date.now(),discountNote:it.discountNote||undefined});
+          await decrementShopStockForManualOrder(id,it.spec,it.qty);
         }
         orderSpecLabel=`（${specKeys.join("、")}）`;
       } else {
@@ -16581,7 +16608,12 @@ window.saveQuickAdd=async function(){
         const orderSpec=specKeys[0]||(window.G.qaOrderSpec||"").trim()||(qaSpecs.length===1?qaSpecs[0]:"");
         const qtyFinal=specKeys.length===1?(specSel[specKeys[0]]||1):qty;
         const oid="O"+Date.now();
-        await fbSet("orders",oid,{productId:id,productName:cleanProductName(name),productEmoji:catObj?.emoji||"📦",customerId,communityName,lineName,buyerName:communityName||lineName,qty:qtyFinal,unitPrice:finalPrice,total:finalPrice*qtyFinal,status:"pending",tripId,orderType,spec:orderSpec,purchased:orderType==="onsite",costSnapshot:onsiteCost,paymentMethodSnapshot:pmForThis,createdAt:Date.now()});
+        const _qaItem2={productId:id,productObj:{name,emoji:catObj?.emoji||"📦"},spec:orderSpec,qty:qtyFinal,unitPrice:finalPrice};
+        await applyCrossPromoToPendingItems([_qaItem2],customerId);
+        const _qaUnitPrice2=_qaItem2.discountPrice??_qaItem2.unitPrice;
+        const _qaTotal2=_qaItem2.total??(_qaItem2.unitPrice*qtyFinal);
+        await fbSet("orders",oid,{productId:id,productName:cleanProductName(name),productEmoji:catObj?.emoji||"📦",customerId,communityName,lineName,buyerName:communityName||lineName,qty:qtyFinal,unitPrice:_qaUnitPrice2,total:_qaTotal2,status:"pending",tripId,orderType,spec:orderSpec,purchased:orderType==="onsite",costSnapshot:onsiteCost,paymentMethodSnapshot:pmForThis,createdAt:Date.now(),discountNote:_qaItem2.discountNote||undefined});
+        await decrementShopStockForManualOrder(id,orderSpec,qtyFinal);
         if(orderSpec)addSpecToProductIfNew(id,orderSpec);
         orderSpecLabel=orderSpec?"（"+orderSpec+"）":"";
       }
