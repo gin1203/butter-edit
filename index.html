@@ -5660,7 +5660,7 @@ window.renderFixShopOrderTrips=function(){
         ${affected.slice(0,30).map(o=>`<div style="font-size:11px;color:#5C3A1E;padding:3px 0;border-bottom:1px solid #F0E6D0">${o.communityName||o.buyerName||"未知客人"}－${o.productName||""}${o.selectedSpec?"("+o.selectedSpec+")":""}×${o.qty}</div>`).join("")}
         ${affected.length>30?`<div style="font-size:11px;color:#9C7A5A;padding:3px 0">...還有 ${affected.length-30} 筆</div>`:""}
       </div>
-      <button onclick="doFixShopOrderTrips(${JSON.stringify(affected.map(o=>o.id))})" style="width:100%;background:#0E7490;color:white;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer">全部歸到選定的趟次</button>
+      <button onclick='doFixShopOrderTrips(${JSON.stringify(affected.map(o=>o.id))})' style="width:100%;background:#0E7490;color:white;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer">全部歸到選定的趟次</button>
       `}
     </div>
   </div>`;

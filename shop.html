@@ -654,15 +654,27 @@ function renderGrid(){
     const priceHtml=G.lineUser
       ?`<div style="font-size:15px;font-weight:900;color:#F4845F;margin-top:auto">NT$ ${displayPrice.toLocaleString()}</div>`
       :`<div style="font-size:13px;font-weight:700;color:#9C7A5A;margin-top:auto;display:flex;align-items:center;gap:4px">🔒 登入查看價格</div>`;
-    return `<div onclick="openDetail('${p.id}')" style="background:white;border-radius:14px;border:1px solid #E8D5B0;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;position:relative">
-      ${totalInCart>0?`<div style="position:absolute;top:8px;right:8px;z-index:2;background:#F4845F;color:white;font-size:10px;font-weight:900;border-radius:99px;width:20px;height:20px;display:flex;align-items:center;justify-content:center">${totalInCart}</div>`:""}
-      ${allSoldOut?`<div style="position:absolute;top:8px;left:8px;z-index:2;background:rgba(0,0,0,0.45);color:white;font-size:10px;font-weight:700;border-radius:6px;padding:2px 7px">售完</div>`:""}
-      ${!allSoldOut&&gridHasBundleChoice?`<div style="position:absolute;top:8px;left:8px;z-index:2;background:#FF6B35;color:white;font-size:10px;font-weight:900;border-radius:6px;padding:2px 7px">${p.bundleQty}件優惠</div>`:(!allSoldOut&&pMultiple?`<div style="position:absolute;top:8px;left:8px;z-index:2;background:#FF6B35;color:white;font-size:10px;font-weight:900;border-radius:6px;padding:2px 7px">買${pMultiple-1}送1</div>`:(!allSoldOut&&p.crossPromoGroup?`<div style="position:absolute;top:8px;left:8px;z-index:2;background:#B08968;color:white;font-size:10px;font-weight:900;border-radius:6px;padding:2px 7px">任選${p.crossPromoMinQty||2}件${p.crossPromoPct||95}折</div>`:""))}
-      ${isNewProduct?`<div style="position:absolute;bottom:8px;left:8px;z-index:2;background:#06C755;color:white;font-size:10px;font-weight:900;border-radius:6px;padding:2px 7px">✨ 新品</div>`:""}
-      <button onclick="toggleFavorite('${p.id}',event)" style="position:absolute;bottom:8px;right:8px;z-index:2;background:rgba(255,255,255,0.9);border:none;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="${getFavorites().includes(p.id)?'#F4845F':'none'}" stroke="${getFavorites().includes(p.id)?'#F4845F':'#9C7A5A'}" stroke-width="2"><path d="M20.8 4.6c-1.8-1.8-4.7-1.8-6.5 0L12 6.9l-2.3-2.3c-1.8-1.8-4.7-1.8-6.5 0-1.8 1.8-1.8 4.7 0 6.5L12 20.8l8.8-8.8c1.8-1.8 1.8-4.7 0-6.5z"/></svg>
-      </button>
-      <div style="width:100%;aspect-ratio:1/1;background:#FAF8F5;overflow:hidden">
+    // 左上角的標籤（售完/促銷/新品）改用直向堆疊排列，同時有促銷又是新品的話會自然疊在一起，不會互相蓋住
+    const topLeftBadges=[];
+    if(allSoldOut){
+      topLeftBadges.push(`<div style="background:rgba(0,0,0,0.45);color:white;font-size:10px;font-weight:700;border-radius:6px;padding:2px 7px">售完</div>`);
+    } else if(gridHasBundleChoice){
+      topLeftBadges.push(`<div style="background:#FF6B35;color:white;font-size:10px;font-weight:900;border-radius:6px;padding:2px 7px">${p.bundleQty}件優惠</div>`);
+    } else if(pMultiple){
+      topLeftBadges.push(`<div style="background:#FF6B35;color:white;font-size:10px;font-weight:900;border-radius:6px;padding:2px 7px">買${pMultiple-1}送1</div>`);
+    } else if(p.crossPromoGroup){
+      topLeftBadges.push(`<div style="background:#B08968;color:white;font-size:10px;font-weight:900;border-radius:6px;padding:2px 7px">任選${p.crossPromoMinQty||2}件${p.crossPromoPct||95}折</div>`);
+    }
+    if(isNewProduct){
+      topLeftBadges.push(`<div style="background:#06C755;color:white;font-size:10px;font-weight:900;border-radius:6px;padding:2px 7px">✨ 新品</div>`);
+    }
+    return `<div onclick="openDetail('${p.id}')" style="background:white;border-radius:14px;border:1px solid #E8D5B0;overflow:hidden;display:flex;flex-direction:column;cursor:pointer">
+      <div style="width:100%;aspect-ratio:1/1;background:#FAF8F5;overflow:hidden;position:relative">
+        ${totalInCart>0?`<div style="position:absolute;top:8px;right:8px;z-index:2;background:#F4845F;color:white;font-size:10px;font-weight:900;border-radius:99px;width:20px;height:20px;display:flex;align-items:center;justify-content:center">${totalInCart}</div>`:""}
+        ${topLeftBadges.length?`<div style="position:absolute;top:8px;left:8px;z-index:2;display:flex;flex-direction:column;gap:4px;align-items:flex-start">${topLeftBadges.join("")}</div>`:""}
+        <button onclick="toggleFavorite('${p.id}',event)" style="position:absolute;bottom:8px;right:8px;z-index:2;background:rgba(255,255,255,0.9);border:none;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="${getFavorites().includes(p.id)?'#F4845F':'none'}" stroke="${getFavorites().includes(p.id)?'#F4845F':'#9C7A5A'}" stroke-width="2"><path d="M20.8 4.6c-1.8-1.8-4.7-1.8-6.5 0L12 6.9l-2.3-2.3c-1.8-1.8-4.7-1.8-6.5 0-1.8 1.8-1.8 4.7 0 6.5L12 20.8l8.8-8.8c1.8-1.8 1.8-4.7 0-6.5z"/></svg>
+        </button>
         ${p.photo?`<img src="${p.photo}" style="width:100%;height:100%;object-fit:cover" loading="lazy"/>`:`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px">${p.emoji||"📦"}</div>`}
       </div>
       <div style="padding:8px 10px 12px;display:flex;flex-direction:column;flex:1">
