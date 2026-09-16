@@ -53,6 +53,7 @@
 
   <div id="catalog-view" style="padding:14px 16px">
     <div id="shop-description-banner" style="margin-bottom:10px"></div>
+    <div id="catalog-back-link"></div>
     <div id="product-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px"></div>
   </div>
 
@@ -358,7 +359,11 @@ function getPurchaseMultiple(p){
 
 // ── 商品載入 ───────────────────────────────────────
 // 本梯次截止倒數：只有打開側欄才查一次，不用每次載入商城都問一次，省流量
-async function fetchActiveTrip(){
+// 跟後台 getLatestTrip() 用同一套判斷邏輯：優先「今天正在進行中」的趟次，
+// 沒有的話找「最近的未來趟次」（通常是現在在收單準備出發的那一趟），
+// 都沒有才退回「最近結束的過去趟次」。這個結果同時用在：
+// 1) 側欄的截止倒數顯示　2) 商城訂單要標記正確的 tripId，讓後台備貨清單抓得到這些訂單
+async function fetchLatestTrip(){
   try{
     const today=new Date().toISOString().split("T")[0];
     const url=`${BASE_URL}:runQuery?key=${FIREBASE_API_KEY}`;
@@ -366,8 +371,13 @@ async function fetchActiveTrip(){
     const resp=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
     const data=await resp.json();
     const trips=(data||[]).filter(r=>r.document).map(r=>fsDoc(r.document));
-    // 優先找「今天」剛好落在起訖區間內的趟次，符合條件的通常就是目前這一梯正在收單的
-    return trips.find(t=>t.startDate&&t.endDate&&today>=t.startDate&&today<=t.endDate)||null;
+    if(!trips.length)return null;
+    const active=trips.find(t=>t.startDate&&t.endDate&&t.startDate<=today&&t.endDate>=today);
+    if(active)return active;
+    const future=trips.filter(t=>t.startDate>today).sort((a,b)=>a.startDate.localeCompare(b.startDate));
+    if(future.length)return future[0];
+    const past=trips.filter(t=>t.endDate<today).sort((a,b)=>b.endDate.localeCompare(a.endDate));
+    return past[0]||null;
   }catch(e){return null;}
 }
 async function loadProducts(){
@@ -393,6 +403,12 @@ async function loadProducts(){
   renderGrid();
   renderCartBar();
   startProductAutoRefresh(); // 背景定期重新抓取商品資料，價格/庫存改了客人不用手動整理頁面
+  // 趟次資料背景抓一次就好：一來給側欄顯示截止倒數，二來讓客人送出訂單時能正確標記
+  // tripId，不然後台的備貨清單是照趟次分類，商城訂單如果沒有tripId會抓不到、漏算
+  fetchLatestTrip().then(trip=>{
+    G._activeTrip=trip;
+    if(document.getElementById("side-drawer")?.style.left==="0px")renderSideDrawer();
+  });
   // 如果網址帶著 ?p=商品ID（分享連結進來的），直接跳到那個商品的詳情頁，不用先逛過整個商城；
   // 如果是剛登入完跳回來的（原本網址上的商品ID沒有跟著回來），改看剛才登入前存的那個
   const sharedPid=new URLSearchParams(location.search).get("p")||localStorage.getItem("butter_pending_product");
@@ -438,15 +454,6 @@ function toggleSideDrawer(open){
     overlay.style.display="block";
     drawer.style.left="0";
     renderSideDrawer();
-    // 趟次截止倒數只有打開側欄才查，不用每次載入商城就先問一次，省流量；
-    // 先用已經抓過的快取畫面，抓到新資料才補上去，不會讓側欄卡住等資料回來
-    if(!G._activeTripFetched){
-      G._activeTripFetched=true;
-      fetchActiveTrip().then(trip=>{
-        G._activeTrip=trip;
-        if(document.getElementById("side-drawer")?.style.left==="0px")renderSideDrawer();
-      });
-    }
   } else {
     drawer.style.left="-320px";
     G.drawerView=null; // 關閉後重置，下次打開一律從主選單開始，不會卡在分類瀏覽子畫面
@@ -579,6 +586,15 @@ function renderShopDescriptionBanner(){
 }
 function renderGrid(){
   const grid=document.getElementById("product-grid");
+  const backLinkBox=document.getElementById("catalog-back-link");
+  const filterLabels={hot:"熱銷排行",discount:"折扣商品",new:"新品上架",favorites:"我的收藏",recent:"最近瀏覽",featured:"精選推薦"};
+  if(backLinkBox){
+    const isFiltered=!!G.catalogFilter||(G.cat&&G.cat!=="all");
+    backLinkBox.innerHTML=isFiltered?`<button onclick="setCat('all')" style="display:flex;align-items:center;gap:4px;background:none;border:none;color:#8A6D52;font-size:12px;font-weight:700;cursor:pointer;padding:0 0 10px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+      返回全部商品${G.catalogFilter?`（目前顯示：${filterLabels[G.catalogFilter]||""}）`:""}
+    </button>`:"";
+  }
   if(!G.loaded){
     // 骨架畫面：用灰色色塊模擬最終版面的形狀，比純文字「載入中」更順、不會有畫面空白後突然跳出內容的落差感
     grid.style.display="grid";
@@ -755,7 +771,7 @@ function renderDetail(){
   const price=p.finalPrice||0; // 單件的真實售價
   const displayPrice=(!hasBundleChoice&&pMultiple)?Math.round(price*pMultiple/(pMultiple-1)):price; // 舊模式才需要反推價格
   const dqty=G.detailQty||1;
-  const totalCartQty=Object.values(G.cart).reduce((s,i)=>s+i.qty,0);
+  const totalCartQty=getCartItems().reduce((s,i)=>s+i.qty,0);
   // 跨商品促銷組合提示（例如任選2件95折），只要商品有貼這個代碼、而且登入了才顯示
   const crossPromoHint=(p.crossPromoGroup&&G.lineUser)?`<div style="display:inline-flex;align-items:center;gap:4px;background:#FAF3EC;color:#8A6D52;border:1px solid #E8D5B0;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:700;margin-bottom:10px">🎯 任選${p.crossPromoMinQty||2}件${p.crossPromoPct||95}折（可跨商品混搭）</div>`:"";
 
@@ -897,6 +913,9 @@ function renderDetail(){
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>返回
       </button>
       <div style="flex:1"></div>
+      <button onclick="toggleSideDrawer(true)" style="background:none;border:none;cursor:pointer;padding:4px;color:#5C3A1E">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
       <button id="detail-member-btn" style="background:none;border:none;cursor:pointer;padding:4px;color:#5C3A1E">
         ${G.lineUser&&G.lineUser.pictureUrl?`<img src="${G.lineUser.pictureUrl}" style="width:26px;height:26px;border-radius:50%;object-fit:cover;border:2px solid #06C755"/>`:`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`}
       </button>
@@ -1101,6 +1120,11 @@ function detailBuyNow(pid,specIndex){
 // 這些商品就會一起打折（例如任選2件95折），沒貼代碼的商品維持原價不受影響。
 // 注意：只有湊成「最低件數的整數倍」才算數，例如任選2件一組，買3件的話只有2件享有折扣、
 // 剩下那1件零頭要算原價，不能因為「總數有達標過」就讓全部件數一直維持折扣。
+// 直接把購物車裡「真正的key」帶在每個項目上，不要事後用商品ID+規格編號去猜/組回key——
+// 組合購買的商品key後面會多一個::bundle，用猜的話會兜不起來，導致按鈕點了沒反應
+function getCartItems(){
+  return Object.entries(G.cart).map(([key,item])=>({...item,_cartKey:key}));
+}
 function getCartPricing(items){
   const groups={}; // groupTag -> {qty, minQty, pct}
   items.forEach(item=>{
@@ -1124,7 +1148,7 @@ function getCartPricing(items){
   sortedItems.forEach(item=>{
     const tag=(item.product.crossPromoGroup||"").trim();
     const grp=tag?groups[tag]:null;
-    const cartKey=item.specIndex!=null?`${item.product.id}::${item.specIndex}`:item.product.id;
+    const cartKey=item._cartKey;
     if(!grp){
       const price=item.product.finalPrice||0;
       total+=price*item.qty;
@@ -1148,14 +1172,14 @@ function getCartPricing(items){
   });
   // 照原本 items 的順序輸出，畫面顯示順序才不會因為內部按價格排序而跳動
   const itemPricing=items.map(item=>{
-    const cartKey=item.specIndex!=null?`${item.product.id}::${item.specIndex}`:item.product.id;
+    const cartKey=item._cartKey;
     return pricingByCartKey[cartKey];
   });
   return{total,itemPricing};
 }
 function renderCartBar(){
   saveCartToStorage();
-  const items=Object.values(G.cart);
+  const items=getCartItems();
   const totalQty=items.reduce((s,i)=>s+i.qty,0);
   const badge=document.getElementById("header-cart-badge");
   if(badge){badge.textContent=totalQty;badge.style.display=totalQty>0?"flex":"none";}
@@ -1179,7 +1203,7 @@ function renderCartBar(){
 async function trackCartAbandonment(){
   if(!G.lineUser)return;
   try{
-    const items=Object.values(G.cart);
+    const items=getCartItems();
     if(!items.length)return;
     const abandonId="abd_"+G.lineUser.userId.slice(0,16);
     const itemsSummary=items.map(i=>`${cleanProductName(i.product.name)}${i.spec?"("+i.spec+")":""}×${i.qty}`).join("、");
@@ -1232,12 +1256,17 @@ function backToCatalog(){
 
 function renderCheckout(){
   const el=document.getElementById("checkout-view");
-  const items=Object.values(G.cart);
+  const items=getCartItems();
   const total=getCartPricing(items).total;
   const f=G.form||{name:"",phone:"",communityName:"",lineId:""};
 
   el.innerHTML=`
-    <button onclick="backToCatalog()" style="background:none;border:none;color:#9C7A5A;font-size:14px;font-weight:700;cursor:pointer;padding:0 0 14px;display:flex;align-items:center;gap:4px">← 返回商品頁</button>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:14px">
+      <button onclick="backToCatalog()" style="background:none;border:none;color:#9C7A5A;font-size:14px;font-weight:700;cursor:pointer;padding:0;display:flex;align-items:center;gap:4px">← 返回商品頁</button>
+      <button onclick="toggleSideDrawer(true)" style="background:none;border:none;cursor:pointer;padding:4px;color:#5C3A1E">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
     <div style="font-size:16px;font-weight:900;margin-bottom:10px">🛒 購物車</div>
     <div id="cart-summary" style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:12px 14px;margin-bottom:16px"></div>
     <div style="font-size:16px;font-weight:900;margin-bottom:10px">🧾 訂購資料</div>
@@ -1278,13 +1307,13 @@ function renderCheckout(){
 function renderCartSummary(){
   const el=document.getElementById("cart-summary");
   if(!el)return;
-  const items=Object.values(G.cart);
+  const items=getCartItems();
   if(!items.length){backToCatalog();return;}
   const{total,itemPricing}=getCartPricing(items);
   const originalTotal=items.reduce((s,i)=>s+i.qty*(i.product.finalPrice||0),0);
   const savedAmount=originalTotal-total;
   el.innerHTML=itemPricing.map(({item,discounted,discountedQty,fullPriceQty,itemTotal,discountedUnitPrice,originalPrice})=>{
-    const cartKey=item.specIndex!=null?`${item.product.id}::${item.specIndex}`:item.product.id;
+    const cartKey=item._cartKey;
     const isMixed=discounted&&fullPriceQty>0; // 這一筆裡面有部分打折、部分沒打折
     let priceLine;
     if(!discounted){
@@ -1399,7 +1428,7 @@ async function submitOrder(){
   if(!name){showCheckoutError("請填寫姓名");return;}
   if(!community){showCheckoutError("請填寫社群暱稱");return;}
   if(!phone){showCheckoutError("請填寫電話");return;}
-  const items=Object.values(G.cart);
+  const items=getCartItems();
   if(!items.length){showCheckoutError("詢問單是空的");return;}
 
   const btn=document.getElementById("submit-btn");
@@ -1458,7 +1487,7 @@ async function submitOrder(){
         customerId,communityName:community,buyerName:name,
         selectedSpec:item.spec||"",
         qty:item.qty,unitPrice:actualUnitPrice,total:actualUnitPrice*item.qty,
-        status:"pending",orderType:"shop_web",
+        status:"pending",orderType:"shop_web",tripId:G._activeTrip?.id||"",
         phone,lineUserId:G.lineUser?.userId||"",
         note,purchased:false,createdAt:groupTs,
       });

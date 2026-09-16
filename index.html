@@ -419,6 +419,7 @@ body.live-mode .hide-live { display: none !important; }
         <button onclick="event.stopPropagation();closeListToolsMenu();showStockPlan()" style="display:block;width:100%;text-align:left;font-size:12px;color:#E07B39;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">📋 備貨清單</button>
         <button onclick="event.stopPropagation();closeListToolsMenu();showPromoGroups()" style="display:block;width:100%;text-align:left;font-size:12px;color:#C0392B;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">🏷️ 活動群組管理</button>
         <button onclick="event.stopPropagation();closeListToolsMenu();showDupProductScan()" style="display:block;width:100%;text-align:left;font-size:12px;color:#92400E;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">🔍 檢查重複</button>
+        <button onclick="event.stopPropagation();closeListToolsMenu();showFixShopOrderTrips()" style="display:block;width:100%;text-align:left;font-size:12px;color:#0E7490;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">🔧 修復商城訂單趟次</button>
         <button onclick="event.stopPropagation();closeListToolsMenu();showProductOrphanScan()" style="display:block;width:100%;text-align:left;font-size:12px;color:#943126;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">⚠️ 連結異常</button>
       </div>
     </div>
@@ -5618,6 +5619,68 @@ window.deleteLineUserRecord=async function(userId){
 // 同一個真人，可能因為不同管道（商城登入/官方LINE聊天/手動登記）分別建立了好幾筆客戶資料，
 // 這個工具讓你搜尋名字、勾一個「保留哪一筆當主要客戶」，其他重複的訂單全部轉移過去，
 // 重複的客戶記錄本身刪掉，之後搜尋就不會再看到分不清楚是哪個的重複名單
+// ══════ 修復商城訂單趟次 ══════
+// 商城訂單一開始沒有標記趟次（tripId），導致備貨清單抓不到這些訂單、算不進待購買清單。
+// 這個工具幫你把「已經進來、還沒歸到任何趟次」的商城訂單，一次指定歸到你選的趟次
+window.showFixShopOrderTrips=function(){
+  let modal=document.getElementById("modal-fix-shop-trips");
+  if(!modal){
+    modal=document.createElement("div");
+    modal.id="modal-fix-shop-trips";
+    modal.className="modal-overlay";
+    modal.style.cssText="display:none;position:fixed;inset:0;z-index:120;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;padding:16px";
+    document.body.appendChild(modal);
+  }
+  modal.style.display="flex";
+  renderFixShopOrderTrips();
+};
+window.renderFixShopOrderTrips=function(){
+  const modal=document.getElementById("modal-fix-shop-trips");
+  if(!modal)return;
+  // 找出「商城訂單、還沒出貨/結清、目前沒有標記趟次」的訂單——這些就是備貨清單抓不到的
+  const affected=(window.G.orders||[]).filter(o=>
+    o.orderType==="shop_web"&&!o.tripId&&o.status!=="shipped"&&o.status!=="settled"&&o.status!=="cancelled"
+  );
+  const trips=[...(window.G.trips||[])].sort((a,b)=>b.startDate>a.startDate?1:-1);
+  modal.innerHTML=`<div style="background:white;border-radius:18px;width:100%;max-width:460px;max-height:85vh;display:flex;flex-direction:column">
+    <div style="padding:18px 20px 12px;border-bottom:1px solid #F0E6D0;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <h3 style="margin:0;font-size:15px;font-weight:900;color:#3D2010">🔧 修復商城訂單趟次</h3>
+        <div style="font-size:10px;color:#9C7A5A;margin-top:2px">把還沒歸類趟次的商城訂單，一次指定歸屬</div>
+      </div>
+      <button onclick="document.getElementById('modal-fix-shop-trips').style.display='none'" style="background:none;border:none;font-size:20px;color:#9C7A5A;cursor:pointer">×</button>
+    </div>
+    <div style="padding:16px 20px;overflow-y:auto;flex:1">
+      ${!affected.length?`<div style="text-align:center;padding:20px 10px;color:#9C7A5A;font-size:12px">🎉 沒有需要修復的商城訂單，全部都已經正確歸類了</div>`:`
+      <div style="font-size:12px;color:#9C7A5A;margin-bottom:14px">找到 <b style="color:#0E7490">${affected.length}</b> 筆還沒歸類趟次的商城訂單，選擇要歸到哪一趟：</div>
+      <select id="fix-trip-select" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;font-size:13px;outline:none;box-sizing:border-box;margin-bottom:14px">
+        ${trips.map(t=>`<option value="${t.id}">${t.name}（${t.startDate}~${t.endDate}）</option>`).join("")}
+      </select>
+      <div style="max-height:200px;overflow-y:auto;border:1px solid #E8D5B0;border-radius:10px;padding:8px 12px;margin-bottom:14px;background:#FAF8F5">
+        ${affected.slice(0,30).map(o=>`<div style="font-size:11px;color:#5C3A1E;padding:3px 0;border-bottom:1px solid #F0E6D0">${o.communityName||o.buyerName||"未知客人"}－${o.productName||""}${o.selectedSpec?"("+o.selectedSpec+")":""}×${o.qty}</div>`).join("")}
+        ${affected.length>30?`<div style="font-size:11px;color:#9C7A5A;padding:3px 0">...還有 ${affected.length-30} 筆</div>`:""}
+      </div>
+      <button onclick="doFixShopOrderTrips(${JSON.stringify(affected.map(o=>o.id))})" style="width:100%;background:#0E7490;color:white;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer">全部歸到選定的趟次</button>
+      `}
+    </div>
+  </div>`;
+};
+window.doFixShopOrderTrips=async function(orderIds){
+  const tripId=document.getElementById("fix-trip-select")?.value;
+  if(!tripId){showToast("請選擇趟次","warning");return;}
+  try{
+    for(const oid of orderIds){
+      await fbUpd("orders",oid,{tripId});
+      const o=window.G.orders.find(x=>x.id===oid);
+      if(o)o.tripId=tripId;
+    }
+    showToast(`✅ 已把 ${orderIds.length} 筆訂單歸到選定趟次`);
+    document.getElementById("modal-fix-shop-trips").style.display="none";
+  }catch(e){
+    showToast("修復失敗："+e.message,"error");
+  }
+};
+
 window.showMergeCustomers=function(){
   let modal=document.getElementById("modal-merge-customers");
   if(!modal){
@@ -7880,7 +7943,7 @@ window.addOrder=async function(){
   const specKeys=Object.keys(specSel);
   if(specKeys.length>=2){
     for(const s of specKeys){
-      itemsToCreate.push({productId,productObj:prod,spec:s,qty:specSel[s]||1,unitPrice:prod.finalPrice,costSnapshot:onsiteCost});
+      itemsToCreate.push({productId,productObj:prod,spec:s,qty:specSel[s]||1,unitPrice:getBundleAdjustedPrice(prod,specSel[s]||1),costSnapshot:onsiteCost});
     }
     lastSpecLabel=`（${specKeys.join("、")}）`;
     totalKinds+=specKeys.length;
@@ -7888,7 +7951,7 @@ window.addOrder=async function(){
     const spec=specKeys[0]||document.getElementById("mo-spec")?.value.trim()||"";
     const qtyFinal=specKeys.length===1?(specSel[specKeys[0]]||1):qty;
     if(prod?.specs?.length>1&&!spec){showToast("請先選擇規格！","error");return;}
-    itemsToCreate.push({productId,productObj:prod,spec,qty:qtyFinal,unitPrice:prod.finalPrice,costSnapshot:onsiteCost,_addSpec:spec});
+    itemsToCreate.push({productId,productObj:prod,spec,qty:qtyFinal,unitPrice:getBundleAdjustedPrice(prod,qtyFinal),costSnapshot:onsiteCost,_addSpec:spec});
     totalKinds=1;
     lastSpecLabel=spec?" ("+spec+")":"";
   }
@@ -7896,7 +7959,7 @@ window.addOrder=async function(){
   for(const item of mixItems){
     const sp=window.G.products.find(x=>x.id===item.productId);if(!sp)continue;
     const mixCost=orderType==="onsite"?calcCost(sp.foreignAmount||sp.krw||0,sp.currency||"KRW",window.isDutyFreeChannel(sp.channel,sp.flags?.noTaxRefund),pmThisBatch).afterTax:null;
-    itemsToCreate.push({productId:sp.id,productObj:sp,spec:item.spec||"",qty:item.qty,unitPrice:sp.finalPrice,costSnapshot:mixCost,_isMix:true});
+    itemsToCreate.push({productId:sp.id,productObj:sp,spec:item.spec||"",qty:item.qty,unitPrice:getBundleAdjustedPrice(sp,item.qty),costSnapshot:mixCost,_isMix:true});
     totalKinds++;
   }
 
@@ -8783,6 +8846,15 @@ window.eoUpdateDiscountPreview=function(){
 // 因為是代購模式（先收單、之後才去採購），客人可能分好幾次陸續加單，
 // 所以這裡不只看「這次新加的」，還會把這個客人「還沒出貨/結清」的舊訂單也一起抓進來合併計算，
 // 湊到門檻的話舊訂單的價格也會跟著回頭更新，不會因為分批下單就吃虧。
+// 商城端的「組合優惠」（例如3件$300），手動喊單也要套用同一套邏輯：
+// 這次登記的數量如果剛好是組合件數的整數倍，就用組合的平均單價；
+// 湊不成整數倍的話，維持單件原價（跟商城客人自己選組合模式時的規則一致）
+function getBundleAdjustedPrice(prod,qty){
+  if(prod?.bundleQty>1&&prod?.bundlePrice>0&&qty>0&&qty%prod.bundleQty===0){
+    return Math.round((prod.bundlePrice/prod.bundleQty)*100)/100;
+  }
+  return prod?.finalPrice||0;
+}
 async function applyCrossPromoToPendingItems(pendingItems,customerId){
   // 先找出這批新商品裡，有沒有任何一個屬於跨商品促銷組合，完全沒有就不用查舊訂單，省一次查詢
   const hasAnyPromo=pendingItems.some(item=>{
@@ -9383,7 +9455,7 @@ window.boConfirm=async function(){
     const p=products.find(x=>x.id===item.productId);
     if(!p)continue;
     const batchCost=orderType==="onsite"?calcCost(p.foreignAmount||p.krw||0,p.currency||"KRW",window.isDutyFreeChannel(p.channel,p.flags?.noTaxRefund),p.paymentMethod||"card").afterTax:null;
-    itemsToCreate.push({productId:item.productId,productObj:p,spec:item.spec||"",qty:item.qty,unitPrice:p.finalPrice,costSnapshot:batchCost,_origIdx:i});
+    itemsToCreate.push({productId:item.productId,productObj:p,spec:item.spec||"",qty:item.qty,unitPrice:getBundleAdjustedPrice(p,item.qty),costSnapshot:batchCost,_origIdx:i});
   }
   await applyCrossPromoToPendingItems(itemsToCreate,customerId);
   for(const it of itemsToCreate){
@@ -16263,7 +16335,7 @@ window.qaLiveAddMoreOrder=async function(){
   const pmForThis=orderType==="onsite"?await askPaymentMethodModal():null;
   const onsiteCost=orderType==="onsite"?calcCost(prod.foreignAmount,prod.currency,window.isDutyFreeChannel(prod.channel,prod.flags?.noTaxRefund),pmForThis).afterTax:null;
   const oid="O"+Date.now();
-  const _qlItem={productId:prod.id,productObj:prod,spec:"",qty,unitPrice:prod.finalPrice};
+  const _qlItem={productId:prod.id,productObj:prod,spec:"",qty,unitPrice:getBundleAdjustedPrice(prod,qty)};
   await applyCrossPromoToPendingItems([_qlItem],customerId);
   const _qlUnitPrice=_qlItem.discountPrice??_qlItem.unitPrice;
   const _qlTotal=_qlItem.total??(_qlItem.unitPrice*qty);
@@ -16374,7 +16446,7 @@ window.qaLiveSave=async function(){
       const pmForThis=orderType==="onsite"?await askPaymentMethodModal():null;
       const onsiteCost=orderType==="onsite"?calcCost(prod.foreignAmount,prod.currency,window.isDutyFreeChannel(prod.channel,prod.flags?.noTaxRefund),pmForThis).afterTax:null;
       const oid="O"+Date.now();
-      const _qaItem={productId:id,productObj:prod,spec:"",qty,unitPrice:prod.finalPrice};
+      const _qaItem={productId:id,productObj:prod,spec:"",qty,unitPrice:getBundleAdjustedPrice(prod,qty)};
       await applyCrossPromoToPendingItems([_qaItem],customerId);
       const _qaUnitPrice=_qaItem.discountPrice??_qaItem.unitPrice;
       const _qaTotal=_qaItem.total??(_qaItem.unitPrice*qty);
