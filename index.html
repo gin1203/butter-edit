@@ -7894,7 +7894,7 @@ window.addOrder=async function(){
     const oid="O"+Date.now()+"_"+(idx++);
     const actualUnitPrice=it.discountPrice??it.unitPrice;
     const actualTotal=it.total??(it.unitPrice*it.qty);
-    await fbSet("orders",oid,{productId:it.productId,productName:cleanProductName(it.productObj.name),productEmoji:it.productObj.emoji,customerId,communityName,lineName,buyerName:communityName||lineName,qty:it.qty,unitPrice:actualUnitPrice,total:actualTotal,status:"pending",tripId,orderType,spec:it.spec,purchased:orderType==="onsite",costSnapshot:it.costSnapshot,paymentMethodSnapshot:it._isMix?(orderType==="onsite"?pmThisBatch:null):pmThisBatch,createdAt:Date.now(),discountNote:it.discountNote||undefined});
+    await fbSet("orders",oid,{productId:it.productId,productName:cleanProductName(it.productObj.name),productEmoji:it.productObj.emoji,customerId,communityName,lineName,buyerName:communityName||lineName,qty:it.qty,unitPrice:actualUnitPrice,total:actualTotal,status:"pending",tripId,orderType,spec:it.spec,purchased:orderType==="onsite",costSnapshot:it.costSnapshot,paymentMethodSnapshot:it._isMix?(orderType==="onsite"?pmThisBatch:null):pmThisBatch,createdAt:Date.now(),discountNote:it.discountNote||""});
     await decrementShopStockForManualOrder(it.productId,it.spec,it.qty);
     if(it._addSpec)addSpecToProductIfNew(it.productId,it._addSpec,window.G.moCustomSpecPhoto);
   }
@@ -7907,7 +7907,7 @@ window.addOrder=async function(){
   setTimeout(()=>{renderList();renderCustomers();renderInvoice();},600);
   } catch(e){
     console.error("addOrder failed:",e);
-    showToast("登記失敗，請再試一次","error");
+    showToast("登記失敗："+(e?.message||e),"error");
   } finally {
     // 不管成功、失敗、還是中途因為驗證沒過而提早return，最後都要把按鈕解鎖還原，
     // 不然按鈕會一直卡在「登記中…」，使用者只能重新整理頁面才能再操作
@@ -9373,7 +9373,7 @@ window.boConfirm=async function(){
       customerId,communityName,lineName:lineName||"",buyerName:communityName,
       qty:it.qty,unitPrice:actualUnitPrice,total:actualTotal,
       status:"pending",tripId,orderType,spec:it.spec,purchased:orderType==="onsite",
-      costSnapshot:it.costSnapshot,discountNote:it.discountNote||undefined,
+      costSnapshot:it.costSnapshot,discountNote:it.discountNote||"",
       createdAt:Date.now()+(it._origIdx*1000)
     });
     await decrementShopStockForManualOrder(it.productId,it.spec,it.qty);
@@ -16243,7 +16243,7 @@ window.qaLiveAddMoreOrder=async function(){
   await applyCrossPromoToPendingItems([_qlItem],customerId);
   const _qlUnitPrice=_qlItem.discountPrice??_qlItem.unitPrice;
   const _qlTotal=_qlItem.total??(_qlItem.unitPrice*qty);
-  await fbSet("orders",oid,{productId:prod.id,productName:cleanProductName(prod.name),productEmoji:prod.emoji||"📦",customerId,communityName,lineName,buyerName:communityName||lineName,qty,unitPrice:_qlUnitPrice,total:_qlTotal,status:"pending",tripId,orderType,spec:"",purchased:orderType==="onsite",costSnapshot:onsiteCost,paymentMethodSnapshot:pmForThis,createdAt:Date.now(),discountNote:_qlItem.discountNote||undefined});
+  await fbSet("orders",oid,{productId:prod.id,productName:cleanProductName(prod.name),productEmoji:prod.emoji||"📦",customerId,communityName,lineName,buyerName:communityName||lineName,qty,unitPrice:_qlUnitPrice,total:_qlTotal,status:"pending",tripId,orderType,spec:"",purchased:orderType==="onsite",costSnapshot:onsiteCost,paymentMethodSnapshot:pmForThis,createdAt:Date.now(),discountNote:_qlItem.discountNote||""});
   await decrementShopStockForManualOrder(prod.id,"",qty);
   window.G.qaLiveMoreCount++;
   const orderTypeLabel=orderType==="onsite"?"🛍️現場":orderType==="quote"?"📋待報價":"📱記事本+1";
@@ -16354,7 +16354,7 @@ window.qaLiveSave=async function(){
       await applyCrossPromoToPendingItems([_qaItem],customerId);
       const _qaUnitPrice=_qaItem.discountPrice??_qaItem.unitPrice;
       const _qaTotal=_qaItem.total??(_qaItem.unitPrice*qty);
-      await fbSet("orders",oid,{productId:id,productName:cleanProductName(prod.name),productEmoji:prod.emoji||"📦",customerId,communityName,lineName,buyerName:communityName||lineName,qty,unitPrice:_qaUnitPrice,total:_qaTotal,status:"pending",tripId,orderType,spec:"",purchased:orderType==="onsite",costSnapshot:onsiteCost,paymentMethodSnapshot:pmForThis,createdAt:Date.now(),discountNote:_qaItem.discountNote||undefined});
+      await fbSet("orders",oid,{productId:id,productName:cleanProductName(prod.name),productEmoji:prod.emoji||"📦",customerId,communityName,lineName,buyerName:communityName||lineName,qty,unitPrice:_qaUnitPrice,total:_qaTotal,status:"pending",tripId,orderType,spec:"",purchased:orderType==="onsite",costSnapshot:onsiteCost,paymentMethodSnapshot:pmForThis,createdAt:Date.now(),discountNote:_qaItem.discountNote||""});
       await decrementShopStockForManualOrder(id,"",qty);
       const orderTypeLabel=orderType==="onsite"?"🛍️現場":orderType==="quote"?"📋待報價":"📱記事本+1";
       showToast(`⚡ 已上架：${name}，並幫 ${communityName||lineName} 登記 ${orderTypeLabel}`);
@@ -16599,7 +16599,7 @@ window.saveQuickAdd=async function(){
           const oid="O"+Date.now()+"_s"+(idx++);
           const actualUnitPrice=it.discountPrice??it.unitPrice;
           const actualTotal=it.total??(it.unitPrice*it.qty);
-          await fbSet("orders",oid,{productId:id,productName:cleanProductName(name),productEmoji:catObj?.emoji||"📦",customerId,communityName,lineName,buyerName:communityName||lineName,qty:it.qty,unitPrice:actualUnitPrice,total:actualTotal,status:"pending",tripId,orderType,spec:it.spec,purchased:orderType==="onsite",costSnapshot:onsiteCost,paymentMethodSnapshot:pmForThis,createdAt:Date.now(),discountNote:it.discountNote||undefined});
+          await fbSet("orders",oid,{productId:id,productName:cleanProductName(name),productEmoji:catObj?.emoji||"📦",customerId,communityName,lineName,buyerName:communityName||lineName,qty:it.qty,unitPrice:actualUnitPrice,total:actualTotal,status:"pending",tripId,orderType,spec:it.spec,purchased:orderType==="onsite",costSnapshot:onsiteCost,paymentMethodSnapshot:pmForThis,createdAt:Date.now(),discountNote:it.discountNote||""});
           await decrementShopStockForManualOrder(id,it.spec,it.qty);
         }
         orderSpecLabel=`（${specKeys.join("、")}）`;
@@ -16612,7 +16612,7 @@ window.saveQuickAdd=async function(){
         await applyCrossPromoToPendingItems([_qaItem2],customerId);
         const _qaUnitPrice2=_qaItem2.discountPrice??_qaItem2.unitPrice;
         const _qaTotal2=_qaItem2.total??(_qaItem2.unitPrice*qtyFinal);
-        await fbSet("orders",oid,{productId:id,productName:cleanProductName(name),productEmoji:catObj?.emoji||"📦",customerId,communityName,lineName,buyerName:communityName||lineName,qty:qtyFinal,unitPrice:_qaUnitPrice2,total:_qaTotal2,status:"pending",tripId,orderType,spec:orderSpec,purchased:orderType==="onsite",costSnapshot:onsiteCost,paymentMethodSnapshot:pmForThis,createdAt:Date.now(),discountNote:_qaItem2.discountNote||undefined});
+        await fbSet("orders",oid,{productId:id,productName:cleanProductName(name),productEmoji:catObj?.emoji||"📦",customerId,communityName,lineName,buyerName:communityName||lineName,qty:qtyFinal,unitPrice:_qaUnitPrice2,total:_qaTotal2,status:"pending",tripId,orderType,spec:orderSpec,purchased:orderType==="onsite",costSnapshot:onsiteCost,paymentMethodSnapshot:pmForThis,createdAt:Date.now(),discountNote:_qaItem2.discountNote||""});
         await decrementShopStockForManualOrder(id,orderSpec,qtyFinal);
         if(orderSpec)addSpecToProductIfNew(id,orderSpec);
         orderSpecLabel=orderSpec?"（"+orderSpec+"）":"";
