@@ -80,7 +80,7 @@
 </div>
 
 <!-- 懸浮 LINE 客服按鈕（登入後才顯示） -->
-<a id="line-float-btn" href="https://line.me/R/ti/p/995iznve" target="_blank" style="display:none;position:fixed;right:16px;bottom:100px;z-index:40;width:52px;height:52px;border-radius:50%;background:#06C755;box-shadow:0 4px 16px rgba(6,199,85,0.4);align-items:center;justify-content:center;text-decoration:none">
+<a id="line-float-btn" href="https://line.me/R/ti/p/%40995iznve" target="_blank" style="display:none;position:fixed;right:16px;bottom:100px;z-index:40;width:52px;height:52px;border-radius:50%;background:#06C755;box-shadow:0 4px 16px rgba(6,199,85,0.4);align-items:center;justify-content:center;text-decoration:none">
   <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
 </a>
 
@@ -875,13 +875,11 @@ function closeDetail(){
 }
 // 分享單一商品連結：手機上優先用系統原生的分享選單（可以直接選LINE、簡訊等），
 // 沒有這個功能的話（大部分電腦瀏覽器）就退回「複製連結」，一樣能貼去LINE分享
-function shareProductLink(pid){
-  const p=G.products.find(x=>x.id===pid);
-  const url=`${location.origin}${location.pathname}?p=${pid}`;
-  const shareText=p?cleanProductName(p.name):"";
-  if(navigator.share){
-    navigator.share({title:shareText,text:shareText,url}).catch(()=>{});
-  } else if(navigator.clipboard){
+// navigator.share()（系統原生分享）在某些環境下會直接讓分頁當機（RESULT_CODE_KILLED_BAD_MESSAGE），
+// 而且這個問題不只出現在特定的內嵌瀏覽器，電腦上也遇到過，沒辦法可靠地判斷「哪裡安全」，
+// 與其冒著隨時當機的風險，乾脆完全不用這個功能，統一都用「複製連結」，穩定優先
+function doShareUrl(url,shareText){
+  if(navigator.clipboard){
     navigator.clipboard.writeText(url).then(()=>showToast("連結已複製，貼給朋友分享吧！")).catch(()=>{
       prompt("複製這個連結分享：",url);
     });
@@ -889,22 +887,18 @@ function shareProductLink(pid){
     prompt("複製這個連結分享：",url);
   }
 }
+function shareProductLink(pid){
+  const p=G.products.find(x=>x.id===pid);
+  const url=`${location.origin}${location.pathname}?p=${pid}`;
+  doShareUrl(url,p?cleanProductName(p.name):"");
+}
 // 分享篩選畫面（例如新品上架、折扣商品），跟分享單一商品同一套邏輯，
 // 差別只在網址帶的是 ?filter=xxx 不是 ?p=xxx
 function shareFilteredCatalogLink(){
   if(!G.catalogFilter)return;
   const filterLabels={hot:"熱銷排行",discount:"折扣商品",new:"新品上架",favorites:"我的收藏",recent:"最近瀏覽",featured:"精選推薦"};
   const url=`${location.origin}${location.pathname}?filter=${G.catalogFilter}`;
-  const shareText=filterLabels[G.catalogFilter]||"商城推薦";
-  if(navigator.share){
-    navigator.share({title:shareText,text:shareText,url}).catch(()=>{});
-  } else if(navigator.clipboard){
-    navigator.clipboard.writeText(url).then(()=>showToast("連結已複製，貼給朋友分享吧！")).catch(()=>{
-      prompt("複製這個連結分享：",url);
-    });
-  } else {
-    prompt("複製這個連結分享：",url);
-  }
+  doShareUrl(url,filterLabels[G.catalogFilter]||"商城推薦");
 }
 // 詳情頁下方的推薦區塊：
 // 1) 這個商品如果有跨商品促銷組合，優先推薦「同一個組合裡的其他商品」——
