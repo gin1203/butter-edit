@@ -1086,7 +1086,7 @@ function renderDetail(){
             </div>
             <div style="display:flex;align-items:center;background:white;border:1px solid #E8D5B0;border-radius:8px;overflow:hidden;flex-shrink:0">
               <button ${isSoldOut?"disabled":""} onclick="changeMultiSpecQty('${pid}',${i},-1)" style="width:30px;height:30px;border:none;background:none;font-size:16px;font-weight:900;color:#5C3A1E;cursor:pointer">−</button>
-              <span style="font-size:14px;font-weight:900;min-width:24px;text-align:center">${qtys[i]||0}</span>
+              <input type="text" inputmode="numeric" ${isSoldOut?"disabled":""} value="${qtys[i]||0}" onchange="setMultiSpecQty('${pid}',${i},this.value)" onclick="event.stopPropagation()" style="width:32px;height:30px;border:none;background:none;font-size:14px;font-weight:900;text-align:center;outline:none;padding:0"/>
               <button ${isSoldOut?"disabled":""} onclick="changeMultiSpecQty('${pid}',${i},1)" style="width:30px;height:30px;border:none;background:none;font-size:16px;font-weight:900;color:#5C3A1E;cursor:pointer">+</button>
             </div>
           </div>`;
@@ -1224,6 +1224,22 @@ function changeMultiSpecQty(pid,specIdx,delta){
   const qtys=G.multiSpecQty[pid];
   const cur=qtys[specIdx]||0;
   let next=Math.max(0,cur+delta);
+  const stockRaw=(p.specStock||[])[specIdx];
+  const stock=(stockRaw===null||stockRaw===undefined||stockRaw==="")?null:Number(stockRaw);
+  if(stock!=null&&next>stock){showToast(`庫存只剩 ${stock} 件`);next=stock;}
+  qtys[specIdx]=next;
+  renderDetail();
+}
+// 客人直接在多規格湊單的數量欄位打數字，一樣要檢查庫存上限、不能小於0
+function setMultiSpecQty(pid,specIdx,val){
+  if(!G.lineUser)return;
+  const p=G.products.find(x=>x.id===pid);if(!p)return;
+  G.multiSpecQty=G.multiSpecQty||{};
+  const specsArr=(p.specs||[]).filter(s=>s!=null&&String(s).trim()!=="");
+  if(!G.multiSpecQty[pid])G.multiSpecQty[pid]=new Array(specsArr.length).fill(0);
+  const qtys=G.multiSpecQty[pid];
+  let next=parseInt(val,10);
+  if(isNaN(next)||next<0)next=qtys[specIdx]||0; // 打了看不懂的內容，退回原本的數字
   const stockRaw=(p.specStock||[])[specIdx];
   const stock=(stockRaw===null||stockRaw===undefined||stockRaw==="")?null:Number(stockRaw);
   if(stock!=null&&next>stock){showToast(`庫存只剩 ${stock} 件`);next=stock;}
