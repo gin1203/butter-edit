@@ -463,6 +463,10 @@ async function loadProducts(){
   catch(e){console.error(e);showToast("商品載入失敗："+e.message);}
   restoreCartFromStorage(); // 商品資料齊全了，才能把存起來的購物車內容對照回完整商品資訊
   G.loaded=true;
+  // 如果網址帶著 ?filter=xxx（分享「新品上架」這類篩選畫面的連結進來的），
+  // 先套用篩選再畫面，才不會先閃一下全部商品、又立刻換成篩選結果
+  const sharedFilter=new URLSearchParams(location.search).get("filter");
+  if(sharedFilter)G.catalogFilter=sharedFilter;
   renderShopDescriptionBanner();
   renderNewProductStrip();
   renderCatTabs();
@@ -619,6 +623,9 @@ function showFilteredCatalog(type){
   G.cat="all";
   document.getElementById("search-input").value="";
   G.search="";
+  // 網址列跟著更新，這樣「新品上架」這種篩選畫面也能被分享出去，
+  // 別人點連結進來會直接看到這個篩選結果，不會只是普通首頁
+  history.pushState({filter:type},"",`${location.pathname}?filter=${type}`);
   renderCatTabs();
   renderGrid();
   window.scrollTo(0,0);
@@ -716,10 +723,15 @@ function renderGrid(){
   const filterLabels={hot:"熱銷排行",discount:"折扣商品",new:"新品上架",favorites:"我的收藏",recent:"最近瀏覽",featured:"精選推薦"};
   if(backLinkBox){
     const isFiltered=!!G.catalogFilter||(G.cat&&G.cat!=="all");
-    backLinkBox.innerHTML=isFiltered?`<button onclick="setCat('all')" style="display:flex;align-items:center;gap:4px;background:none;border:none;color:#8A6D52;font-size:12px;font-weight:700;cursor:pointer;padding:0 0 10px">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-      返回全部商品${G.catalogFilter?`（目前顯示：${filterLabels[G.catalogFilter]||""}）`:""}
-    </button>`:"";
+    backLinkBox.innerHTML=isFiltered?`<div style="display:flex;align-items:center;justify-content:space-between;padding:0 0 10px">
+      <button onclick="setCat('all')" style="display:flex;align-items:center;gap:4px;background:none;border:none;color:#8A6D52;font-size:12px;font-weight:700;cursor:pointer;padding:0">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        返回全部商品${G.catalogFilter?`（目前顯示：${filterLabels[G.catalogFilter]||""}）`:""}
+      </button>
+      ${G.catalogFilter?`<button onclick="shareFilteredCatalogLink()" style="flex-shrink:0;display:flex;align-items:center;gap:4px;background:#FAF3EA;border:1px solid #E8D5B0;border-radius:99px;padding:4px 10px;cursor:pointer;color:#8A6D52;font-size:11px;font-weight:700">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg>分享
+      </button>`:""}
+    </div>`:"";
   }
   if(!G.loaded){
     // 骨架畫面：用灰色色塊模擬最終版面的形狀，比純文字「載入中」更順、不會有畫面空白後突然跳出內容的落差感
@@ -867,6 +879,23 @@ function shareProductLink(pid){
   const p=G.products.find(x=>x.id===pid);
   const url=`${location.origin}${location.pathname}?p=${pid}`;
   const shareText=p?cleanProductName(p.name):"";
+  if(navigator.share){
+    navigator.share({title:shareText,text:shareText,url}).catch(()=>{});
+  } else if(navigator.clipboard){
+    navigator.clipboard.writeText(url).then(()=>showToast("連結已複製，貼給朋友分享吧！")).catch(()=>{
+      prompt("複製這個連結分享：",url);
+    });
+  } else {
+    prompt("複製這個連結分享：",url);
+  }
+}
+// 分享篩選畫面（例如新品上架、折扣商品），跟分享單一商品同一套邏輯，
+// 差別只在網址帶的是 ?filter=xxx 不是 ?p=xxx
+function shareFilteredCatalogLink(){
+  if(!G.catalogFilter)return;
+  const filterLabels={hot:"熱銷排行",discount:"折扣商品",new:"新品上架",favorites:"我的收藏",recent:"最近瀏覽",featured:"精選推薦"};
+  const url=`${location.origin}${location.pathname}?filter=${G.catalogFilter}`;
+  const shareText=filterLabels[G.catalogFilter]||"商城推薦";
   if(navigator.share){
     navigator.share({title:shareText,text:shareText,url}).catch(()=>{});
   } else if(navigator.clipboard){
@@ -1885,7 +1914,9 @@ async function init(){
 // 詳情頁/結帳頁不顯示（那些頁面已經有自己的固定底部按鈕，不要疊在一起）
 // 處理瀏覽器「上一頁/下一頁」按鈕：網址列變了，畫面也要跟著切換，不然兩邊會對不起來
 window.addEventListener("popstate",()=>{
-  const pid=new URLSearchParams(location.search).get("p");
+  const params=new URLSearchParams(location.search);
+  const pid=params.get("p");
+  const filter=params.get("filter");
   if(pid&&G.products?.find(x=>x.id===pid)){
     if(G.detailProduct!==pid){G.detailProduct=pid;renderDetail();document.getElementById("catalog-view").style.display="none";document.getElementById("detail-view").style.display="block";document.getElementById("main-header").style.display="none";document.getElementById("cart-bar").style.display="none";}
   } else if(G.detailProduct){
@@ -1893,7 +1924,14 @@ window.addEventListener("popstate",()=>{
     document.getElementById("catalog-view").style.display="block";
     document.getElementById("main-header").style.display="block";
     G.detailProduct=null;
-    renderGrid();renderCartBar();
+    G.catalogFilter=filter||null;
+    renderCatTabs();renderGrid();renderCartBar();
+  } else {
+    // 已經在商品格子頁，但網址上的篩選狀態變了（例如按上一頁從「新品上架」退回「全部商品」）
+    if(G.catalogFilter!==(filter||null)){
+      G.catalogFilter=filter||null;
+      renderCatTabs();renderGrid();
+    }
   }
 });
 window.addEventListener("scroll",()=>{
