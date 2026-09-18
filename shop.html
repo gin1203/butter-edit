@@ -1722,7 +1722,7 @@ async function submitOrder(){
     let customerId;
     if(G.lineUser?.userId){
       try{
-        const resp=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json","X-Service":"find-or-create-shop-customer"},body:JSON.stringify({userId:G.lineUser.userId,displayName:G.lineUser.displayName||"",community,phone})});
+        const resp=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json","X-Service":"find-or-create-shop-customer"},body:JSON.stringify({userId:G.lineUser.userId,displayName:G.lineUser.displayName||"",pictureUrl:G.lineUser.pictureUrl||"",community,phone})});
         const data=await resp.json();
         customerId=data.customerId||("line_"+G.lineUser.userId.slice(0,16));
       }catch(e){
