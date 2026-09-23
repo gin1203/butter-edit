@@ -204,6 +204,21 @@ async function decrementProductStock(productId,specIndex,qty){
     await fetch(url,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({fields})});
   }catch(e){console.error("扣庫存/累計銷量失敗（不影響訂單本身）：",e);}
 }
+// 瀏覽次數：同一個人（用瀏覽器本機記錄辨識）同一天只算一次，避免有人一直滑進滑出同一個商品
+// 就一直往上累加，數字會失真，你在後台看到的才是「大概有幾個人看過」而不是「被戳了幾下」。
+// 用 Firestore 的 increment 交易寫入，不用先讀一次現有數字，省一次讀取、也不會兩人同時看漏算。
+async function trackProductView(pid){
+  try{
+    const todayStr=new Date().toISOString().split("T")[0];
+    const dedupeKey=`butter_viewed_${pid}_${todayStr}`;
+    if(localStorage.getItem(dedupeKey))return;
+    localStorage.setItem(dedupeKey,"1");
+    const docPath=`projects/${FIREBASE_PROJECT}/databases/(default)/documents/products/${pid}`;
+    const url=`https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT}/databases/(default)/documents:commit?key=${FIREBASE_API_KEY}`;
+    const body={writes:[{transform:{document:docPath,fieldTransforms:[{fieldPath:"viewCount",increment:{integerValue:1}}]}}]};
+    await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  }catch(e){console.error("瀏覽次數記錄失敗（不影響瀏覽本身）：",e);}
+}
 async function fsQuery(col,field,value){
   const url=`${BASE_URL}:runQuery?key=${FIREBASE_API_KEY}`;
   const body={structuredQuery:{from:[{collectionId:col}],where:{fieldFilter:{field:{fieldPath:field},op:"EQUAL",value:jsToFs(value)}},limit:20}};
@@ -833,6 +848,7 @@ async function openDetail(pid){
   const p=G.products.find(x=>x.id===pid);if(!p)return;
   G.detailProduct=pid;
   addToRecentlyViewed(pid);
+  trackProductView(pid);
   // 網址列跟著更新，這樣重新整理頁面才會記得剛才在看哪個商品，不會跳回商城首頁
   history.pushState({pid},"",`${location.pathname}?p=${pid}`);
   G.selectedSpec=G.selectedSpec||{};

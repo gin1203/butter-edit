@@ -426,6 +426,7 @@ body.live-mode .hide-live { display: none !important; }
     <select id="list-sort-select" class="hide-live" onchange="setListSortMode(this.value)" style="flex:1;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 6px;font-size:12px;font-weight:700;color:#3D2010;outline:none;cursor:pointer;text-align:center;text-align-last:center">
       <option value="default">上架順序</option>
       <option value="sold">熱銷排行</option>
+      <option value="views">瀏覽數高低</option>
       <option value="profit">利潤高低</option>
     </select>
     <select id="list-filter-select" onchange="setListFilterMode(this.value)" style="flex:1;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 6px;font-size:12px;font-weight:700;color:#3D2010;outline:none;cursor:pointer;text-align:center;text-align-last:center">
@@ -12137,6 +12138,8 @@ window.renderList=function(){
   if(sortMode==="sold"){
     const soldCount=p=>(ordersByProduct[p.id]||[]).reduce((s,o)=>s+(o.qty||0),0);
     filtered.sort((a,b)=>soldCount(b)-soldCount(a));
+  } else if(sortMode==="views"){
+    filtered.sort((a,b)=>(Number(b.viewCount)||0)-(Number(a.viewCount)||0));
   } else if(sortMode==="profit"){
     const liveProfit=p=>{
       const fa=p.foreignAmount||p.krw||0;
@@ -12240,6 +12243,7 @@ window.renderList=function(){
         +'<div style="font-size:12px;font-weight:700;color:#3D2010;line-height:1.3;margin-bottom:3px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">'+(cleanProductName(p.name))+'</div>'
         +((p.specs&&p.specs.length>0&&p.specs!='[]')?'<div style="font-size:10px;color:#9C7A5A;margin-bottom:2px">📐 '+(Array.isArray(p.specs)?p.specs.join(','):p.specs)+'</div>':'') 
         +((()=>{const sc=window.getSubcat?.(p.name,p.catKey);return sc?'<div style="font-size:9px;display:inline-block;background:#F3E8FF;border:1px solid #D8B4FE;color:#7B5EA7;padding:1px 6px;border-radius:99px;font-weight:700;margin-bottom:3px">'+sc.label.replace(/^\S+\s*/,"")+'</div>':'';})())
+        +((p.shopVisible&&p.viewCount>0)?'<div style="font-size:9px;color:#9C7A5A;margin-bottom:2px">👁 '+p.viewCount+' 次瀏覽</div>':'')
         +'<div style="font-size:15px;font-weight:900;color:#F4845F">NT$ '+(p.finalPrice.toLocaleString())+'</div>'
         +'<div style="display:flex;gap:6px;align-items:center;margin-top:2px">'
         +'<div style="font-size:10px;color:#9C7A5A">'+(cur?.symbol||"₩")+(p.foreignAmount||0).toLocaleString()+'</div>'
@@ -12273,6 +12277,7 @@ window.renderList=function(){
         <span style="font-size:10px;background:#FDF6EC;border:1px solid #E8D5B0;color:#A08060;padding:2px 8px;border-radius:99px;flex-shrink:0;white-space:nowrap">${cur?.name||""}</span>
         ${p.channel?`<span style="font-size:10px;background:#E8F5E9;border:1px solid #A5D6A7;color:#2E7D32;padding:2px 8px;border-radius:99px;font-weight:700;flex-shrink:0;white-space:nowrap">${p.channel}</span>`:""}
         ${(()=>{const sc=window.getSubcat?.(p.name,p.catKey);return sc?`<span style="font-size:10px;background:#F3E8FF;border:1px solid #D8B4FE;color:#7B5EA7;padding:2px 8px;border-radius:99px;font-weight:700;flex-shrink:0;white-space:nowrap">${sc.label.replace(/^\S+\s*/,"")}</span>`:"";})()}
+        ${p.shopVisible&&(p.viewCount>0)?`<span style="font-size:10px;background:#FAF8F5;border:1px solid #E8D5B0;color:#9C7A5A;padding:2px 8px;border-radius:99px;flex-shrink:0;white-space:nowrap">👁 ${p.viewCount} 次瀏覽</span>`:""}
       </div>
       <!-- Row 2: action buttons -->
       <div style="display:flex;gap:6px;margin-bottom:10px">
