@@ -807,10 +807,9 @@ function renderGrid(){
     // 新品判斷：從「最近一次上架」算起10天內都算新品，如果下架過一段時間又重新上架，
     // shopListedAt 會被後台更新成最新的時間，等於重新開始算10天
     const isNewProduct=!!(p.shopListedAt&&(Date.now()-p.shopListedAt)<10*24*60*60*1000);
-    // 價格顯示：未登入顯示鎖頭
-    const priceHtml=G.lineUser
-      ?`<div style="font-size:15px;font-weight:900;color:#F4845F;margin-top:auto">NT$ ${displayPrice.toLocaleString()}</div>`
-      :`<div style="font-size:13px;font-weight:700;color:#9C7A5A;margin-top:auto;display:flex;align-items:center;gap:4px">🔒 登入查看價格</div>`;
+    // 價格改成完全不在格子上顯示（不管登入與否），要點進詳情頁才看得到，
+    // 這樣「瀏覽次數」才是真的對這個商品有興趣、點進去看的人，不會被格子上的價格先篩掉一批
+    const priceHtml="";
     // 左上角的標籤（售完/促銷/新品）改用直向堆疊排列，同時有促銷又是新品的話會自然疊在一起，不會互相蓋住
     const topLeftBadges=[];
     if(allSoldOut){
@@ -967,13 +966,11 @@ function renderRelatedProductsHtml(p){
       </button>
       <div id="related-strip-scroll" class="scrollbar-none" style="display:flex;gap:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 16px 4px;scroll-behavior:smooth">
         ${related.map(rp=>{
-          const rPrice=rp.finalPrice||0;
           return `<div onclick="event.stopPropagation();openDetail('${rp.id}')" style="flex-shrink:0;width:104px;cursor:pointer">
             <div style="width:104px;height:104px;border-radius:12px;overflow:hidden;background:#FAF8F5;border:1px solid #E8D5B0">
               ${rp.photo?`<img src="${rp.photo}" style="width:100%;height:100%;object-fit:cover" loading="lazy"/>`:`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:28px">${rp.emoji||"📦"}</div>`}
             </div>
             <div style="font-size:11px;color:#3D2010;margin-top:5px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3">${cleanProductName(rp.name)}</div>
-            ${G.lineUser?`<div style="font-size:11px;font-weight:900;color:#F4845F;margin-top:2px">NT$${rPrice.toLocaleString()}</div>`:""}
           </div>`;
         }).join("")}
       </div>
