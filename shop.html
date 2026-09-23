@@ -44,6 +44,9 @@
     <div id="line-banner" style="margin-bottom:8px"></div>
     <input id="search-input" type="text" placeholder="🔍 搜尋商品名稱..." oninput="onSearchInput()" style="width:100%;background:white;border:1px solid #E8D5B0;border-radius:10px;padding:9px 14px;font-size:14px;outline:none;box-sizing:border-box;margin-bottom:8px"/>
     <div id="cat-tabs" class="scrollbar-none" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:2px"></div>
+    <!-- 在分類/篩選畫面裡面，這個要跟著頭部一起黏在畫面最上方，
+         不然滑到商品格子下面就看不到了，客人會誤以為「這個分類只有這幾件」，不知道其實可以回首頁看全部 -->
+    <div id="catalog-back-link"></div>
   </div>
 
   <!-- 側欄選單（折扣商品/新品/熱銷/分類/收藏），預設隱藏在畫面外，點開才滑進來 -->
@@ -59,7 +62,6 @@
   <div id="catalog-view" style="padding:14px 16px">
     <div id="shop-description-banner" style="margin-bottom:10px"></div>
     <div id="new-product-strip"></div>
-    <div id="catalog-back-link"></div>
     <div id="product-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px"></div>
   </div>
 
@@ -723,12 +725,14 @@ function renderGrid(){
   const filterLabels={hot:"熱銷排行",discount:"折扣商品",new:"新品上架",favorites:"我的收藏",recent:"最近瀏覽",featured:"精選推薦"};
   if(backLinkBox){
     const isFiltered=!!G.catalogFilter||(G.cat&&G.cat!=="all");
-    backLinkBox.innerHTML=isFiltered?`<div style="display:flex;align-items:center;justify-content:space-between;padding:0 0 10px">
-      <button onclick="setCat('all')" style="display:flex;align-items:center;gap:4px;background:none;border:none;color:#8A6D52;font-size:12px;font-weight:700;cursor:pointer;padding:0">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-        返回全部商品${G.catalogFilter?`（目前顯示：${filterLabels[G.catalogFilter]||""}）`:""}
+    // 改成實心藥丸按鈕、放在頭部（會一起黏在畫面最上方），不再是容易被忽略的純文字連結
+    backLinkBox.innerHTML=isFiltered?`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:8px">
+      <button onclick="setCat('all')" style="display:flex;align-items:center;gap:5px;background:#F4845F;color:white;border:none;border-radius:99px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;box-shadow:0 2px 6px rgba(244,132,95,0.35)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        🏠 回首頁看全部商品
       </button>
-      ${G.catalogFilter?`<button onclick="shareFilteredCatalogLink()" style="flex-shrink:0;display:flex;align-items:center;gap:4px;background:#FAF3EA;border:1px solid #E8D5B0;border-radius:99px;padding:4px 10px;cursor:pointer;color:#8A6D52;font-size:11px;font-weight:700">
+      <div style="flex:1;min-width:0;font-size:11px;color:#9C7A5A;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right">${G.catalogFilter?`目前顯示：${filterLabels[G.catalogFilter]||""}`:""}</div>
+      ${G.catalogFilter?`<button onclick="shareFilteredCatalogLink()" style="flex-shrink:0;display:flex;align-items:center;gap:4px;background:#FAF3EA;border:1px solid #E8D5B0;border-radius:99px;padding:6px 10px;cursor:pointer;color:#8A6D52;font-size:11px;font-weight:700">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg>分享
       </button>`:""}
     </div>`:"";
