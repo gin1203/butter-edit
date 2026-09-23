@@ -988,6 +988,13 @@ function renderDetail(){
   // 不然一進詳情頁就自動選中第一個規格、直接顯示規格照片，會看不到商品原本的主照片
   const specImg=isMultiMode?(p.photo||""):(hasExplicitlyChosenSpec?((p.specImages||[])[selIdx]||""):"");
   const mainImg=specImg||p.photo||"";
+  // 商品畫廊：主照片 + 額外照片（例如模特兒實拍），不是規格圖，詳情頁排成一排可以左右滑動看
+  const galleryPhotos=Array.isArray(p.galleryPhotos)?p.galleryPhotos.filter(Boolean):[];
+  const galleryThumbs=[p.photo,...galleryPhotos].filter(Boolean);
+  const galleryStripHtml=galleryThumbs.length>1?`
+    <div style="display:flex;gap:8px;overflow-x:auto;padding:10px 16px;background:#FAF8F5" class="scrollbar-none">
+      ${galleryThumbs.map((src,i)=>`<img class="detail-gallery-thumb" data-idx="${i}" src="${src}" onclick="setDetailHeroImgByIndex('${pid}',${i})" style="width:56px;height:56px;border-radius:10px;object-fit:cover;flex-shrink:0;cursor:pointer;border:2px solid ${src===mainImg?"#F4845F":"#E8D5B0"}"/>`).join("")}
+    </div>`:"";
   const stockRaw=hasSpecs?(p.specStock||[])[selIdx]:null;
   const stock=(stockRaw===null||stockRaw===undefined||stockRaw==="")?null:Number(stockRaw);
   const soldOut=stock!=null&&stock<=0;
@@ -1152,8 +1159,9 @@ function renderDetail(){
 
     <!-- 商品圖 -->
     <div style="width:100%;aspect-ratio:1/1;background:#FAF8F5;overflow:hidden">
-      ${mainImg?`<img id="detail-hero-img" src="${mainImg}" style="width:100%;height:100%;object-fit:cover"/>`:`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:60px">${p.emoji||"📦"}</div>`}
+      ${mainImg?`<img id="detail-hero-img" src="${mainImg}" onclick="detailZoomOpen(this.src)" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in"/>`:`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:60px">${p.emoji||"📦"}</div>`}
     </div>
+    ${galleryStripHtml}
 
     <!-- 商品資訊 -->
     <div style="padding:16px 16px 140px">
@@ -1219,6 +1227,38 @@ function setDetailHeroImg(pid,specIdx){
   const heroEl=document.getElementById("detail-hero-img");
   if(heroEl)heroEl.src=img;
 }
+// 商品畫廊縮圖點選：跟規格縮圖分開一套，索引對應的是「主照片＋畫廊照片」這個組合陣列，
+// 不會動到規格選擇的狀態，純粹只是切換上面主圖顯示哪一張
+function setDetailHeroImgByIndex(pid,idx){
+  const p=G.products.find(x=>x.id===pid);if(!p)return;
+  const galleryPhotos=Array.isArray(p.galleryPhotos)?p.galleryPhotos.filter(Boolean):[];
+  const photos=[p.photo,...galleryPhotos].filter(Boolean);
+  const src=photos[idx];if(!src)return;
+  const heroEl=document.getElementById("detail-hero-img");
+  if(heroEl)heroEl.src=src;
+  document.querySelectorAll(".detail-gallery-thumb").forEach(el=>{
+    el.style.borderColor=(el.dataset.idx===String(idx))?"#F4845F":"#E8D5B0";
+  });
+}
+// 點主圖放大看——跟畫廊/規格縮圖共用同一個全螢幕檢視，圖片本身已經有全站的防右鍵/防長按保護
+window.detailZoomOpen=function(src){
+  if(!src)return;
+  let ov=document.getElementById("img-zoom-overlay");
+  if(!ov){
+    ov=document.createElement("div");
+    ov.id="img-zoom-overlay";
+    ov.style.cssText="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.92);align-items:center;justify-content:center;padding:20px";
+    ov.innerHTML=`<img id="img-zoom-img" style="max-width:100%;max-height:100%;object-fit:contain"/><button onclick="detailZoomClose()" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.15);color:white;border:none;border-radius:50%;width:36px;height:36px;font-size:20px;cursor:pointer;line-height:1">✕</button>`;
+    ov.addEventListener("click",e=>{if(e.target===ov)detailZoomClose();});
+    document.body.appendChild(ov);
+  }
+  document.getElementById("img-zoom-img").src=src;
+  ov.style.display="flex";
+};
+window.detailZoomClose=function(){
+  const ov=document.getElementById("img-zoom-overlay");
+  if(ov)ov.style.display="none";
+};
 function changeMultiSpecQty(pid,specIdx,delta){
   if(!G.lineUser)return; // 沒登入不能調整數量，畫面上本來就沒有按鈕，這裡多一層防護
   const p=G.products.find(x=>x.id===pid);if(!p)return;

@@ -984,6 +984,17 @@ body.live-mode .hide-live { display: none !important; }
       </label>
       <input type="file" id="ep-img-input" accept="image/*" style="display:none" onchange="epImgPick(this)"/>
     </div>
+    <!-- 1b. 商品畫廊：跟規格圖不一樣，這些是額外的商品照片（例如模特兒實拍、細節照、情境照），
+         不綁在某個口味/款式上，商城詳情頁會排成一排讓客人左右滑動看 -->
+    <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">🖼️ 商品畫廊（選填，多張額外照片，例如商品本身＋模特兒實穿照）</label>
+    <div id="ep-gallery-area" style="margin-bottom:14px">
+      <div id="ep-gallery-grid" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px"></div>
+      <label for="ep-gallery-input" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:10px;border:2px dashed #E8D5B0;border-radius:10px;cursor:pointer;background:#FAF8F5;color:#9C7A5A;font-size:12px;font-weight:700">
+        <span>🖼️</span><span>新增畫廊照片（可一次選多張）</span>
+      </label>
+      <input type="file" id="ep-gallery-input" accept="image/*" multiple style="display:none" onchange="epGalleryPick(this)"/>
+      <div style="font-size:10px;color:#9C7A5A;margin-top:4px;line-height:1.5">跟上面「商品圖片」不一樣：這裡是額外補充照片，不會取代主圖，商城詳情頁會顯示成一排可滑動的畫廊。</div>
+    </div>
     <!-- 2. 品名 + 規格 -->
     <div style="display:flex;gap:8px;margin-bottom:10px">
       <div style="flex:3">
@@ -2621,6 +2632,38 @@ window.epImgClear=function(){
   if(input)input.value="";
 };
 
+// ── 修改商品 modal：商品畫廊（多張額外照片，跟規格圖分開存）──────────────
+window.G.editGalleryPhotos=[];
+window.epRenderGallery=function(){
+  const grid=document.getElementById("ep-gallery-grid");if(!grid)return;
+  const arr=window.G.editGalleryPhotos||[];
+  grid.innerHTML=arr.map((b64,i)=>`
+    <div style="position:relative;width:72px;height:72px;border-radius:8px;overflow:hidden;border:1px solid #E8D5B0;flex-shrink:0">
+      <img loading="lazy" decoding="async" src="${b64}" style="width:100%;height:100%;object-fit:cover;display:block"/>
+      <button onclick="epGalleryRemove(${i})" style="position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,0.55);color:white;border:none;font-size:11px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>`).join("");
+};
+window.epGalleryPick=async function(input){
+  const files=Array.from(input.files||[]);if(!files.length)return;
+  showToast("壓縮圖片中…","success");
+  for(const file of files){
+    try{
+      // 畫廊照片是補充用途，壓縮設定比主照片保守一點，避免一次選太多張把單一商品文件撐爆
+      const b64=await compressImg(file,900,0.72);
+      window.G.editGalleryPhotos=[...(window.G.editGalleryPhotos||[]),b64];
+    }catch(e){console.error("[商品畫廊] 壓縮失敗",e);}
+  }
+  input.value="";
+  window.epRenderGallery();
+  showToast("畫廊照片已加入","success");
+};
+window.epGalleryRemove=function(i){
+  const arr=[...(window.G.editGalleryPhotos||[])];
+  arr.splice(i,1);
+  window.G.editGalleryPhotos=arr;
+  window.epRenderGallery();
+};
+
 // ── Lightbox ───────────────────────────────────────────────────────────
 window.openLightbox=function(pid){
   const p=window.G.products.find(x=>x.id===pid);if(!p||!p.photo)return;
@@ -4137,6 +4180,11 @@ window.openModal=function(id,data){
         if(epLt)epLt.textContent="拍照 或 從相簿選擇";
         window.G.editPhotoPos=null;
       }
+      // 商品畫廊：載入這個商品目前已有的額外照片
+      window.G.editGalleryPhotos=[...(data.galleryPhotos||[])];
+      const epGalInput=document.getElementById("ep-gallery-input");
+      if(epGalInput)epGalInput.value="";
+      window.epRenderGallery();
       updateEpCalc(fa,window.G.editCurrency,data.catKey||"food",data.twPrice||0,data.flags||{});
       // 填入最終售價並標記為手動，避免被建議售價蓋掉
       const epPr=document.getElementById("ep-price");
@@ -6731,8 +6779,9 @@ window.confirmShopOrder=async function(oid){
     renderCustomers();
     showToast("✅ 已確認訂單");
     // 商城訂單原本沒有歸屬任何趟次，確認的同時順便問一下要歸屬哪一趟，
-    // 不然之後在「依趟次」篩選時會找不到這筆訂單
-    if(window.G.trips&&window.G.trips.length){
+    // 不然之後在「依趟次」篩選時會找不到這筆訂單；但如果這筆訂單已經有趟次了
+    // （例如已經用過修復工具、或本來就有登記），就不用再問一次
+    if(window.G.trips&&window.G.trips.length&&!o?.tripId){
       setTimeout(()=>window.openMoveTrip(oid),300);
     }
   }catch(e){
@@ -6748,7 +6797,7 @@ window.toggleShopVisibleSingle=async function(id,event){
   const next=!p.shopVisible;
   try{
     // 每次「從下架切成上架」都重新記錄這個時間點，商城那邊會用這個時間判斷是不是「新品」，
-    // 下架過一段時間再重新上架，也會被當成新的一輪，重新從這個時間點開始算7天
+    // 下架過一段時間再重新上架，也會被當成新的一輪，重新從這個時間點開始算10天
     const upd={shopVisible:next};
     if(next)upd.shopListedAt=Date.now();
     await fbUpd("products",id,upd);
@@ -7189,8 +7238,18 @@ function updateEpCalc(amt,cur,cat,twPrice,flags){
 // 先保留「跟原本存的商品資料一模一樣、沒有改動」的舊照片不動，
 // 這次新增/修改過的照片依照原本排列順序，一張一張試著塞進去，
 // 塞到快超過容量上限就停下來，讓已經塞進去的先存檔，剩下塞不下的維持空白、下次再補
-function epTrimSpecImagesToFit(upd,newSpecs,newSpecImages,m){
+function epTrimSpecImagesToFit(upd,newSpecs,newSpecImages,m,newGalleryPhotos){
   const SAFE_BYTES=900000; // 留一點安全空間，不要卡在1,048,576的邊緣
+  newGalleryPhotos=newGalleryPhotos||[];
+  // 商品畫廊是額外補充照片，重要性比規格圖低（規格圖直接影響能不能選規格下單），
+  // 容量不夠的時候優先從畫廊開始砍，砍到能塞下規格圖為止，或畫廊本身已經空了
+  let finalGallery=[...newGalleryPhotos];
+  while(finalGallery.length){
+    const size=JSON.stringify({...upd,specImages:newSpecImages,galleryPhotos:finalGallery}).length;
+    if(size<=SAFE_BYTES)break;
+    finalGallery.pop();
+  }
+  const galleryDropped=newGalleryPhotos.length-finalGallery.length;
   const origMap={};
   (m.specs||[]).forEach((s,i)=>{origMap[s]=(m.specImages||[])[i]||"";});
   const finalImages=newSpecs.map((s,i)=>{
@@ -7208,7 +7267,7 @@ function epTrimSpecImagesToFit(upd,newSpecs,newSpecImages,m){
   for(const i of newIdxs){
     const trialImages=[...finalImages];
     trialImages[i]=newSpecImages[i];
-    const size=JSON.stringify({...upd,specImages:trialImages}).length;
+    const size=JSON.stringify({...upd,specImages:trialImages,galleryPhotos:finalGallery}).length;
     if(size<=SAFE_BYTES){
       finalImages[i]=newSpecImages[i];
       addedCount++;
@@ -7216,11 +7275,14 @@ function epTrimSpecImagesToFit(upd,newSpecs,newSpecImages,m){
       break; // 這張塞不下了，後面也大概率塞不下，先停在這裡，讓已經加進去的先存檔
     }
   }
-  return{finalImages,addedCount,totalNew:newIdxs.length};
+  return{finalImages,addedCount,totalNew:newIdxs.length,finalGallery,galleryDropped,galleryTotal:newGalleryPhotos.length};
 }
-function epOverCapacityMsg(addedCount,totalNew){
-  if(addedCount===0)return"⚠️ 規格圖片太多，這次新增/修改的照片一張都塞不下（容量已滿），其他資料都已存好，麻煩先刪掉幾張舊照片再補新的";
-  if(addedCount<totalNew)return`⚠️ 規格圖片太多超過容量上限，這次新增/修改的 ${totalNew} 張裡只塞得下 ${addedCount} 張，其他資料都已存好，剩下的可以下次再分批補`;
+function epOverCapacityMsg(addedCount,totalNew,galleryDropped,galleryTotal){
+  galleryDropped=galleryDropped||0;galleryTotal=galleryTotal||0;
+  const galleryMsg=galleryDropped>0?`商品畫廊照片有 ${galleryDropped}/${galleryTotal} 張因容量不足沒存進去，`:"";
+  if(addedCount===0&&totalNew>0)return`⚠️ ${galleryMsg}規格圖片太多，這次新增/修改的照片一張都塞不下（容量已滿），其他資料都已存好，麻煩先刪掉幾張舊照片再補新的`;
+  if(addedCount<totalNew)return`⚠️ ${galleryMsg}規格圖片太多超過容量上限，這次新增/修改的 ${totalNew} 張裡只塞得下 ${addedCount} 張，其他資料都已存好，剩下的可以下次再分批補`;
+  if(galleryDropped>0)return`⚠️ ${galleryMsg}其他資料都已存好`;
   return"商品已更新";
 }
 window.saveEditProd=async function(){
@@ -7257,6 +7319,7 @@ window.saveEditProd=async function(){
   const rawSpecs=window.G.epSpecsList||[];
   const rawSpecImages=window.G.epSpecImages||[];
   const rawSpecStock=window.G.epSpecStock||[];
+  const newGalleryPhotos=window.G.editGalleryPhotos||[];
   const newSpecs=[];const newSpecImages=[];const newSpecStock=[];
   rawSpecs.forEach((s,i)=>{const t=String(s).trim();if(t){newSpecs.push(t);newSpecImages.push(rawSpecImages[i]||"");newSpecStock.push(rawSpecStock[i]??"");}});
   const newAliases=(document.getElementById("ep-aliases")?.value.trim()||"").split(",").map(s=>s.trim()).filter(Boolean);
@@ -7275,8 +7338,9 @@ window.saveEditProd=async function(){
   const saveBtn2=document.querySelector('button[onclick="saveEditProd()"]');
   const origBtnHtml2=saveBtn2?.innerHTML;
   if(saveBtn2){saveBtn2.disabled=true;saveBtn2.innerHTML="📤 上傳照片中…";}
-  // 規格圖片、主照片都先上傳到 Storage 換成網址，已經是網址的（沒改過的舊圖）會直接跳過不重傳
+  // 規格圖片、主照片、商品畫廊都先上傳到 Storage 換成網址，已經是網址的（沒改過的舊圖）會直接跳過不重傳
   upd.specImages=await window.uploadPhotosToStorage(newSpecImages,oldId);
+  upd.galleryPhotos=await window.uploadPhotosToStorage(newGalleryPhotos,oldId+"_gallery");
   if(window.G.editPhoto===null){/* 不動圖片 */}
   else if(window.G.editPhoto===""){upd.photo="";upd.photoPos="50% 50%";}
   else{
@@ -7320,9 +7384,9 @@ window.saveEditProd=async function(){
         alert("儲存失敗，請把這段錯誤訊息截圖給開發者：\n\n"+msg);
         return;
       }
-      const{finalImages,addedCount,totalNew}=epTrimSpecImagesToFit(upd,newSpecs,newSpecImages,m);
-      await fbSet("products",newId,{...m,...upd,id:newId,specImages:finalImages});
-      showToast(epOverCapacityMsg(addedCount,totalNew),"warning");
+      const{finalImages,addedCount,totalNew,finalGallery,galleryDropped,galleryTotal}=epTrimSpecImagesToFit(upd,newSpecs,newSpecImages,m,newGalleryPhotos);
+      await fbSet("products",newId,{...m,...upd,id:newId,specImages:finalImages,galleryPhotos:finalGallery});
+      showToast(epOverCapacityMsg(addedCount,totalNew,galleryDropped,galleryTotal),"warning");
     }
     await fbDel("products",oldId);
     if(saveBtn2){saveBtn2.disabled=false;saveBtn2.innerHTML=origBtnHtml2;}
@@ -7341,10 +7405,10 @@ window.saveEditProd=async function(){
     console.warn("[存檔] 第一次嘗試超過容量上限，開始補救流程",msg);
     // 規格圖片太多，資料超過1MB上限：不是整個不帶圖片存，而是保留原本已經存好的照片不動，
     // 這次新增/修改的照片依序嘗試塞進去，塞得下多少算多少，塞不下的部分維持原狀、留到下次繼續補
-    const{finalImages,addedCount,totalNew}=epTrimSpecImagesToFit(upd,newSpecs,newSpecImages,m);
+    const{finalImages,addedCount,totalNew,finalGallery,galleryDropped,galleryTotal}=epTrimSpecImagesToFit(upd,newSpecs,newSpecImages,m,newGalleryPhotos);
     try{
-      await fbUpd("products",m.id,{...upd,specImages:finalImages});
-      showToast(epOverCapacityMsg(addedCount,totalNew),"warning");
+      await fbUpd("products",m.id,{...upd,specImages:finalImages,galleryPhotos:finalGallery});
+      showToast(epOverCapacityMsg(addedCount,totalNew,galleryDropped,galleryTotal),"warning");
     }catch(err2){
       const msg2=(err2&&err2.message)||String(err2);
       if(!/exceeds the maximum allowed size|bytes/i.test(msg2)){
@@ -7364,7 +7428,7 @@ window.saveEditProd=async function(){
         }
       }
       try{
-        await fbUpd("products",m.id,{...upd,specImages:finalImages});
+        await fbUpd("products",m.id,{...upd,specImages:finalImages,galleryPhotos:finalGallery});
         showToast("⚠️ 主照片檔案較大，已自動改用較小的版本存檔，畫質可能沒那麼高，可以之後再試著換一張檔案更小的原圖","warning");
       }catch(err3){
         if(saveBtn2){saveBtn2.disabled=false;saveBtn2.innerHTML=origBtnHtml2;}
