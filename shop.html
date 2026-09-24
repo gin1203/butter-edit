@@ -18,6 +18,10 @@
   #new-strip-left,#related-strip-left{left:0}
   #new-strip-right,#related-strip-right{right:0}
   @media(hover:none){.new-strip-arrow{display:none!important}} /* 觸控裝置本來就能直接滑，不需要箭頭按鈕多佔畫面 */
+  /* 商品圖浮水印：純疊加在圖片上面的文字，不會動到 Firestore 裡存的原始圖片，
+     後台看到的還是原圖、完全沒有浮水印，只有商城畫面上顯示的時候會多這一層 */
+  .wm-layer{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;overflow:hidden;z-index:1}
+  .wm-layer span{display:block;color:rgba(255,255,255,0.5);font-weight:900;letter-spacing:0.12em;white-space:nowrap;transform:rotate(-28deg);text-shadow:0 1px 2px rgba(0,0,0,0.35),0 0 6px rgba(0,0,0,0.25)}
 </style>
 </head>
 <body>
@@ -832,6 +836,7 @@ function renderGrid(){
           <svg width="15" height="15" viewBox="0 0 24 24" fill="${getFavorites().includes(p.id)?'#F4845F':'none'}" stroke="${getFavorites().includes(p.id)?'#F4845F':'#9C7A5A'}" stroke-width="2"><path d="M20.8 4.6c-1.8-1.8-4.7-1.8-6.5 0L12 6.9l-2.3-2.3c-1.8-1.8-4.7-1.8-6.5 0-1.8 1.8-1.8 4.7 0 6.5L12 20.8l8.8-8.8c1.8-1.8 1.8-4.7 0-6.5z"/></svg>
         </button>
         ${p.photo?`<img src="${p.photo}" style="width:100%;height:100%;object-fit:cover" loading="lazy"/>`:`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:36px">${p.emoji||"📦"}</div>`}
+        ${p.photo?`<div class="wm-layer"><span style="font-size:15px">THE BUTTER EDIT</span></div>`:""}
       </div>
       <div style="padding:8px 10px 12px;display:flex;flex-direction:column;flex:1">
         <div style="font-size:12px;font-weight:700;color:#3D2010;line-height:1.35;margin-bottom:6px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${cleanProductName(p.name)}</div>
@@ -1175,8 +1180,9 @@ function renderDetail(){
     <div style="height:50px"></div>
 
     <!-- 商品圖 -->
-    <div style="width:100%;aspect-ratio:1/1;background:#FAF8F5;overflow:hidden">
+    <div style="width:100%;aspect-ratio:1/1;background:#FAF8F5;overflow:hidden;position:relative">
       ${mainImg?`<img id="detail-hero-img" src="${mainImg}" onclick="detailZoomOpen(this.src)" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in"/>`:`<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:60px">${p.emoji||"📦"}</div>`}
+      ${mainImg?`<div class="wm-layer"><span style="font-size:28px">THE BUTTER EDIT</span></div>`:""}
     </div>
     ${galleryStripHtml}
 
@@ -1265,7 +1271,7 @@ window.detailZoomOpen=function(src){
     ov=document.createElement("div");
     ov.id="img-zoom-overlay";
     ov.style.cssText="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.92);align-items:center;justify-content:center;padding:20px";
-    ov.innerHTML=`<img id="img-zoom-img" style="max-width:100%;max-height:100%;object-fit:contain"/><button onclick="detailZoomClose()" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.15);color:white;border:none;border-radius:50%;width:36px;height:36px;font-size:20px;cursor:pointer;line-height:1">✕</button>`;
+    ov.innerHTML=`<img id="img-zoom-img" style="max-width:100%;max-height:100%;object-fit:contain"/><div class="wm-layer"><span style="font-size:36px">THE BUTTER EDIT</span></div><button onclick="detailZoomClose()" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.15);color:white;border:none;border-radius:50%;width:36px;height:36px;font-size:20px;cursor:pointer;line-height:1">✕</button>`;
     ov.addEventListener("click",e=>{if(e.target===ov)detailZoomClose();});
     document.body.appendChild(ov);
   }
