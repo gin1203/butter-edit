@@ -21,7 +21,7 @@
   /* 商品圖浮水印：純疊加在圖片上面的文字，不會動到 Firestore 裡存的原始圖片，
      後台看到的還是原圖、完全沒有浮水印，只有商城畫面上顯示的時候會多這一層 */
   .wm-layer{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;overflow:hidden;z-index:1}
-  .wm-layer span{display:block;color:rgba(255,255,255,0.5);font-weight:900;letter-spacing:0.12em;white-space:nowrap;transform:rotate(-28deg);text-shadow:0 1px 2px rgba(0,0,0,0.35),0 0 6px rgba(0,0,0,0.25)}
+  .wm-layer span{display:block;color:rgba(255,255,255,0.45);font-weight:400;letter-spacing:0.12em;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -221,6 +221,14 @@ async function trackProductView(pid){
     const url=`https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT}/databases/(default)/documents:commit?key=${FIREBASE_API_KEY}`;
     const body={writes:[{transform:{document:docPath,fieldTransforms:[{fieldPath:"viewCount",increment:{integerValue:1}}]}}]};
     await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    // 有登入的話，另外記一筆「誰看過」，後台修改商品頁可以看到最近瀏覽名單。
+    // 沒登入的人系統認不出是誰，就只會算進上面的總瀏覽數，不會出現在名單裡。
+    // 用「商品+客人+日期」當文件ID，同一人同一天重複寫也只會蓋掉同一筆，不會一直長
+    if(G.lineUser&&G.lineUser.userId){
+      const custId="line_"+G.lineUser.userId.slice(0,16);
+      const viewId=`pv_${pid}_${custId}_${todayStr}`;
+      await fsCreate("product_views",viewId,{productId:pid,customerId:custId,lineName:G.lineUser.displayName||"",viewedAt:Date.now()}).catch(()=>{});
+    }
   }catch(e){console.error("瀏覽次數記錄失敗（不影響瀏覽本身）：",e);}
 }
 async function fsQuery(col,field,value){

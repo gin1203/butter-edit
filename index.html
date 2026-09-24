@@ -996,6 +996,12 @@ body.live-mode .hide-live { display: none !important; }
       <input type="file" id="ep-gallery-input" accept="image/*" multiple style="display:none" onchange="epGalleryPick(this)"/>
       <div style="font-size:10px;color:#9C7A5A;margin-top:4px;line-height:1.5">跟上面「商品圖片」不一樣：這裡是額外補充照片，不會取代主圖，商城詳情頁會顯示成一排可滑動的畫廊。</div>
     </div>
+    <!-- 最近瀏覽：只抓得到「有登入 LINE」的客人，沒登入的訪客系統認不出是誰，
+         只會算進商品清單卡片上那個總瀏覽數，不會出現在這份名單裡 -->
+    <div style="margin-bottom:14px">
+      <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">👀 最近誰看過這個商品（只抓得到有登入的客人）</label>
+      <div id="ep-recent-viewers" style="background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;font-size:12px;color:#9C7A5A">載入中…</div>
+    </div>
     <!-- 2. 品名 + 規格 -->
     <div style="display:flex;gap:8px;margin-bottom:10px">
       <div style="flex:3">
@@ -2665,6 +2671,40 @@ window.epGalleryRemove=function(i){
   window.epRenderGallery();
 };
 
+// ── 修改商品 modal：最近誰看過這個商品 ──────────────────────────────────
+// 只有客人登入 LINE 瀏覽時才會留下紀錄（商城那邊沒登入沒辦法知道是誰），
+// 每次開這個商品的修改視窗才查一次（不是即時監聽），避免又增加常駐的 Firestore 監聽數量
+window.epLoadRecentViewers=async function(pid){
+  const box=document.getElementById("ep-recent-viewers");
+  if(!box||!pid)return;
+  box.textContent="載入中…";
+  try{
+    const{getDocs,collection:col,query,where}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    const snap=await getDocs(query(col(db,"product_views"),where("productId","==",pid)));
+    let records=snap.docs.map(d=>({id:d.id,...d.data()}));
+    const now=Date.now();
+    const MONTH_MS=30*24*60*60*1000;
+    // 超過30天的紀錄清掉，不然這個collection會一直長，名單也只需要看「最近」的就好
+    const expired=records.filter(r=>now-(r.viewedAt||0)>MONTH_MS);
+    if(expired.length){
+      expired.forEach(r=>fbDel("product_views",r.id).catch(()=>{}));
+      records=records.filter(r=>now-(r.viewedAt||0)<=MONTH_MS);
+    }
+    records.sort((a,b)=>(b.viewedAt||0)-(a.viewedAt||0));
+    records=records.slice(0,15);
+    if(!records.length){
+      box.innerHTML=`<div style="text-align:center;padding:4px;color:#C5A880">目前還沒有登入的客人看過（或都是沒登入的訪客）</div>`;
+      return;
+    }
+    box.innerHTML=records.map(r=>{
+      const dateStr=r.viewedAt?new Date(r.viewedAt).toLocaleString("zh-TW",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"}):"";
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #F0E6D0"><span style="font-weight:700;color:#3D2010">${r.lineName||"未知客人"}</span><span style="color:#B0906A">${dateStr}</span></div>`;
+    }).join("");
+  }catch(e){
+    box.innerHTML=`<div style="color:#C0392B">載入失敗：${e.message}</div>`;
+  }
+};
+
 // ── Lightbox ───────────────────────────────────────────────────────────
 window.openLightbox=function(pid){
   const p=window.G.products.find(x=>x.id===pid);if(!p||!p.photo)return;
@@ -4186,6 +4226,7 @@ window.openModal=function(id,data){
       const epGalInput=document.getElementById("ep-gallery-input");
       if(epGalInput)epGalInput.value="";
       window.epRenderGallery();
+      window.epLoadRecentViewers(data.id);
       updateEpCalc(fa,window.G.editCurrency,data.catKey||"food",data.twPrice||0,data.flags||{});
       // 填入最終售價並標記為手動，避免被建議售價蓋掉
       const epPr=document.getElementById("ep-price");
