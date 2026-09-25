@@ -1299,12 +1299,11 @@ body.live-mode .hide-live { display: none !important; }
         <!-- 趟次＋喊單類型合併成同一行：喊單類型改成純圖示的小按鈕，跟趟次選擇並排，
              省下原本單獨一整排的高度；滑鼠移上去(或手機長按)看得到文字說明 -->
         <div id="eo-trip-picker" style="background:#FDF6EC;border:1px solid #E8D5B0;border-radius:8px;padding:6px 8px;margin-bottom:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-          <span style="font-size:10px;font-weight:700;color:#9C7A5A;white-space:nowrap;flex-shrink:0">趟次</span>
           <div id="eo-trip-picker-btns" style="display:flex;flex-wrap:wrap;gap:5px;flex-shrink:1;min-width:0"></div>
           <div style="width:1px;height:20px;background:#E8D5B0;flex-shrink:0"></div>
           <div style="display:flex;gap:4px;flex-shrink:0;margin-left:auto">
             <button id="eo-type-onsite" onclick="eoSetType('onsite')" title="現場購買（人在賣場、直接帶走）"
-              style="height:28px;padding:0 9px;border-radius:8px;border:1.5px solid #5C3A1E;background:#5C3A1E;color:#F5E6C8;font-size:11px;font-weight:700;cursor:pointer;line-height:1;white-space:nowrap">現貨</button>
+              style="height:28px;padding:0 9px;border-radius:8px;border:1.5px solid #0E7490;background:#0E7490;color:white;font-size:11px;font-weight:700;cursor:pointer;line-height:1;white-space:nowrap">現貨</button>
             <button id="eo-type-preorder" onclick="eoSetType('preorder')" title="記事本+1（已離開、代買尚未購買）"
               style="height:28px;padding:0 9px;border-radius:8px;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;font-size:11px;font-weight:700;cursor:pointer;line-height:1;white-space:nowrap">預購</button>
             <button id="eo-type-quote" onclick="eoSetType('quote')" title="待報價"
@@ -8363,7 +8362,7 @@ window.eoSetType=async function(type){
   });
   const map={onsite,preorder,quote};
   const active=map[type];
-  if(active){active.style.background="#5C3A1E";active.style.color="#F5E6C8";active.style.borderColor="#5C3A1E";}
+  if(active){active.style.background="#0E7490";active.style.color="white";active.style.borderColor="#0E7490";}
   // 切換這個開關時，順便把「目前還沒儲存」的暫存項目也一起改成新選的類型，
   // 不然使用者會以為切換了、結果之前加的那幾筆還是舊的類型，搞不清楚為什麼沒生效
   const pending=window.G.eoPendingAdd||[];
