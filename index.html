@@ -1296,9 +1296,9 @@ body.live-mode .hide-live { display: none !important; }
       <!-- 新增商品到訂單：用不同底色的區塊明確跟上面「修改現有商品」分開，避免搞混 -->
       <div style="background:#EAF4EA;border:1px solid #C8E0C8;border-radius:12px;padding:12px;margin-bottom:10px">
         <div style="font-size:12px;font-weight:900;color:#2E7D32;margin-bottom:8px">➕ 新增商品到此訂單</div>
-        <div id="eo-trip-picker" style="background:#FDF6EC;border:1px solid #E8D5B0;border-radius:8px;padding:8px 10px;margin-bottom:8px">
-          <div style="font-size:10px;font-weight:700;color:#9C7A5A;margin-bottom:6px">✈️ 這次新增的商品要歸屬哪個趟次？</div>
-          <div id="eo-trip-picker-btns" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+        <div id="eo-trip-picker" style="background:#FDF6EC;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;margin-bottom:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span style="font-size:10px;font-weight:700;color:#9C7A5A;white-space:nowrap;flex-shrink:0">✈️ 歸屬</span>
+          <div id="eo-trip-picker-btns" style="display:flex;flex-wrap:wrap;gap:5px;flex:1;min-width:0"></div>
         </div>
         <div style="display:flex;gap:6px;margin-bottom:8px">
           <button id="eo-type-onsite" onclick="eoSetType('onsite')"
@@ -1765,8 +1765,8 @@ body.live-mode .hide-live { display: none !important; }
         </div>
         <!-- 重量（選填，放大） -->
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-          <label style="font-size:13px;font-weight:700;color:#B45309;white-space:nowrap">⚖️ 重量(克)</label>
-          <input type="text" inputmode="decimal" id="qa-live-weight" oninput="qaLiveCalc()" placeholder="選填，例：620" style="flex:1;background:white;border:2px solid #F59E0B;border-radius:10px;padding:11px 14px;font-size:18px;font-weight:700;outline:none;box-sizing:border-box"/>
+          <label style="font-size:13px;font-weight:700;color:#B45309;white-space:nowrap;flex-shrink:0">⚖️ 重量(克)</label>
+          <input type="text" inputmode="decimal" id="qa-live-weight" oninput="qaLiveCalc()" placeholder="選填，例：620" style="flex:1;min-width:0;background:white;border:2px solid #F59E0B;border-radius:10px;padding:11px 14px;font-size:18px;font-weight:700;outline:none;box-sizing:border-box"/>
         </div>
         <!-- 含運費即時參考（有填重量才顯示，放大） -->
         <div id="qa-live-ship-row" style="display:none;margin-bottom:10px">
@@ -8306,17 +8306,18 @@ window.eoRenderTripPicker=function(){
     const filterTrip=(window.G.tripFilter&&window.G.tripFilter!=="all")?window.G.tripFilter:null;
     window.G.moSelectedTripId=filterTrip||getLatestTrip()?.id||trips[0]?.id||"";
   }
-  // 只把最近3個趟次做成按鈕，太久以前的趟次不太會再用到，收進下拉選單裡，不用一直攤開佔版面
-  const RECENT_N=2;
+  // 只把最新的1個趟次做成按鈕直接露出來，其餘全部收進下拉選單裡，
+  // 這樣不管建立過幾趟，這一排的寬度/高度都固定小小的，不會把下面商品清單的版面擠窄
+  const RECENT_N=1;
   const recentTrips=trips.slice(0,RECENT_N);
   const olderTrips=trips.slice(RECENT_N);
   const selectedInRecent=recentTrips.some(t=>t.id===window.G.moSelectedTripId);
   const btnsHtml=recentTrips.map(t=>{
     const active=window.G.moSelectedTripId===t.id;
-    return `<button data-tid="${t.id}" onclick="window.eoSelectTrip(this.dataset.tid)" style="padding:5px 10px;border-radius:8px;font-size:11px;font-weight:700;border:1.5px solid ${active?"#5C3A1E":"#E8D5B0"};background:${active?"#5C3A1E":"white"};color:${active?"#F5E6C8":"#9C7A5A"};cursor:pointer">${t.name||t.id}</button>`;
+    return `<button data-tid="${t.id}" onclick="window.eoSelectTrip(this.dataset.tid)" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:4px 9px;border-radius:8px;font-size:10px;font-weight:700;border:1.5px solid ${active?"#5C3A1E":"#E8D5B0"};background:${active?"#5C3A1E":"white"};color:${active?"#F5E6C8":"#9C7A5A"};cursor:pointer">${t.name||t.id}</button>`;
   }).join("");
-  const olderSelectHtml=olderTrips.length?`<select onchange="window.eoSelectTrip(this.value)" style="padding:5px 8px;border-radius:8px;font-size:11px;font-weight:700;border:1.5px solid ${!selectedInRecent?"#5C3A1E":"#E8D5B0"};background:${!selectedInRecent?"#5C3A1E":"white"};color:${!selectedInRecent?"#F5E6C8":"#9C7A5A"};cursor:pointer">
-    <option value="" ${selectedInRecent?"selected":""} disabled>⋯</option>
+  const olderSelectHtml=olderTrips.length?`<select onchange="window.eoSelectTrip(this.value)" style="max-width:90px;padding:4px 6px;border-radius:8px;font-size:10px;font-weight:700;border:1.5px solid ${!selectedInRecent?"#5C3A1E":"#E8D5B0"};background:${!selectedInRecent?"#5C3A1E":"white"};color:${!selectedInRecent?"#F5E6C8":"#9C7A5A"};cursor:pointer">
+    <option value="" ${selectedInRecent?"selected":""} disabled>其他趟次⋯</option>
     ${olderTrips.map(t=>`<option value="${t.id}" ${window.G.moSelectedTripId===t.id?"selected":""}>${t.name||t.id}</option>`).join("")}
   </select>`:"";
   box.innerHTML=btnsHtml+olderSelectHtml;
@@ -14412,18 +14413,16 @@ window.buildGroupedOrderLines=function(orders){
     if(!byProductName.has(g.name))byProductName.set(g.name,[]);
     byProductName.get(g.name).push(g);
   });
+  // 明細一律顯示原價（不打折的價格），實際有折扣的部分統一在最後彙總成一行
+  // （例如「折扣95折」），不在每個商品後面分別標註，畫面比較乾淨
   const normalLines=[];
   byProductName.forEach((items,name)=>{
     if(items.length>1){
-      const subLines=items.map(g=>{
-        const origNote=g.origAmt>g.amt?`（原價NT$${g.origAmt.toLocaleString()}）`:"";
-        return "　"+(g.spec||"（無規格）")+" ×"+g.qty+"  NT$"+g.amt.toLocaleString()+origNote;
-      });
+      const subLines=items.map(g=>"　"+(g.spec||"（無規格）")+" ×"+g.qty+"  NT$"+g.origAmt.toLocaleString());
       normalLines.push("• "+name+"\n"+subLines.join("\n"));
     } else {
       const g=items[0];
-      const origNote=g.origAmt>g.amt?`（原價NT$${g.origAmt.toLocaleString()}）`:"";
-      normalLines.push("• "+g.name+(g.spec?" ("+g.spec+")":"")+" ×"+g.qty+"  NT$"+g.amt.toLocaleString()+origNote);
+      normalLines.push("• "+g.name+(g.spec?" ("+g.spec+")":"")+" ×"+g.qty+"  NT$"+g.origAmt.toLocaleString());
     }
   });
   const normalTotal=normalGroupOrder.reduce((s,key)=>s+normalGroupMap.get(key).amt,0);
@@ -14451,7 +14450,10 @@ window.buildGroupedOrderLines=function(orders){
     return `• ${g.label}（${promoLabel}，單包NT$${origSingle}）\n${itemLines.join("\n")}\n　小計 NT$${groupTotal.toLocaleString()}`;
   });
   const totalQty=orders.reduce((s,o)=>s+(o.qty||1),0);
-  return {lines:[...normalLines,...promoBlocks],total:normalTotal+promoTotal,totalQty};
+  // origTotal＝明細裡實際列出來的「原價」總和（一般商品用origAmt、加購優惠商品維持原本的實付小計)，
+  // 用來跟total（實際應收）比較差多少、算出折扣是打幾折
+  const origTotal=normalGroupOrder.reduce((s,key)=>s+normalGroupMap.get(key).origAmt,0)+promoTotal;
+  return {lines:[...normalLines,...promoBlocks],total:normalTotal+promoTotal,totalQty,origTotal};
 };
 // scope 三種：
 // "active"（預設）＝只複製還沒結案、進行中的商品，這是最常用的情境——客人追加新東西，只想複製新的那幾樣
@@ -14541,13 +14543,19 @@ window.copyCustOrder=function(cid,scope){
   const grouped=window.buildGroupedOrderLines(cO);
   const lines=grouped.lines;
   const total=grouped.total;
+  const origTotal=grouped.origTotal;
   const afterPct=pctOrder?Math.round(total*pctOrder.sharedDiscountPercent/10):total;
   const discountedTotal=afterPct-sharedDiscount;
   // 只列商品明細跟總額，不主動提匯款/訂金，因為客人有時候只是想查目前訂了什麼——
-  // 打幾折跟折扣(NT$)都是在最後統一列一行，不會分別標註在每個商品後面
+  // 商品明細一律顯示原價，任何折扣（不管是單品自己就有折、還是整批另外再打折）
+  // 都統一在最後彙總成一行寫清楚打幾折、折多少，不會分別標註在每個商品後面
+  const itemDiscount=origTotal-total;
+  const itemDiscPct=itemDiscount>0?Math.round((total/origTotal)*100):null;
+  const itemDiscLine=itemDiscount>0?`\n折扣${itemDiscPct}折　-NT$${itemDiscount.toLocaleString()}`:"";
   const pctLine=pctOrder?`\n打${pctOrder.sharedDiscountPercent}折後  NT$${afterPct.toLocaleString()}`:"";
-  const totalBlock=(sharedDiscount>0||pctOrder)
-    ?`\n\n商品小計 NT$${total.toLocaleString()}${pctLine}${sharedDiscount>0?`\n折扣  -NT$${sharedDiscount.toLocaleString()}${sharedDiscountReason?`（${sharedDiscountReason}）`:""}`:""}\n\n應付金額 NT$${discountedTotal.toLocaleString()}`
+  const hasAnyDiscount=sharedDiscount>0||pctOrder||itemDiscount>0;
+  const totalBlock=hasAnyDiscount
+    ?`\n\n商品原價 NT$${origTotal.toLocaleString()}${itemDiscLine}${pctLine}${sharedDiscount>0?`\n折扣  -NT$${sharedDiscount.toLocaleString()}${sharedDiscountReason?`（${sharedDiscountReason}）`:""}`:""}\n\n應付金額 NT$${discountedTotal.toLocaleString()}`
     :`\n\n總金額 NT$${total.toLocaleString()}`;
   const scopeLabel=scope==="closed"?"（已結案批次）":scope==="all"?"（全部訂單）":"";
   const text=`【訂單明細】${scopeLabel}\n${lines.join("\n")}\n\n共計 ${grouped.totalQty} 件商品${totalBlock}`;
@@ -14592,6 +14600,12 @@ window.copyBuyerOrder=function(buyerKey){
   const grouped=window.buildGroupedOrderLines(buyerOrders);
   const lines=grouped.lines;
   const rawTotal=grouped.total;
+  const origTotal=grouped.origTotal;
+  const itemDiscount=origTotal-rawTotal;
+  const itemDiscPct=itemDiscount>0?Math.round((rawTotal/origTotal)*100):null;
+  const itemDiscLine=itemDiscount>0?`\n折扣${itemDiscPct}折　-NT$${itemDiscount.toLocaleString()}`:"";
+  const totalLabel=itemDiscount>0?"商品原價":"總金額";
+  const totalShown=itemDiscount>0?origTotal:rawTotal;
   const afterPct=pctOrder?Math.round(rawTotal*pctOrder.sharedDiscountPercent/10):rawTotal;
   const total=afterPct-sharedDisc;
   const totalDeposit=buyerOrders.reduce((s,o)=>s+(o.depositAmt||0),0);
@@ -14605,8 +14619,8 @@ window.copyBuyerOrder=function(buyerKey){
     ?`🌟應付金額　NT$${payNow.toLocaleString()}`
     :`🌟應付金額　NT$${payNow.toLocaleString()}（保留 NT$100 賣貨便貨到付款）`;
   const summaryBlock=totalDeposit>0
-    ?`\n───────────\n總金額　NT$${rawTotal.toLocaleString()}${pctLine}${discLine}${shipLine}\n已付訂金　NT$${totalDeposit.toLocaleString()}\n───────────\n${payLine}`
-    :`\n───────────\n總金額　NT$${rawTotal.toLocaleString()}${pctLine}${discLine}${shipLine}\n\n${payLine}`;
+    ?`\n───────────\n${totalLabel}　NT$${totalShown.toLocaleString()}${itemDiscLine}${pctLine}${discLine}${shipLine}\n已付訂金　NT$${totalDeposit.toLocaleString()}\n───────────\n${payLine}`
+    :`\n───────────\n${totalLabel}　NT$${totalShown.toLocaleString()}${itemDiscLine}${pctLine}${discLine}${shipLine}\n\n${payLine}`;
   const bs=window.G.settings||{};
   const bankLines=[];
   if(bs.bank1Name||bs.bank1Account)bankLines.push(`${bs.bank1Name||""}\n${bs.bank1Account||""}`);
@@ -14650,6 +14664,12 @@ window.openSendSettlement=async function(buyerKey){
   const grouped2=window.buildGroupedOrderLines(buyerOrders);
   const lines=grouped2.lines;
   const rawTotal=grouped2.total;
+  const origTotal=grouped2.origTotal;
+  const itemDiscount=origTotal-rawTotal;
+  const itemDiscPct=itemDiscount>0?Math.round((rawTotal/origTotal)*100):null;
+  const itemDiscLine=itemDiscount>0?`\n折扣${itemDiscPct}折　-NT$${itemDiscount.toLocaleString()}`:"";
+  const totalLabel=itemDiscount>0?"商品原價":"總金額";
+  const totalShown=itemDiscount>0?origTotal:rawTotal;
   const afterPct=pctOrder?Math.round(rawTotal*pctOrder.sharedDiscountPercent/10):rawTotal;
   const total=afterPct-sharedDisc;
   const totalDeposit=buyerOrders.reduce((s,o)=>s+(o.depositAmt||0),0);
@@ -14663,8 +14683,8 @@ window.openSendSettlement=async function(buyerKey){
     ?`🌟應付金額　NT$${payNow.toLocaleString()}`
     :`🌟應付金額　NT$${payNow.toLocaleString()}（保留 NT$100 賣貨便貨到付款）`;
   const summaryBlock=totalDeposit>0
-    ?`\n───────────\n總金額　NT$${rawTotal.toLocaleString()}${pctLine}${discLine}${shipLine}\n已付訂金　NT$${totalDeposit.toLocaleString()}\n───────────\n${payLine}`
-    :`\n───────────\n總金額　NT$${rawTotal.toLocaleString()}${pctLine}${discLine}${shipLine}\n\n${payLine}`;
+    ?`\n───────────\n${totalLabel}　NT$${totalShown.toLocaleString()}${itemDiscLine}${pctLine}${discLine}${shipLine}\n已付訂金　NT$${totalDeposit.toLocaleString()}\n───────────\n${payLine}`
+    :`\n───────────\n${totalLabel}　NT$${totalShown.toLocaleString()}${itemDiscLine}${pctLine}${discLine}${shipLine}\n\n${payLine}`;
   const bs=window.G.settings||{};
   const bankLines=[];
   if(bs.bank1Name||bs.bank1Account)bankLines.push(`${bs.bank1Name||""}\n${bs.bank1Account||""}`);
