@@ -1299,7 +1299,7 @@ body.live-mode .hide-live { display: none !important; }
         <!-- 趟次＋喊單類型合併成同一行：喊單類型改成純圖示的小按鈕，跟趟次選擇並排，
              省下原本單獨一整排的高度；滑鼠移上去(或手機長按)看得到文字說明 -->
         <div id="eo-trip-picker" style="background:#FDF6EC;border:1px solid #E8D5B0;border-radius:8px;padding:6px 8px;margin-bottom:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-          <span style="font-size:10px;font-weight:700;color:#9C7A5A;white-space:nowrap;flex-shrink:0">✈️</span>
+          <span style="font-size:10px;font-weight:700;color:#9C7A5A;white-space:nowrap;flex-shrink:0">趟次</span>
           <div id="eo-trip-picker-btns" style="display:flex;flex-wrap:wrap;gap:5px;flex-shrink:1;min-width:0"></div>
           <div style="width:1px;height:20px;background:#E8D5B0;flex-shrink:0"></div>
           <div style="display:flex;gap:4px;flex-shrink:0;margin-left:auto">
@@ -8319,11 +8319,34 @@ window.eoRenderTripPicker=function(){
     const active=window.G.moSelectedTripId===t.id;
     return `<button data-tid="${t.id}" onclick="window.eoSelectTrip(this.dataset.tid)" style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:4px 9px;border-radius:8px;font-size:10px;font-weight:700;border:1.5px solid ${active?"#5C3A1E":"#E8D5B0"};background:${active?"#5C3A1E":"white"};color:${active?"#F5E6C8":"#9C7A5A"};cursor:pointer">${t.name||t.id}</button>`;
   }).join("");
-  const olderSelectHtml=olderTrips.length?`<select onchange="window.eoSelectTrip(this.value)" style="max-width:90px;padding:4px 6px;border-radius:8px;font-size:10px;font-weight:700;border:1.5px solid ${!selectedInRecent?"#5C3A1E":"#E8D5B0"};background:${!selectedInRecent?"#5C3A1E":"white"};color:${!selectedInRecent?"#F5E6C8":"#9C7A5A"};cursor:pointer">
-    <option value="" ${selectedInRecent?"selected":""} disabled>其他趟次⋯</option>
-    ${olderTrips.map(t=>`<option value="${t.id}" ${window.G.moSelectedTripId===t.id?"selected":""}>${t.name||t.id}</option>`).join("")}
-  </select>`:"";
-  box.innerHTML=btnsHtml+olderSelectHtml;
+  // 其他趟次不用原生<select>——手機瀏覽器的下拉框本身就會有一個吃版面的長方形外框，
+  // 改用一個小小的「⋯」按鈕，點了才彈出選單，平常完全不占空間
+  const moreHtml=olderTrips.length?`<div style="position:relative;display:inline-flex">
+    <button type="button" onclick="event.stopPropagation();window.eoToggleTripMore()" style="width:26px;height:26px;border-radius:8px;font-size:13px;font-weight:900;border:1.5px solid ${!selectedInRecent?"#5C3A1E":"#E8D5B0"};background:${!selectedInRecent?"#5C3A1E":"white"};color:${!selectedInRecent?"#F5E6C8":"#9C7A5A"};cursor:pointer;line-height:1;padding:0">⋯</button>
+    <div id="eo-trip-more-menu" style="display:none;position:absolute;top:calc(100% + 4px);left:0;background:white;border:1px solid #E8D5B0;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:210;min-width:130px;max-height:180px;overflow-y:auto">
+      ${olderTrips.map(t=>{
+        const on=window.G.moSelectedTripId===t.id;
+        return `<div data-tid="${t.id}" onclick="event.stopPropagation();window.eoSelectTrip(this.dataset.tid);document.getElementById('eo-trip-more-menu').style.display='none'" style="padding:8px 12px;font-size:12px;font-weight:700;white-space:nowrap;cursor:pointer;color:${on?"#5C3A1E":"#3D2010"};background:${on?"#FDF6EC":"white"}">${t.name||t.id}</div>`;
+      }).join("")}
+    </div>
+  </div>`:"";
+  box.innerHTML=btnsHtml+moreHtml;
+};
+window.eoToggleTripMore=function(){
+  const menu=document.getElementById("eo-trip-more-menu");
+  if(!menu)return;
+  const isOpen=menu.style.display==="block";
+  menu.style.display=isOpen?"none":"block";
+  if(!isOpen){
+    setTimeout(()=>{
+      document.addEventListener("click",window._eoTripMoreOutsideHandler=function handler(e){
+        if(!menu.contains(e.target)){
+          menu.style.display="none";
+          document.removeEventListener("click",handler);
+        }
+      });
+    },0);
+  }
 };
 window.eoSelectTrip=function(tid){
   window.G.moSelectedTripId=tid;
