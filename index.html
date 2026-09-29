@@ -82,6 +82,7 @@ body.live-mode .hide-live { display: none !important; }
     </div>
     <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
       <div id="pending-badge" style="display:none;background:#5C3A1E;color:#F5E6C8;font-size:10px;font-weight:700;padding:3px 7px;border-radius:99px;white-space:nowrap"></div>
+      <button id="shop-pending-badge" onclick="showShopPendingOrders()" style="display:none;background:#E65100;color:white;font-size:10px;font-weight:700;padding:3px 7px;border-radius:99px;white-space:nowrap;border:none;cursor:pointer"></button>
       <span id="user-role-badge" style="display:none;font-size:9px;font-weight:700;color:#9C7A5A;background:#FAF8F5;border:1px solid #E8D5B0;padding:2px 5px;border-radius:99px"></span>
       <button onclick="doLogout()" style="padding:6px 8px;border-radius:8px;border:1px solid #E8D5B0;background:#FAF8F5;color:#9C7A5A;cursor:pointer;font-size:10px;font-weight:700">登出</button>
       <button onclick="showTab('settings')" style="padding:5px;border-radius:8px;border:none;background:transparent;color:#9C7A5A;cursor:pointer;flex-shrink:0">
@@ -6842,6 +6843,7 @@ window.confirmShopOrder=async function(oid){
     const o=window.G.orders.find(x=>x.id===oid);
     if(o){o.status="confirmed";o.lastActivityAt=now;}
     renderCustomers();
+    updateShopPendingBadge();
     showToast("✅ 已確認訂單");
     // 商城訂單原本沒有歸屬任何趟次，確認的同時順便問一下要歸屬哪一趟，
     // 不然之後在「依趟次」篩選時會找不到這筆訂單；但如果這筆訂單已經有趟次了
@@ -6852,6 +6854,89 @@ window.confirmShopOrder=async function(oid){
   }catch(e){
     showToast("更新失敗："+e.message,"error");
   }
+};
+
+// ══════ 商城待確認訂單 ══════
+// 商城訂單送出後狀態是 pending，要老闆確認過（庫存/金額沒問題）才會變成 confirmed，
+// 之後可以照正常流程收訂金/出貨；超過48小時沒確認會被Cron自動取消、庫存也會被釋放回去。
+// 原本要確認一筆訂單得先找到是哪個客人、點開客人卡片才看得到確認按鈕，
+// 這裡另外做一個集中列表，把所有還沒確認的商城訂單全部列在同一個畫面，一次處理完
+window.showShopPendingOrders=function(){
+  let modal=document.getElementById("modal-shop-pending");
+  if(!modal){
+    modal=document.createElement("div");
+    modal.id="modal-shop-pending";
+    modal.className="modal-overlay";
+    modal.style.cssText="display:none;position:fixed;inset:0;z-index:120;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;padding:16px";
+    document.body.appendChild(modal);
+  }
+  modal.style.display="flex";
+  renderShopPendingOrders();
+};
+window.renderShopPendingOrders=function(){
+  const modal=document.getElementById("modal-shop-pending");
+  if(!modal)return;
+  // 快到期（48小時自動取消）的排最前面，越急迫的越先看到、越先處理
+  const list=(window.G.orders||[]).filter(o=>o.orderType==="shop_web"&&o.status==="pending")
+    .sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+  const now=Date.now();
+  const EXPIRE_MS=48*60*60*1000;
+  modal.innerHTML=`<div style="background:white;border-radius:18px;width:100%;max-width:480px;max-height:85vh;display:flex;flex-direction:column">
+    <div style="padding:18px 20px 12px;border-bottom:1px solid #F0E6D0;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <h3 style="margin:0;font-size:15px;font-weight:900;color:#3D2010">🛍️ 商城待確認訂單</h3>
+        <div style="font-size:10px;color:#9C7A5A;margin-top:2px">確認過的訂單才會進入正常收訂金/出貨流程，超過48小時沒確認會自動取消</div>
+      </div>
+      <button onclick="document.getElementById('modal-shop-pending').style.display='none'" style="background:none;border:none;font-size:20px;color:#9C7A5A;cursor:pointer">×</button>
+    </div>
+    <div style="padding:16px 20px;overflow-y:auto;flex:1">
+      ${!list.length?`<div style="text-align:center;padding:24px 10px;color:#9C7A5A;font-size:12px">🎉 目前沒有待確認的商城訂單</div>`:`
+      <button onclick='doConfirmAllShopPending(${JSON.stringify(list.map(o=>o.id))})' style="width:100%;background:#2E7D32;color:white;border:none;border-radius:10px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:14px">✅ 全部確認（共 ${list.length} 筆）</button>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${list.map(o=>{
+          const hoursLeft=Math.max(0,Math.round((EXPIRE_MS-(now-(o.createdAt||now)))/3600000));
+          const urgentColor=hoursLeft<=6?"#C0392B":hoursLeft<=24?"#E07B39":"#9C7A5A";
+          const name=o.communityName||o.lineName||o.buyerName||"未知客人";
+          const p=window.G.products.find(x=>x.id===o.productId);
+          const price=o.discountPrice||o.unitPrice||0;
+          return `<div data-oid="${o.id}" style="background:#FAF8F5;border:1px solid #E8D5B0;border-radius:12px;padding:10px 12px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px">
+              <div style="min-width:0">
+                <div style="font-size:12px;font-weight:900;color:#3D2010;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</div>
+                <div style="font-size:11px;color:#5C3A1E;margin-top:2px">${cleanProductName((p?.name)||o.productName||"商品")}${(o.spec||o.selectedSpec)?" ("+(o.spec||o.selectedSpec)+")":""} ×${o.qty}</div>
+              </div>
+              <div style="text-align:right;flex-shrink:0">
+                <div style="font-size:12px;font-weight:900;color:#3D2010">NT$${(price*o.qty).toLocaleString()}</div>
+                <div style="font-size:10px;font-weight:700;color:${urgentColor}">⏰ 剩${hoursLeft}小時</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:6px">
+              <button data-oid="${o.id}" onclick="confirmShopOrder(this.dataset.oid)" style="flex:1;font-size:11px;color:#2E7D32;background:#E8F5E9;border:1px solid #A5D6A7;padding:6px;border-radius:6px;cursor:pointer;font-weight:700">✅ 確認訂單</button>
+              <button data-oid="${o.id}" onclick="deleteOrder(this.dataset.oid)" style="font-size:11px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:6px 10px;border-radius:6px;cursor:pointer">🗑️</button>
+            </div>
+          </div>`;
+        }).join("")}
+      </div>
+      `}
+    </div>
+  </div>`;
+};
+window.doConfirmAllShopPending=async function(orderIds){
+  if(!orderIds?.length)return;
+  if(!confirm(`確定要一次確認這 ${orderIds.length} 筆商城訂單？\n確認後就不會被自動取消，可以正常用收訂金/出貨流程處理。`))return;
+  const now=Date.now();
+  let ok=0;
+  for(const oid of orderIds){
+    try{
+      await fbUpd("orders",oid,{status:"confirmed",confirmedAt:now,lastActivityAt:now});
+      const o=window.G.orders.find(x=>x.id===oid);
+      if(o){o.status="confirmed";o.lastActivityAt=now;}
+      ok++;
+    }catch(e){/* 單筆失敗不影響其他筆，繼續處理下一筆 */}
+  }
+  renderCustomers();
+  updateShopPendingBadge();
+  showToast(`✅ 已確認 ${ok} 筆訂單`);
 };
 
 // 單一商品直接在卡片上切換上下架，不用勾選、不用滑到最上面按批次按鈕
@@ -12156,6 +12241,23 @@ function updateStats(){
   const pending=window.G.orders.filter(o=>o.status==="pending"||o.status==="confirmed").length;
   const badge=document.getElementById("pending-badge");
   if(badge){badge.textContent=`${pending} 待對帳`;badge.style.display=pending>0?"inline-block":"none";}
+  updateShopPendingBadge();
+}
+// 商城訂單一進來狀態是 pending，要老闆確認過（庫存/金額都沒問題）才會變成 confirmed，
+// 之後才會進入正常收訂金/出貨流程；48小時內沒確認會被Cron自動取消。
+// 這裡另外做一個顯眼的紅色小圓標，點了直接看到所有還沒確認的商城訂單並在同一個畫面裡確認掉，
+// 不用像以前一樣得一個一個客人卡片點開才找得到
+function updateShopPendingBadge(){
+  const list=(window.G.orders||[]).filter(o=>o.orderType==="shop_web"&&o.status==="pending");
+  const badge=document.getElementById("shop-pending-badge");
+  if(badge){
+    badge.textContent=`🛍️ ${list.length}筆待確認`;
+    badge.style.display=list.length>0?"inline-block":"none";
+  }
+  // 如果現在正開著這個清單視窗，資料一有變動（例如剛確認掉一筆）就順便重畫一次，
+  // 不用使用者自己關掉再打開才會看到清單更新
+  const modal=document.getElementById("modal-shop-pending");
+  if(modal&&modal.style.display!=="none")renderShopPendingOrders();
 }
 
 // ── 渲染商品 ──────────────────────────────────────────────────────────
