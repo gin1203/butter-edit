@@ -1939,12 +1939,21 @@ async function submitOrder(){
         const itemsSummary2=items.map(i=>`・${cleanProductName(i.product.name)}${i.spec?"("+i.spec+")":""} ×${i.qty}`).join("\n");
         const orderTotal2=getCartPricing(items).total;
         const confirmMsg=`🧡 訂單確認通知\n\n${community} 您好，已經收到您在商城送出的詢問單囉！\n\n${itemsSummary2}\n\n共計 NT$${orderTotal2.toLocaleString()}\n\n我們會盡快幫您確認商品與金額，正式的結清金額會再另外傳送給您，謝謝🙏`;
-        fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json","X-Service":"line-quote"},body:JSON.stringify({userId:G.lineUser.userId,message:confirmMsg})})
-          .then(async r=>{
-            const data=await r.json().catch(()=>({}));
-            if(!r.ok)console.error("[訂單確認通知除錯] 失敗，狀態碼",r.status,"回應：",data);
-          })
-          .catch(e=>console.error("[訂單確認通知除錯] 網路請求失敗：",e));
+        // 用await等它真的做完，不要fire-and-forget——避免後面showSuccess切換畫面時，
+        // 這個還沒送完的請求被瀏覽器中途取消掉，導致訊息其實沒送出去
+        // 推播失敗的話，除了印在主控台（你手機上根本看不到），也順便用「通知老闆」那條線路
+        // 再推一則失敗原因給你自己的LINE，這樣不用打開瀏覽器開發者工具也能知道到底卡在哪
+        try{
+          const r=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json","X-Service":"line-quote"},body:JSON.stringify({userId:G.lineUser.userId,message:confirmMsg})});
+          const data=await r.json().catch(()=>({}));
+          if(!r.ok){
+            console.error("[訂單確認通知除錯] 失敗，狀態碼",r.status,"回應：",data);
+            await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json","X-Service":"notify-new-order"},body:JSON.stringify({summary:`⚠️ 客人的訂單確認訊息推播失敗\n客人：${community}\nLINE userId：${G.lineUser.userId}\n狀態碼：${r.status}\n回應：${JSON.stringify(data)}`})}).catch(()=>{});
+          }
+        }catch(e){
+          console.error("[訂單確認通知除錯] 網路請求失敗：",e);
+          await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json","X-Service":"notify-new-order"},body:JSON.stringify({summary:`⚠️ 客人的訂單確認訊息推播失敗（網路請求層級）\n客人：${community}\nLINE userId：${G.lineUser.userId}\n錯誤：${e.message||e}`})}).catch(()=>{});
+        }
       }catch(e){console.error("[訂單確認通知除錯] 組訊息時發生錯誤：",e);}
     }
     showSuccess(items,getCartPricing(items).total,community);
