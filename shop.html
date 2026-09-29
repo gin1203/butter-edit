@@ -1969,11 +1969,19 @@ async function submitOrder(){
         // 先用顯示名稱去後台的 line_users 名單裡找出真正對得上官方帳號的userId，找不到才退回用登入的userId硬試
         // 前面下單前的好友確認關卡（checkFriendshipReal）如果剛查過，會直接存在resolvedUserId上，這裡優先重用、不用再查一次
         const resolvedUserId=G.lineUser.resolvedUserId||(await fsFindLineUserIdByName(G.lineUser.displayName).catch(()=>null))||G.lineUser.userId;
-        // 排版加上分隔線、每個品項後面直接接金額，比原本一長串堆在一起清楚
+        // 排版加上分隔線、每個品項後面直接接金額，比原本一長串堆在一起清楚。
+        // 每個品項一律顯示「原價」（跟後台複製訂單明細那邊的邏輯一致），
+        // 有折扣的話另外統一列一行折扣金額，不要讓客人看到「單價」跟商品頁標價對不起來、以為算錯
         const{itemPricing:confirmItemPricing,total:orderTotal2}=getCartPricing(items);
         const divider="－－－－－－－－－－";
-        const itemsSummary2=confirmItemPricing.map(({item:i,unitPrice})=>`・${cleanProductName(i.product.name)}${i.spec?"("+i.spec+")":""} ×${i.qty}　NT$${(unitPrice*i.qty).toLocaleString()}`).join("\n");
-        const confirmMsg=`🧡 訂單確認通知\n\n${community} 您好，已經收到您在商城送出的訂單囉！\n\n📦 訂單內容\n${divider}\n${itemsSummary2}\n${divider}\n💰 共計：NT$${orderTotal2.toLocaleString()}\n\n請核對以上內容是否正確，謝謝🙏`;
+        const itemsSummary2=confirmItemPricing.map(({item:i})=>{
+          const origAmt=(i.product.finalPrice||0)*i.qty;
+          return `・${cleanProductName(i.product.name)}${i.spec?"("+i.spec+")":""} ×${i.qty}　NT$${origAmt.toLocaleString()}`;
+        }).join("\n");
+        const origTotal2=confirmItemPricing.reduce((s,{item:i})=>s+(i.product.finalPrice||0)*i.qty,0);
+        const itemDiscount2=origTotal2-orderTotal2;
+        const discountLine=itemDiscount2>0?`商品原價　NT$${origTotal2.toLocaleString()}\n折扣　－NT$${itemDiscount2.toLocaleString()}\n`:"";
+        const confirmMsg=`🧡 訂單確認通知\n\n${community} 您好，已經收到您在商城送出的訂單囉！\n\n${divider}\n${itemsSummary2}\n${divider}\n${discountLine}💰 共計：NT$${orderTotal2.toLocaleString()}\n\n請核對以上內容是否正確，謝謝～`;
         // 用await等它真的做完，不要fire-and-forget——避免後面showSuccess切換畫面時，
         // 這個還沒送完的請求被瀏覽器中途取消掉，導致訊息其實沒送出去
         // 推播失敗的話，除了印在主控台（你手機上根本看不到），也順便用「通知老闆」那條線路
