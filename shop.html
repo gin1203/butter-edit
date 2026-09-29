@@ -1779,19 +1779,28 @@ function computeCrossPromoWithExisting(cartItems,existingOrders){
 }
 // 下單前強制確認好友狀態：只針對「有用LINE登入」的客人才擋——沒登入、純填表單的客人
 // 沒有LINE身分可以查，擋不了也不用擋，維持原本可以直接下單的行為。
-// 用即時查詢（而不是登入當下存的舊狀態），是因為客人可能是登入很久之後才臨時去加好友，
-// 或者反過來登入時還沒加、後來才加，舊的isFriend快取都可能不準
-async function checkFriendshipLive(){
-  if(!G.lineUser?.accessToken)return null; // 沒存到token（例如很舊的登入資料），無法查證，不要卡住客人
+// 判斷依據直接查後台的 line_users 名單（跟實際推播訊息用的判斷方式完全一致），
+// 不再透過商城登入頻道自己的好友狀態API——因為那個頻道跟真正推播用的官方帳號是不同Provider，
+// 查出來的好友狀態不一定準；用line_users有沒有這個人的紀錄來判斷，才是「推不推得到訊息」的真正答案。
+async function checkFriendshipReal(){
+  if(!G.lineUser?.displayName)return null; // 沒有顯示名稱可以比對，不要卡住客人，視為允許
   try{
-    const resp=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json","X-Service":"line-friendship-check"},body:JSON.stringify({accessToken:G.lineUser.accessToken})});
-    if(resp.status===401)return "expired"; // access token過期了，要請客人重新登入
-    const data=await resp.json();
-    if(!resp.ok)return null; // 查詢本身出問題，不要卡住客人下單，視為允許
-    G.lineUser.isFriend=!!data.isFriend;
-    localStorage.setItem("butter_line_user",JSON.stringify(G.lineUser));
-    return G.lineUser.isFriend;
+    const uid=await fsFindLineUserIdByName(G.lineUser.displayName);
+    if(uid){
+      G.lineUser.resolvedUserId=uid; // 記下來，等一下要推播確認訊息時直接用，不用重查一次
+      localStorage.setItem("butter_line_user",JSON.stringify(G.lineUser));
+      return true;
+    }
+    return false;
   }catch(e){return null;}
+}
+// 客人在畫面上點「加好友」通常會跳去LINE App，加完好友切回瀏覽器分頁時，
+// 讓系統自動幫他重新確認一次，不用他自己再點一次「重新確認」按鈕，體驗更順
+function handleAddFriendGateVisibility(){
+  if(document.visibilityState==="visible"){
+    const gate=document.getElementById("add-friend-gate");
+    if(gate&&gate.style.display==="flex")recheckFriendshipAndClose(true);
+  }
 }
 function showAddFriendGate(){
   let ov=document.getElementById("add-friend-gate");
@@ -1804,27 +1813,32 @@ function showAddFriendGate(){
   ov.innerHTML=`<div style="background:white;border-radius:20px;max-width:340px;width:100%;padding:24px;text-align:center">
     <div style="font-size:38px;margin-bottom:8px">💬</div>
     <div style="font-size:15px;font-weight:900;color:#3D2010;margin-bottom:8px">請先加官方LINE好友</div>
-    <div style="font-size:13px;color:#9C7A5A;line-height:1.6;margin-bottom:18px">加好友之後，訂單確認、出貨通知、結清單才傳得到您的LINE，麻煩先加好友再送出訂單喔！</div>
+    <div style="font-size:13px;color:#9C7A5A;line-height:1.6;margin-bottom:18px">加好友之後，訂單確認、出貨通知、結清單才傳得到您的LINE，麻煩先加好友再送出訂單喔！加完好友切回這個頁面，系統會自動幫您確認。</div>
     <a href="https://line.me/R/ti/p/${encodeURIComponent(LINE_OA_ID)}" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:6px;background:#06C755;border-radius:10px;padding:12px;font-size:14px;font-weight:700;color:white;text-decoration:none;margin-bottom:10px;box-sizing:border-box">💬 加官方LINE好友</a>
     <button onclick="recheckFriendshipAndClose()" id="add-friend-recheck-btn" style="width:100%;background:#F4845F;color:white;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">我已經加了，重新確認</button>
-    <button onclick="document.getElementById('add-friend-gate').style.display='none'" style="width:100%;background:none;border:none;color:#9C7A5A;font-size:12px;cursor:pointer;padding:6px">先不要，關閉</button>
+    <button onclick="document.getElementById('add-friend-gate').style.display='none';document.removeEventListener('visibilitychange',handleAddFriendGateVisibility)" style="width:100%;background:none;border:none;color:#9C7A5A;font-size:12px;cursor:pointer;padding:6px">先不要，關閉</button>
   </div>`;
   ov.style.display="flex";
+  document.addEventListener("visibilitychange",handleAddFriendGateVisibility);
 }
-async function recheckFriendshipAndClose(){
+async function recheckFriendshipAndClose(auto){
   const btn=document.getElementById("add-friend-recheck-btn");
-  if(btn){btn.disabled=true;btn.textContent="確認中…";}
-  const result=await checkFriendshipLive();
+  if(btn&&!auto){btn.disabled=true;btn.textContent="確認中…";}
+  let result=await checkFriendshipReal();
+  if(result===false){
+    // 剛加好友，LINE那邊的webhook紀錄可能還沒寫進來，稍等一下下再查一次，
+    // 避免明明剛加好友卻因為差那一兩秒被判定成沒加
+    await new Promise(r=>setTimeout(r,1200));
+    result=await checkFriendshipReal();
+  }
   if(result===true){
     document.getElementById("add-friend-gate").style.display="none";
-    showToast("好友確認成功！請再按一次「送出訂單」");
-  } else if(result==="expired"){
-    document.getElementById("add-friend-gate").style.display="none";
-    showToast("登入已過期，請重新登入LINE後再試一次");
-    logoutLine();
+    document.removeEventListener("visibilitychange",handleAddFriendGateVisibility);
+    showToast("好友確認成功，幫您繼續送出訂單…");
+    submitOrder();
   } else {
     if(btn){btn.disabled=false;btn.textContent="我已經加了，重新確認";}
-    showToast("還沒偵測到好友關係，加了好友後請稍等幾秒再試一次");
+    if(!auto)showToast("還沒偵測到好友關係，加了好友後請稍等幾秒再試一次");
   }
 }
 async function submitOrder(){
@@ -1835,14 +1849,10 @@ async function submitOrder(){
   if(G.lineUser?.userId){
     const gateBtn=document.getElementById("submit-btn");
     if(gateBtn){gateBtn.disabled=true;gateBtn.textContent="確認好友狀態中…";}
-    const friendStatus=await checkFriendshipLive();
+    const isFriend=await checkFriendshipReal();
     if(gateBtn){gateBtn.disabled=false;gateBtn.textContent="送出訂單";}
-    if(friendStatus===false){showAddFriendGate();return;}
-    if(friendStatus==="expired"){
-      showCheckoutError("登入資訊已過期，請重新登入LINE後再試一次");
-      logoutLine();
-      return;
-    }
+    if(isFriend===false){showAddFriendGate();return;}
+    // isFriend===null：查詢本身出問題（例如網路不穩），不要卡住客人，當作允許先讓訂單送出
   }
   const name=(document.getElementById("f-name")?.value||"").trim();
   const community=(document.getElementById("f-community")?.value||"").trim();
@@ -1957,10 +1967,11 @@ async function submitOrder(){
       try{
         // 商城「LINE登入」拿到的userId跟官方帳號的Messaging API是不同Provider，常常對不上、推播會失敗。
         // 先用顯示名稱去後台的 line_users 名單裡找出真正對得上官方帳號的userId，找不到才退回用登入的userId硬試
-        const resolvedUserId=(await fsFindLineUserIdByName(G.lineUser.displayName).catch(()=>null))||G.lineUser.userId;
+        // 前面下單前的好友確認關卡（checkFriendshipReal）如果剛查過，會直接存在resolvedUserId上，這裡優先重用、不用再查一次
+        const resolvedUserId=G.lineUser.resolvedUserId||(await fsFindLineUserIdByName(G.lineUser.displayName).catch(()=>null))||G.lineUser.userId;
         const itemsSummary2=items.map(i=>`・${cleanProductName(i.product.name)}${i.spec?"("+i.spec+")":""} ×${i.qty}`).join("\n");
         const orderTotal2=getCartPricing(items).total;
-        const confirmMsg=`🧡 訂單確認通知\n\n${community} 您好，已經收到您在商城送出的詢問單囉！\n\n${itemsSummary2}\n\n共計 NT$${orderTotal2.toLocaleString()}\n\n我們會盡快幫您確認商品與金額，正式的結清金額會再另外傳送給您，謝謝🙏`;
+        const confirmMsg=`🧡 訂單確認通知\n\n${community} 您好，已經收到您在商城送出的訂單囉！\n\n${itemsSummary2}\n\n共計 NT$${orderTotal2.toLocaleString()}\n\n請核對是否正確，謝謝🙏`;
         // 用await等它真的做完，不要fire-and-forget——避免後面showSuccess切換畫面時，
         // 這個還沒送完的請求被瀏覽器中途取消掉，導致訊息其實沒送出去
         // 推播失敗的話，除了印在主控台（你手機上根本看不到），也順便用「通知老闆」那條線路
@@ -2028,40 +2039,26 @@ function showSuccess(items,total,name){
   el.style.display="block";
 
   const{itemPricing}=getCartPricing(items);
-  const itemLines=itemPricing.map(({item:i,unitPrice})=>`・${cleanProductName(i.product.name)}${i.spec?" ("+i.spec+")":""} ×${i.qty}　NT$${(unitPrice*i.qty).toLocaleString()}`).join("\n");
-  const orderText=`我剛在商城下單了！請幫我確認訂單，謝謝🙏\n\n社群暱稱：${name}\n\n【訂單內容】\n${itemLines}\n\n總金額：NT$${total.toLocaleString()}`;
+  const orderText=`我剛在商城下單了！請幫我確認訂單，謝謝🙏\n\n社群暱稱：${name}\n\n【訂單內容】\n${itemPricing.map(({item:i,unitPrice})=>`・${cleanProductName(i.product.name)}${i.spec?" ("+i.spec+")":""} ×${i.qty}　NT$${(unitPrice*i.qty).toLocaleString()}`).join("\n")}\n\n總金額：NT$${total.toLocaleString()}`;
   const msg=encodeURIComponent(orderText);
   const lineUrl=`line://ti/p/${LINE_OA_ID}?text=${msg}`;
-
+  // goToCheckout() 本來就擋著沒登入的人（會直接叫他去登入），能走到這裡的一定是已經
+  // 用LINE登入、也在送出訂單前被強制加過官方好友的客人，所以不需要再分「有沒有登入」兩種畫面，
+  // 訂單一送出，官方LINE也已經主動推播確認訊息給他了，這裡只要告知這件事就好，
+  // 不能再用「必須」「否則無法確認」這種字眼，會跟已經自動完成的流程互相矛盾、誤導客人。
   el.innerHTML=`
     <div style="padding:24px 16px 60px">
       <div style="text-align:center;margin-bottom:24px">
         <div style="font-size:44px;margin-bottom:8px">✅</div>
-        <div style="font-size:18px;font-weight:900;color:#3D2010;margin-bottom:6px">訂單已記錄！</div>
-        <div style="font-size:13px;color:#9C7A5A">還差最後一步，請完成下方操作</div>
+        <div style="font-size:18px;font-weight:900;color:#3D2010;margin-bottom:6px">訂單已送出！</div>
+        <div style="font-size:13px;color:#9C7A5A">官方LINE已經主動傳送訂單確認訊息給您</div>
       </div>
 
-      <!-- 主要行動：LINE 通知（強調必要性） -->
-      <div style="background:#F0FFF4;border:2px solid #06C755;border-radius:16px;padding:16px;margin-bottom:16px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-          <div style="font-size:20px">⚠️</div>
-          <div style="font-size:13px;font-weight:900;color:#1A7A3A">必須完成這個步驟，否則我們無法確認您的訂單</div>
-        </div>
-        <button id="line-complete-btn" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:#06C755;color:white;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:900;cursor:pointer;box-sizing:border-box">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
-          點我加入官方 LINE 完成下單
-        </button>
-        <div style="font-size:11px;color:#1A7A3A;text-align:center;margin-top:8px;line-height:1.6">
-          點下去會<b>自動複製訂單資訊</b>到剪貼簿<br>進入 LINE 後直接<b>長按貼上</b>再按傳送即完成<br>
-          <span style="color:#9C7A5A">（電腦用戶請搜尋官方帳號 <b>${LINE_OA_ID}</b>）</span>
-        </div>
+      <div style="background:#F0FFF4;border:2px solid #06C755;border-radius:16px;padding:16px;margin-bottom:16px;display:flex;align-items:center;gap:10px">
+        <div style="font-size:26px">💬</div>
+        <div style="font-size:13px;color:#1A7A3A;line-height:1.6">請至官方LINE查看訂單確認訊息，核對內容無誤即可，我們會儘快幫您處理</div>
       </div>
-      <!-- 電腦用戶：複製訂單資訊 -->
-      <button id="copy-order-btn" onclick="copyOrderInfo()" style="width:100%;background:white;color:#5C3A1E;border:1px solid #E8D5B0;border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:16px">
-        📋 複製訂單資訊
-      </button>
 
-      <!-- 訂單明細 -->
       <div style="background:white;border:1px solid #E8D5B0;border-radius:14px;padding:14px;margin-bottom:16px">
         <div style="font-size:12px;font-weight:900;color:#9C7A5A;margin-bottom:10px">📋 您的訂單內容</div>
         ${itemPricing.map(({item:i,unitPrice})=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #FAF8F5;font-size:13px">
@@ -2079,31 +2076,19 @@ function showSuccess(items,total,name){
       </div>
 
       <div style="background:#FFF8E1;border:1px solid #FFE082;border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:12px;color:#7B5800;line-height:1.7">
-        ⚠️ 請在 <b>48小時內</b>前往官方 LINE 確認訂單，逾時訂單將自動取消
+        ⚠️ 請在 <b>48小時內</b>於LINE確認訂單內容，逾時訂單將自動取消
       </div>
+      <button id="line-fallback-btn" style="width:100%;background:white;color:#1A7A3A;border:1px solid #A5D6A7;border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:10px">沒收到LINE訊息？點此傳訊息給我們</button>
       <button onclick="location.reload()" style="width:100%;background:white;color:#9C7A5A;border:1px solid #E8D5B0;border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer">回到商品頁繼續逛</button>
     </div>`;
-  // 點 LINE 按鈕時：先複製訂單文字到剪貼簿、跳出「已複製」提示，稍微延遲再跳轉，
-  // 避免手機上剪貼簿還沒寫完，App 就已經切換過去
-  document.getElementById("line-complete-btn")?.addEventListener("click",()=>{
+  // 保留一個低調的備援按鈕：萬一自動推播真的失敗（極少數狀況，例如客人是line_users名單裡
+  // 完全查不到的全新好友），客人還是有辦法主動聯繫，但不再強調「必須」，避免誤導
+  document.getElementById("line-fallback-btn")?.addEventListener("click",()=>{
     copyToClipboard(orderText).then((ok)=>{
-      showToast(ok?"✅ 已複製訂單內容，請在 LINE 裡長按貼上":"⚠️ 複製失敗，請改用下方「複製訂單資訊」按鈕");
+      showToast(ok?"✅ 已複製訂單內容，請在 LINE 裡長按貼上":"⚠️ 複製失敗，請直接搜尋官方帳號 "+LINE_OA_ID);
       setTimeout(()=>{location.href=lineUrl;},ok?350:0);
     });
   });
-
-  // 讓複製按鈕能存取這筆訂單的資料
-  window.copyOrderInfo=function(){
-    copyToClipboard(orderText).then((ok)=>{
-      const btn=document.getElementById("copy-order-btn");
-      if(ok){
-        showToast("✅ 已複製訂單內容，請貼到 LINE 傳送給我們");
-        if(btn){btn.textContent="✅ 已複製！請開啟 LINE 貼上傳送";btn.style.background="#E8F5E9";btn.style.color="#2E7D32";btn.style.border="1px solid #A5D6A7";}
-      } else {
-        alert("複製失敗，請手動複製以下內容：\n\n"+orderText);
-      }
-    });
-  };
   window.scrollTo(0,0);
 }
 
