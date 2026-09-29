@@ -238,6 +238,25 @@ async function fsQuery(col,field,value){
   const data=await resp.json();
   return (data||[]).filter(r=>r.document).map(r=>fsDoc(r.document));
 }
+// 商城的「LINE登入」跟官方帳號的Messaging API是不同Provider底下的頻道，
+// 同一個真人在這兩邊會拿到不同的userId，用商城登入的userId去推播常常會失敗（推播對象根本對不上）。
+// 後台原本就有 line_users 這份名單（客人跟官方LINE互動過，Webhook自動記下來的），
+// 這份名單裡的userId才是真正屬於官方帳號那個頻道、推播推得到的。
+// 用顯示名稱去比對，全部撈出來才知道是不是唯一一筆——0筆或超過1筆都不能亂猜，直接放棄推播比較安全。
+async function fsFindLineUserIdByName(displayName){
+  const key=(displayName||"").trim().toLowerCase();
+  if(!key)return null;
+  try{
+    const url=`${BASE_URL}:runQuery?key=${FIREBASE_API_KEY}`;
+    const body={structuredQuery:{from:[{collectionId:"line_users"}],limit:1000}};
+    const resp=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    const data=await resp.json();
+    const all=(data||[]).filter(r=>r.document).map(r=>fsDoc(r.document));
+    const matches=all.filter(u=>(u.displayName||"").trim().toLowerCase()===key);
+    if(matches.length===1)return matches[0].userId||matches[0].id||null;
+    return null;
+  }catch(e){return null;}
+}
 async function fsListShopProducts(){
   const url=`${BASE_URL}:runQuery?key=${FIREBASE_API_KEY}`;
   // 商品格子頁只需要這些輕量欄位就能顯示（名稱/價格/主圖/促銷資訊），
@@ -1936,6 +1955,9 @@ async function submitOrder(){
     // 只有客人是用LINE登入（有userId）才推得到；純填表單（沒登入）沒有LINE身分，推不了訊息，跳過就好，不影響下單本身
     if(G.lineUser?.userId){
       try{
+        // 商城「LINE登入」拿到的userId跟官方帳號的Messaging API是不同Provider，常常對不上、推播會失敗。
+        // 先用顯示名稱去後台的 line_users 名單裡找出真正對得上官方帳號的userId，找不到才退回用登入的userId硬試
+        const resolvedUserId=(await fsFindLineUserIdByName(G.lineUser.displayName).catch(()=>null))||G.lineUser.userId;
         const itemsSummary2=items.map(i=>`・${cleanProductName(i.product.name)}${i.spec?"("+i.spec+")":""} ×${i.qty}`).join("\n");
         const orderTotal2=getCartPricing(items).total;
         const confirmMsg=`🧡 訂單確認通知\n\n${community} 您好，已經收到您在商城送出的詢問單囉！\n\n${itemsSummary2}\n\n共計 NT$${orderTotal2.toLocaleString()}\n\n我們會盡快幫您確認商品與金額，正式的結清金額會再另外傳送給您，謝謝🙏`;
@@ -1944,15 +1966,18 @@ async function submitOrder(){
         // 推播失敗的話，除了印在主控台（你手機上根本看不到），也順便用「通知老闆」那條線路
         // 再推一則失敗原因給你自己的LINE，這樣不用打開瀏覽器開發者工具也能知道到底卡在哪
         try{
-          const r=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json","X-Service":"line-quote"},body:JSON.stringify({userId:G.lineUser.userId,message:confirmMsg})});
+          const r=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json","X-Service":"line-quote"},body:JSON.stringify({userId:resolvedUserId,message:confirmMsg})});
           const data=await r.json().catch(()=>({}));
           if(!r.ok){
             console.error("[訂單確認通知除錯] 失敗，狀態碼",r.status,"回應：",data);
-            await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json","X-Service":"notify-new-order"},body:JSON.stringify({summary:`⚠️ 客人的訂單確認訊息推播失敗\n客人：${community}\nLINE userId：${G.lineUser.userId}\n狀態碼：${r.status}\n回應：${JSON.stringify(data)}`})}).catch(()=>{});
+            const lineStatusNote=data?.lineStatus?`\nLINE原始狀態碼：${data.lineStatus}`:"";
+            const friendNote=data?.friendCheckNote?`\n\n${data.friendCheckNote}`:"";
+            const resolvedNote=resolvedUserId!==G.lineUser.userId?"\n（已改用line_users名單比對到的ID，仍失敗）":"\n（line_users名單找不到這個人，退回用登入的ID，失敗）";
+            await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json","X-Service":"notify-new-order"},body:JSON.stringify({summary:`⚠️ 客人的訂單確認訊息推播失敗\n客人：${community}\nLINE userId：${resolvedUserId}${resolvedNote}\n狀態碼：${r.status}${lineStatusNote}\n回應：${JSON.stringify(data)}${friendNote}`})}).catch(()=>{});
           }
         }catch(e){
           console.error("[訂單確認通知除錯] 網路請求失敗：",e);
-          await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json","X-Service":"notify-new-order"},body:JSON.stringify({summary:`⚠️ 客人的訂單確認訊息推播失敗（網路請求層級）\n客人：${community}\nLINE userId：${G.lineUser.userId}\n錯誤：${e.message||e}`})}).catch(()=>{});
+          await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json","X-Service":"notify-new-order"},body:JSON.stringify({summary:`⚠️ 客人的訂單確認訊息推播失敗（網路請求層級）\n客人：${community}\nLINE userId：${resolvedUserId}\n錯誤：${e.message||e}`})}).catch(()=>{});
         }
       }catch(e){console.error("[訂單確認通知除錯] 組訊息時發生錯誤：",e);}
     }
