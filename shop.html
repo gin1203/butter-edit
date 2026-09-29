@@ -280,7 +280,9 @@ function lineLogin(){
   // 先把這個資訊存起來，登入完成後才能正確跳回原本那個商品，而不是跳回普通的商品格子頁
   const sharedPid=new URLSearchParams(location.search).get("p");
   if(sharedPid)localStorage.setItem("butter_pending_product",sharedPid);
-  const params=new URLSearchParams({response_type:"code",client_id:LINE_LOGIN_CHANNEL_ID,redirect_uri:lineLoginRedirectUri(),state,scope:"profile openid"});
+  // bot_prompt=normal：登入流程裡順便問客人要不要加官方帳號好友（如果這個LINE Login頻道有連結到官方帳號的話）。
+  // 這樣下單後才推得出訂單確認訊息——如果客人只是登入、根本沒加好友，後面的LINE推播會失敗。
+  const params=new URLSearchParams({response_type:"code",client_id:LINE_LOGIN_CHANNEL_ID,redirect_uri:lineLoginRedirectUri(),state,scope:"profile openid",bot_prompt:"normal"});
   location.href="https://access.line.me/oauth2/v2.1/authorize?"+params.toString();
 }
 function logoutLine(){
@@ -1620,9 +1622,9 @@ function renderCheckout(){
         <textarea id="f-note" rows="2" placeholder="有其他想說的都可以寫在這裡" oninput="G.form.note=this.value" style="width:100%;margin-top:4px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:10px 12px;font-size:14px;outline:none;box-sizing:border-box;resize:vertical"></textarea>
       </div>
     </div>
-    <div style="background:#FFF8E1;border:1px solid #FFE082;border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:12px;color:#7B5800;line-height:1.6">
+    ${!G.lineUser?`<div style="background:#FFF8E1;border:1px solid #FFE082;border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:12px;color:#7B5800;line-height:1.6">
       📌 送出訂單後，請務必依照下一頁指示加入官方 LINE
-    </div>
+    </div>`:""}
     <div id="checkout-error" style="display:none;color:#C0392B;font-size:12px;font-weight:700;margin-bottom:10px"></div>
     <button onclick="submitOrder()" id="submit-btn" style="width:100%;background:#F4845F;color:white;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:900;cursor:pointer;margin-bottom:0">送出訂單</button>
   `;
@@ -1756,8 +1758,73 @@ function computeCrossPromoWithExisting(cartItems,existingOrders){
   });
   return{newItemPricing,existingUpdates};
 }
+// 下單前強制確認好友狀態：只針對「有用LINE登入」的客人才擋——沒登入、純填表單的客人
+// 沒有LINE身分可以查，擋不了也不用擋，維持原本可以直接下單的行為。
+// 用即時查詢（而不是登入當下存的舊狀態），是因為客人可能是登入很久之後才臨時去加好友，
+// 或者反過來登入時還沒加、後來才加，舊的isFriend快取都可能不準
+async function checkFriendshipLive(){
+  if(!G.lineUser?.accessToken)return null; // 沒存到token（例如很舊的登入資料），無法查證，不要卡住客人
+  try{
+    const resp=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json","X-Service":"line-friendship-check"},body:JSON.stringify({accessToken:G.lineUser.accessToken})});
+    if(resp.status===401)return "expired"; // access token過期了，要請客人重新登入
+    const data=await resp.json();
+    if(!resp.ok)return null; // 查詢本身出問題，不要卡住客人下單，視為允許
+    G.lineUser.isFriend=!!data.isFriend;
+    localStorage.setItem("butter_line_user",JSON.stringify(G.lineUser));
+    return G.lineUser.isFriend;
+  }catch(e){return null;}
+}
+function showAddFriendGate(){
+  let ov=document.getElementById("add-friend-gate");
+  if(!ov){
+    ov=document.createElement("div");
+    ov.id="add-friend-gate";
+    ov.style.cssText="position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.55);align-items:center;justify-content:center;padding:20px";
+    document.body.appendChild(ov);
+  }
+  ov.innerHTML=`<div style="background:white;border-radius:20px;max-width:340px;width:100%;padding:24px;text-align:center">
+    <div style="font-size:38px;margin-bottom:8px">💬</div>
+    <div style="font-size:15px;font-weight:900;color:#3D2010;margin-bottom:8px">請先加官方LINE好友</div>
+    <div style="font-size:13px;color:#9C7A5A;line-height:1.6;margin-bottom:18px">加好友之後，訂單確認、出貨通知、結清單才傳得到您的LINE，麻煩先加好友再送出訂單喔！</div>
+    <a href="https://line.me/R/ti/p/${encodeURIComponent(LINE_OA_ID)}" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:6px;background:#06C755;border-radius:10px;padding:12px;font-size:14px;font-weight:700;color:white;text-decoration:none;margin-bottom:10px;box-sizing:border-box">💬 加官方LINE好友</a>
+    <button onclick="recheckFriendshipAndClose()" id="add-friend-recheck-btn" style="width:100%;background:#F4845F;color:white;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">我已經加了，重新確認</button>
+    <button onclick="document.getElementById('add-friend-gate').style.display='none'" style="width:100%;background:none;border:none;color:#9C7A5A;font-size:12px;cursor:pointer;padding:6px">先不要，關閉</button>
+  </div>`;
+  ov.style.display="flex";
+}
+async function recheckFriendshipAndClose(){
+  const btn=document.getElementById("add-friend-recheck-btn");
+  if(btn){btn.disabled=true;btn.textContent="確認中…";}
+  const result=await checkFriendshipLive();
+  if(result===true){
+    document.getElementById("add-friend-gate").style.display="none";
+    showToast("好友確認成功！請再按一次「送出訂單」");
+  } else if(result==="expired"){
+    document.getElementById("add-friend-gate").style.display="none";
+    showToast("登入已過期，請重新登入LINE後再試一次");
+    logoutLine();
+  } else {
+    if(btn){btn.disabled=false;btn.textContent="我已經加了，重新確認";}
+    showToast("還沒偵測到好友關係，加了好友後請稍等幾秒再試一次");
+  }
+}
 async function submitOrder(){
   if(!G.form)G.form={};
+  // 有登入LINE的客人，下單前先即時確認一次是不是真的加了官方好友——
+  // 沒加的話直接擋下來，跳出加好友的畫面，不讓訂單送出。
+  // 這段查詢也要一點時間，先把按鈕鎖住避免手滑連點兩次
+  if(G.lineUser?.userId){
+    const gateBtn=document.getElementById("submit-btn");
+    if(gateBtn){gateBtn.disabled=true;gateBtn.textContent="確認好友狀態中…";}
+    const friendStatus=await checkFriendshipLive();
+    if(gateBtn){gateBtn.disabled=false;gateBtn.textContent="送出訂單";}
+    if(friendStatus===false){showAddFriendGate();return;}
+    if(friendStatus==="expired"){
+      showCheckoutError("登入資訊已過期，請重新登入LINE後再試一次");
+      logoutLine();
+      return;
+    }
+  }
   const name=(document.getElementById("f-name")?.value||"").trim();
   const community=(document.getElementById("f-community")?.value||"").trim();
   const phone=(document.getElementById("f-phone")?.value||"").trim();
@@ -1864,6 +1931,22 @@ async function submitOrder(){
         })
         .catch(e=>console.error("[新訂單通知除錯] 網路請求失敗：",e));
     }catch(e){console.error("[新訂單通知除錯] 組訊息時發生錯誤：",e);}
+    // 主動用官方LINE傳訊息跟客人確認訂單——客人下單後常常不會主動來訊，
+    // 用推播直接告訴他「訂單收到了、內容是這些」，讓他自己核對，也順便留一個聯繫的開頭。
+    // 只有客人是用LINE登入（有userId）才推得到；純填表單（沒登入）沒有LINE身分，推不了訊息，跳過就好，不影響下單本身
+    if(G.lineUser?.userId){
+      try{
+        const itemsSummary2=items.map(i=>`・${cleanProductName(i.product.name)}${i.spec?"("+i.spec+")":""} ×${i.qty}`).join("\n");
+        const orderTotal2=getCartPricing(items).total;
+        const confirmMsg=`🧡 訂單確認通知\n\n${community} 您好，已經收到您在商城送出的詢問單囉！\n\n${itemsSummary2}\n\n共計 NT$${orderTotal2.toLocaleString()}\n\n我們會盡快幫您確認商品與金額，正式的結清金額會再另外傳送給您，謝謝🙏`;
+        fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json","X-Service":"line-quote"},body:JSON.stringify({userId:G.lineUser.userId,message:confirmMsg})})
+          .then(async r=>{
+            const data=await r.json().catch(()=>({}));
+            if(!r.ok)console.error("[訂單確認通知除錯] 失敗，狀態碼",r.status,"回應：",data);
+          })
+          .catch(e=>console.error("[訂單確認通知除錯] 網路請求失敗：",e));
+      }catch(e){console.error("[訂單確認通知除錯] 組訊息時發生錯誤：",e);}
+    }
     showSuccess(items,getCartPricing(items).total,community);
   }catch(e){
     console.error(e);
