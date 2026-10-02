@@ -1243,6 +1243,7 @@ body.live-mode .hide-live { display: none !important; }
     </div>
     <div id="eo-suggestion-banner" style="display:none;padding:8px 16px 0;flex-shrink:0"></div>
     <div id="eo-old-percent-banner" style="display:none;margin:8px 16px 0;background:#FFF3E0;border:1.5px solid #FFB74D;border-radius:10px;padding:10px 12px;flex-shrink:0"></div>
+    <div id="eo-orphan-promo-banner" style="display:none;margin:8px 16px 0;background:#FDEDEC;border:1.5px solid #F1948A;border-radius:10px;padding:10px 12px;flex-shrink:0"></div>
     <!-- 共用訂金 + 物流 -->
     <div style="border-bottom:1px solid #F0E6D0;flex-shrink:0">
       <button type="button" onclick="eoToggleBatchSettings()" id="eo-batch-settings-toggle" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 16px;background:#FDF6EC;border:none;cursor:pointer;text-align:left">
@@ -9226,6 +9227,13 @@ window.saveAllEditOrders=async function(){
       // 折扣、免運、訂金、打幾折都只記在第一筆，避免同一件事在同一批訂單裡被記錄了好幾次、加總時被重複計算；
       // 打幾折不再去改每一筆商品的售價，商品明細裡的售價維持原本填的金額，折算只在結算總額時統一處理
       const upd={qty,discountPrice:price,total:price*qty,tracking:sharedTracking,discountNote};
+      // 原價（unitPrice）只是給客人看的「訂單明細」折扣基準，跟售價是兩個獨立欄位；
+      // 有填才更新，不填就不動，避免誤觸把本來對的原價洗掉
+      const origPriceInput=row.querySelector(".eo-orig-price");
+      if(origPriceInput&&origPriceInput.value.trim()!==""){
+        const origPrice=parseFloat(origPriceInput.value);
+        if(origPrice>0)upd.unitPrice=origPrice;
+      }
       if(i===0){
         upd.sharedDiscount=sharedDiscount>0?sharedDiscount:0;
         upd.sharedDiscountReason=sharedDiscount>0?eoGetDiscountReasonText():"";
@@ -10236,8 +10244,9 @@ window.openAddWishlistPrompt=function(){
           <input id="wish-input-text" type="text" placeholder="例如：innisfree 綠茶精華" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #E8D5B0;border-radius:8px;font-size:13px">
         </div>
         <div style="margin-bottom:14px">
-          <label style="display:block;font-size:11px;color:#9C7A5A;margin-bottom:4px">這是哪位客人許願的？（可留空）</label>
-          <input id="wish-input-name" type="text" placeholder="不確定或不方便寫可以留空" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #E8D5B0;border-radius:8px;font-size:13px">
+          <label style="display:block;font-size:11px;color:#9C7A5A;margin-bottom:4px">這是哪位客人許願的？（可留空，打字符合客戶名單會自動連結）</label>
+          <input id="wish-input-name" type="text" list="wish-cust-datalist" placeholder="不確定或不方便寫可以留空" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #E8D5B0;border-radius:8px;font-size:13px">
+          <datalist id="wish-cust-datalist"></datalist>
         </div>
         <div style="display:flex;gap:8px">
           <button onclick="document.getElementById('modal-add-wishlist').style.display='none'" style="flex:1;padding:9px;border-radius:8px;border:1px solid #E8D5B0;background:white;color:#9C7A5A;font-weight:700;cursor:pointer;font-size:13px">取消</button>
@@ -10249,6 +10258,13 @@ window.openAddWishlistPrompt=function(){
   }
   document.getElementById("wish-input-text").value="";
   document.getElementById("wish-input-name").value="";
+  // 客人名稱輸入框掛上客戶名單自動完成，打字時系統會提示現有客戶，
+  // 選到完全符合的名字，等一下送出時就會自動連結到這位客戶的資料
+  const datalist=document.getElementById("wish-cust-datalist");
+  if(datalist){
+    datalist.innerHTML=(window.G.customers||[]).map(c=>c.communityName||c.lineName).filter(Boolean)
+      .filter((v,i,arr)=>arr.indexOf(v)===i).map(n=>`<option value="${escWishText(n)}"></option>`).join("");
+  }
   modal.style.display="flex";
   const nameInput=document.getElementById("wish-input-name");
   const textInput=document.getElementById("wish-input-text");
@@ -10267,10 +10283,41 @@ window.submitAddWishlistModal=function(){
 window.addWishlistItem=async function(text,customerName){
   if(!text)return;
   const id="wish_"+Date.now()+"_"+Math.random().toString(36).slice(2,7);
+  // 名字如果剛好跟客戶名單裡「唯一」一個人完全對得上，就自動連結這位客戶——
+  // 不強迫一定要選客戶，單純打字、找不到或對到好幾個同名的人，就只存文字，不連結，
+  // 這樣許願功能還是可以很快速地記一筆，不會因為要求選客戶而變麻煩
+  let customerId="";
+  const key=(customerName||"").trim().toLowerCase();
+  if(key){
+    const matches=(window.G.customers||[]).filter(c=>(c.communityName||"").trim().toLowerCase()===key||(c.lineName||"").trim().toLowerCase()===key);
+    if(matches.length===1)customerId=matches[0].id;
+  }
   try{
-    await fbSet("wishlist_items",id,{text,customerName:customerName||"",purchased:false,createdAt:Date.now()});
-    showToast("✅ 已加入許願清單");
+    await fbSet("wishlist_items",id,{text,customerName:customerName||"",customerId,purchased:false,createdAt:Date.now()});
+    showToast(customerId?"✅ 已加入許願清單（已連結客戶資料）":"✅ 已加入許願清單");
   }catch(e){showToast("新增失敗："+e.message,"error");}
+};
+// 許願商品到貨時，如果這筆有連結到客戶、而且查得到客戶的LINE帳號，
+// 直接在這裡傳訊息通知，不用再跳去客戶頁面找人、複製貼上
+window.notifyWishlistCustomer=async function(id){
+  const item=(window.G.wishlistItems||[]).find(x=>x.id===id);
+  if(!item)return;
+  const c=(window.G.customers||[]).find(x=>x.id===item.customerId);
+  if(!c){showToast("找不到連結的客戶資料","error");return;}
+  const{userId,ambiguous}=resolveCustomerLineUserId(c);
+  if(!userId){
+    showToast(ambiguous?"⚠️ 有多個同名LINE帳號，無法自動判斷，請改用其他方式聯絡":"⚠️ 找不到這位客人的LINE ID，請確認他有傳過訊息給官方帳號","warning");
+    return;
+  }
+  const name=c.communityName||c.lineName||"";
+  const message=`🎉 您許願的「${item.text}」到貨囉！\n\n麻煩確認一下是否還需要，謝謝～`;
+  if(!confirm(`要傳送以下訊息給 ${name} 嗎？\n\n${message}`))return;
+  try{
+    const resp=await fetch("https://butter-ai.kueigin.workers.dev",{method:"POST",headers:{"Content-Type":"application/json","X-Service":"line-quote"},body:JSON.stringify({userId,message})});
+    const result=await resp.json();
+    if(result.success){showToast("✅ 已傳送通知給客人");}
+    else{showToast("傳送失敗："+JSON.stringify(result.error),"error");}
+  }catch(e){showToast("傳送失敗："+e.message,"error");}
 };
 window.toggleWishlistPurchased=async function(id){
   const item=(window.G.wishlistItems||[]).find(x=>x.id===id);
@@ -10304,8 +10351,9 @@ window.renderWishlistSection=function(){
     <button data-wid="${w.id}" onclick="toggleWishlistPurchased(this.dataset.wid)" title="${w.purchased?"點擊取消已買到":"點擊標記已買到"}" style="flex-shrink:0;width:20px;height:20px;border-radius:5px;border:1.5px solid ${w.purchased?"#2E7D32":"#E8D5B0"};background:${w.purchased?"#2E7D32":"white"};color:white;cursor:pointer;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;padding:0">${w.purchased?"✓":""}</button>
     <div style="flex:1;min-width:0">
       <div style="font-size:12px;font-weight:700;color:#3D2010;${w.purchased?"text-decoration:line-through":""}">${escWishText(w.text)}</div>
-      ${w.customerName?`<div style="font-size:10px;color:#9C7A5A">👤 ${escWishText(w.customerName)}</div>`:""}
+      ${w.customerName?`<div style="font-size:10px;color:#9C7A5A">👤 ${escWishText(w.customerName)}${w.customerId?' <span style="color:#2E7D32">· 已連結客戶</span>':""}</div>`:""}
     </div>
+    ${w.purchased&&w.customerId?`<button data-wid="${w.id}" onclick="notifyWishlistCustomer(this.dataset.wid)" title="傳LINE通知客人到貨" style="flex-shrink:0;font-size:11px;color:#1E5F8C;background:#E3F2FD;border:1px solid #90CAF9;padding:4px 7px;border-radius:6px;cursor:pointer">📨 通知</button>`:""}
     <button data-wid="${w.id}" onclick="deleteWishlistItem(this.dataset.wid)" style="flex-shrink:0;font-size:11px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:4px 7px;border-radius:6px;cursor:pointer">🗑️</button>
   </div>`).join("");
 };
@@ -12938,6 +12986,17 @@ window.openEditOrd=function(oid){
           <input type="text" inputmode="decimal" class="eo-price" value="${dp}" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;font-size:14px;font-weight:700;outline:none"/>
         </div>
       </div>
+      <div style="margin-bottom:8px">
+        ${x.unitPrice&&Math.round(x.unitPrice)!==Math.round(dp)?`
+        <div style="font-size:10px;color:#C0392B;margin-bottom:2px">⚠️ 原價 (NT$)　跟售價不同，客人看到的「訂單明細」會把這個當原價、算出折扣顯示</div>
+        <input type="text" inputmode="decimal" class="eo-orig-price" value="${x.unitPrice}" style="width:100%;background:#FDEDEC;border:1px solid #F1948A;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:700;outline:none;color:#C0392B"/>
+        `:`
+        <button type="button" onclick="event.stopPropagation();this.style.display='none';this.nextElementSibling.style.display='block';this.nextElementSibling.querySelector('input').focus();" style="background:none;border:none;color:#B08968;font-size:11px;font-weight:700;cursor:pointer;padding:2px 0">+ 修改原價（給客人看的折扣基準）</button>
+        <div style="display:none">
+          <input type="text" inputmode="decimal" class="eo-orig-price" value="${x.unitPrice||dp}" placeholder="原價" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;font-size:13px;outline:none;margin-top:2px"/>
+        </div>
+        `}
+      </div>
       <div>
         ${x.discountNote?`
         <div style="font-size:10px;color:#9C7A5A;margin-bottom:2px">🏷️ 折扣／備註（選填）</div>
@@ -12955,6 +13014,44 @@ window.openEditOrd=function(oid){
   const el=document.getElementById("modal-eord");
   if(el)el.style.display="flex";
   window.eoDetectOldPercentDiscount(cOrders);
+  window.eoDetectOrphanCrossPromo(cOrders);
+};
+// 偵測「孤兒促銷折扣」：這筆訂單身上有促銷折扣的備註紀錄（代表曾經被
+// applyCrossPromoToPendingItems 打過折），但商品現在已經不屬於任何跨商品促銷組合了——
+// 最常見的情況是：這個商品當初是被誤加進某個折扣組合（例如編輯組合時勾選殘留造成的烏龍），
+// 事後管理員從組合裡移除了，但這筆訂單當時已經寫入的折扣價格不會自動恢復，要手動修回原價
+window.eoDetectOrphanCrossPromo=function(cOrders){
+  const banner=document.getElementById("eo-orphan-promo-banner");
+  if(!banner)return;
+  banner.style.display="none";
+  banner.innerHTML="";
+  const orphans=cOrders.filter(o=>{
+    if(!o.discountNote||!o.discountNote.includes("促銷折扣"))return false;
+    const p=window.G.products.find(x=>x.id===o.productId);
+    const tag=(p?.crossPromoGroup||"").trim();
+    return !tag; // 商品現在已經不屬於任何促銷組合，但訂單還留著折扣價
+  });
+  if(!orphans.length)return;
+  window.G._eoOrphanPromoIds=orphans.map(o=>o.id);
+  const names=orphans.map(o=>cleanProductName(window.G.products.find(x=>x.id===o.productId)?.name||o.productName||"商品")).join("、");
+  banner.style.display="block";
+  banner.innerHTML=`<div style="font-size:12px;font-weight:700;color:#C0392B;margin-bottom:6px">⚠️ 偵測到 ${orphans.length} 筆商品還留著促銷折扣的價格，但這些商品現在已經不屬於任何折扣組合了：${names}</div>
+    <div style="font-size:11px;color:#9C7A5A;margin-bottom:8px">可能是當初被誤加進某個折扣組合、事後才移除，訂單價格卻沒有跟著恢復。可以一鍵恢復成原價</div>
+    <button id="eo-fix-orphan-promo-btn" onclick="eoFixOrphanCrossPromo()" style="background:#E74C3C;color:white;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer">✅ 一鍵恢復原價</button>`;
+};
+window.eoFixOrphanCrossPromo=async function(){
+  const ids=window.G._eoOrphanPromoIds||[];
+  if(!ids.length)return;
+  const btn=document.getElementById("eo-fix-orphan-promo-btn");
+  if(btn){btn.disabled=true;btn.textContent="修復中…";}
+  for(const id of ids){
+    const o=window.G.orders.find(x=>x.id===id);
+    if(!o)continue;
+    const cleanNote=(o.discountNote||"").split("、").filter(s=>!s.includes("促銷折扣")).join("、");
+    await fbUpd("orders",id,{discountPrice:o.unitPrice,total:o.unitPrice*o.qty,discountNote:cleanNote});
+  }
+  showToast(`已將 ${ids.length} 筆商品恢復原價`,"success");
+  setTimeout(()=>window.openEditOrd(ids[0]),500);
 };
 window.eoToggleExpand=function(){
   window.G.eoExpanded=true;
