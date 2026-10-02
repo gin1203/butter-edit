@@ -10249,8 +10249,8 @@ window.openAddWishlistPrompt=function(){
           <datalist id="wish-cust-datalist"></datalist>
         </div>
         <div style="display:flex;gap:8px">
-          <button onclick="document.getElementById('modal-add-wishlist').style.display='none'" style="flex:1;padding:9px;border-radius:8px;border:1px solid #E8D5B0;background:white;color:#9C7A5A;font-weight:700;cursor:pointer;font-size:13px">取消</button>
-          <button onclick="window.submitAddWishlistModal()" style="flex:1;padding:9px;border-radius:8px;border:none;background:#C5A880;color:white;font-weight:700;cursor:pointer;font-size:13px">新增</button>
+          <button onclick="document.getElementById('modal-add-wishlist').style.display='none'" style="flex:1;padding:9px;border-radius:8px;border:1px solid #E8D5B0;background:white;color:#9C7A5A;font-weight:700;cursor:pointer;font-size:13px">完成</button>
+          <button onclick="window.submitAddWishlistModal()" style="flex:1;padding:9px;border-radius:8px;border:none;background:#C5A880;color:white;font-weight:700;cursor:pointer;font-size:13px">新增（可連續新增下一筆）</button>
         </div>
       </div>`;
     document.body.appendChild(modal);
@@ -10281,7 +10281,13 @@ window.submitAddWishlistModal=function(){
   if(!text){showToast("請先填寫客人想要的品牌／商品","warning");return;}
   const customerName=(document.getElementById("wish-input-name")?.value||"").trim();
   window.addWishlistItem(text,customerName);
-  document.getElementById("modal-add-wishlist").style.display="none";
+  // 新增完不關視窗，清空兩個欄位、游標移回「商品」欄位，方便連續登記好幾位客人許願的東西，
+  // 不用每新增一筆就重新點開一次選單
+  const textInput=document.getElementById("wish-input-text");
+  const nameInput=document.getElementById("wish-input-name");
+  if(textInput)textInput.value="";
+  if(nameInput)nameInput.value="";
+  textInput?.focus();
 };
 window.addWishlistItem=async function(text,customerName){
   if(!text)return;
@@ -10300,27 +10306,67 @@ window.addWishlistItem=async function(text,customerName){
     showToast(customerId?"✅ 已加入許願清單（已連結客戶資料）":"✅ 已加入許願清單");
   }catch(e){showToast("新增失敗："+e.message,"error");}
 };
-// 許願商品到貨時，如果這筆有連結到客戶、而且查得到客戶的LINE帳號，
-// 直接在這裡傳訊息通知，不用再跳去客戶頁面找人、複製貼上
+// 許願商品「已買到」在代購模式下，只代表這趟幫客人留意到／找到現貨，還不是已經確定
+// 要幫客人買、更不是已經到貨——實際上是要詢問客人要不要下單，或是給客人報價，
+// 所以傳送前一定要能先看、先編輯文字內容（可能要手動補價錢/數量），不能直接套固定文案就送出
 window.notifyWishlistCustomer=async function(id){
   const item=(window.G.wishlistItems||[]).find(x=>x.id===id);
   if(!item)return;
   const c=(window.G.customers||[]).find(x=>x.id===item.customerId);
   if(!c){showToast("找不到連結的客戶資料","error");return;}
-  const{userId,ambiguous}=resolveCustomerLineUserId(c);
-  if(!userId){
-    showToast(ambiguous?"⚠️ 有多個同名LINE帳號，無法自動判斷，請改用其他方式聯絡":"⚠️ 找不到這位客人的LINE ID，請確認他有傳過訊息給官方帳號","warning");
-    return;
+  window.G._wishNotifyId=id;
+  let modal=document.getElementById("modal-wish-notify");
+  if(!modal){
+    modal=document.createElement("div");
+    modal.id="modal-wish-notify";
+    modal.style.cssText="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:10060;align-items:center;justify-content:center;padding:16px";
+    modal.innerHTML=`
+      <div style="background:white;border-radius:14px;padding:18px;width:100%;max-width:400px;box-shadow:0 10px 30px rgba(0,0,0,0.25)">
+        <h3 style="margin:0 0 4px;font-size:15px;color:#3D2010">📨 詢問客人要不要購買</h3>
+        <div id="wn-cust-name" style="font-size:12px;color:#9C7A5A;margin-bottom:10px"></div>
+        <textarea id="wn-message" rows="6" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #E8D5B0;border-radius:8px;font-size:13px;resize:vertical;margin-bottom:6px"></textarea>
+        <div id="wn-status" style="font-size:11px;color:#9C7A5A;margin-bottom:10px"></div>
+        <div style="display:flex;gap:8px">
+          <button onclick="document.getElementById('modal-wish-notify').style.display='none'" style="flex:1;padding:9px;border-radius:8px;border:1px solid #E8D5B0;background:white;color:#9C7A5A;font-weight:700;cursor:pointer;font-size:13px">取消</button>
+          <button id="wn-send-btn" onclick="window.sendWishNotifyMessage()" style="flex:1;padding:9px;border-radius:8px;border:none;background:#06C755;color:white;font-weight:700;cursor:pointer;font-size:13px">傳送給客人</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener("click",(e)=>{if(e.target===modal)modal.style.display="none";});
   }
   const name=c.communityName||c.lineName||"";
-  const message=`🎉 您許願的「${item.text}」到貨囉！\n\n麻煩確認一下是否還需要，謝謝～`;
-  if(!confirm(`要傳送以下訊息給 ${name} 嗎？\n\n${message}`))return;
+  document.getElementById("wn-cust-name").textContent=`👤 ${name}`;
+  document.getElementById("wn-message").value=`嗨嗨，你許願的${item.text}目前在社群連線中\n有需要什麼商品嗎～`;
+  document.getElementById("wn-status").textContent="";
+  modal.style.display="flex";
+};
+window.sendWishNotifyMessage=async function(){
+  const id=window.G._wishNotifyId;
+  const item=(window.G.wishlistItems||[]).find(x=>x.id===id);
+  const message=document.getElementById("wn-message")?.value.trim();
+  const statusEl=document.getElementById("wn-status");
+  const sendBtn=document.getElementById("wn-send-btn");
+  if(!item||!message)return;
+  const c=(window.G.customers||[]).find(x=>x.id===item.customerId);
+  if(!c){showToast("找不到連結的客戶資料","error");return;}
+  const{userId,ambiguous}=resolveCustomerLineUserId(c);
+  if(!userId){
+    statusEl.textContent=ambiguous?"⚠️ 有多個同名LINE帳號，無法自動判斷，請改用其他方式聯絡":"⚠️ 找不到這位客人的LINE ID，請確認他有傳過訊息給官方帳號";
+    statusEl.style.color="#D97706";
+    return;
+  }
+  sendBtn.disabled=true;sendBtn.textContent="傳送中...";
   try{
     const resp=await fetch("https://butter-ai.kueigin.workers.dev",{method:"POST",headers:{"Content-Type":"application/json","X-Service":"line-quote"},body:JSON.stringify({userId,message})});
     const result=await resp.json();
-    if(result.success){showToast("✅ 已傳送通知給客人");}
-    else{showToast("傳送失敗："+JSON.stringify(result.error),"error");}
-  }catch(e){showToast("傳送失敗："+e.message,"error");}
+    if(result.success){
+      showToast("✅ 已傳送給客人");
+      document.getElementById("modal-wish-notify").style.display="none";
+    } else {
+      statusEl.textContent=formatLineSendError(result,resp.status);statusEl.style.color="#C0392B";
+    }
+  }catch(e){statusEl.textContent="傳送失敗："+e.message;statusEl.style.color="#C0392B";}
+  sendBtn.disabled=false;sendBtn.textContent="傳送給客人";
 };
 window.toggleWishlistPurchased=async function(id){
   const item=(window.G.wishlistItems||[]).find(x=>x.id===id);
@@ -10356,7 +10402,7 @@ window.renderWishlistSection=function(){
       <div style="font-size:12px;font-weight:700;color:#3D2010;${w.purchased?"text-decoration:line-through":""}">${escWishText(w.text)}</div>
       ${w.customerName?`<div style="font-size:10px;color:#9C7A5A">👤 ${escWishText(w.customerName)}${w.customerId?' <span style="color:#2E7D32">· 已連結客戶</span>':""}</div>`:""}
     </div>
-    ${w.purchased&&w.customerId?`<button data-wid="${w.id}" onclick="notifyWishlistCustomer(this.dataset.wid)" title="傳LINE通知客人到貨" style="flex-shrink:0;font-size:11px;color:#1E5F8C;background:#E3F2FD;border:1px solid #90CAF9;padding:4px 7px;border-radius:6px;cursor:pointer">📨 通知</button>`:""}
+    ${w.purchased&&w.customerId?`<button data-wid="${w.id}" onclick="notifyWishlistCustomer(this.dataset.wid)" title="傳LINE詢問客人要不要購買" style="flex-shrink:0;font-size:11px;color:#1E5F8C;background:#E3F2FD;border:1px solid #90CAF9;padding:4px 7px;border-radius:6px;cursor:pointer">📨 詢問</button>`:""}
     <button data-wid="${w.id}" onclick="deleteWishlistItem(this.dataset.wid)" style="flex-shrink:0;font-size:11px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:4px 7px;border-radius:6px;cursor:pointer">🗑️</button>
   </div>`).join("");
 };
@@ -14776,7 +14822,7 @@ window.sendDepositLineMessage=async function(){
       setTimeout(()=>{renderCustomers();renderInvoice();},600);
       window.G._depositContext=null;
     } else {
-      showToast("傳送失敗："+JSON.stringify(result.error),"error");
+      showToast(formatLineSendError(result,resp.status),"error");
     }
   } catch(e){
     showToast(e.name==="AbortError"?"網路太慢，傳送逾時，請確認網路後再試一次":"傳送失敗："+e.message,"error");
@@ -14888,6 +14934,13 @@ window.copyShippingInfo=function(cid){
   });
 };
 
+// 所有「傳LINE給客人」功能共用：worker那邊推播失敗時，會順便查「這個人到底是不是
+// 官方帳號好友」，這個線索比LINE原始錯誤（例如很籠統的"Failed to send messages"）有用太多，
+// 一定要顯示出來，不然每個功能都要各自重複同一段格式化邏輯
+function formatLineSendError(result,fallbackStatus){
+  const note=result?.friendCheckNote?`\n${result.friendCheckNote}`:"";
+  return `傳送失敗（狀態碼${result?.lineStatus||fallbackStatus||"?"}）：${JSON.stringify(result?.error||result)}${note}`;
+}
 function resolveCustomerLineUserId(c){
   if(c.lineUserId)return{userId:c.lineUserId,ambiguous:false};
   const map=window.G.lineUserMap||{};
@@ -14924,7 +14977,7 @@ window.sendShopLinkToCustomer=async function(custId){
       statusEl.textContent="✅ 已傳送給客人！";statusEl.style.color="#16A34A";
       showToast("賣場連結已透過LINE傳送給客人");
     } else {
-      statusEl.textContent="傳送失敗："+JSON.stringify(result.error);statusEl.style.color="#C0392B";
+      statusEl.textContent=formatLineSendError(result,resp.status);statusEl.style.color="#C0392B";
     }
   }catch(e){
     statusEl.textContent="傳送失敗："+e.message;statusEl.style.color="#C0392B";
@@ -15107,7 +15160,7 @@ window.sendOrderConfirmMessage=async function(){
       showToast("✅ 已傳送給客人確認！");
       document.getElementById("modal-send-order-confirm").style.display="none";
     } else {
-      showToast("傳送失敗："+JSON.stringify(result.error),"error");
+      showToast(formatLineSendError(result,resp.status),"error");
     }
   } catch(e){
     showToast(e.name==="AbortError"?"網路太慢，傳送逾時，請確認網路後再試一次":"傳送失敗："+e.message,"error");
@@ -15344,7 +15397,7 @@ window.sendSettlementMessage=async function(){
       showToast("✅ 結清單已傳送給客人！");
       document.getElementById("modal-send-settlement").style.display="none";
     } else {
-      showToast("傳送失敗："+JSON.stringify(result.error),"error");
+      showToast(formatLineSendError(result,resp.status),"error");
     }
   } catch(e){
     showToast(e.name==="AbortError"?"網路太慢，傳送逾時，請確認網路後再試一次":"傳送失敗："+e.message,"error");
@@ -16307,7 +16360,7 @@ window.sendLineNotify=async function(){
       showToast(count>0?`✅ 出貨通知已傳送，${count} 筆訂單已標記為已出貨！`:"✅ 出貨通知已傳送！");
       document.getElementById("modal-line-notify").style.display="none";
     } else {
-      showToast("傳送失敗："+JSON.stringify(result.error),"error");
+      showToast(formatLineSendError(result,resp.status),"error");
     }
   } catch(e){
     showToast("傳送失敗："+e.message,"error");
@@ -16437,7 +16490,7 @@ window.sendQuoteMessage=async function(){
       showToast("✅ 報價已傳送給客人！");
       document.getElementById("modal-send-quote").style.display="none";
     } else {
-      showToast("傳送失敗："+JSON.stringify(result.error),"error");
+      showToast(formatLineSendError(result,resp.status),"error");
     }
   } catch(e){
     showToast("傳送失敗："+e.message,"error");
