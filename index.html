@@ -10268,7 +10268,10 @@ window.openAddWishlistPrompt=function(){
   modal.style.display="flex";
   const nameInput=document.getElementById("wish-input-name");
   const textInput=document.getElementById("wish-input-text");
-  const onEnter=(e)=>{if(e.key==="Enter")window.submitAddWishlistModal();};
+  // 中文輸入法選字的時候按Enter，瀏覽器也會觸發keydown事件，但那是在「選字」不是「送出」，
+  // 一定要用e.isComposing（以及保險起見看keyCode 229）排除掉，不然打中文打到一半按Enter選字
+  // 就會被誤判成按了送出按鈕，內容還沒打完就被存走
+  const onEnter=(e)=>{if(e.key==="Enter"&&!e.isComposing&&e.keyCode!==229)window.submitAddWishlistModal();};
   textInput.onkeydown=onEnter;
   nameInput.onkeydown=onEnter;
   setTimeout(()=>textInput?.focus(),50);
