@@ -417,13 +417,13 @@ body.live-mode .hide-live { display: none !important; }
     <div style="position:relative;flex:1">
       <button onclick="event.stopPropagation();toggleListToolsMenu()" style="width:100%;padding:8px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #E8D5B0;background:#FAF8F5;color:#9C7A5A;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">更多工具</button>
       <div id="list-tools-menu" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:white;border:1px solid #E8D5B0;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:20;overflow:hidden">
-        <button onclick="event.stopPropagation();closeListToolsMenu();exportProductCSV()" style="display:block;width:100%;text-align:left;font-size:12px;color:#2980B9;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600">📤 匯出商品庫</button>
-        <button onclick="event.stopPropagation();closeListToolsMenu();showStockPlan()" style="display:block;width:100%;text-align:left;font-size:12px;color:#E07B39;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">📋 備貨清單</button>
-        <button onclick="event.stopPropagation();closeListToolsMenu();openAddWishlistPrompt()" style="display:block;width:100%;text-align:left;font-size:12px;color:#7B5800;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">🙋 新增客人許願商品</button>
-        <button onclick="event.stopPropagation();closeListToolsMenu();showPromoGroups()" style="display:block;width:100%;text-align:left;font-size:12px;color:#C0392B;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">🏷️ 活動群組管理</button>
-        <button onclick="event.stopPropagation();closeListToolsMenu();showDupProductScan()" style="display:block;width:100%;text-align:left;font-size:12px;color:#92400E;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">🔍 檢查重複</button>
-        <button onclick="event.stopPropagation();closeListToolsMenu();showFixShopOrderTrips()" style="display:block;width:100%;text-align:left;font-size:12px;color:#0E7490;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">🔧 修復商城訂單趟次</button>
-        <button onclick="event.stopPropagation();closeListToolsMenu();showProductOrphanScan()" style="display:block;width:100%;text-align:left;font-size:12px;color:#943126;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">⚠️ 連結異常</button>
+        <button onclick="event.stopPropagation();closeListToolsMenu();exportProductCSV()" style="display:block;width:100%;text-align:left;font-size:12px;color:#2980B9;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600">匯出商品庫</button>
+        <button onclick="event.stopPropagation();closeListToolsMenu();showStockPlan()" style="display:block;width:100%;text-align:left;font-size:12px;color:#E07B39;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">備貨清單</button>
+        <button onclick="event.stopPropagation();closeListToolsMenu();openAddWishlistPrompt()" style="display:block;width:100%;text-align:left;font-size:12px;color:#7B5800;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">新增客人許願商品</button>
+        <button onclick="event.stopPropagation();closeListToolsMenu();showPromoGroups()" style="display:block;width:100%;text-align:left;font-size:12px;color:#C0392B;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">活動群組管理</button>
+        <button onclick="event.stopPropagation();closeListToolsMenu();showDupProductScan()" style="display:block;width:100%;text-align:left;font-size:12px;color:#92400E;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">檢查重複</button>
+        <button onclick="event.stopPropagation();closeListToolsMenu();showFixShopOrderTrips()" style="display:block;width:100%;text-align:left;font-size:12px;color:#0E7490;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">修復商城訂單趟次</button>
+        <button onclick="event.stopPropagation();closeListToolsMenu();showProductOrphanScan()" style="display:block;width:100%;text-align:left;font-size:12px;color:#943126;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">連結異常</button>
       </div>
     </div>
     <select id="list-sort-select" class="hide-live" onchange="setListSortMode(this.value)" style="flex:1;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:8px 6px;font-size:12px;font-weight:700;color:#3D2010;outline:none;cursor:pointer;text-align:center;text-align-last:center">
@@ -4204,9 +4204,9 @@ window.openModal=function(id,data){
       if(epCrossPromoStatus){
         if(data.crossPromoGroup){
           const bundleName=(window.G.promoBundlesCache||{})[data.crossPromoGroup]?.name||data.crossPromoGroup;
-          epCrossPromoStatus.innerHTML=`🎯 目前屬於促銷組合「${bundleName}」（任選${data.crossPromoMinQty||2}件${data.crossPromoPct||95}折）<br>要調整請到「更多工具 → 🏷️ 活動群組管理 → 折扣群組」管理`;
+          epCrossPromoStatus.innerHTML=`🎯 目前屬於促銷組合「${bundleName}」（任選${data.crossPromoMinQty||2}件${data.crossPromoPct||95}折）<br>要調整請到「更多工具 → 活動群組管理 → 折扣群組」管理`;
         } else {
-          epCrossPromoStatus.textContent="🎯 目前沒有加入任何跨商品促銷組合（要設定請到「更多工具 → 🏷️ 活動群組管理 → 折扣群組」）";
+          epCrossPromoStatus.textContent="🎯 目前沒有加入任何跨商品促銷組合（要設定請到「更多工具 → 活動群組管理 → 折扣群組」）";
         }
       }
       const epShopDescInput=document.getElementById("ep-shop-description");
@@ -9803,13 +9803,28 @@ window.renderPromoBundleList=async function(){
     listBox.innerHTML=`<div style="text-align:center;padding:20px 10px;color:#9C7A5A;font-size:12px">還沒有建立任何折扣組合</div>`;
     return;
   }
-  listBox.innerHTML=bundles.map(b=>`<div onclick="openPromoBundleEditor('${b.id}')" style="background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer">
-    <div style="font-size:13px;font-weight:700;color:#3D2010;margin-bottom:3px">${b.name||"（未命名）"}</div>
-    <div style="font-size:11px;color:#9C7A5A">任選 ${b.minQty||2} 件 ${b.discountPct||95}折扣％　·　${(b.productIds||[]).length} 件商品</div>
-  </div>`).join("");
+  window.G.promoBundlesCache=window.G.promoBundlesCache||{};
+  bundles.forEach(b=>{window.G.promoBundlesCache[b.id]=b;});
+  // 每個組合把成員商品名稱直接列出來，不用一個一個點進去才看得到，
+  // 方便一次檢查有沒有不該在裡面的商品（例如誤加進去的）
+  listBox.innerHTML=bundles.map(b=>{
+    const members=(b.productIds||[]).map(id=>window.G.products.find(p=>p.id===id)).filter(Boolean);
+    const memberNames=members.length?members.map(p=>`<div style="font-size:11px;color:#5C3A1E;padding:2px 0 2px 10px">・${p.name}</div>`).join(""):`<div style="font-size:11px;color:#C0392B;padding:2px 0 2px 10px">（找不到商品，可能已被刪除）</div>`;
+    return `<div style="background:#FAF8F5;border:1px solid #E8D5B0;border-radius:10px;padding:12px 14px;margin-bottom:8px">
+    <div onclick="openPromoBundleEditor('${b.id}')" style="cursor:pointer">
+      <div style="font-size:13px;font-weight:700;color:#3D2010;margin-bottom:3px">${b.name||"（未命名）"}</div>
+      <div style="font-size:11px;color:#9C7A5A;margin-bottom:6px">任選 ${b.minQty||2} 件 ${b.discountPct||95}折扣％　·　${(b.productIds||[]).length} 件商品（點這裡編輯）</div>
+    </div>
+    <div style="border-top:1px solid #E8D5B0;padding-top:6px">${memberNames}</div>
+  </div>`;
+  }).join("");
 };
 window.openPromoBundleEditor=async function(bundleId){
   window.G.editingBundleId=bundleId;
+  // 每次打開編輯視窗都要清空「搜尋勾選」記錄，不然上次編輯別的組合時沒按「加入已勾選」
+  // 就關掉視窗、殘留在記憶體裡的勾選商品，會在這次按「全選」時被一起偷加進來，
+  // 畫面上卻完全看不到——這正是造成「某些商品被誤加入折扣組合」的原因
+  window.G.pbSearchChecked=new Set();
   let modal=document.getElementById("modal-promo-bundle-editor");
   if(!modal){
     modal=document.createElement("div");
@@ -17447,15 +17462,15 @@ window.swUpdate = function(){
       <button onclick="document.getElementById('modal-stock-plan').style.display='none'" style="font-size:24px;color:#9C7A5A;background:none;border:none;cursor:pointer">×</button>
     </div>
     <div style="display:flex;gap:6px;margin-bottom:10px">
-      <button id="sp-view-buy" onclick="setStockPlanViewMode('buy')" style="flex:1;font-size:12px;font-weight:700;padding:9px 8px;border-radius:10px;border:1.5px solid #C5A880;background:#C5A880;color:white;cursor:pointer">🛒 待購買</button>
-      <button id="sp-view-quote" onclick="setStockPlanViewMode('quote')" style="flex:1;font-size:12px;font-weight:700;padding:9px 8px;border-radius:10px;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">📋 待報價</button>
-      <button id="sp-view-wishlist" onclick="setStockPlanViewMode('wishlist')" style="flex:1;font-size:12px;font-weight:700;padding:9px 8px;border-radius:10px;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🙋 許願商品</button>
+      <button id="sp-view-buy" onclick="setStockPlanViewMode('buy')" style="flex:1;font-size:12px;font-weight:700;padding:9px 8px;border-radius:10px;border:1.5px solid #C5A880;background:#C5A880;color:white;cursor:pointer">待購買</button>
+      <button id="sp-view-quote" onclick="setStockPlanViewMode('quote')" style="flex:1;font-size:12px;font-weight:700;padding:9px 8px;border-radius:10px;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">待報價</button>
+      <button id="sp-view-wishlist" onclick="setStockPlanViewMode('wishlist')" style="flex:1;font-size:12px;font-weight:700;padding:9px 8px;border-radius:10px;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">許願商品</button>
     </div>
     <div id="sp-mode-row" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px">
       <div id="stock-plan-desc" style="font-size:11px;color:#9C7A5A">依喊單時間排序，方便確認缺貨截止點</div>
       <div style="display:flex;gap:4px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:99px;padding:3px;flex-shrink:0">
-        <button id="sp-mode-time" onclick="setStockPlanMode('time')" style="font-size:12px;font-weight:700;padding:6px 12px;border-radius:99px;border:none;background:#C5A880;color:white;cursor:pointer;transition:background 0.15s,color 0.15s">🕐 時間</button>
-        <button id="sp-mode-channel" onclick="setStockPlanMode('channel')" style="font-size:12px;font-weight:700;padding:6px 12px;border-radius:99px;border:none;background:white;color:#9C7A5A;cursor:pointer;transition:background 0.15s,color 0.15s">🏪 通路</button>
+        <button id="sp-mode-time" onclick="setStockPlanMode('time')" style="font-size:12px;font-weight:700;padding:6px 12px;border-radius:99px;border:none;background:#C5A880;color:white;cursor:pointer;transition:background 0.15s,color 0.15s">時間</button>
+        <button id="sp-mode-channel" onclick="setStockPlanMode('channel')" style="font-size:12px;font-weight:700;padding:6px 12px;border-radius:99px;border:none;background:white;color:#9C7A5A;cursor:pointer;transition:background 0.15s,color 0.15s">通路</button>
       </div>
     </div>
     <!-- 篩選條件全部合併成一排小標籤，用多少才顯示多少，不再一排一排往下疊 -->
