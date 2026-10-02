@@ -418,6 +418,7 @@ body.live-mode .hide-live { display: none !important; }
       <div id="list-tools-menu" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:white;border:1px solid #E8D5B0;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:20;overflow:hidden">
         <button onclick="event.stopPropagation();closeListToolsMenu();exportProductCSV()" style="display:block;width:100%;text-align:left;font-size:12px;color:#2980B9;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600">📤 匯出商品庫</button>
         <button onclick="event.stopPropagation();closeListToolsMenu();showStockPlan()" style="display:block;width:100%;text-align:left;font-size:12px;color:#E07B39;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">📋 備貨清單</button>
+        <button onclick="event.stopPropagation();closeListToolsMenu();openAddWishlistPrompt()" style="display:block;width:100%;text-align:left;font-size:12px;color:#7B5800;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">🙋 新增客人許願商品</button>
         <button onclick="event.stopPropagation();closeListToolsMenu();showPromoGroups()" style="display:block;width:100%;text-align:left;font-size:12px;color:#C0392B;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">🏷️ 活動群組管理</button>
         <button onclick="event.stopPropagation();closeListToolsMenu();showDupProductScan()" style="display:block;width:100%;text-align:left;font-size:12px;color:#92400E;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">🔍 檢查重複</button>
         <button onclick="event.stopPropagation();closeListToolsMenu();showFixShopOrderTrips()" style="display:block;width:100%;text-align:left;font-size:12px;color:#0E7490;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">🔧 修復商城訂單趟次</button>
@@ -6688,6 +6689,13 @@ onSnapshot(collection(db,"orders"),s=>{
     if(catHealthModal&&catHealthModal.style.display!=="none")window.renderCategoryHealth();
   },500);
 });
+// 客人許願清單：客人臨時說想要哪個牌子/商品，但那個東西不一定在商品庫裡（甚至還沒決定要不要賣），
+// 純粹只是「出發前要記得去找看看」的清單，所以不綁訂單也不綁商品，獨立一個集合存
+onSnapshot(collection(db,"wishlist_items"),s=>{
+  window.G.wishlistItems=s.docs.map(d=>({id:d.id,...d.data()}));
+  const spModal=document.getElementById("modal-stock-plan");
+  if(spModal&&spModal.style.display!=="none"&&typeof renderWishlistSection==="function")renderWishlistSection();
+});
 onSnapshot(doc(db,"settings","main"),s=>{
   if(s.exists()){
     const d=s.data();
@@ -10192,32 +10200,137 @@ window.renamePromoGroup=async function(oldName,newNameRaw){
   setTimeout(renderPromoGroups,300);
 };
 
+// ── 客人許願清單（不綁商品庫、不綁訂單，純粹記錄「出發前要記得找看看」的東西）──────────
+function escWishText(s){
+  return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+// 新增入口放在「更多工具」選單裡，備貨清單本身維持單純瀏覽；用一個小視窗表單填寫，
+// 比瀏覽器原生的 prompt() 彈窗更清楚好填，也能一次看到兩個欄位
+window.openAddWishlistPrompt=function(){
+  let modal=document.getElementById("modal-add-wishlist");
+  if(!modal){
+    modal=document.createElement("div");
+    modal.id="modal-add-wishlist";
+    modal.style.cssText="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:10050;align-items:center;justify-content:center;padding:16px";
+    modal.innerHTML=`
+      <div style="background:white;border-radius:14px;padding:18px;width:100%;max-width:360px;box-shadow:0 10px 30px rgba(0,0,0,0.25)">
+        <h3 style="margin:0 0 12px;font-size:15px;color:#3D2010">🙋 新增客人許願商品</h3>
+        <div style="margin-bottom:10px">
+          <label style="display:block;font-size:11px;color:#9C7A5A;margin-bottom:4px">客人想要的品牌／商品是什麼？</label>
+          <input id="wish-input-text" type="text" placeholder="例如：innisfree 綠茶精華" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #E8D5B0;border-radius:8px;font-size:13px">
+        </div>
+        <div style="margin-bottom:14px">
+          <label style="display:block;font-size:11px;color:#9C7A5A;margin-bottom:4px">這是哪位客人許願的？（可留空）</label>
+          <input id="wish-input-name" type="text" placeholder="不確定或不方便寫可以留空" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #E8D5B0;border-radius:8px;font-size:13px">
+        </div>
+        <div style="display:flex;gap:8px">
+          <button onclick="document.getElementById('modal-add-wishlist').style.display='none'" style="flex:1;padding:9px;border-radius:8px;border:1px solid #E8D5B0;background:white;color:#9C7A5A;font-weight:700;cursor:pointer;font-size:13px">取消</button>
+          <button onclick="window.submitAddWishlistModal()" style="flex:1;padding:9px;border-radius:8px;border:none;background:#C5A880;color:white;font-weight:700;cursor:pointer;font-size:13px">新增</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener("click",(e)=>{if(e.target===modal)modal.style.display="none";});
+  }
+  document.getElementById("wish-input-text").value="";
+  document.getElementById("wish-input-name").value="";
+  modal.style.display="flex";
+  const nameInput=document.getElementById("wish-input-name");
+  const textInput=document.getElementById("wish-input-text");
+  const onEnter=(e)=>{if(e.key==="Enter")window.submitAddWishlistModal();};
+  textInput.onkeydown=onEnter;
+  nameInput.onkeydown=onEnter;
+  setTimeout(()=>textInput?.focus(),50);
+};
+window.submitAddWishlistModal=function(){
+  const text=(document.getElementById("wish-input-text")?.value||"").trim();
+  if(!text){showToast("請先填寫客人想要的品牌／商品","warning");return;}
+  const customerName=(document.getElementById("wish-input-name")?.value||"").trim();
+  window.addWishlistItem(text,customerName);
+  document.getElementById("modal-add-wishlist").style.display="none";
+};
+window.addWishlistItem=async function(text,customerName){
+  if(!text)return;
+  const id="wish_"+Date.now()+"_"+Math.random().toString(36).slice(2,7);
+  try{
+    await fbSet("wishlist_items",id,{text,customerName:customerName||"",purchased:false,createdAt:Date.now()});
+    showToast("✅ 已加入許願清單");
+  }catch(e){showToast("新增失敗："+e.message,"error");}
+};
+window.toggleWishlistPurchased=async function(id){
+  const item=(window.G.wishlistItems||[]).find(x=>x.id===id);
+  if(!item)return;
+  const next=!item.purchased;
+  try{
+    await fbUpd("wishlist_items",id,{purchased:next});
+    item.purchased=next;
+    renderWishlistSection();
+  }catch(e){showToast("更新失敗："+e.message,"error");}
+};
+window.deleteWishlistItem=async function(id){
+  if(!confirm("確定刪除這個許願項目？"))return;
+  try{
+    await fbDel("wishlist_items",id);
+    window.G.wishlistItems=(window.G.wishlistItems||[]).filter(x=>x.id!==id);
+    renderWishlistSection();
+  }catch(e){showToast("刪除失敗："+e.message,"error");}
+};
+window.renderWishlistSection=function(){
+  const box=document.getElementById("sp-wishlist-list");
+  if(!box)return;
+  // 還沒買到的排前面，買到的排後面、變淡且加刪除線，但不整個藏起來——
+  // 這樣下次出發前如果又有新的許願，還是看得到之前已經買過的歷史紀錄，想刪掉再手動刪
+  const list=[...(window.G.wishlistItems||[])].sort((a,b)=>{
+    if(!!a.purchased!==!!b.purchased)return a.purchased?1:-1;
+    return(b.createdAt||0)-(a.createdAt||0);
+  });
+  if(!list.length){box.innerHTML=`<div style="font-size:11px;color:#9C7A5A;text-align:center;padding:6px 0">目前沒有客人許願項目</div>`;return;}
+  box.innerHTML=list.map(w=>`<div style="display:flex;align-items:center;gap:8px;background:white;border:1px solid ${w.purchased?"#E8D5B0":"#FFE082"};border-radius:8px;padding:7px 10px;margin-bottom:6px;${w.purchased?"opacity:0.55":""}">
+    <button data-wid="${w.id}" onclick="toggleWishlistPurchased(this.dataset.wid)" title="${w.purchased?"點擊取消已買到":"點擊標記已買到"}" style="flex-shrink:0;width:20px;height:20px;border-radius:5px;border:1.5px solid ${w.purchased?"#2E7D32":"#E8D5B0"};background:${w.purchased?"#2E7D32":"white"};color:white;cursor:pointer;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;padding:0">${w.purchased?"✓":""}</button>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:12px;font-weight:700;color:#3D2010;${w.purchased?"text-decoration:line-through":""}">${escWishText(w.text)}</div>
+      ${w.customerName?`<div style="font-size:10px;color:#9C7A5A">👤 ${escWishText(w.customerName)}</div>`:""}
+    </div>
+    <button data-wid="${w.id}" onclick="deleteWishlistItem(this.dataset.wid)" style="flex-shrink:0;font-size:11px;color:#C0392B;background:#FDEDEC;border:1px solid #F1948A;padding:4px 7px;border-radius:6px;cursor:pointer">🗑️</button>
+  </div>`).join("");
+};
 window.showStockPlan=function(){
   const tripOrders=getTripOrders().filter(o=>o.orderType!=="quote"&&o.status!=="shipped"&&o.status!=="settled");
   const products=window.G.products;
-  if(!tripOrders.length){showToast("目前沒有待購買的喊單","warning");return;}
+  const hasWishlist=(window.G.wishlistItems||[]).length>0;
+  // 就算暫時沒有待購買的喊單，只要有客人許願清單要看，一樣要能打開這個視窗
+  if(!tripOrders.length&&!hasWishlist){showToast("目前沒有待購買的喊單","warning");return;}
+  renderWishlistSection();
   window.setStockPlanViewMode(window.G.stockPlanViewMode||"buy");
   setStockPlanMode(window.G.stockPlanMode||"time");
   const capInput=document.getElementById("sp-capacity-input");
   if(capInput)capInput.value=window.G.stockPlanCapacity||"";
+  // 之前已經設定過容量的話，預設展開讓你看到目前設的數字；沒設過就收著，減少一開始要看的東西
+  if(window.G.stockPlanCapacityOpen==null)window.G.stockPlanCapacityOpen=!!window.G.stockPlanCapacity;
+  const capRow=document.getElementById("sp-capacity-row");
+  const capToggleBtn=document.getElementById("sp-capacity-toggle-btn");
+  if(capRow)capRow.style.display=window.G.stockPlanCapacityOpen?"block":"none";
+  if(capToggleBtn){
+    capToggleBtn.style.background=window.G.stockPlanCapacityOpen?"#1E5F8C":"white";
+    capToggleBtn.style.color=window.G.stockPlanCapacityOpen?"white":"#1E5F8C";
+  }
   const coldBtn=document.getElementById("sp-filter-cold");
   if(coldBtn){
     if(window.G.stockPlanColdOnly){
       coldBtn.style.background="#1E5F8C";coldBtn.style.color="white";coldBtn.style.borderColor="#1E5F8C";
-      coldBtn.textContent="☑ 只看冷藏商品";
+      coldBtn.textContent="☑ 只看冷藏";
     } else {
       coldBtn.style.background="#EAF4FB";coldBtn.style.color="#1E5F8C";coldBtn.style.borderColor="#BEE0F5";
-      coldBtn.textContent="☐ 只看冷藏商品";
+      coldBtn.textContent="☐ 只看冷藏";
     }
   }
   const upBtn=document.getElementById("sp-filter-unpurchased");
   if(upBtn){
     if(window.G.stockPlanUnpurchasedOnly){
       upBtn.style.background="#7C3AED";upBtn.style.color="white";upBtn.style.borderColor="#7C3AED";
-      upBtn.textContent="☑ 隱藏已買到的";
+      upBtn.textContent="☑ 隱藏已買到";
     } else {
       upBtn.style.background="#FEF3C7";upBtn.style.color="#92400E";upBtn.style.borderColor="#FCD34D";
-      upBtn.textContent="☐ 隱藏已買到的";
+      upBtn.textContent="☐ 隱藏已買到";
     }
   }
   const m=document.getElementById("modal-stock-plan");
@@ -10229,22 +10342,51 @@ window.setStockPlanViewMode=function(mode){
   window.G.stockPlanViewMode=mode;
   const buyBtn=document.getElementById("sp-view-buy");
   const quoteBtn=document.getElementById("sp-view-quote");
-  const subFilterRow=document.getElementById("sp-buy-subfilter-row");
-  if(buyBtn&&quoteBtn){
+  const wishBtn=document.getElementById("sp-view-wishlist");
+  if(buyBtn&&quoteBtn&&wishBtn){
     const on={background:"#C5A880",color:"white",borderColor:"#C5A880"};
     const off={background:"white",color:"#9C7A5A",borderColor:"#E8D5B0"};
     Object.assign(buyBtn.style,mode==="buy"?on:off);
     Object.assign(quoteBtn.style,mode==="quote"?on:off);
+    Object.assign(wishBtn.style,mode==="wishlist"?on:off);
   }
-  if(subFilterRow)subFilterRow.style.display=mode==="buy"?"flex":"none";
+  // 「隱藏已買到」只對待購買清單有意義，待報價的東西還沒確認要不要買，沒有「買到」這個狀態
+  const unpurchasedBtn=document.getElementById("sp-filter-unpurchased");
+  if(unpurchasedBtn)unpurchasedBtn.style.display=mode==="buy"?"inline-block":"none";
+  // 許願清單是純粹的清單瀏覽，跟「依時間/依通路」「冷藏/常溫/容量」這些篩選完全無關，
+  // 切到這個分頁時把那整排控制項都藏起來，只留清單本身，畫面比較乾淨
+  const modeRow=document.getElementById("sp-mode-row");
+  if(modeRow)modeRow.style.display=mode==="wishlist"?"none":"flex";
+  const toggleRow=document.getElementById("sp-toggle-row");
+  if(toggleRow)toggleRow.style.display=mode==="wishlist"?"none":"flex";
   const capacityRow=document.getElementById("sp-capacity-row");
-  if(capacityRow)capacityRow.style.display=mode==="buy"?"block":"none";
+  if(capacityRow)capacityRow.style.display=(mode!=="wishlist"&&window.G.stockPlanCapacityOpen)?"block":"none";
+  const wishBox=document.getElementById("sp-wishlist-box");
+  const contentBox=document.getElementById("stock-plan-content");
+  if(wishBox)wishBox.style.display=mode==="wishlist"?"block":"none";
+  if(contentBox)contentBox.style.display=mode==="wishlist"?"none":"block";
+  if(mode==="wishlist"){renderWishlistSection();return;}
   window.renderStockPlanContent();
 };
 window.setStockPlanCapacity=function(val){
   const n=parseInt(val)||0;
   window.G.stockPlanCapacity=n>0?n:null;
   window.renderStockPlanContent();
+};
+// 容量設定很少用到（一趟差不多只設一次），預設收起來、按「🧊設定可帶件數」才展開，
+// 避免每次打開備貨清單都要先看過這個欄位才能看到真正的購買清單
+window.toggleStockPlanCapacityBox=function(){
+  const row=document.getElementById("sp-capacity-row");
+  if(!row)return;
+  const open=row.style.display==="none";
+  window.G.stockPlanCapacityOpen=open;
+  row.style.display=open?"block":"none";
+  const btn=document.getElementById("sp-capacity-toggle-btn");
+  if(btn){
+    btn.style.background=open?"#1E5F8C":"white";
+    btn.style.color=open?"white":"#1E5F8C";
+  }
+  if(open)document.getElementById("sp-capacity-input")?.focus();
 };
 
 window.setStockPlanMode=function(mode){
@@ -10269,10 +10411,10 @@ window.setStockPlanUnpurchasedOnly=function(on){
   if(btn){
     if(on){
       btn.style.background="#7C3AED";btn.style.color="white";btn.style.borderColor="#7C3AED";
-      btn.textContent="☑ 隱藏已買到的";
+      btn.textContent="☑ 隱藏已買到";
     } else {
       btn.style.background="#FEF3C7";btn.style.color="#92400E";btn.style.borderColor="#FCD34D";
-      btn.textContent="☐ 隱藏已買到的";
+      btn.textContent="☐ 隱藏已買到";
     }
   }
   window.renderStockPlanContent();
@@ -10283,10 +10425,10 @@ window.setStockPlanColdOnly=function(on){
   if(btn){
     if(on){
       btn.style.background="#1E5F8C";btn.style.color="white";btn.style.borderColor="#1E5F8C";
-      btn.textContent="☑ 只看冷藏商品";
+      btn.textContent="☑ 只看冷藏";
     } else {
       btn.style.background="#EAF4FB";btn.style.color="#1E5F8C";btn.style.borderColor="#BEE0F5";
-      btn.textContent="☐ 只看冷藏商品";
+      btn.textContent="☐ 只看冷藏";
     }
   }
   // 冷藏跟常溫是互斥的篩選，開一個就把另一個關掉，不然兩個一起勾會篩出空清單
@@ -10299,10 +10441,10 @@ window.setStockPlanRoomOnly=function(on){
   if(btn){
     if(on){
       btn.style.background="#B45309";btn.style.color="white";btn.style.borderColor="#B45309";
-      btn.textContent="☑ 只看常溫品";
+      btn.textContent="☑ 只看常溫";
     } else {
       btn.style.background="#FEF3C7";btn.style.color="#B45309";btn.style.borderColor="#FCD34D";
-      btn.textContent="☐ 只看常溫品";
+      btn.textContent="☐ 只看常溫";
     }
   }
   if(on&&window.G.stockPlanColdOnly)window.setStockPlanColdOnly(false);
@@ -13803,7 +13945,7 @@ window.renderInvoice=function(){
     searchBuyerKeys=new Set(getTripOrders().filter(matchFn).map(o=>o.customerId||o.communityName||o.buyerName||"未知"));
     filtered=filtered.filter(o=>searchBuyerKeys.has(o.customerId||o.communityName||o.buyerName||"未知"));
   }
-  // 只看冷藏商品——改成跟客戶頁同一套邏輯：只要這位買家「有任何一筆」冷藏商品（不管是正式訂單還是待報價），
+  // 只看冷藏——改成跟客戶頁同一套邏輯：只要這位買家「有任何一筆」冷藏商品（不管是正式訂單還是待報價），
   // 這位買家名下所有符合目前狀態篩選的訂單、以及待報價清單，都要留著顯示，
   // 不是只顯示冷藏那幾筆、把同一位客人買的其他常溫商品藏起來（那樣反而看不出這張單全貌）
   let coldBuyerKeys=null;
@@ -17306,27 +17448,31 @@ window.swUpdate = function(){
     <div style="display:flex;gap:6px;margin-bottom:10px">
       <button id="sp-view-buy" onclick="setStockPlanViewMode('buy')" style="flex:1;font-size:12px;font-weight:700;padding:9px 8px;border-radius:10px;border:1.5px solid #C5A880;background:#C5A880;color:white;cursor:pointer">🛒 待購買</button>
       <button id="sp-view-quote" onclick="setStockPlanViewMode('quote')" style="flex:1;font-size:12px;font-weight:700;padding:9px 8px;border-radius:10px;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">📋 待報價</button>
+      <button id="sp-view-wishlist" onclick="setStockPlanViewMode('wishlist')" style="flex:1;font-size:12px;font-weight:700;padding:9px 8px;border-radius:10px;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;cursor:pointer">🙋 許願商品</button>
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px">
+    <div id="sp-mode-row" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px">
       <div id="stock-plan-desc" style="font-size:11px;color:#9C7A5A">依喊單時間排序，方便確認缺貨截止點</div>
       <div style="display:flex;gap:4px;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:99px;padding:3px;flex-shrink:0">
         <button id="sp-mode-time" onclick="setStockPlanMode('time')" style="font-size:12px;font-weight:700;padding:6px 12px;border-radius:99px;border:none;background:#C5A880;color:white;cursor:pointer;transition:background 0.15s,color 0.15s">🕐 時間</button>
         <button id="sp-mode-channel" onclick="setStockPlanMode('channel')" style="font-size:12px;font-weight:700;padding:6px 12px;border-radius:99px;border:none;background:white;color:#9C7A5A;cursor:pointer;transition:background 0.15s,color 0.15s">🏪 通路</button>
       </div>
     </div>
-    <div id="sp-buy-subfilter-row" style="display:flex;gap:8px;margin-bottom:8px">
-      <button id="sp-filter-unpurchased" onclick="setStockPlanUnpurchasedOnly(!window.G.stockPlanUnpurchasedOnly)" style="flex:1;font-size:12px;font-weight:700;padding:8px 12px;border-radius:10px;border:1.5px solid #FCD34D;background:#FEF3C7;color:#92400E;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">☐ 隱藏已買到的</button>
+    <!-- 篩選條件全部合併成一排小標籤，用多少才顯示多少，不再一排一排往下疊 -->
+    <div id="sp-toggle-row" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
+      <button id="sp-filter-unpurchased" onclick="setStockPlanUnpurchasedOnly(!window.G.stockPlanUnpurchasedOnly)" style="font-size:11px;font-weight:700;padding:6px 10px;border-radius:99px;border:1.5px solid #FCD34D;background:#FEF3C7;color:#92400E;cursor:pointer">☐ 隱藏已買到</button>
+      <button id="sp-filter-cold" onclick="setStockPlanColdOnly(!window.G.stockPlanColdOnly)" style="font-size:11px;font-weight:700;padding:6px 10px;border-radius:99px;border:1.5px solid #BEE0F5;background:#EAF4FB;color:#1E5F8C;cursor:pointer">☐ 只看冷藏</button>
+      <button id="sp-filter-room" onclick="setStockPlanRoomOnly(!window.G.stockPlanRoomOnly)" style="font-size:11px;font-weight:700;padding:6px 10px;border-radius:99px;border:1.5px solid #FCD34D;background:#FEF3C7;color:#B45309;cursor:pointer">☐ 只看常溫</button>
+      <button id="sp-capacity-toggle-btn" onclick="toggleStockPlanCapacityBox()" style="font-size:11px;font-weight:700;padding:6px 10px;border-radius:99px;border:1.5px solid #BEE0F5;background:white;color:#1E5F8C;cursor:pointer">🧊 設定可帶件數</button>
     </div>
-    <div style="display:flex;gap:8px;margin-bottom:10px">
-      <button id="sp-filter-cold" onclick="setStockPlanColdOnly(!window.G.stockPlanColdOnly)" style="flex:1;font-size:12px;font-weight:700;padding:8px 12px;border-radius:10px;border:1.5px solid #BEE0F5;background:#EAF4FB;color:#1E5F8C;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">☐ 只看冷藏商品</button>
-      <button id="sp-filter-room" onclick="setStockPlanRoomOnly(!window.G.stockPlanRoomOnly)" style="flex:1;font-size:12px;font-weight:700;padding:8px 12px;border-radius:10px;border:1.5px solid #FCD34D;background:#FEF3C7;color:#B45309;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">☐ 只看常溫品</button>
-    </div>
-    <div id="sp-capacity-row" style="margin-bottom:14px;background:#EAF4FB;border:1px solid #BEE0F5;border-radius:10px;padding:9px 12px">
+    <div id="sp-capacity-row" style="display:none;margin-bottom:10px;background:#EAF4FB;border:1px solid #BEE0F5;border-radius:10px;padding:9px 12px">
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
         <span style="font-size:11px;font-weight:700;color:#1E5F8C">🧊 冷藏商品這趟大概能帶多少件</span>
         <input type="text" inputmode="numeric" id="sp-capacity-input" placeholder="例如：100" oninput="setStockPlanCapacity(this.value)" style="width:80px;flex-shrink:0;background:white;border:1px solid #BEE0F5;border-radius:8px;padding:5px 8px;font-size:12px;font-weight:700;outline:none;text-align:center"/>
       </div>
       <div style="font-size:10px;color:#5C8CA8">只算冷藏／高風險冷藏商品，其他能走貨運的商品不算</div>
+    </div>
+    <div id="sp-wishlist-box" style="display:none">
+      <div id="sp-wishlist-list"></div>
     </div>
     <div id="stock-plan-content"></div>
   </div>
