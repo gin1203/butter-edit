@@ -4526,6 +4526,12 @@ window.renderIfActiveElseMarkDirty=function(tabName,renderFn){
 };
 const TAB_RENDER_MAP={list:()=>renderList(),customers:()=>renderCustomers(),invoice:()=>renderInvoice()};
 window.showTab=function(tab){
+  // 所有分頁共用同一個瀏覽器捲軸（用 .active 切換顯示/隱藏，不是各自獨立的容器），
+  // 切分頁本身不會自動回到頂部，所以在客戶頁面滑到下面、切去商品頁，商品頁看起來就會
+  // 「也滑到下面」——其實是同一條捲軸沒有歸零。這裡手動記住「每個分頁各自捲到哪裡」，
+  // 離開分頁前先存起來，進入分頁後還原成那個分頁自己上次的位置（新分頁預設是頂部）
+  window.G._tabScrollPos=window.G._tabScrollPos||{};
+  if(window.G.tab)window.G._tabScrollPos[window.G.tab]=window.scrollY;
   window.G.tab=tab;
   if(tab==="stats"&&!window.G._expensesLoadedOnce){
     window.G._expensesLoadedOnce=true;
@@ -4533,6 +4539,7 @@ window.showTab=function(tab){
   }
   document.querySelectorAll(".tab-page").forEach(el=>el.classList.remove("active"));
   const tp=document.getElementById("tab-"+tab);if(tp)tp.classList.add("active");
+  requestAnimationFrame(()=>window.scrollTo(0,window.G._tabScrollPos[tab]||0));
   // 切過去發現這個分頁是「待更新」狀態，這時候才真的補畫一次
   if(window.G._dirtyTabs[tab]){
     window.G._dirtyTabs[tab]=false;
@@ -10243,10 +10250,10 @@ window.openAddWishlistPrompt=function(){
           <label style="display:block;font-size:11px;color:#9C7A5A;margin-bottom:4px">客人想要的品牌／商品是什麼？</label>
           <input id="wish-input-text" type="text" placeholder="例如：innisfree 綠茶精華" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #E8D5B0;border-radius:8px;font-size:13px">
         </div>
-        <div style="margin-bottom:14px">
+        <div style="margin-bottom:14px;position:relative">
           <label style="display:block;font-size:11px;color:#9C7A5A;margin-bottom:4px">這是哪位客人許願的？（可留空，打字符合客戶名單會自動連結）</label>
-          <input id="wish-input-name" type="text" list="wish-cust-datalist" placeholder="不確定或不方便寫可以留空" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #E8D5B0;border-radius:8px;font-size:13px">
-          <datalist id="wish-cust-datalist"></datalist>
+          <input id="wish-input-name" type="text" autocomplete="off" placeholder="不確定或不方便寫可以留空" style="width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #E8D5B0;border-radius:8px;font-size:13px">
+          <div id="wish-cust-suggest" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:2px;background:white;border:1px solid #E8D5B0;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);max-height:160px;overflow-y:auto;z-index:10070"></div>
         </div>
         <div style="display:flex;gap:8px">
           <button onclick="document.getElementById('modal-add-wishlist').style.display='none'" style="flex:1;padding:9px;border-radius:8px;border:1px solid #E8D5B0;background:white;color:#9C7A5A;font-weight:700;cursor:pointer;font-size:13px">完成</button>
@@ -10258,16 +10265,31 @@ window.openAddWishlistPrompt=function(){
   }
   document.getElementById("wish-input-text").value="";
   document.getElementById("wish-input-name").value="";
-  // 客人名稱輸入框掛上客戶名單自動完成，打字時系統會提示現有客戶，
-  // 選到完全符合的名字，等一下送出時就會自動連結到這位客戶的資料
-  const datalist=document.getElementById("wish-cust-datalist");
-  if(datalist){
-    datalist.innerHTML=(window.G.customers||[]).map(c=>c.communityName||c.lineName).filter(Boolean)
-      .filter((v,i,arr)=>arr.indexOf(v)===i).map(n=>`<option value="${escWishText(n)}"></option>`).join("");
-  }
   modal.style.display="flex";
   const nameInput=document.getElementById("wish-input-name");
   const textInput=document.getElementById("wish-input-text");
+  const suggestBox=document.getElementById("wish-cust-suggest");
+  // 客人名稱輸入框打字時自動提示現有客戶——原本用HTML原生的<datalist>，
+  // 但手機瀏覽器（尤其iOS）對datalist的支援很差，常常根本不會跳出建議清單，
+  // 改成自己畫一個下拉清單，手機電腦都會正常顯示
+  const allNames=(window.G.customers||[]).map(c=>c.communityName||c.lineName).filter(Boolean)
+    .filter((v,i,arr)=>arr.indexOf(v)===i);
+  nameInput.oninput=function(){
+    const q=this.value.trim().toLowerCase();
+    if(!q){suggestBox.style.display="none";suggestBox.innerHTML="";return;}
+    const matches=allNames.filter(n=>n.toLowerCase().includes(q)).slice(0,8);
+    if(!matches.length){suggestBox.style.display="none";suggestBox.innerHTML="";return;}
+    suggestBox.innerHTML=matches.map(n=>`<div class="wish-suggest-item" data-name="${escWishText(n)}" style="padding:8px 10px;font-size:13px;color:#3D2010;cursor:pointer;border-bottom:1px solid #FAF8F5">${escWishText(n)}</div>`).join("");
+    suggestBox.style.display="block";
+  };
+  suggestBox.onclick=function(e){
+    const item=e.target.closest(".wish-suggest-item");
+    if(!item)return;
+    nameInput.value=item.dataset.name;
+    suggestBox.style.display="none";suggestBox.innerHTML="";
+  };
+  nameInput.onblur=function(){setTimeout(()=>{suggestBox.style.display="none";},150);};
+  suggestBox.style.display="none";suggestBox.innerHTML="";
   // 中文輸入法選字的時候按Enter，瀏覽器也會觸發keydown事件，但那是在「選字」不是「送出」，
   // 一定要用e.isComposing（以及保險起見看keyCode 229）排除掉，不然打中文打到一半按Enter選字
   // 就會被誤判成按了送出按鈕，內容還沒打完就被存走

@@ -938,7 +938,10 @@ function isMobileDevice(){
 function doShareUrl(url,shareText){
   if(isMobileDevice()&&navigator.share){
     try{
-      navigator.share({title:shareText,text:shareText,url}).catch(()=>{});
+      // 原本把text跟url分開傳，結果分享到LINE時LINE只吃text欄位、把url欄位整個忽略，
+      // 貼過去只看到標題沒有網址。改成把網址直接接在text後面、不要分開傳url欄位，
+      // 不管對方App實際上吃哪個欄位，網址都已經包在文字內容裡面，不會不見
+      navigator.share({text:`${shareText}\n${url}`}).catch(()=>{});
       return;
     }catch(e){/* 萬一還是失敗，往下退回複製連結 */}
   }
