@@ -415,10 +415,11 @@ body.live-mode .hide-live { display: none !important; }
   <div id="product-toolbar" style="display:flex;gap:6px;margin-bottom:8px;align-items:center">
     <button id="list-view-toggle" onclick="toggleListView()" style="background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:7px 12px;font-size:16px;cursor:pointer" title="切換顯示模式">☰</button>
     <div style="position:relative;flex:1">
-      <button onclick="event.stopPropagation();toggleListToolsMenu()" style="width:100%;padding:8px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #E8D5B0;background:#FAF8F5;color:#9C7A5A;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">更多工具</button>
+      <button onclick="event.stopPropagation();toggleListToolsMenu()" style="width:100%;padding:8px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #E8D5B0;background:#FAF8F5;color:#9C7A5A;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">更多工具<span id="fc-dot" style="display:none;width:8px;height:8px;border-radius:50%;background:#E74C3C"></span></button>
       <div id="list-tools-menu" style="display:none;position:absolute;top:100%;left:0;right:0;margin-top:4px;background:white;border:1px solid #E8D5B0;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,0.12);z-index:20;overflow:hidden">
         <button onclick="event.stopPropagation();closeListToolsMenu();exportProductCSV()" style="display:block;width:100%;text-align:left;font-size:12px;color:#2980B9;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600">匯出商品庫</button>
         <button onclick="event.stopPropagation();closeListToolsMenu();showStockPlan()" style="display:block;width:100%;text-align:left;font-size:12px;color:#E07B39;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">備貨清單</button>
+        <button onclick="event.stopPropagation();closeListToolsMenu();showFixCost()" style="display:block;width:100%;text-align:left;font-size:12px;color:#1E8449;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5"><span id="fc-menu-label">待補實際成本</span></button>
         <button onclick="event.stopPropagation();closeListToolsMenu();openAddWishlistPrompt()" style="display:block;width:100%;text-align:left;font-size:12px;color:#7B5800;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">新增客人許願商品</button>
         <button onclick="event.stopPropagation();closeListToolsMenu();showPromoGroups()" style="display:block;width:100%;text-align:left;font-size:12px;color:#C0392B;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">活動群組管理</button>
         <button onclick="event.stopPropagation();closeListToolsMenu();showDupProductScan()" style="display:block;width:100%;text-align:left;font-size:12px;color:#92400E;background:white;border:none;padding:10px 14px;cursor:pointer;font-weight:600;border-top:1px solid #FAF8F5">檢查重複</button>
@@ -1232,6 +1233,20 @@ body.live-mode .hide-live { display: none !important; }
   </div>
 </div>
 <!-- 修改訂單 -->
+<style>
+/* 修改訂單視窗：放大，商品在寬螢幕自動排成多欄；手機直接滿版 */
+#modal-eord{padding:8px!important}
+#modal-eord>div{max-width:1100px!important;max-height:96vh!important;max-height:96dvh!important}
+#eo-order-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:0 12px;align-items:start}
+#eo-order-list>*{min-width:0}
+#eo-order-list>:not(.eo-collapsible-row){grid-column:1/-1}
+#modal-eord.eo-full{padding:0!important}
+#modal-eord.eo-full>div{max-width:100%!important;max-height:100vh!important;max-height:100dvh!important;height:100vh;height:100dvh;border-radius:0!important}
+@media (max-width:640px){
+  #modal-eord{padding:0!important}
+  #modal-eord>div{max-width:100%!important;max-height:100vh!important;max-height:100dvh!important;height:100vh;height:100dvh;border-radius:0!important}
+}
+</style>
 <div id="modal-eord" class="modal-overlay" style="display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,0.35);align-items:center;justify-content:center;padding:16px">
   <div style="background:white;border-radius:20px;width:100%;max-width:720px;max-height:88vh;display:flex;flex-direction:column">
     <div style="padding:16px 20px 12px;border-bottom:1px solid #F0E6D0;flex-shrink:0;display:flex;justify-content:space-between;align-items:center">
@@ -1239,7 +1254,10 @@ body.live-mode .hide-live { display: none !important; }
         <h3 id="eo-title" style="margin:0;font-size:15px;font-weight:900;color:#3D2010"></h3>
         <div id="eo-subtitle" style="font-size:11px;color:#9C7A5A;margin-top:2px"></div>
       </div>
-      <button onclick="closeModal('modal-eord')" style="font-size:24px;font-weight:900;color:#9C7A5A;background:none;border:none;cursor:pointer">×</button>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button onclick="eoToggleFull()" id="eo-full-btn" title="全螢幕／還原" style="font-size:12px;font-weight:700;color:#5C3A1E;background:white;border:1px solid #E8D5B0;border-radius:99px;padding:5px 11px;cursor:pointer">⛶ 全螢幕</button>
+        <button onclick="closeModal('modal-eord')" style="font-size:24px;font-weight:900;color:#9C7A5A;background:none;border:none;cursor:pointer">×</button>
+      </div>
     </div>
     <div id="eo-suggestion-banner" style="display:none;padding:8px 16px 0;flex-shrink:0"></div>
     <div id="eo-old-percent-banner" style="display:none;margin:8px 16px 0;background:#FFF3E0;border:1.5px solid #FFB74D;border-radius:10px;padding:10px 12px;flex-shrink:0"></div>
@@ -1583,6 +1601,20 @@ body.live-mode .hide-live { display: none !important; }
   </div>
 </div>
 
+<!-- 待補實際成本：現場先標記已買到，回來再補這次實際買的價格 -->
+<div id="modal-fix-cost" class="modal-overlay" style="display:none;position:fixed;inset:0;z-index:80;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;padding:16px">
+  <div style="background:white;border-radius:18px;width:100%;max-width:420px;max-height:88vh;display:flex;flex-direction:column">
+    <div style="padding:18px 20px 8px">
+      <div style="font-size:15px;font-weight:900;color:#3D2010;text-align:center">🧾 待補實際成本</div>
+      <div style="font-size:11px;color:#9C7A5A;text-align:center;margin-top:4px;line-height:1.6">現場先標記「已買到」，回來再補這次實際買的價格。<br>還沒補之前，成本先用商品設定的價格估算。</div>
+    </div>
+    <div id="fix-cost-body" style="padding:8px 20px;overflow-y:auto;flex:1"></div>
+    <div style="padding:10px 20px 16px">
+      <button onclick="closeModal('modal-fix-cost')" style="width:100%;padding:12px;border-radius:12px;border:2px solid #E8D5B0;background:white;color:#9C7A5A;font-size:13px;font-weight:700;cursor:pointer">關閉</button>
+    </div>
+  </div>
+</div>
+
 <!-- 收訂金（取代原生confirm，可自訂金額） -->
 <div id="modal-ask-deposit" class="modal-overlay" style="display:none;position:fixed;inset:0;z-index:80;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;padding:16px">
   <div style="background:white;border-radius:18px;width:100%;max-width:380px;padding:22px">
@@ -1606,9 +1638,24 @@ body.live-mode .hide-live { display: none !important; }
 <div id="modal-ask-settlement" class="modal-overlay" style="display:none;position:fixed;inset:0;z-index:80;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;padding:16px">
   <div style="background:white;border-radius:18px;width:100%;max-width:380px;padding:22px">
     <div style="font-size:14px;font-weight:900;color:#3D2010;margin-bottom:4px;text-align:center">📋 結清單</div>
-    <div id="ask-settlement-subtitle" style="font-size:12px;color:#9C7A5A;margin-bottom:16px;text-align:center"></div>
-    <button onclick="closeModal('modal-ask-settlement');openSendSettlement(window.G._askSettlementBuyerKey)" style="width:100%;padding:12px;border-radius:10px;border:none;background:#06C755;color:white;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">📤 直接傳送到LINE給客人</button>
-    <button onclick="copyBuyerOrder(window.G._askSettlementBuyerKey);closeModal('modal-ask-settlement')" style="width:100%;padding:12px;border-radius:10px;border:1.5px solid #90D7FF;background:#EAF4FD;color:#0277BD;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">📋 改成複製（貼到別的地方）</button>
+    <div id="ask-settlement-subtitle" style="font-size:12px;color:#9C7A5A;margin-bottom:12px;text-align:center"></div>
+    <div style="border:1.5px solid #E8D5B0;border-radius:12px;padding:10px 12px;margin-bottom:12px;background:#FAF8F5">
+      <div style="font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:6px">這張結清單要算哪些商品？（冷藏、常溫分開寄時用）</div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#3D2010;cursor:pointer;padding:3px 0"><input type="radio" name="ask-scope" value="all" checked onchange="askFreightToggle()"/> 全部商品（跟以前一樣）</label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#3D2010;cursor:pointer;padding:3px 0"><input type="radio" name="ask-scope" value="ambient" onchange="askFreightToggle()"/> 只算常溫（賣貨便，保留 NT$100）</label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#3D2010;cursor:pointer;padding:3px 0"><input type="radio" name="ask-scope" value="cold" onchange="askFreightToggle()"/> 🚚 只算冷藏（加運費，不保留 NT$100）</label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#3D2010;cursor:pointer;padding:3px 0"><input type="radio" name="ask-scope" value="together" onchange="askFreightToggle()"/> 📦 冷藏＋常溫一起寄（加運費，不保留 NT$100）</label>
+      <div id="ask-freight-hint" style="display:none;font-size:11px;color:#1E5F8C;margin-top:4px"></div>
+      <div id="ask-freight-row" style="display:none;margin-top:8px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:13px;font-weight:700;color:#3D2010">運費 NT$</span>
+          <input type="text" inputmode="numeric" id="ask-freight-amt" placeholder="運費金額" style="flex:1;min-width:0;background:white;border:1.5px solid #E8D5B0;border-radius:10px;padding:10px;font-size:15px;font-weight:700;text-align:center;outline:none;box-sizing:border-box"/>
+        </div>
+        <div style="font-size:11px;color:#9C7A5A;margin-top:6px">冷藏是全額轉帳再宅配，所以不保留賣貨便貨到付款的 NT$100</div>
+      </div>
+    </div>
+    <button onclick="askSettleGo('send')" style="width:100%;padding:12px;border-radius:10px;border:none;background:#06C755;color:white;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">📤 直接傳送到LINE給客人</button>
+    <button onclick="askSettleGo('copy')" style="width:100%;padding:12px;border-radius:10px;border:1.5px solid #90D7FF;background:#EAF4FD;color:#0277BD;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">📋 改成複製（貼到別的地方）</button>
     <button onclick="closeModal('modal-ask-settlement')" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;font-size:13px;font-weight:700;cursor:pointer">取消</button>
   </div>
 </div>
@@ -9211,6 +9258,48 @@ async function applyCrossPromoToPendingItems(pendingItems,customerId){
     }
   }
 }
+// 修改訂單視窗：成本或售價有改，就即時顯示這一件的利潤
+// 改原幣價：自動換算台幣成本；改台幣成本：就用你填的。兩種都記錄「動了哪一格」，存檔時才知道怎麼存
+window.eoCostInput=function(el,kind){
+  const row=el.closest("[data-oid]");if(!row)return;
+  row.dataset.costTouched=kind;
+  if(kind==="foreign"){
+    const box=row.querySelector(".eo-cost-box");
+    const fv=parseFloat(el.value);
+    const cIn=row.querySelector(".eo-cost");
+    if(box&&cIn&&isFinite(fv)&&fv>0){
+      try{
+        const c=window.calcCost(fv,box.dataset.cur,box.dataset.nr==="1",box.dataset.pm||"card").afterTax;
+        cIn.value=Math.round(c*10)/10;
+      }catch(e){}
+    }
+  }
+  window.eoUpdateCostHint(el);
+};
+// 修改訂單視窗裡點品名：開啟該商品的「修改商品」頁，疊在訂單視窗上面；
+// 關掉之後回到訂單視窗，裡面還沒存的內容都還在（不會重新整理）
+window.eoOpenProd=function(pid){
+  const el=document.getElementById("modal-eprod");
+  if(el)el.style.zIndex="60";
+  openEditProd(pid);
+};
+window.eoToggleFull=function(){
+  const m=document.getElementById("modal-eord");if(!m)return;
+  const on=m.classList.toggle("eo-full");
+  const b=document.getElementById("eo-full-btn");if(b)b.textContent=on?"⛶ 還原":"⛶ 全螢幕";
+  try{localStorage.setItem("eoFull",on?"1":"");}catch(e){}
+};
+window.eoUpdateCostHint=function(el){
+  const row=el.closest("[data-oid]");if(!row)return;
+  const price=parseFloat(row.querySelector(".eo-price")?.value)||0;
+  const cost=parseFloat(row.querySelector(".eo-cost")?.value);
+  const hint=row.querySelector(".eo-cost-hint");if(!hint)return;
+  if(!isFinite(cost)){hint.textContent="";return;}
+  const profit=Math.round((price-cost)*10)/10;
+  const margin=price>0?Math.round(profit/price*100):0;
+  hint.textContent=`每件利潤 NT$${profit}（${margin}%）`;
+  hint.style.color=profit<0?"#C0392B":"#1E5F8C";
+};
 window.saveAllEditOrders=async function(){
   const rows=document.querySelectorAll("#eo-order-list [data-oid]");
   const sharedDeposit=parseFloat(document.getElementById("eo-shared-deposit")?.value)||0;
@@ -9234,6 +9323,24 @@ window.saveAllEditOrders=async function(){
       // 折扣、免運、訂金、打幾折都只記在第一筆，避免同一件事在同一批訂單裡被記錄了好幾次、加總時被重複計算；
       // 打幾折不再去改每一筆商品的售價，商品明細裡的售價維持原本填的金額，折算只在結算總額時統一處理
       const upd={qty,discountPrice:price,total:price*qty,tracking:sharedTracking,discountNote};
+      // 每一筆商品「當時成本」：有動過才存，沒動就不碰，避免把「還在估算」的成本誤鎖成固定值
+      // 改的是原幣價 → 用原幣價換算台幣成本，並記下原幣價；直接改台幣成本 → 就存你填的台幣數字
+      const costTouched=row.dataset.costTouched;
+      if(costTouched){
+        const box=row.querySelector(".eo-cost-box");
+        if(costTouched==="foreign"){
+          const fv=parseFloat(row.querySelector(".eo-cost-foreign")?.value);
+          if(isFinite(fv)&&fv>0&&box){
+            const cur=box.dataset.cur,nr=box.dataset.nr==="1",pm=box.dataset.pm||"card";
+            upd.costSnapshot=window.calcCost(fv,cur,nr,pm).afterTax;
+            upd.buyForeignAmount=fv;upd.buyCurrency=cur;upd.buyNoRefund=nr;upd.paymentMethodSnapshot=pm;
+            upd.costSnapshotAt=Date.now();upd.costManual=true;upd.costPending=false;
+          }
+        } else {
+          const cv=parseFloat(row.querySelector(".eo-cost")?.value);
+          if(isFinite(cv)&&cv>=0){upd.costSnapshot=cv;upd.costSnapshotAt=Date.now();upd.costManual=true;upd.costPending=false;}
+        }
+      }
       // 原價（unitPrice）只是給客人看的「訂單明細」折扣基準，跟售價是兩個獨立欄位；
       // 有填才更新，不填就不動，避免誤觸把本來對的原價洗掉
       const origPriceInput=row.querySelector(".eo-orig-price");
@@ -10605,9 +10712,15 @@ function renderStockProductBlock(pid,orders){
   if(p.photo){
     html+=`<div onclick="openLightbox('${p.id}')" style="flex-shrink:0;width:36px;height:36px;border-radius:8px;overflow:hidden;background:white;border:1px solid #E8D5B0;cursor:zoom-in"><img src="${p.photo}" style="width:100%;height:100%;object-fit:cover;object-position:${p.photoPos||"50% 50%"};display:block" loading="lazy"/></div>`;
   }
-  html+=`<div style="font-size:13px;font-weight:900;color:#3D2010">${p.emoji||"📦"} ${p.name}</div>`;
+  // 在備貨清單裡就能看到定價，不用關掉視窗跑去商品頁
+  const priceBits=[];
+  if(p.finalPrice)priceBits.push(`定價 NT$${Number(p.finalPrice).toLocaleString()}`);
+  if(p.twPrice>0)priceBits.push(`台灣 NT$${Number(p.twPrice).toLocaleString()}`);
+  const curP=CURR[p.currency||"KRW"];
+  const foreignBit=p.foreignAmount?`<span class="hide-staff">${priceBits.length?" ・ ":""}原幣 ${curP?.symbol||"₩"}${Number(p.foreignAmount).toLocaleString()}</span>`:"";
+  html+=`<div style="min-width:0"><div style="font-size:13px;font-weight:900;color:#3D2010">${p.emoji||"📦"} ${p.name}</div>${(priceBits.length||foreignBit)?`<div style="font-size:11px;font-weight:700;color:#9C7A5A;margin-top:2px">${priceBits.join(" ・ ")}${foreignBit}</div>`:""}</div>`;
   html+=`</div>`;
-  html+=`<div style="flex-shrink:0;font-size:12px;font-weight:700;color:#E07B39;background:#FFF3E0;border:1px solid #FFCC80;padding:3px 10px;border-radius:99px">共 ${total} 個</div>`;
+  html+=`<div style="flex-shrink:0;display:flex;align-items:center;gap:6px"><button onclick="spEditProd('${p.id}')" title="直接修改這個商品的價格、庫存、規格等" style="font-size:11px;font-weight:700;color:#5C3A1E;background:white;border:1px solid #E8D5B0;border-radius:99px;padding:3px 9px;cursor:pointer">✏️ 編輯</button><div style="font-size:12px;font-weight:700;color:#E07B39;background:#FFF3E0;border:1px solid #FFCC80;padding:3px 10px;border-radius:99px">共 ${total} 個</div></div>`;
   html+=`</div>`;
   Object.keys(specGroups).forEach(spec=>{
     const sOrders=specGroups[spec];
@@ -10628,7 +10741,7 @@ function renderStockProductBlock(pid,orders){
       html+=`<div id="sp-row-${o.id}" style="margin-bottom:6px;padding:8px 10px;background:${bought?"#F0FDF4":(overCapacity?"#FFF5F5":"white")};border-radius:10px;border:1px solid ${bought?"#BBF7D0":(overCapacity?"#F5B7B1":"#E8D5B0")}">`;
       html+=`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">`;
       html+=`<span style="flex-shrink:0;font-size:10px;font-weight:900;color:#C5A880">#${i+1}</span>`;
-      html+=`<span style="font-size:12px;font-weight:700;color:#3D2010;flex:1;min-width:36px;overflow-wrap:anywhere">${buyer}</span>`;
+      html+=`<span data-oid="${o.id}" onclick="spShowBuyer(this.dataset.oid)" title="點一下看這位客人的整張訂單" style="font-size:12px;font-weight:700;color:#3D2010;flex:1;min-width:36px;overflow-wrap:anywhere;cursor:pointer;text-decoration:underline dotted #C5A880;text-underline-offset:3px">${buyer}</span>`;
       html+=globalBadge;
       html+=`<button data-oid="${o.id}" onclick="spTogglePurchased(this.dataset.oid,this)" style="flex-shrink:0;font-size:11px;font-weight:700;padding:5px 8px;border-radius:8px;cursor:pointer;border:1.5px solid ${bought?"#6EE7B7":"#FCD34D"};background:${bought?"#D1FAE5":"#FEF3C7"};color:${bought?"#065F46":"#92400E"}">${bought?"✓ 已購買":"待購買"}</button>`;
       html+=`<div style="display:flex;align-items:center;gap:0;border:1px solid #E8D5B0;border-radius:8px;overflow:hidden;background:#FAF8F5;flex-shrink:0">
@@ -13022,7 +13135,7 @@ window.openEditOrd=function(oid){
 
   const list=document.getElementById("eo-order-list");
   const EO_COLLAPSE_N=4;
-  window.G.eoExpanded=cOrders.length<=EO_COLLAPSE_N; // 訂單筆數不多就直接全部展開，不用多一道操作
+  window.G.eoExpanded=true; // 視窗已放大、商品會自動排成多欄，不再需要「展開查看」，一律全部展開
   const listHeader=`<div style="font-size:11px;font-weight:900;color:#8B6F47;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #E8D5B0">📦 修改現有商品</div>`;
   list.innerHTML=listHeader+cOrders.map((x,idx)=>{
     const dp=x.discountPrice||x.unitPrice||0;
@@ -13032,7 +13145,17 @@ window.openEditOrd=function(oid){
     return `<div class="eo-collapsible-row" style="background:${rowBg};border:1.5px solid #DDBF8F;border-radius:12px;padding:12px 14px;margin-bottom:12px;${hideStyle};position:relative;box-shadow:0 1px 3px rgba(139,111,71,0.08)" data-oid="${x.id}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
         <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;flex:1;min-width:0">
-          <span style="font-size:14px;font-weight:900;color:#3D2010">${(window.G.products.find(p=>p.id===x.productId)?.name)||x.productName||"商品"}</span>
+          ${(()=>{
+            const pr=window.G.products.find(p=>p.id===x.productId);
+            const nm=(pr&&pr.name)||x.productName||"商品";
+            const thumb=(pr&&pr.photo)
+              ?`<div onclick="event.stopPropagation();openLightbox('${pr.id}')" title="點一下放大" style="flex-shrink:0;width:44px;height:44px;border-radius:8px;overflow:hidden;background:white;border:1px solid #E8D5B0;cursor:zoom-in"><img src="${pr.photo}" style="width:100%;height:100%;object-fit:cover;object-position:${pr.photoPos||"50% 50%"}"/></div>`
+              :`<div style="flex-shrink:0;width:44px;height:44px;border-radius:8px;background:#FAF8F5;border:1px solid #E8D5B0;display:flex;align-items:center;justify-content:center;font-size:20px">${x.productEmoji||(pr&&pr.emoji)||"📦"}</div>`;
+            const link=pr
+              ?`<span onclick="event.stopPropagation();eoOpenProd('${pr.id}')" title="開啟這個商品的頁面" style="font-size:14px;font-weight:900;color:#1E5F8C;cursor:pointer;text-decoration:underline;text-underline-offset:3px">${nm}</span>`
+              :`<span style="font-size:14px;font-weight:900;color:#3D2010">${nm}</span>`;
+            return thumb+link;
+          })()}
           ${x.spec?`<span style="font-size:11px;font-weight:700;color:#9C7A5A;background:#F5F0E8;border-radius:4px;padding:1px 6px">${x.spec}</span>`:""}
           ${purchasedTag}
           <span style="font-size:10px;font-weight:700;color:${scol[x.status]||"#9C7A5A"}">${sl[x.status]||""}</span>
@@ -13054,8 +13177,56 @@ window.openEditOrd=function(oid){
         </div>
         <div>
           <div style="font-size:10px;color:#9C7A5A;margin-bottom:2px">售價 (NT$)</div>
-          <input type="text" inputmode="decimal" class="eo-price" value="${dp}" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;font-size:14px;font-weight:700;outline:none"/>
+          <input type="text" inputmode="decimal" class="eo-price" oninput="eoUpdateCostHint(this)" value="${dp}" style="width:100%;background:#FAF8F5;border:1px solid #E8D5B0;border-radius:8px;padding:6px 10px;font-size:14px;font-weight:700;outline:none"/>
         </div>
+      </div>
+      <div class="hide-staff" style="margin-bottom:8px;background:#F0F9FF;border:1px solid #BEE0F5;border-radius:8px;padding:8px 10px">
+        ${(()=>{
+          const pr=window.G.products.find(p=>p.id===x.productId);
+          const cur=x.buyCurrency||pr?.currency||"KRW";
+          const sym=(CURR[cur]||{}).symbol||cur;
+          const nr=(typeof x.buyNoRefund==="boolean")?x.buyNoRefund:!!(pr&&window.isDutyFreeChannel(pr.channel,pr.flags?.noTaxRefund));
+          const pm=x.paymentMethodSnapshot||pr?.paymentMethod||"card";
+          const uc=Math.round(window.getOrderUnitCost(x,pr)*10)/10;
+          const locked=typeof x.costSnapshot==="number";
+          // 原幣價：優先用這筆訂單自己記的；沒記的話用商品設定的價格。
+          // 但已鎖定成本的舊訂單，要換算回來跟鎖定的成本差不多（3%內）才採用，對不上就留空，不亂猜
+          let fa=(typeof x.buyForeignAmount==="number"&&x.buyForeignAmount>0)?x.buyForeignAmount:null;
+          let faNote="";
+          if(fa===null&&pr){
+            const cand=pr.foreignAmount||pr.krw||0;
+            if(cand>0){
+              if(!locked){fa=cand;}
+              else{
+                try{
+                  const est=window.calcCost(cand,cur,nr,pm).afterTax;
+                  if(Math.abs(est-x.costSnapshot)<=Math.max(0.5,x.costSnapshot*0.03)){fa=cand;faNote="（推算）";}
+                }catch(e){}
+              }
+            }
+          }
+          const tag=x.costPending===true
+            ?'<span style="font-size:9px;font-weight:700;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:1px 6px;border-radius:4px">待補實際成本</span>'
+            :(x.costManual===true
+              ?'<span style="font-size:9px;font-weight:700;background:#DCFCE7;color:#166534;border:1px solid #86EFAC;padding:1px 6px;border-radius:4px">已手動修改</span>'
+              :(locked
+                ?'<span style="font-size:9px;font-weight:700;background:#E0F2FE;color:#0369A1;border:1px solid #7DD3FC;padding:1px 6px;border-radius:4px">買到當時鎖定</span>'
+                :'<span style="font-size:9px;font-weight:700;background:#F3F4F6;color:#6B7280;border:1px solid #D1D5DB;padding:1px 6px;border-radius:4px">估算（還沒鎖定）</span>'));
+          const profit=Math.round((dp-uc)*10)/10;
+          const margin=dp>0?Math.round(profit/dp*100):0;
+          const inpStyle="width:100%;background:white;border:1px solid #BEE0F5;border-radius:8px;padding:6px 10px;font-size:14px;font-weight:700;outline:none;box-sizing:border-box";
+          return `<div class="eo-cost-box" data-cur="${cur}" data-nr="${nr?1:0}" data-pm="${pm}">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap"><span style="font-size:10px;color:#1E5F8C;font-weight:700">當時成本（每件）</span>${tag}</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div><div style="font-size:10px;color:#9C7A5A;margin-bottom:2px">原幣價（${sym}）${faNote}</div>
+                <input type="text" inputmode="decimal" class="eo-cost-foreign" oninput="eoCostInput(this,'foreign')" value="${fa==null?"":fa}" placeholder="${fa==null?"未記錄":""}" style="${inpStyle}"/></div>
+              <div><div style="font-size:10px;color:#9C7A5A;margin-bottom:2px">台幣成本（NT$）</div>
+                <input type="text" inputmode="decimal" class="eo-cost" oninput="eoCostInput(this,'twd')" value="${uc}" style="${inpStyle}"/></div>
+            </div>
+            <div class="eo-cost-hint" style="font-size:10px;color:#1E5F8C;margin-top:4px">每件利潤 NT$${profit}（${margin}%）</div>
+            <div style="font-size:10px;color:#9C7A5A;margin-top:2px">改原幣價會自動換算成台幣成本；也可以直接改台幣</div>
+          </div>`;
+        })()}
       </div>
       <div style="margin-bottom:8px">
         ${x.unitPrice&&Math.round(x.unitPrice)!==Math.round(dp)?`
@@ -13083,7 +13254,12 @@ window.openEditOrd=function(oid){
   }).join("")+(!window.G.eoExpanded&&cOrders.length>EO_COLLAPSE_N?`<button id="eo-expand-btn" onclick="eoToggleExpand()" style="width:100%;margin-bottom:8px;background:#FDF6EC;color:#B08968;border:1px dashed #E8D5B0;border-radius:8px;padding:8px;font-size:12px;font-weight:700;cursor:pointer">▼ 展開查看／編輯其餘 ${cOrders.length-EO_COLLAPSE_N} 筆</button>`:"");
 
   const el=document.getElementById("modal-eord");
-  if(el)el.style.display="flex";
+  if(el){
+    let wantFull=false;try{wantFull=localStorage.getItem("eoFull")==="1";}catch(e){}
+    el.classList.toggle("eo-full",wantFull);
+    const fb=document.getElementById("eo-full-btn");if(fb)fb.textContent=wantFull?"⛶ 還原":"⛶ 全螢幕";
+    el.style.display="flex";
+  }
   window.eoDetectOldPercentDiscount(cOrders);
   window.eoDetectOrphanCrossPromo(cOrders);
 };
@@ -13645,7 +13821,7 @@ window.renderCustomers=function(){
   }
   // 只看底下有任何一筆訂單填了備註（discountNote）的客戶，方便快速找出「缺貨候補」這類需要特別留意的訂單
   if(custViewFilter==="hasNote"){
-    const allOrders=window.G.orders;
+    const allOrders=getTripOrders();
     filtered=filtered.filter(c=>allOrders.some(o=>{
       const match=o.customerId
         ?o.customerId===c.id
@@ -13657,7 +13833,7 @@ window.renderCustomers=function(){
   // 只看有買到冷藏／高風險冷藏商品的客戶——只要有一筆是冷藏，這個客戶就整張卡片留下來，
   // 底下常溫的商品也會一起正常顯示，不會只挑出冷藏那幾筆單獨秀
   if(custViewFilter==="hasCold"){
-    const allOrders=window.G.orders;
+    const allOrders=getTripOrders();
     filtered=filtered.filter(c=>allOrders.some(o=>{
       const match=o.customerId
         ?o.customerId===c.id
@@ -14460,24 +14636,215 @@ window.togglePurchased=async function(oid){
     // 標記為「已購買」的這一刻，把當下的成本凍結存起來，之後就算匯率變動，這筆訂單的利潤也不會再跟著漂移
     const prod=window.G.products.find(x=>x.id===o.productId);
     if(prod){
-      // 同一款商品，這次可能刷卡買、下次可能現金買，所以每次標記已買到都要問一次，
-      // 不能永遠套用商品身上那個「預設」付款方式——這裡問的是「這一次實際購入」用的方式
+      // 現場沒空算，所以標記已買到時「一鍵完成、不問任何問題」：
+      // 成本先暫時用商品設定的價格和預設付款方式估算，並標記「待補實際成本」，
+      // 回來之後到「更多工具 → 待補實際成本」補這次實際買的價格（同商品在不同地方買價格可能不同）
       const defaultPm=prod.paymentMethod||"card";
-      const pmThisTime=await askPaymentMethodModal();
-      upd.costSnapshot=calcCost(prod.foreignAmount||prod.krw||0,prod.currency||"KRW",window.isDutyFreeChannel(prod.channel,prod.flags?.noTaxRefund),pmThisTime).afterTax;
+      upd.costSnapshot=calcCost(prod.foreignAmount||prod.krw||0,prod.currency||"KRW",window.isDutyFreeChannel(prod.channel,prod.flags?.noTaxRefund),defaultPm).afterTax;
       upd.costSnapshotAt=Date.now();
-      upd.paymentMethodSnapshot=pmThisTime;
+      upd.paymentMethodSnapshot=defaultPm;
+      upd.costPending=true;
+      upd.buyForeignAmount=prod.foreignAmount||prod.krw||0;
+      upd.buyCurrency=prod.currency||"KRW";
+      upd.buyNoRefund=!!window.isDutyFreeChannel(prod.channel,prod.flags?.noTaxRefund);
     }
   } else {
     // 取消勾選：把舊的凍結成本清掉，退回「即時估算」狀態，避免在還沒真的買之前，誤用上一次的舊快照
     upd.costSnapshot=null;
     upd.costSnapshotAt=null;
     upd.paymentMethodSnapshot=null;
+    upd.costPending=null;
+    upd.buyForeignAmount=null;
+    upd.buyNoRefund=null;
+    upd.buyCurrency=null;
   }
   upd.lastActivityAt=Date.now();
   await fbUpd("orders",oid,upd);
   if(o)o.lastActivityAt=upd.lastActivityAt;
-  showToast(next?"✓ 已標記為買到了！":"已取消買到標記");
+  showToast(next?(upd.costPending?"✓ 已標記買到！實際價格可之後到「更多工具→待補實際成本」補":"✓ 已標記為買到了！"):"已取消買到標記");
+  if(typeof updateCostPendingBadge==="function")updateCostPendingBadge();
+};
+
+// ══ 待補實際成本 ══════════════════════════════════════════════════
+// 已買到、但還沒補實際價格的訂單（成本目前是用商品設定價格估的）
+window.getCostPendingOrders=function(){
+  return (window.G.orders||[]).filter(o=>o.purchased&&o.costPending===true);
+};
+window.updateCostPendingBadge=function(){
+  const n=window.getCostPendingOrders().length;
+  const dot=document.getElementById("fc-dot");if(dot)dot.style.display=n?"inline-block":"none";
+  const lb=document.getElementById("fc-menu-label");if(lb)lb.textContent=n?`待補實際成本（${n} 筆）`:"待補實際成本";
+};
+setInterval(()=>{try{window.updateCostPendingBadge();}catch(e){}},3000);
+window.showFixCost=function(){
+  window.renderFixCost();
+  openModal("modal-fix-cost");
+};
+window.renderFixCost=function(){
+  const body=document.getElementById("fix-cost-body");if(!body)return;
+  const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const pending=window.getCostPendingOrders();
+  if(!pending.length){
+    body.innerHTML='<div style="text-align:center;padding:30px 0;color:#9C7A5A;font-size:13px">✅ 沒有待補的項目</div>';
+    window.G._fcGroups=[];window.updateCostPendingBadge();return;
+  }
+  const byProd={};
+  pending.forEach(o=>{(byProd[o.productId||"?"]=byProd[o.productId||"?"]||[]).push(o);});
+  const groups=Object.keys(byProd).map(pid=>({pid,orders:byProd[pid]}));
+  window.G._fcGroups=groups;
+  body.innerHTML=groups.map((g,gi)=>{
+    const prod=window.G.products.find(x=>x.id===g.pid);
+    const o0=g.orders[0];
+    const name=prod?prod.name:(o0.productName||"（商品已刪除）");
+    const cur=prod?(prod.currency||"KRW"):"";
+    const defAmt=prod?(prod.foreignAmount||prod.krw||0):0;
+    const defNoRefund=prod?!!window.isDutyFreeChannel(prod.channel,prod.flags?.noTaxRefund):false;
+    const defPm=prod?(prod.paymentMethod||"card"):"card";
+    const rows=g.orders.map(o=>`<label style="display:flex;gap:8px;align-items:center;font-size:12px;color:#3D2010;padding:4px 0;cursor:pointer"><input type="checkbox" class="fc-chk" data-oid="${esc(o.id)}" checked/><span style="flex:1">${esc(o.communityName||o.buyerName||o.lineName||"未知")}${o.spec?"｜"+esc(o.spec):""} × ${o.qty||1}</span></label>`).join("");
+    if(!prod){
+      return `<div data-gi="${gi}" style="border:1px solid #E8D5B0;border-radius:14px;padding:12px;margin-bottom:12px"><div style="font-weight:800;font-size:13px;color:#3D2010">${esc(name)}</div><div style="font-size:11px;color:#C0392B;margin:4px 0">找不到這個商品，無法補成本</div>${rows}</div>`;
+    }
+    return `<div data-gi="${gi}" style="border:1px solid #E8D5B0;border-radius:14px;padding:12px;margin-bottom:12px">
+      <div style="font-weight:800;font-size:13px;color:#3D2010">${esc(prod.emoji||"📦")} ${esc(name)}</div>
+      <div style="font-size:11px;color:#9C7A5A;margin:2px 0 6px">商品設定價格：${defAmt} ${esc(cur)}　｜　勾選要套用的訂單：</div>
+      ${rows}
+      <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+        <input type="text" inputmode="decimal" class="fc-amt" value="${defAmt||""}" placeholder="這次實際買的價格（${esc(cur)}）" style="flex:1;min-width:0;background:#FAF8F5;border:1.5px solid #E8D5B0;border-radius:10px;padding:10px;font-size:15px;font-weight:700;text-align:center;outline:none;box-sizing:border-box"/>
+        <select class="fc-pm" style="background:#FAF8F5;border:1.5px solid #E8D5B0;border-radius:10px;padding:10px 6px;font-size:13px;font-weight:700;color:#3D2010;outline:none"><option value="card"${defPm!=="cash"?" selected":""}>💳 刷卡</option><option value="cash"${defPm==="cash"?" selected":""}>💵 現金</option></select>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#5C3A1E;margin:8px 0;cursor:pointer"><input type="checkbox" class="fc-nr"${defNoRefund?" checked":""}/> 這次買的地方無法退稅</label>
+      <div style="display:flex;gap:8px">
+        <button onclick="fcApply(${gi},false)" style="flex:2;padding:11px;border-radius:10px;border:none;background:#5C3A1E;color:#F5E6C8;font-size:13px;font-weight:700;cursor:pointer">確認這幾筆</button>
+        <button onclick="fcApply(${gi},true)" style="flex:1;padding:11px;border-radius:10px;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;font-size:12px;font-weight:700;cursor:pointer">沿用原價</button>
+      </div>
+    </div>`;
+  }).join("");
+  window.updateCostPendingBadge();
+};
+window.fcApply=async function(gi,useDefault){
+  const g=(window.G._fcGroups||[])[gi];if(!g)return;
+  const root=document.querySelector(`#fix-cost-body [data-gi="${gi}"]`);if(!root)return;
+  const prod=window.G.products.find(x=>x.id===g.pid);
+  if(!prod){showToast("找不到這個商品","error");return;}
+  const oids=[...root.querySelectorAll(".fc-chk:checked")].map(x=>x.dataset.oid);
+  if(!oids.length){showToast("請至少勾選一筆訂單","error");return;}
+  const cur=prod.currency||"KRW";
+  let amt,noRefund,pm;
+  if(useDefault){
+    amt=prod.foreignAmount||prod.krw||0;
+    noRefund=!!window.isDutyFreeChannel(prod.channel,prod.flags?.noTaxRefund);
+    pm=prod.paymentMethod||"card";
+  } else {
+    amt=parseFloat(String(root.querySelector(".fc-amt")?.value||"").replace(/,/g,""));
+    noRefund=!!root.querySelector(".fc-nr")?.checked;
+    pm=root.querySelector(".fc-pm")?.value==="cash"?"cash":"card";
+  }
+  if(!(amt>0)){showToast("請輸入正確的價格","error");return;}
+  const afterTax=calcCost(amt,cur,noRefund,pm).afterTax;
+  try{
+    for(const oid of oids){
+      const o=window.G.orders.find(x=>x.id===oid);if(!o)continue;
+      const upd={costSnapshot:afterTax,costSnapshotAt:Date.now(),paymentMethodSnapshot:pm,buyForeignAmount:amt,buyCurrency:cur,buyNoRefund:noRefund,costPending:false};
+      await fbUpd("orders",oid,upd);
+      Object.assign(o,upd);
+    }
+    showToast(`✓ 已補好 ${oids.length} 筆的成本`);
+  }catch(e){
+    console.error(e);showToast("儲存失敗，請再試一次","error");
+  }
+  window.renderFixCost();
+  if(typeof renderCustomers==="function")renderCustomers();
+  if(typeof renderInvoice==="function")renderInvoice();
+};
+
+// ══ 備貨清單裡直接編輯商品／看客人整張訂單（不用關掉備貨清單去別的頁面）══════════
+// 備貨清單跟「修改商品」視窗原本的層級一樣高，後開的會被蓋住，所以從備貨清單開的時候把修改商品視窗拉高一點
+window.spEditProd=function(pid){
+  const el=document.getElementById("modal-eprod");
+  if(el)el.style.zIndex="60";
+  window.G._eprodFromStockPlan=true;
+  openEditProd(pid);
+};
+// 關掉修改商品視窗時：把層級還原；如果是從備貨清單開的，備貨清單的價格、數量就立刻更新
+(function(){
+  const _closeModalOrig=window.closeModal;
+  window.closeModal=function(id){
+    const r=_closeModalOrig.apply(this,arguments);
+    if(id==="modal-eprod"){
+      const el=document.getElementById("modal-eprod");
+      if(el)el.style.zIndex="50";
+      if(window.G._eprodFromStockPlan){
+        window.G._eprodFromStockPlan=false;
+        const refresh=()=>{
+          const sp=document.getElementById("modal-stock-plan");
+          if(sp&&sp.style.display!=="none"&&typeof window.renderStockPlanContent==="function")window.renderStockPlanContent();
+        };
+        refresh();
+        setTimeout(refresh,800); // 商品資料同步回來之後再更新一次，確保顯示的是最新價格
+      }
+    }
+    return r;
+  };
+})();
+// 點備貨清單裡的客人名字：跳出這位客人「這一趟」所有品項、已買到/待購買、金額（只看、不會改動任何資料）
+window.spShowBuyer=function(oid){
+  const o0=window.G.orders.find(x=>x.id===oid);if(!o0)return;
+  const keyOf=o=>o.customerId||o.communityName||o.buyerName||"未知";
+  const key=keyOf(o0);
+  const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  // 只列「你點的這一筆訂單所屬的那一趟」，不會把上一趟、更早的商品也一起列出來。
+  // （外面的趟次選單如果選「全部趟次」，getTripOrders() 會回傳所有趟次，所以這裡不能直接用它）
+  const tripOfOrder=o=>o.tripId||(detectTripForOrder(o)?.id)||"";
+  const thisTripId=tripOfOrder(o0);
+  const thisTrip=thisTripId?(window.G.trips||[]).find(tr=>tr.id===thisTripId):null;
+  const pool=thisTripId?window.G.orders.filter(o=>tripOfOrder(o)===thisTripId):getTripOrders();
+  const list=pool.filter(o=>keyOf(o)===key&&o.status!=="cancelled")
+    .sort((a,b)=>{
+      const sa=(a.status==="shipped"||a.status==="settled")?1:0, sb=(b.status==="shipped"||b.status==="settled")?1:0;
+      return sa-sb||(a.createdAt||0)-(b.createdAt||0);
+    });
+  const name=o0.communityName||o0.buyerName||o0.lineName||"未知";
+  let sum=0,buyQty=0,totalQty=0;
+  const rows=list.map(o=>{
+    const qty=o.qty||1;
+    const amt=o.total!=null?o.total:(o.unitPrice||0)*qty;
+    const done=o.status==="shipped"||o.status==="settled";
+    const isQuote=o.orderType==="quote";
+    if(!isQuote)sum+=amt;
+    totalQty+=qty;if(o.purchased)buyQty+=qty;
+    const badge=done?`<span style="font-size:10px;font-weight:700;color:#6B7280;background:#F3F4F6;border-radius:6px;padding:2px 6px">${o.status==="shipped"?"已出貨":"已結清"}</span>`
+      :isQuote?`<span style="font-size:10px;font-weight:700;color:#7C3AED;background:#F3E8FF;border-radius:6px;padding:2px 6px">待報價</span>`
+      :o.purchased?`<span style="font-size:10px;font-weight:700;color:#166534;background:#DCFCE7;border-radius:6px;padding:2px 6px">✓ 已買到</span>`
+      :`<span style="font-size:10px;font-weight:700;color:#92400E;background:#FEF3C7;border-radius:6px;padding:2px 6px">待購買</span>`;
+    const isHere=o.id===oid;
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;margin-bottom:6px;background:${isHere?"#FFF8E1":"#FAF8F5"};border:1px solid ${isHere?"#FFE082":"#E8D5B0"};${done?"opacity:0.6":""}">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:700;color:#3D2010;overflow-wrap:anywhere">${esc(o.productEmoji||"📦")} ${esc(o.productName||"")}${o.spec?"｜"+esc(o.spec):""} × ${qty}</div>
+        <div style="margin-top:3px">${badge}</div>
+      </div>
+      <div style="flex-shrink:0;font-size:12px;font-weight:900;color:#3D2010">${isQuote?"—":"NT$"+Number(amt).toLocaleString()}</div>
+    </div>`;
+  }).join("");
+  let modal=document.getElementById("modal-sp-buyer");
+  if(!modal){
+    modal=document.createElement("div");
+    modal.id="modal-sp-buyer";
+    modal.style.cssText="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:10050;align-items:center;justify-content:center;padding:16px";
+    modal.addEventListener("click",e=>{if(e.target===modal)modal.style.display="none";});
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML=`<div style="background:white;border-radius:16px;width:100%;max-width:400px;max-height:82vh;display:flex;flex-direction:column;box-shadow:0 10px 30px rgba(0,0,0,0.25)">
+    <div style="padding:16px 18px 8px">
+      <div style="font-size:15px;font-weight:900;color:#3D2010">👤 ${esc(name)}</div>
+      <div style="font-size:11px;color:#9C7A5A;margin-top:3px">這一趟${thisTrip&&thisTrip.name?"（"+esc(thisTrip.name)+"）":""}共 ${totalQty} 件，已買到 ${buyQty} 件　｜　品項小計 NT$${Number(sum).toLocaleString()}</div>
+    </div>
+    <div style="padding:6px 18px;overflow-y:auto;flex:1">${rows||'<div style="text-align:center;color:#9C7A5A;font-size:12px;padding:20px 0">沒有訂單</div>'}</div>
+    <div style="padding:8px 18px 16px">
+      <div style="font-size:10px;color:#9C7A5A;margin-bottom:8px">小計不含整批折扣、訂金、運費，完整金額請看對帳單</div>
+      <button onclick="document.getElementById('modal-sp-buyer').style.display='none'" style="width:100%;padding:11px;border-radius:10px;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;font-size:13px;font-weight:700;cursor:pointer">關閉</button>
+    </div>
+  </div>`;
+  modal.style.display="flex";
 };
 
 // ── 複製對帳單（客戶頁）──────────────────────────────────────────────
@@ -15193,10 +15560,59 @@ window.sendOrderConfirmMessage=async function(){
 };
 
 // ── 複製對帳單（對帳單頁）──────────────────────────────────────────────
+window.isColdOrderItem=function(o){
+  const pr=window.G.products.find(x=>x.id===o.productId);
+  return !!(pr?.flags?.isCold||pr?.flags?.coldHigh);
+};
 window.openAskSettlement=function(buyerKey){
   window.G._askSettlementBuyerKey=buyerKey;
+  // 每次打開都重設成「全部商品」，避免上一位客人的選擇不小心帶到這一位
+  const allRadio=document.querySelector('input[name="ask-scope"][value="all"]');if(allRadio)allRadio.checked=true;
+  const row=document.getElementById("ask-freight-row");if(row)row.style.display="none";
+  const amt=document.getElementById("ask-freight-amt");
+  if(amt){let last="";try{last=localStorage.getItem("lastColdFreight")||"";}catch(e){}amt.value=last;}
+  // 提示：這位客人還沒出貨的商品裡，冷藏、常溫各幾件
+  const hint=document.getElementById("ask-freight-hint");
+  if(hint){
+    let coldQty=0,ambQty=0;
+    getTripOrders().forEach(o=>{
+      const key=o.customerId||o.communityName||o.buyerName||"未知";
+      if(key!==buyerKey||o.status==="shipped"||o.batchClosed)return;
+      if(window.isColdOrderItem(o))coldQty+=(o.qty||1);else ambQty+=(o.qty||1);
+    });
+    hint.textContent=`這位客人：冷藏 ${coldQty} 件、常溫 ${ambQty} 件`;
+    hint.style.display="block";
+  }
   const modal=document.getElementById("modal-ask-settlement");
   if(modal)modal.style.display="flex";
+};
+window.askFreightToggle=function(){
+  const scope=document.querySelector('input[name="ask-scope"]:checked')?.value||"all";
+  const row=document.getElementById("ask-freight-row");if(row)row.style.display=(scope==="cold"||scope==="together")?"block":"none";
+  if(scope==="cold"||scope==="together")setTimeout(()=>document.getElementById("ask-freight-amt")?.focus(),30);
+};
+// 結清單：冷藏、常溫分開寄、分開收款，所以可以選「只算常溫」或「只算冷藏（加運費）」
+// 選冷藏就把運費加進應付金額、明細多一行，而且不保留賣貨便貨到付款的100；選「全部商品」跟以前完全一樣
+// 只影響「這一次」複製/傳送的訊息，不會改動訂單資料
+window.askSettleGo=function(mode){
+  const key=window.G._askSettlementBuyerKey;
+  const scope=document.querySelector('input[name="ask-scope"]:checked')?.value||"all";
+  let opts=null;
+  if(scope==="cold"||scope==="together"){
+    const amt=parseInt(String(document.getElementById("ask-freight-amt")?.value||"").replace(/[^\d]/g,""),10);
+    if(!(amt>0)){showToast("請輸入運費金額","error");return;}
+    opts={scope,amount:amt};
+    try{localStorage.setItem("lastColdFreight",String(amt));}catch(e){}
+  } else if(scope==="ambient"){
+    opts={scope:"ambient",amount:0};
+  }
+  closeModal("modal-ask-settlement");
+  window.G._settleFreightOpts=opts;
+  try{
+    if(mode==="send")openSendSettlement(key);else copyBuyerOrder(key);
+  }finally{
+    window.G._settleFreightOpts=null;
+  }
 };
 window.copyBuyerOrder=function(buyerKey){
   const allBuyerOrders=getTripOrders().filter(o=>{
@@ -15207,8 +15623,14 @@ window.copyBuyerOrder=function(buyerKey){
   // 已經出貨的品項代表款項已經收完、流程已經走完，不該再被算進「這次還要收多少錢」的結清單裡，
   // 不然客人會收到一份把已經付清的東西也一起列進待收金額的帳單，變成算錯錢
   const shippedCount=allBuyerOrders.filter(o=>o.status==="shipped"||o.batchClosed).length;
-  const buyerOrders=allBuyerOrders.filter(o=>o.status!=="shipped"&&!o.batchClosed);
+  let buyerOrders=allBuyerOrders.filter(o=>o.status!=="shipped"&&!o.batchClosed);
   if(!buyerOrders.length){showToast("這位客人的品項都已經出貨、結清了，沒有還需要收款的部分","warning");return;}
+  // 冷藏、常溫分開寄、分開收款：從「結清單」彈窗選了只算冷藏/只算常溫，這張單就只列那一種
+  const settleScope=window.G._settleFreightOpts?.scope||"all";
+  if(settleScope==="cold"||settleScope==="ambient"){
+    buyerOrders=buyerOrders.filter(o=>settleScope==="cold"?window.isColdOrderItem(o):!window.isColdOrderItem(o));
+    if(!buyerOrders.length){showToast(settleScope==="cold"?"這位客人沒有冷藏商品":"這位客人沒有常溫商品","warning");return;}
+  }
   const name=buyerOrders[0].communityName||buyerOrders[0].buyerName||"買家";
   // 折扣、免運、訂金都改成只在「還沒出貨的buyerOrders」裡面找，不要用allBuyerOrders——
   // 已經出貨結清的舊訂單，它身上記的折扣/訂金代表「那筆交易已經處理完了」，
@@ -15231,11 +15653,15 @@ window.copyBuyerOrder=function(buyerKey){
   const afterPct=pctOrder?Math.round(rawTotal*pctOrder.sharedDiscountPercent/10):rawTotal;
   const total=afterPct-sharedDisc;
   const totalDeposit=buyerOrders.reduce((s,o)=>s+(o.depositAmt||0),0);
-  const codReserve=100; // 貨到付款服務費固定要留，跟有沒有免運無關（免運只是運費，是不同的錢）
-  const payNow=Math.max(0,total-totalDeposit-codReserve);
+  // 冷藏運費（只有從「結清單」彈窗勾了才會有）：冷藏是客人全額轉帳、再用宅配寄出，
+  // 不走賣貨便貨到付款，所以勾了冷藏運費就不保留那 100
+  const freightOpts=window.G._settleFreightOpts||null;
+  const coldFreight=freightOpts&&(freightOpts.scope==="cold"||freightOpts.scope==="together")&&freightOpts.amount>0?freightOpts.amount:0;
+  const codReserve=coldFreight>0?0:100; // 一般（沒勾冷藏運費）維持：貨到付款服務費固定要留，跟有沒有免運無關
+  const payNow=Math.max(0,total+coldFreight-totalDeposit-codReserve);
   const pctLine=pctOrder?`\n打${pctOrder.sharedDiscountPercent}折後　NT$${afterPct.toLocaleString()}`:"";
   const discLine=sharedDisc>0?`\n折扣　-NT$${sharedDisc.toLocaleString()}${sharedDiscReason?`（${sharedDiscReason}）`:""}`:"";
-  const shipLine=hasFreeShipping?`\n🚚 免運${shipReason?`（${shipReason}）`:""}`:"";
+  const shipLine=(hasFreeShipping?`\n🚚 免運${shipReason?`（${shipReason}）`:""}`:"")+(coldFreight>0?`\n${settleScope==="together"?"運費":"冷藏運費"}　NT$${coldFreight.toLocaleString()}`:"");
   const remainder=total-totalDeposit;
   const payLine=codReserve===0
     ?`🌟應付金額　NT$${payNow.toLocaleString()}`
@@ -15270,8 +15696,14 @@ window.openSendSettlement=async function(buyerKey){
   if(!allBuyerOrders.length){showToast("找不到訂單","warning");return;}
   // 已經出貨的品項代表款項已經收完、流程已經走完，不該再被算進「這次還要收多少錢」的結清單裡
   const shippedCountForSettlement=allBuyerOrders.filter(o=>o.status==="shipped"||o.batchClosed).length;
-  const buyerOrders=allBuyerOrders.filter(o=>o.status!=="shipped"&&!o.batchClosed);
+  let buyerOrders=allBuyerOrders.filter(o=>o.status!=="shipped"&&!o.batchClosed);
   if(!buyerOrders.length){showToast("這位客人的品項都已經出貨、結清了，沒有還需要收款的部分","warning");return;}
+  // 冷藏、常溫分開寄、分開收款：從「結清單」彈窗選了只算冷藏/只算常溫，這張單就只列那一種
+  const settleScope=window.G._settleFreightOpts?.scope||"all";
+  if(settleScope==="cold"||settleScope==="ambient"){
+    buyerOrders=buyerOrders.filter(o=>settleScope==="cold"?window.isColdOrderItem(o):!window.isColdOrderItem(o));
+    if(!buyerOrders.length){showToast(settleScope==="cold"?"這位客人沒有冷藏商品":"這位客人沒有常溫商品","warning");return;}
+  }
   const first=buyerOrders[0];
   const c=window.G.customers.find(x=>x.id===first.customerId);
   const custName=c?(c.communityName||c.lineName||"客人"):(first.communityName||first.buyerName||"客人");
@@ -15295,11 +15727,15 @@ window.openSendSettlement=async function(buyerKey){
   const afterPct=pctOrder?Math.round(rawTotal*pctOrder.sharedDiscountPercent/10):rawTotal;
   const total=afterPct-sharedDisc;
   const totalDeposit=buyerOrders.reduce((s,o)=>s+(o.depositAmt||0),0);
-  const codReserve=100; // 貨到付款服務費固定要留，跟有沒有免運無關（免運只是運費，是不同的錢）
-  const payNow=Math.max(0,total-totalDeposit-codReserve);
+  // 冷藏運費（只有從「結清單」彈窗勾了才會有）：冷藏是客人全額轉帳、再用宅配寄出，
+  // 不走賣貨便貨到付款，所以勾了冷藏運費就不保留那 100
+  const freightOpts=window.G._settleFreightOpts||null;
+  const coldFreight=freightOpts&&(freightOpts.scope==="cold"||freightOpts.scope==="together")&&freightOpts.amount>0?freightOpts.amount:0;
+  const codReserve=coldFreight>0?0:100; // 一般（沒勾冷藏運費）維持：貨到付款服務費固定要留，跟有沒有免運無關
+  const payNow=Math.max(0,total+coldFreight-totalDeposit-codReserve);
   const pctLine=pctOrder?`\n打${pctOrder.sharedDiscountPercent}折後　NT$${afterPct.toLocaleString()}`:"";
   const discLine=sharedDisc>0?`\n折扣　-NT$${sharedDisc.toLocaleString()}${sharedDiscReason?`（${sharedDiscReason}）`:""}`:"";
-  const shipLine=hasFreeShipping?`\n🚚 免運${shipReason?`（${shipReason}）`:""}`:"";
+  const shipLine=(hasFreeShipping?`\n🚚 免運${shipReason?`（${shipReason}）`:""}`:"")+(coldFreight>0?`\n${settleScope==="together"?"運費":"冷藏運費"}　NT$${coldFreight.toLocaleString()}`:"");
   const remainder=total-totalDeposit;
   const payLine=codReserve===0
     ?`🌟應付金額　NT$${payNow.toLocaleString()}`
@@ -17637,7 +18073,10 @@ window.swUpdate = function(){
   <div style="background:white;border-radius:20px;width:100%;max-width:480px;padding:24px;margin:auto">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <h3 style="margin:0;font-size:16px;font-weight:900;color:#3D2010">📦 備貨清單</h3>
-      <button onclick="document.getElementById('modal-stock-plan').style.display='none'" style="font-size:24px;color:#9C7A5A;background:none;border:none;cursor:pointer">×</button>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button onclick="openAddWishlistPrompt()" style="font-size:12px;font-weight:700;color:#9C6B00;background:#FFF8E1;border:1px solid #FFE082;border-radius:99px;padding:6px 12px;cursor:pointer">🙋 新增願望</button>
+        <button onclick="document.getElementById('modal-stock-plan').style.display='none'" style="font-size:24px;color:#9C7A5A;background:none;border:none;cursor:pointer">×</button>
+      </div>
     </div>
     <div style="display:flex;gap:6px;margin-bottom:10px">
       <button id="sp-view-buy" onclick="setStockPlanViewMode('buy')" style="flex:1;font-size:12px;font-weight:700;padding:9px 8px;border-radius:10px;border:1.5px solid #C5A880;background:#C5A880;color:white;cursor:pointer">待購買</button>
