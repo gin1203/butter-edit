@@ -1650,6 +1650,7 @@ body.live-mode .hide-live { display: none !important; }
     <div style="border:1.5px solid #E8D5B0;border-radius:12px;padding:10px 12px;margin-bottom:12px;background:#FAF8F5">
       <div style="font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:6px">這張結清單要算哪些商品？（冷藏、常溫分開寄時用）</div>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#3D2010;cursor:pointer;padding:3px 0"><input type="radio" name="ask-scope" value="all" checked onchange="askFreightToggle()"/> 全部商品（跟以前一樣）</label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#3D2010;cursor:pointer;padding:3px 0"><input type="radio" name="ask-scope" value="meetup" onchange="askFreightToggle()"/> 🤝 面交（全額轉帳，不分常溫／冷藏，不保留 NT$100）</label>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#3D2010;cursor:pointer;padding:3px 0"><input type="radio" name="ask-scope" value="ambient" onchange="askFreightToggle()"/> 只算常溫（賣貨便，保留 NT$100）</label>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#3D2010;cursor:pointer;padding:3px 0"><input type="radio" name="ask-scope" value="cold" onchange="askFreightToggle()"/> 🚚 只算冷藏（加運費，不保留 NT$100）</label>
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#3D2010;cursor:pointer;padding:3px 0"><input type="radio" name="ask-scope" value="together" onchange="askFreightToggle()"/> 📦 冷藏＋常溫一起寄（加運費，不保留 NT$100）</label>
@@ -1662,6 +1663,7 @@ body.live-mode .hide-live { display: none !important; }
         <div style="font-size:11px;color:#9C7A5A;margin-top:6px">冷藏是全額轉帳再宅配，所以不保留賣貨便貨到付款的 NT$100</div>
       </div>
     </div>
+    <div id="ask-bank-box" style="border:1.5px solid #E8D5B0;border-radius:12px;padding:10px 12px;margin-bottom:12px;background:#FAF8F5"></div>
     <button onclick="askSettleGo('send')" style="width:100%;padding:12px;border-radius:10px;border:none;background:#06C755;color:white;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">📤 直接傳送到LINE給客人</button>
     <button onclick="askSettleGo('copy')" style="width:100%;padding:12px;border-radius:10px;border:1.5px solid #90D7FF;background:#EAF4FD;color:#0277BD;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">📋 改成複製（貼到別的地方）</button>
     <button onclick="closeModal('modal-ask-settlement')" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid #E8D5B0;background:white;color:#9C7A5A;font-size:13px;font-weight:700;cursor:pointer">取消</button>
@@ -1749,10 +1751,12 @@ body.live-mode .hide-live { display: none !important; }
 <div id="modal-same-name" class="modal-overlay" style="display:none;position:fixed;inset:0;z-index:80;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;padding:16px">
   <div style="background:white;border-radius:18px;width:100%;max-width:380px;padding:22px">
     <div style="font-size:14px;font-weight:900;color:#3D2010;margin-bottom:4px;text-align:center">👥 找到同名客戶</div>
-    <div id="same-name-subtitle" style="font-size:12px;color:#9C7A5A;margin-bottom:16px;text-align:center"></div>
+    <div id="same-name-subtitle" style="font-size:12px;color:#9C7A5A;margin-bottom:10px;text-align:center"></div>
+    <div id="same-name-info" style="display:none;font-size:12px;color:#5C3A1E;background:#FAF8F5;border:1px solid #F0E6D0;border-radius:10px;padding:8px 12px;margin-bottom:14px;line-height:1.7"></div>
     <div style="display:flex;flex-direction:column;gap:10px">
+      <button id="same-name-yes" onclick="resolveSameNameCheck(true)" style="width:100%;padding:14px;border-radius:12px;border:2px solid #5C3A1E;background:#5C3A1E;color:#F5E6C8;font-size:14px;font-weight:700;cursor:pointer">👤 是同一人，更新舊資料</button>
       <button onclick="resolveSameNameCheck(false)" style="width:100%;padding:14px;border-radius:12px;border:2px solid #C5A880;background:#C5A880;color:white;font-size:14px;font-weight:700;cursor:pointer">🆕 不是同一人，建立新客戶</button>
-      <button onclick="resolveSameNameCheck(true)" style="width:100%;padding:14px;border-radius:12px;border:2px solid #E8D5B0;background:white;color:#9C7A5A;font-size:14px;font-weight:700;cursor:pointer">👤 是同一人，更新舊資料</button>
+      <button onclick="resolveSameNameCheck(null)" style="width:100%;padding:10px;border-radius:12px;border:none;background:transparent;color:#9C7A5A;font-size:13px;font-weight:700;cursor:pointer">↩️ 取消，先不要</button>
     </div>
   </div>
 </div>
@@ -5916,20 +5920,69 @@ window.showMergeCustomers=function(){
   document.getElementById("mc-search").value="";
   renderMergeCustomerAutoScan();
 };
-// 自動掃描：只抓「社群暱稱或LINE名稱完全一模一樣」的客戶分組——
-// 曾經試過加入「名字部分重疊」的模糊比對，但發現這個機制沒辦法兩全：
-// 門檻放寬會抓到一堆不相干的人，門檻收緊又會漏掉像「紫」跟「紫 Zih」這種真正的重複。
-// 與其用不準的猜測增加你的困擾，乾脆只做「完全一樣」這種不會出錯的自動掃描，
-// 其餘懷疑的情況（例如名字有些微差異），麻煩自己用上面的搜尋框手動找、自己判斷比較準確。
+// 自動掃描分兩區：
+// ① 完全同名：社群暱稱或LINE名稱一模一樣——幾乎一定是同一個人。
+// ② 名字很像（只是「提醒你看一下」，不會自動合併）：一個名字完整包含另一個名字，而且較短的那個至少 3 個字，
+//    例如「23號-欣妤」跟「23號-欣妤（昶霆媽媽）」。
+//    以前曾經試過更寬鬆的模糊比對，會抓到一堆不相干的人（像「妤」這種單字很多人都有），所以這裡刻意收得很緊：
+//    單字、兩個字的名字不會被拿來比，只比 3 個字以上的，寧可漏掉也不要一直誤報。
+//    抓到之後一律由你自己看過、自己選要保留哪一筆，才會合併。
+window.custNamesOf=function(c){return [c.communityName,c.lineName].map(n=>(n||"").trim().toLowerCase()).filter(Boolean);};
+window.findSuspectedDupGroups=function(){
+  const custs=window.G.customers||[];
+  const names=custs.map(c=>window.custNamesOf(c));
+  const parent=custs.map((_,i)=>i);
+  const find=x=>{while(parent[x]!==x){parent[x]=parent[parent[x]];x=parent[x];}return x;};
+  const union=(a,b)=>{const ra=find(a),rb=find(b);if(ra!==rb)parent[ra]=rb;};
+  const involved=new Set();
+  for(let i=0;i<custs.length;i++){
+    for(let j=i+1;j<custs.length;j++){
+      let exact=false,contain=false;
+      for(const a of names[i]){
+        for(const b of names[j]){
+          if(a===b){exact=true;continue;}
+          const [sh,lg]=a.length<=b.length?[a,b]:[b,a];
+          if(sh.length>=3&&lg.includes(sh))contain=true;
+        }
+      }
+      if(contain&&!exact){union(i,j);involved.add(i);involved.add(j);}
+    }
+  }
+  const groups={};
+  involved.forEach(i=>{(groups[find(i)]=groups[find(i)]||[]).push(custs[i].id);});
+  return Object.values(groups).filter(g=>g.length>=2);
+};
+// 給客戶清單用：這個客戶是不是在「完全同名」或「名字很像」的任何一組裡（算一次、快取起來）
+window.getDupFlagIds=function(){
+  const custs=window.G.customers||[];
+  const sig=custs.length+":"+custs.reduce((s,c)=>s+(c.communityName||"").length+(c.lineName||"").length,0);
+  if(window.G._dupFlagCache&&window.G._dupFlagCache.sig===sig)return window.G._dupFlagCache.ids;
+  const ids=new Set();
+  const exact={};
+  custs.forEach(c=>window.custNamesOf(c).forEach(k=>{(exact[k]=exact[k]||new Set()).add(c.id);}));
+  Object.values(exact).forEach(set=>{if(set.size>=2)set.forEach(id=>ids.add(id));});
+  window.findSuspectedDupGroups().forEach(g=>g.forEach(id=>ids.add(id)));
+  window.G._dupFlagCache={sig,ids};
+  return ids;
+};
+// 在喊單的客戶清單點「疑似重複」：直接打開合併視窗，停在包含這位客人的那一組
+window.openMergeForCustomer=function(id){
+  const custs=window.G.customers||[];
+  const me=custs.find(c=>c.id===id);if(!me)return;
+  const myNames=window.custNamesOf(me);
+  const exactIds=custs.filter(c=>c.id===id||window.custNamesOf(c).some(n=>myNames.includes(n))).map(c=>c.id);
+  let ids=exactIds.length>=2?exactIds:null;
+  if(!ids){const g=window.findSuspectedDupGroups().find(g=>g.includes(id));ids=g||null;}
+  window.showMergeCustomers();
+  if(ids&&ids.length>=2)window.openMergeGroupByIds(ids);
+};
 window.renderMergeCustomerAutoScan=function(){
   const box=document.getElementById("mc-content");
   if(!box)return;
   const custs=window.G.customers||[];
-  const namesOf=c=>[c.communityName,c.lineName].map(n=>(n||"").trim().toLowerCase()).filter(Boolean);
-
   const exactGroups={};
   custs.forEach(c=>{
-    namesOf(c).forEach(key=>{
+    window.custNamesOf(c).forEach(key=>{
       if(!exactGroups[key])exactGroups[key]=new Set();
       exactGroups[key].add(c.id);
     });
@@ -5943,20 +5996,36 @@ window.renderMergeCustomerAutoScan=function(){
     seenIds.add(key);
     dupGroups.push([...idSet]);
   });
-
-  if(!dupGroups.length){
-    box.innerHTML=`<div style="text-align:center;padding:24px 10px;color:#9C7A5A;font-size:12px">🎉 沒有掃到完全同名的重複客戶<br>如果懷疑有名字略有差異的重複（例如暱稱多打了字），<br>麻煩用上面的搜尋框手動搜尋確認</div>`;
-    return;
+  const suspected=window.findSuspectedDupGroups();
+  const nameLine=c=>`${c.communityName||"（無社群暱稱）"}　<span style="color:#9C7A5A">LINE：${c.lineName||"無"}</span>`;
+  let html="";
+  if(dupGroups.length){
+    html+=`<div style="font-size:11px;color:#9C7A5A;margin-bottom:8px">🔴 完全同名的重複（${dupGroups.length} 組），點一組展開處理</div>`+
+      dupGroups.map((ids)=>{
+        const group=ids.map(id=>custs.find(c=>c.id===id)).filter(Boolean);
+        const label=group[0]?.communityName||group[0]?.lineName||"（無名稱）";
+        return `<div onclick='openMergeGroupByIds(${JSON.stringify(ids)})' style="background:#FEF3E2;border:1px solid #F5C77E;border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer">
+          <div style="font-size:13px;font-weight:700;color:#3D2010">${label}　<span style="font-size:11px;color:#B91C1C;font-weight:700">${group.length}筆重複</span></div>
+          <div style="font-size:10px;color:#9C7A5A;margin-top:2px">點擊展開，選擇要保留哪一筆</div>
+        </div>`;
+      }).join("");
   }
-  box.innerHTML=`<div style="font-size:11px;color:#9C7A5A;margin-bottom:10px">掃到 ${dupGroups.length} 組完全同名的重複，點一組展開處理；懷疑名字有些微差異的重複，麻煩用上面搜尋框手動找</div>`+
-    dupGroups.map((ids)=>{
-      const group=ids.map(id=>custs.find(c=>c.id===id)).filter(Boolean);
-      const label=group[0]?.communityName||group[0]?.lineName||"（無名稱）";
-      return `<div onclick='openMergeGroupByIds(${JSON.stringify(ids)})' style="background:#FEF3E2;border:1px solid #F5C77E;border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer">
-        <div style="font-size:13px;font-weight:700;color:#3D2010">${label}　<span style="font-size:11px;color:#B91C1C;font-weight:700">${group.length}筆重複</span></div>
-        <div style="font-size:10px;color:#9C7A5A;margin-top:2px">點擊展開，選擇要保留哪一筆</div>
-      </div>`;
-    }).join("");
+  if(suspected.length){
+    html+=`<div style="font-size:11px;color:#9C7A5A;margin:${dupGroups.length?"14px":"0"} 0 8px">🤔 名字很像、可能是同一個人（${suspected.length} 組）——只是提醒，請自己看一下再決定要不要合併</div>`+
+      suspected.map((ids)=>{
+        const group=ids.map(id=>custs.find(c=>c.id===id)).filter(Boolean);
+        return `<div onclick='openMergeGroupByIds(${JSON.stringify(ids)})' style="background:#F5F8FF;border:1px solid #BFD3F2;border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer">
+          ${group.map(c=>`<div style="font-size:12px;font-weight:700;color:#3D2010;margin-bottom:2px">${nameLine(c)}</div>`).join("")}
+          <div style="font-size:10px;color:#6B7FA8;margin-top:4px">點擊展開，看是不是同一個人</div>
+        </div>`;
+      }).join("");
+  }
+  if(!html){
+    html=`<div style="text-align:center;padding:24px 10px;color:#9C7A5A;font-size:12px">🎉 沒有掃到重複或很像的客戶<br>如果懷疑還有，可以用上面的搜尋框手動搜尋確認</div>`;
+  } else {
+    html+=`<div style="font-size:10px;color:#C5A880;margin-top:6px;line-height:1.6">還是怕漏掉的話，用上面的搜尋框手動找最準。單字、兩個字的名字（像「妤」）不會被自動比對，避免一直誤報。</div>`;
+  }
+  box.innerHTML=html;
 };
 window.openMergeGroupByIds=function(ids){
   window.G.mcSelectedPrimary=ids[0];
@@ -6613,12 +6682,16 @@ if(sf){
       <div style="font-size:10px;color:#9C7A5A;margin-top:3px">${hint}</div>
     </div>
   `).join("")
-  +`<div style="margin:16px 0 10px;padding-top:12px;border-top:1px dashed #E8D5B0;font-size:12px;font-weight:900;color:#3D2010">💰 收款帳戶（收訂金請款文字會自動帶入）</div>`
+  +`<div style="margin:16px 0 10px;padding-top:12px;border-top:1px dashed #E8D5B0;font-size:12px;font-weight:900;color:#3D2010">💰 收款帳戶（收訂金請款、結清單文字會帶入；結清時可以勾選要附哪一組）</div>`
   +[
     ["set-bank1-name","收款帳戶 1 · 銀行名稱","例：玉山銀行（808）"],
     ["set-bank1-account","收款帳戶 1 · 帳號","例：0602979139248"],
     ["set-bank2-name","收款帳戶 2 · 銀行名稱（選填）","沒有第二組可留空"],
     ["set-bank2-account","收款帳戶 2 · 帳號（選填）","沒有第二組可留空"],
+    ["set-bank3-name","收款帳戶 3 · 銀行名稱（選填）","沒有第三組可留空"],
+    ["set-bank3-account","收款帳戶 3 · 帳號（選填）","沒有第三組可留空"],
+    ["set-bank4-name","收款帳戶 4 · 銀行名稱（選填）","沒有第四組可留空"],
+    ["set-bank4-account","收款帳戶 4 · 帳號（選填）","沒有第四組可留空"],
   ].map(([id,label,ph])=>`
     <div style="margin-bottom:12px">
       <label style="display:block;font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:5px">${label}</label>
@@ -6773,6 +6846,10 @@ onSnapshot(doc(db,"settings","main"),s=>{
     const bank1AccEl=document.getElementById("set-bank1-account");if(bank1AccEl&&!bank1AccEl.value)bank1AccEl.value=d.bank1Account||"";
     const bank2NameEl=document.getElementById("set-bank2-name");if(bank2NameEl&&!bank2NameEl.value)bank2NameEl.value=d.bank2Name||"";
     const bank2AccEl=document.getElementById("set-bank2-account");if(bank2AccEl&&!bank2AccEl.value)bank2AccEl.value=d.bank2Account||"";
+    const bank3NameEl=document.getElementById("set-bank3-name");if(bank3NameEl&&!bank3NameEl.value)bank3NameEl.value=d.bank3Name||"";
+    const bank3AccEl=document.getElementById("set-bank3-account");if(bank3AccEl&&!bank3AccEl.value)bank3AccEl.value=d.bank3Account||"";
+    const bank4NameEl=document.getElementById("set-bank4-name");if(bank4NameEl&&!bank4NameEl.value)bank4NameEl.value=d.bank4Name||"";
+    const bank4AccEl=document.getElementById("set-bank4-account");if(bank4AccEl&&!bank4AccEl.value)bank4AccEl.value=d.bank4Account||"";
     const shipKgEl=document.getElementById("set-ship-per-kg");if(shipKgEl&&!shipKgEl.value)shipKgEl.value=d.shippingPerKg||"";
   }
 });
@@ -7720,7 +7797,20 @@ window.copyLineFormat=function(id){
 // ── 客戶 ──────────────────────────────────────────────────────────────
 // 同名客戶判斷（取代confirm，避免「確定/取消」語意混淆）
 window.G._sameNameResolve=null;
-window.askSameNameModal=function(dupLabel){
+// existing：找到的那位舊客人（顯示資料讓你一眼判斷）；mode："order"＝喊單時選客人（選「同一人」只是沿用這位客人，不會動他的資料也不會合併）
+// 回傳 true＝同一人、false＝不同人（建新客戶）、null＝取消（什麼都不做）
+window.askSameNameModal=function(dupLabel,existing,mode){
+  const info=document.getElementById("same-name-info");
+  if(info){
+    if(existing){
+      const esc=x=>window.chEsc?window.chEsc(x):String(x);
+      const n=(window.G.orders||[]).filter(o=>o.customerId===existing.id&&o.status!=="cancelled").length;
+      const bits=[existing.communityName?`社群暱稱：${esc(existing.communityName)}`:"",existing.lineName?`LINE：${esc(existing.lineName)}`:"",existing.phone?`電話：${esc(existing.phone)}`:"",`已有 ${n} 筆訂單`].filter(Boolean);
+      info.innerHTML=bits.join("<br>");info.style.display="block";
+    } else {info.style.display="none";}
+  }
+  const yesBtn=document.getElementById("same-name-yes");
+  if(yesBtn)yesBtn.textContent=mode==="order"?"👤 是同一人，用這位客人":"👤 是同一人，更新舊資料";
   document.getElementById("same-name-subtitle").textContent=`找到已經存在的客人「${dupLabel}」，是同一位客人嗎？`;
   document.getElementById("modal-same-name").style.display="flex";
   return new Promise(resolve=>{window.G._sameNameResolve=resolve;});
@@ -7753,7 +7843,8 @@ window.saveCustomer=async function(){
     );
     if(dup){
       const dupLabel=dup.communityName||dup.lineName||"";
-      const useExisting=await window.askSameNameModal(dupLabel);
+      const useExisting=await window.askSameNameModal(dupLabel,dup,"customer");
+      if(useExisting===null)return; // 取消：這個客戶先不存
       if(useExisting){
         id=dup.id;
         createdAt=dup.createdAt;
@@ -9453,10 +9544,14 @@ window.saveSettings=async function(){
   const bank1Account=document.getElementById("set-bank1-account")?.value.trim()||"";
   const bank2Name=document.getElementById("set-bank2-name")?.value.trim()||"";
   const bank2Account=document.getElementById("set-bank2-account")?.value.trim()||"";
+  const bank3Name=document.getElementById("set-bank3-name")?.value.trim()||"";
+  const bank3Account=document.getElementById("set-bank3-account")?.value.trim()||"";
+  const bank4Name=document.getElementById("set-bank4-name")?.value.trim()||"";
+  const bank4Account=document.getElementById("set-bank4-account")?.value.trim()||"";
   const shippingPerKg=parseFloat(document.getElementById("set-ship-per-kg")?.value)||0;
-  await fbSet("settings","main",{rate,rateJPY,rateTHB,rateUSD,taxRefund,cardFee,cardRebate,bank1Name,bank1Account,bank2Name,bank2Account,shippingPerKg});
+  await fbSet("settings","main",{rate,rateJPY,rateTHB,rateUSD,taxRefund,cardFee,cardRebate,bank1Name,bank1Account,bank2Name,bank2Account,bank3Name,bank3Account,bank4Name,bank4Account,shippingPerKg});
   window.G.rates.KRW=rate;window.G.rates.JPY=rateJPY;window.G.rates.THB=rateTHB;window.G.rates.USD=rateUSD;
-  window.G.settings={rate,taxRefund,cardFee,cardRebate,rateJPY,rateTHB,rateUSD,bank1Name,bank1Account,bank2Name,bank2Account,shippingPerKg};
+  window.G.settings={rate,taxRefund,cardFee,cardRebate,rateJPY,rateTHB,rateUSD,bank1Name,bank1Account,bank2Name,bank2Account,bank3Name,bank3Account,bank4Name,bank4Account,shippingPerKg};
   updateStats();renderList();
   showToast("設定已儲存，商品成本已同步更新！");
 };
@@ -14519,19 +14614,7 @@ window.renderInvoice=function(){
             <span style="font-weight:900;font-size:14px;color:#3D2010">👤 ${b.name}</span>
             ${b.lineName?`<span style="font-size:11px;color:#9C7A5A;margin-left:6px">LINE：${b.lineName}</span>`:""}
           </div>
-          ${isQuoteOnly?`<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:${statusColor[allStatus]}22;color:${statusColor[allStatus]};border:1px solid ${statusColor[allStatus]}44;flex-shrink:0">${statusLabel[allStatus]||""}</span>`:(()=>{
-            const colorMap={pending:"#F59E0B",deposit:"#9333EA",settled:"#10B981",shipped:"#3B82F6"};
-            const slb={pending:"待訂金",deposit:"已付訂金",settled:"已付尾款",shipped:"已寄出"};
-            const uniform=b.orders.every(o=>o.status===b.orders[0]?.status);
-            const curVal=uniform?b.orders[0]?.status:"";
-            const curColor=curVal?colorMap[curVal]:"#9C7A5A";
-            const curLabel=curVal?slb[curVal]:"狀態不一";
-            // 平常看起來就是個小標籤，點下去才變成下拉選單，不用在訂單中間多佔一整條版面
-            return `<select data-bkey="${encodeURIComponent(b.key)}" onchange="updateBuyerStatus(decodeURIComponent(this.dataset.bkey),this.value)" style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:${curColor}22;color:${curColor};border:1px solid ${curColor}44;flex-shrink:0;cursor:pointer;appearance:none;-webkit-appearance:none;text-align:center;text-align-last:center">
-              ${!uniform?`<option value="" disabled selected>${curLabel}</option>`:""}
-              ${["pending","deposit","settled","shipped"].map(k=>`<option value="${k}" ${curVal===k?"selected":""}>${slb[k]}</option>`).join("")}
-            </select>`;
-          })()}
+          ${isQuoteOnly?`<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:${statusColor[allStatus]}22;color:${statusColor[allStatus]};border:1px solid ${statusColor[allStatus]}44;flex-shrink:0">${statusLabel[allStatus]||""}</span>`:""}
           ${b.orders.length>0&&b.orders.every(o=>o.batchClosed)?`<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:#EAF4FB;color:#1E5F8C;border:1px solid #BEE0F5;flex-shrink:0">🔒 已結案</span>`:""}
         </div>
         ${(()=>{const activeInv=b.orders.filter(o=>!o.batchClosed);return activeInv.length>0&&activeInv.every(o=>o.status==="shipped")?`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:#EAF4FB;border:1px solid #BEE0F5;border-radius:8px;padding:6px 10px;margin-bottom:8px">
@@ -14582,7 +14665,7 @@ window.renderInvoice=function(){
             const yDone=y.orderType!=="preorder"||y.purchased===true;
             return xDone===yDone?0:xDone?1:-1;
           }).map(renderInvRow).join("");
-          return window.invTripHeadlines(activeInvOrders);
+          return window.invTripHeadlines(window.G.invShowClosedOnly?activeInvOrders:b.orders,b.customerId);
         })()}
         ${(b.quotes&&b.quotes.length)?`
         <div style="margin-top:${b.orders.length?"6px":"0"};padding-top:${b.orders.length?"6px":"0"};${b.orders.length?"border-top:1px dashed #BBDEFB":""}">
@@ -15004,19 +15087,26 @@ window.reopenTrip=async function(cid,tid){
   if(list.length)window.openEditOrd(list[0].id,tid);
 };
 // 對帳單：把這位買家的訂單依趟次整理成「一趟一列」的大標題（含前幾個商品的縮圖，核對不用再點進去）
-window.invTripHeadlines=function(orders){
+window.invTripHeadlines=function(orders,cid){
   const byTrip={};
   orders.forEach(o=>{const k=window.orderTripId(o);(byTrip[k]=byTrip[k]||[]).push(o);});
   const tripsArr=window.G.trips||[];
+  // 還沒結案的趟次排前面，已結案的排後面；同樣狀態就照趟次新舊（新的在前）
+  const allClosedOf=k=>byTrip[k].every(o=>o.batchClosed);
   const ids=Object.keys(byTrip).sort((a,b)=>{
+    const ca=allClosedOf(a)?1:0,cb=allClosedOf(b)?1:0;
+    if(ca!==cb)return ca-cb;
     const ia=tripsArr.findIndex(x=>x.id===a),ib=tripsArr.findIndex(x=>x.id===b);
     return (ia<0?9999:ia)-(ib<0?9999:ib);
   });
+  const HEAD_MAX=3;
+  const shownIds=cid?ids.slice(0,HEAD_MAX):ids; // 有客戶資料才有「看全部」可以點，沒有的話就全部列出來
   const mini=(txt,bg,color)=>`<span style="font-size:9px;font-weight:700;background:${bg};color:${color};border-radius:4px;padding:1px 5px;white-space:nowrap">${txt}</span>`;
-  return ids.map(tid=>{
+  const rowsHtml=shownIds.map(tid=>{
     const list=byTrip[tid];
     const trip=tripsArr.find(x=>x.id===tid);
     const tripName=window.chEsc(trip?trip.name:"未分趟次");
+    const dimmed=allClosedOf(tid);
     const real=list.filter(o=>o.orderType!=="quote"&&o.status!=="cancelled");
     const qty=real.reduce((s,o)=>s+(o.qty||1),0);
     const shipQ=real.filter(o=>o.status==="shipped").reduce((s,o)=>s+(o.qty||1),0);
@@ -15028,7 +15118,7 @@ window.invTripHeadlines=function(orders){
     const allProdIds=[...new Set(real.map(o=>o.productId))];
     const thumbs=allProdIds.slice(0,4).map(pid=>window.prodThumbHtml(window.G.products.find(x=>x.id===pid),30));
     const more=allProdIds.length>4?`<span style="font-size:10px;color:#9C7A5A;align-self:center">+${allProdIds.length-4}</span>`:"";
-    return `<div data-oid="${pick.id}" data-tid="${window.chEsc(tid)}" onclick="openTripPopup(this.dataset.oid,this.dataset.tid)" style="background:#FDF6EC;border:1px solid #E8D5B0;border-radius:10px;padding:9px 12px;margin:6px 0;cursor:pointer">
+    return `<div data-oid="${pick.id}" data-tid="${window.chEsc(tid)}" onclick="openTripPopup(this.dataset.oid,this.dataset.tid)" style="background:${dimmed?"#F7F7F5":"#FDF6EC"};border:1px solid #E8D5B0;border-radius:10px;padding:9px 12px;margin:6px 0;cursor:pointer;${dimmed?"opacity:0.85":""}">
       <div style="display:flex;align-items:center;gap:8px">
         <div style="flex:1;min-width:0">
           <div style="font-size:12px;font-weight:900;color:#5C3A1E;overflow-wrap:anywhere">✈️ ${tripName}</div>
@@ -15047,6 +15137,8 @@ window.invTripHeadlines=function(orders){
       ${thumbs.length?`<div style="display:flex;gap:5px;margin-top:7px;flex-wrap:wrap">${thumbs.join("")}${more}</div>`:""}
     </div>`;
   }).join("");
+  const moreBtn=(cid&&ids.length>HEAD_MAX)?`<button data-cid="${window.chEsc(cid)}" onclick="openCustHistory(this.dataset.cid)" style="width:100%;background:#EAF4FB;color:#1E5F8C;border:1px dashed #BEE0F5;border-radius:8px;padding:7px;font-size:11px;font-weight:700;cursor:pointer;margin-top:2px">📚 看全部 ${ids.length} 筆訂單 ›</button>`:"";
+  return rowsHtml+moreBtn;
 };
 window.chGetOrders=function(cid){
   const c=window.G.customers.find(x=>x.id===cid);if(!c)return[];
@@ -15261,6 +15353,8 @@ window.copyDepositMsgOnly=async function(){
   const bankLines=[];
   if(s.bank1Name||s.bank1Account)bankLines.push(`${s.bank1Name||""}\n${s.bank1Account||""}`);
   if(s.bank2Name||s.bank2Account)bankLines.push(`${s.bank2Name||""}\n${s.bank2Account||""}`);
+  if(s.bank3Name||s.bank3Account)bankLines.push(`${s.bank3Name||""}\n${s.bank3Account||""}`);
+  if(s.bank4Name||s.bank4Account)bankLines.push(`${s.bank4Name||""}\n${s.bank4Account||""}`);
   const bankText=bankLines.length?bankLines.join("\n\n"):"（尚未設定收款帳戶，請到「設定」補上）";
   const text=`訂金 NT$${dep.toLocaleString()}\n\n${bankText}\n\n匯款後記得提供末五碼\n確認後會為您安排後續訂單流程`;
   navigator.clipboard?.writeText(text).then(()=>showToast("請款訊息已複製，訂單狀態尚未改變")).catch(()=>{
@@ -15369,6 +15463,8 @@ window.openSendDepositLine=async function(){
   const bankLines=[];
   if(s.bank1Name||s.bank1Account)bankLines.push(`${s.bank1Name||""}\n${s.bank1Account||""}`);
   if(s.bank2Name||s.bank2Account)bankLines.push(`${s.bank2Name||""}\n${s.bank2Account||""}`);
+  if(s.bank3Name||s.bank3Account)bankLines.push(`${s.bank3Name||""}\n${s.bank3Account||""}`);
+  if(s.bank4Name||s.bank4Account)bankLines.push(`${s.bank4Name||""}\n${s.bank4Account||""}`);
   const bankText=bankLines.length?bankLines.join("\n\n"):"（尚未設定收款帳戶，請到「設定」補上）";
   msgEl.value=`訂金 NT$${dep.toLocaleString()}\n\n${bankText}\n\n匯款後記得提供末五碼\n確認後會為您安排後續訂單流程`;
   pickerEl.style.display="none";pickerEl.innerHTML="";
@@ -15872,8 +15968,32 @@ window.openAskSettlement=function(buyerKey){
     hint.textContent=`這位客人：冷藏 ${coldQty} 件、常溫 ${ambQty} 件`;
     hint.style.display="block";
   }
+  window.askRenderBankBox();
   const modal=document.getElementById("modal-ask-settlement");
   if(modal)modal.style.display="flex";
+};
+// 結清單要附哪個匯款帳號：先在這裡勾選，產生的訊息就只帶勾選的帳號（可複選，都不勾就不附）
+// 會記住上一次的選擇；第一次（還沒選過）預設全部勾起來，跟以前一樣
+window.askRenderBankBox=function(){
+  const box=document.getElementById("ask-bank-box");if(!box)return;
+  const s=window.G.settings||{};
+  const esc=x=>String(x==null?"":x).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const accts=[];
+  if(s.bank1Name||s.bank1Account)accts.push({i:1,name:s.bank1Name||"",acc:s.bank1Account||""});
+  if(s.bank2Name||s.bank2Account)accts.push({i:2,name:s.bank2Name||"",acc:s.bank2Account||""});
+  if(s.bank3Name||s.bank3Account)accts.push({i:3,name:s.bank3Name||"",acc:s.bank3Account||""});
+  if(s.bank4Name||s.bank4Account)accts.push({i:4,name:s.bank4Name||"",acc:s.bank4Account||""});
+  if(!accts.length){
+    box.innerHTML='<div style="font-size:11px;color:#9C7A5A">💰 還沒設定收款帳戶（到「設定」補上），這次的結清單不會附帳號</div>';
+    return;
+  }
+  let saved=null;try{saved=JSON.parse(localStorage.getItem("settleBankPick")||"null");}catch(e){}
+  const hasOverlap=Array.isArray(saved)&&accts.some(a=>saved.includes(a.i));
+  box.innerHTML='<div style="font-size:11px;font-weight:700;color:#9C7A5A;margin-bottom:6px">💰 要附上哪個匯款帳號？（可複選，都不勾就不附）</div>'+
+    accts.map(a=>{
+      const checked=hasOverlap?saved.includes(a.i):true;
+      return `<label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;padding:5px 0"><input type="checkbox" class="ask-bank-chk" value="${a.i}" ${checked?"checked":""} style="margin-top:3px;flex-shrink:0"/><span style="font-size:13px;color:#3D2010"><b>${esc(a.name||"收款帳戶 "+a.i)}</b><br><span style="font-size:12px;color:#6B5440;letter-spacing:0.3px">${esc(a.acc)}</span></span></label>`;
+    }).join("");
 };
 window.askFreightToggle=function(){
   const scope=document.querySelector('input[name="ask-scope"]:checked')?.value||"all";
@@ -15894,13 +16014,24 @@ window.askSettleGo=function(mode){
     try{localStorage.setItem("lastColdFreight",String(amt));}catch(e){}
   } else if(scope==="ambient"){
     opts={scope:"ambient",amount:0};
+  } else if(scope==="meetup"){
+    opts={scope:"meetup",amount:0}; // 面交：全部商品、全額轉帳，沒有運費、也不走賣貨便
+  }
+  // 匯款帳號：讀取勾選的帳號（沒設定任何收款帳戶時就沒有這個區塊，維持原樣）
+  let bankPick=null;
+  const bankBox=document.getElementById("ask-bank-box");
+  if(bankBox&&bankBox.querySelector(".ask-bank-chk")){
+    bankPick=[...bankBox.querySelectorAll(".ask-bank-chk:checked")].map(x=>parseInt(x.value,10));
+    try{localStorage.setItem("settleBankPick",JSON.stringify(bankPick));}catch(e){}
   }
   closeModal("modal-ask-settlement");
   window.G._settleFreightOpts=opts;
+  window.G._settleBankPick=bankPick;
   try{
     if(mode==="send")openSendSettlement(key);else copyBuyerOrder(key);
   }finally{
     window.G._settleFreightOpts=null;
+    window.G._settleBankPick=null;
   }
 };
 window.copyBuyerOrder=function(buyerKey){
@@ -15946,11 +16077,11 @@ window.copyBuyerOrder=function(buyerKey){
   // 不走賣貨便貨到付款，所以勾了冷藏運費就不保留那 100
   const freightOpts=window.G._settleFreightOpts||null;
   const coldFreight=freightOpts&&(freightOpts.scope==="cold"||freightOpts.scope==="together")&&freightOpts.amount>0?freightOpts.amount:0;
-  const codReserve=coldFreight>0?0:100; // 一般（沒勾冷藏運費）維持：貨到付款服務費固定要留，跟有沒有免運無關
+  const codReserve=(coldFreight>0||settleScope==="meetup")?0:100; // 一般（沒勾冷藏運費）維持：貨到付款服務費固定要留，跟有沒有免運無關
   const payNow=Math.max(0,total+coldFreight-totalDeposit-codReserve);
   const pctLine=pctOrder?`\n打${pctOrder.sharedDiscountPercent}折後　NT$${afterPct.toLocaleString()}`:"";
   const discLine=sharedDisc>0?`\n折扣　-NT$${sharedDisc.toLocaleString()}${sharedDiscReason?`（${sharedDiscReason}）`:""}`:"";
-  const shipLine=(hasFreeShipping?`\n🚚 免運${shipReason?`（${shipReason}）`:""}`:"")+(coldFreight>0?`\n${settleScope==="together"?"運費":"冷藏運費"}　NT$${coldFreight.toLocaleString()}`:"");
+  const shipLine=(hasFreeShipping&&settleScope!=="meetup"?`\n🚚 免運${shipReason?`（${shipReason}）`:""}`:"")+(coldFreight>0?`\n${settleScope==="together"?"運費":"冷藏運費"}　NT$${coldFreight.toLocaleString()}`:"");
   const remainder=total-totalDeposit;
   const payLine=codReserve===0
     ?`🌟應付金額　NT$${payNow.toLocaleString()}`
@@ -15959,9 +16090,12 @@ window.copyBuyerOrder=function(buyerKey){
     ?`\n───────────\n${totalLabel}　NT$${totalShown.toLocaleString()}${itemDiscLine}${pctLine}${discLine}${shipLine}\n已付訂金　NT$${totalDeposit.toLocaleString()}\n───────────\n${payLine}`
     :`\n───────────\n${totalLabel}　NT$${totalShown.toLocaleString()}${itemDiscLine}${pctLine}${discLine}${shipLine}\n\n${payLine}`;
   const bs=window.G.settings||{};
+  const bankPickNow=window.G._settleBankPick; // 結清單彈窗勾選的帳號；null＝不是從那裡來的，維持全部帶入
   const bankLines=[];
-  if(bs.bank1Name||bs.bank1Account)bankLines.push(`${bs.bank1Name||""}\n${bs.bank1Account||""}`);
-  if(bs.bank2Name||bs.bank2Account)bankLines.push(`${bs.bank2Name||""}\n${bs.bank2Account||""}`);
+  if((!bankPickNow||bankPickNow.includes(1))&&(bs.bank1Name||bs.bank1Account))bankLines.push(`${bs.bank1Name||""}\n${bs.bank1Account||""}`);
+  if((!bankPickNow||bankPickNow.includes(2))&&(bs.bank2Name||bs.bank2Account))bankLines.push(`${bs.bank2Name||""}\n${bs.bank2Account||""}`);
+  if((!bankPickNow||bankPickNow.includes(3))&&(bs.bank3Name||bs.bank3Account))bankLines.push(`${bs.bank3Name||""}\n${bs.bank3Account||""}`);
+  if((!bankPickNow||bankPickNow.includes(4))&&(bs.bank4Name||bs.bank4Account))bankLines.push(`${bs.bank4Name||""}\n${bs.bank4Account||""}`);
   const bankText=bankLines.length?`\n\n${bankLines.join("\n\n")}`:"";
   const text=`【訂單明細】\n\n${lines.join("\n")}\n\n共計 ${grouped.totalQty} 件商品${summaryBlock}${bankText}`;
 
@@ -16020,11 +16154,11 @@ window.openSendSettlement=async function(buyerKey){
   // 不走賣貨便貨到付款，所以勾了冷藏運費就不保留那 100
   const freightOpts=window.G._settleFreightOpts||null;
   const coldFreight=freightOpts&&(freightOpts.scope==="cold"||freightOpts.scope==="together")&&freightOpts.amount>0?freightOpts.amount:0;
-  const codReserve=coldFreight>0?0:100; // 一般（沒勾冷藏運費）維持：貨到付款服務費固定要留，跟有沒有免運無關
+  const codReserve=(coldFreight>0||settleScope==="meetup")?0:100; // 一般（沒勾冷藏運費）維持：貨到付款服務費固定要留，跟有沒有免運無關
   const payNow=Math.max(0,total+coldFreight-totalDeposit-codReserve);
   const pctLine=pctOrder?`\n打${pctOrder.sharedDiscountPercent}折後　NT$${afterPct.toLocaleString()}`:"";
   const discLine=sharedDisc>0?`\n折扣　-NT$${sharedDisc.toLocaleString()}${sharedDiscReason?`（${sharedDiscReason}）`:""}`:"";
-  const shipLine=(hasFreeShipping?`\n🚚 免運${shipReason?`（${shipReason}）`:""}`:"")+(coldFreight>0?`\n${settleScope==="together"?"運費":"冷藏運費"}　NT$${coldFreight.toLocaleString()}`:"");
+  const shipLine=(hasFreeShipping&&settleScope!=="meetup"?`\n🚚 免運${shipReason?`（${shipReason}）`:""}`:"")+(coldFreight>0?`\n${settleScope==="together"?"運費":"冷藏運費"}　NT$${coldFreight.toLocaleString()}`:"");
   const remainder=total-totalDeposit;
   const payLine=codReserve===0
     ?`🌟應付金額　NT$${payNow.toLocaleString()}`
@@ -16033,9 +16167,12 @@ window.openSendSettlement=async function(buyerKey){
     ?`\n───────────\n${totalLabel}　NT$${totalShown.toLocaleString()}${itemDiscLine}${pctLine}${discLine}${shipLine}\n已付訂金　NT$${totalDeposit.toLocaleString()}\n───────────\n${payLine}`
     :`\n───────────\n${totalLabel}　NT$${totalShown.toLocaleString()}${itemDiscLine}${pctLine}${discLine}${shipLine}\n\n${payLine}`;
   const bs=window.G.settings||{};
+  const bankPickNow=window.G._settleBankPick; // 結清單彈窗勾選的帳號；null＝不是從那裡來的，維持全部帶入
   const bankLines=[];
-  if(bs.bank1Name||bs.bank1Account)bankLines.push(`${bs.bank1Name||""}\n${bs.bank1Account||""}`);
-  if(bs.bank2Name||bs.bank2Account)bankLines.push(`${bs.bank2Name||""}\n${bs.bank2Account||""}`);
+  if((!bankPickNow||bankPickNow.includes(1))&&(bs.bank1Name||bs.bank1Account))bankLines.push(`${bs.bank1Name||""}\n${bs.bank1Account||""}`);
+  if((!bankPickNow||bankPickNow.includes(2))&&(bs.bank2Name||bs.bank2Account))bankLines.push(`${bs.bank2Name||""}\n${bs.bank2Account||""}`);
+  if((!bankPickNow||bankPickNow.includes(3))&&(bs.bank3Name||bs.bank3Account))bankLines.push(`${bs.bank3Name||""}\n${bs.bank3Account||""}`);
+  if((!bankPickNow||bankPickNow.includes(4))&&(bs.bank4Name||bs.bank4Account))bankLines.push(`${bs.bank4Name||""}\n${bs.bank4Account||""}`);
   const bankText=bankLines.length?`\n\n${bankLines.join("\n\n")}`:"";
   const text=`【訂單明細】\n\n${lines.join("\n")}\n\n共計 ${grouped2.totalQty} 件商品${summaryBlock}${bankText}`;
 
@@ -17707,14 +17844,19 @@ window.qaFilterCusts=function(q){
     lst.innerHTML='<div style="padding:12px 16px;font-size:12px;color:#C5A880;text-align:center">找不到客戶，可直接在上方欄位輸入名字</div>';
     lst.style.display="block";return;
   }
+  const dupFlags=window.getDupFlagIds();
   lst.innerHTML=filtered.map(c=>{
     const nm=c.communityName||"";
-    const ln=c.lineName?` / ${c.lineName}`:"";
     const escaped=nm.replace(/'/g,"\\'");
     const escapedln=(c.lineName||"").replace(/'/g,"\\'");
+    const isDup=dupFlags.has(c.id);
+    // 名稱寫清楚哪個是社群暱稱、哪個是LINE名稱（以前沒有社群暱稱時，開頭是空的、只剩「/ LINE名稱」，很難看懂）
+    const nameHtml=nm?`<b>${nm}</b>`:`<b style="color:#B8A58C;font-weight:600">（無社群暱稱）</b>`;
+    const lineHtml=c.lineName?`<span style="color:#9C7A5A;font-size:11px"> ・ LINE：${c.lineName}</span>`:"";
+    const dupTag=isDup?`<span onmousedown="event.preventDefault();event.stopPropagation();openMergeForCustomer('${c.id}')" ontouchend="event.preventDefault();event.stopPropagation();openMergeForCustomer('${c.id}')" style="margin-left:6px;font-size:10px;font-weight:700;background:#FEF3E2;color:#B45309;border:1px solid #F5C77E;border-radius:99px;padding:1px 8px;cursor:pointer;white-space:nowrap">⚠️ 疑似重複・去合併</span>`:"";
     return `<div onmousedown="event.preventDefault();qaSelectCust('${c.id}','${escaped}','${escapedln}')" ontouchend="event.preventDefault();qaSelectCust('${c.id}','${escaped}','${escapedln}')"
       style="padding:11px 16px;cursor:pointer;font-size:13px;color:#3D2010;border-bottom:1px solid #F5EDE0;background:white">
-      <b>${nm}</b><span style="color:#9C7A5A;font-size:11px">${ln}</span>
+      ${nameHtml}${lineHtml}${dupTag}
     </div>`;
   }).join("");
   lst.style.display="block";
@@ -17847,7 +17989,8 @@ window.qaLiveAddMoreOrder=async function(){
     );
     if(existing){
       const sameLabel=existing.communityName||existing.lineName||buyerInput;
-      const useExisting=await window.askSameNameModal(sameLabel);
+      const useExisting=await window.askSameNameModal(sameLabel,existing,"order");
+      if(useExisting===null){showToast("已取消，這筆喊單沒有登記","warning");return;}
       if(useExisting){customerId=existing.id;communityName=existing.communityName||buyerInput;lineName=existing.lineName||"";}
       else{
         const newId="C"+Date.now();
@@ -17955,8 +18098,10 @@ window.qaLiveSave=async function(){
       );
       if(existing){
         const sameLabel=existing.communityName||existing.lineName||buyerInput;
-        const useExisting=await window.askSameNameModal(sameLabel);
-        if(useExisting){
+        const useExisting=await window.askSameNameModal(sameLabel,existing,"order");
+        if(useExisting===null){
+          window.G._custPickCancelled=true; // 取消：商品照常上架，但這次不建立客人、也不登記喊單
+        } else if(useExisting){
           customerId=existing.id;communityName=existing.communityName||buyerInput;lineName=existing.lineName||"";
         } else {
           const newId="C"+Date.now();
@@ -17970,7 +18115,7 @@ window.qaLiveSave=async function(){
       }
     }
     if(!customerId){
-      showToast("商品已上架，但沒填客人名字，訂單沒有登記","warning");
+      showToast(window.G._custPickCancelled?"商品已上架，喊單先沒有登記（你按了取消）":"商品已上架，但沒填客人名字，訂單沒有登記","warning");window.G._custPickCancelled=false;
     } else {
       const pmForThis=orderType==="onsite"?await askPaymentMethodModal():null;
       const onsiteCost=orderType==="onsite"?calcCost(prod.foreignAmount,prod.currency,window.isDutyFreeChannel(prod.channel,prod.flags?.noTaxRefund),pmForThis).afterTax:null;
@@ -18193,8 +18338,10 @@ window.saveQuickAdd=async function(){
       );
       if(existing){
         const sameLabel=existing.communityName||existing.lineName||buyerInput;
-        const useExisting=await window.askSameNameModal(sameLabel);
-        if(useExisting){
+        const useExisting=await window.askSameNameModal(sameLabel,existing,"order");
+        if(useExisting===null){
+          window.G._custPickCancelled=true; // 取消：商品照常上架，但這次不建立客人、也不登記喊單
+        } else if(useExisting){
           customerId=existing.id;communityName=existing.communityName||buyerInput;lineName=existing.lineName||"";
         } else {
           const newId="C"+Date.now();
@@ -18208,7 +18355,7 @@ window.saveQuickAdd=async function(){
       }
     }
     if(!customerId){
-      showToast("商品已上架，但沒填客人名字，訂單沒有登記","warning");
+      showToast(window.G._custPickCancelled?"商品已上架，喊單先沒有登記（你按了取消）":"商品已上架，但沒填客人名字，訂單沒有登記","warning");window.G._custPickCancelled=false;
     } else {
       const pmForThis=orderType==="onsite"?await askPaymentMethodModal():null;
       const onsiteCost=orderType==="onsite"?calcCost(amt,qaCur,window.isDutyFreeChannel(window.G.qaChannel,document.getElementById("qa-flag-noRefund")?.checked),pmForThis).afterTax:null;
