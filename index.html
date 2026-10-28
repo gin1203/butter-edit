@@ -1248,6 +1248,8 @@ body.live-mode .hide-live { display: none !important; }
 #eo-order-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:0 12px;align-items:start}
 #eo-order-list>*{min-width:0}
 #eo-order-list>:not(.eo-collapsible-row){grid-column:1/-1}
+#eo-order-list .eo-collapsible-row[data-paid="0"]{box-shadow:inset 6px 0 0 #F97316,0 1px 3px rgba(139,111,71,0.08)!important;border-color:#F9B27C!important}
+#eo-order-list .eo-collapsible-row[data-paid="1"]{box-shadow:inset 6px 0 0 #86EFAC,0 1px 3px rgba(139,111,71,0.08)!important}
 #modal-eord.eo-full{padding:0!important}
 #modal-eord.eo-full>div{max-width:100%!important;max-height:100vh!important;max-height:100dvh!important;height:100vh;height:100dvh;border-radius:0!important}
 @media (max-width:640px){
@@ -5928,29 +5930,58 @@ window.showMergeCustomers=function(){
 //    單字、兩個字的名字不會被拿來比，只比 3 個字以上的，寧可漏掉也不要一直誤報。
 //    抓到之後一律由你自己看過、自己選要保留哪一筆，才會合併。
 window.custNamesOf=function(c){return [c.communityName,c.lineName].map(n=>(n||"").trim().toLowerCase()).filter(Boolean);};
+// 兩個名字「很像」的判斷（刻意收得很緊）：
+//   較短的名字至少 3 個字，而且是較長名字的「開頭」，後面緊接的是括號、空白、符號或表情，不是文字。
+//   例如「23號-欣妤」→「23號-欣妤（昶霆媽媽）」、「Amy」→「Amy Lin」算很像；
+//   「Lin」→「Linlin」「Lindsey」、「Lynn」→「Lynnnn」不算（後面接的是字母，是不同的名字）。
+window.nameLooksLike=function(a,b){
+  if(a===b)return false;
+  const [sh,lg]=a.length<=b.length?[a,b]:[b,a];
+  if(sh.length<3||!lg.startsWith(sh))return false;
+  const next=lg.charAt(sh.length);
+  return next!==""&&!/[A-Za-z0-9\u4e00-\u9fff]/.test(next);
+};
+// 回傳「一對一對」的疑似重複 [idA,idB]（不再用相連的方式把好幾個人串成一大組，那樣會把一堆不相干的人湊在一起）
+// 這位客戶有哪些 LINE 帳號編碼（主要的、備用的、還有「line_」開頭的客戶編號本身）
+window.lineIdsOf=function(c){
+  const s=new Set();
+  if(c.lineUserId)s.add(String(c.lineUserId));
+  if(typeof c.id==="string"&&c.id.startsWith("line_"))s.add(c.id.slice(5));
+  (Array.isArray(c.altLineUserIds)?c.altLineUserIds:[]).forEach(x=>{if(x)s.add(String(x));});
+  return s;
+};
+// 只回傳「一對一對」的疑似重複（不串成一大群）。為什麼：
+// 以前用「A像B、B像C 就全部算同一群」，英文短名字很容易互相沾到，結果把 7 個不相干的人串成一組，
+// 而合併是把整組合成一筆、其餘刪除，這樣非常危險。
+// 現在的規則（都符合才會被提醒）：
+//  ① 名字「很像」：較短的至少 3 個字，而且是較長名字的開頭、後面接的是括號/空白/符號（看 nameLooksLike）
+//  ② 兩邊不是「各自綁了不同 LINE 帳號」——兩個不同的 LINE 帳號幾乎一定是兩個不同的人
 window.findSuspectedDupGroups=function(){
   const custs=window.G.customers||[];
   const names=custs.map(c=>window.custNamesOf(c));
-  const parent=custs.map((_,i)=>i);
-  const find=x=>{while(parent[x]!==x){parent[x]=parent[parent[x]];x=parent[x];}return x;};
-  const union=(a,b)=>{const ra=find(a),rb=find(b);if(ra!==rb)parent[ra]=rb;};
-  const involved=new Set();
+  const lineIds=custs.map(c=>window.lineIdsOf(c));
+  const pairs=[];
   for(let i=0;i<custs.length;i++){
     for(let j=i+1;j<custs.length;j++){
+      // 兩邊都有 LINE 編碼、而且完全沒有重疊 → 是不同的 LINE 帳號，不提醒
+      if(lineIds[i].size&&lineIds[j].size&&![...lineIds[i]].some(x=>lineIds[j].has(x)))continue;
       let exact=false,contain=false;
       for(const a of names[i]){
         for(const b of names[j]){
           if(a===b){exact=true;continue;}
-          const [sh,lg]=a.length<=b.length?[a,b]:[b,a];
-          if(sh.length>=3&&lg.includes(sh))contain=true;
+          if(window.nameLooksLike(a,b))contain=true;
         }
       }
-      if(contain&&!exact){union(i,j);involved.add(i);involved.add(j);}
+      if(contain&&!exact)pairs.push([custs[i].id,custs[j].id]);
     }
   }
-  const groups={};
-  involved.forEach(i=>{(groups[find(i)]=groups[find(i)]||[]).push(custs[i].id);});
-  return Object.values(groups).filter(g=>g.length>=2);
+  return pairs;
+};
+// 某位客人有哪些「很像」的對象
+window.suspectedPartnersOf=function(id){
+  const out=new Set();
+  window.findSuspectedDupGroups().forEach(([a,b])=>{if(a===id)out.add(b);else if(b===id)out.add(a);});
+  return [...out];
 };
 // 給客戶清單用：這個客戶是不是在「完全同名」或「名字很像」的任何一組裡（算一次、快取起來）
 window.getDupFlagIds=function(){
@@ -5972,7 +6003,7 @@ window.openMergeForCustomer=function(id){
   const myNames=window.custNamesOf(me);
   const exactIds=custs.filter(c=>c.id===id||window.custNamesOf(c).some(n=>myNames.includes(n))).map(c=>c.id);
   let ids=exactIds.length>=2?exactIds:null;
-  if(!ids){const g=window.findSuspectedDupGroups().find(g=>g.includes(id));ids=g||null;}
+  if(!ids){const partners=window.suspectedPartnersOf(id);ids=partners.length?[id,...partners]:null;}
   window.showMergeCustomers();
   if(ids&&ids.length>=2)window.openMergeGroupByIds(ids);
 };
@@ -6011,7 +6042,7 @@ window.renderMergeCustomerAutoScan=function(){
       }).join("");
   }
   if(suspected.length){
-    html+=`<div style="font-size:11px;color:#9C7A5A;margin:${dupGroups.length?"14px":"0"} 0 8px">🤔 名字很像、可能是同一個人（${suspected.length} 組）——只是提醒，請自己看一下再決定要不要合併</div>`+
+    html+=`<div style="font-size:11px;color:#9C7A5A;margin:${dupGroups.length?"14px":"0"} 0 8px">🤔 名字很像、可能是同一個人（${suspected.length} 對）——只是提醒，請自己看一下再決定要不要合併；兩邊如果各自綁了不同的LINE帳號就不會出現在這裡</div>`+
       suspected.map((ids)=>{
         const group=ids.map(id=>custs.find(c=>c.id===id)).filter(Boolean);
         return `<div onclick='openMergeGroupByIds(${JSON.stringify(ids)})' style="background:#F5F8FF;border:1px solid #BFD3F2;border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer">
@@ -8516,8 +8547,13 @@ window.batchOrderStatus=async function(status){
   const closedIds=allIds.filter(id=>window.G.orders.find(o=>o.id===id)?.batchClosed);
   const ids=allIds.filter(id=>!closedIds.includes(id));
   if(!ids.length){showToast("勾選的訂單都已經結案，沒有可以改狀態的部分","warning");return;}
-  for(const id of ids)await fbUpd("orders",id,{status});
-  const l={pending:"待對帳",settled:"已結單",shipped:"已寄出"};
+  for(const id of ids){
+    const upd={status};
+    if(status==="settled"){upd.paid=true;upd.paidAt=Date.now();}
+    else if(status==="pending"||status==="deposit")upd.paid=false;
+    await fbUpd("orders",id,upd);
+  }
+  const l={pending:"待對帳",deposit:"已付訂金",settled:"已結單",shipped:"已寄出"};
   showToast(closedIds.length>0?`已將 ${ids.length} 筆更新為「${l[status]}」（已排除 ${closedIds.length} 筆已結案的）`:`已將 ${ids.length} 筆更新為「${l[status]}」`);
 };
 window.batchDeleteOrders=async function(){
@@ -13211,7 +13247,9 @@ window.openEditOrd=function(oid,tripId){
 
   document.getElementById("eo-title").textContent=`✏️ ${custName} 的訂單`;
   const eoTripObj=tripId?(window.G.trips||[]).find(tr=>tr.id===tripId):null;
-  document.getElementById("eo-subtitle").textContent=`${eoTripObj&&eoTripObj.name?"✈️ "+eoTripObj.name+"・":""}共 ${cOrders.length} 筆・合計 NT$${total.toLocaleString()}`;
+  window.G._eoSubBase=`${eoTripObj&&eoTripObj.name?"✈️ "+eoTripObj.name+"・":""}共 ${cOrders.length} 筆・合計 NT$${total.toLocaleString()}`;
+  document.getElementById("eo-subtitle").textContent=window.G._eoSubBase;
+  window.eoRefreshPaidSummary();
 
   // 共用訂金：取第一筆有訂金的值
   const existingDeposit=cOrders.find(x=>x.depositAmt>0)?.depositAmt||"";
@@ -13249,13 +13287,13 @@ window.openEditOrd=function(oid,tripId){
   const list=document.getElementById("eo-order-list");
   const EO_COLLAPSE_N=4;
   window.G.eoExpanded=true; // 視窗已放大、商品會自動排成多欄，不再需要「展開查看」，一律全部展開
-  const listHeader=`<div style="font-size:11px;font-weight:900;color:#8B6F47;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #E8D5B0">📦 修改現有商品</div>`;
-  list.innerHTML=listHeader+cOrders.map((x,idx)=>{
+  const listHeader=`<div style="font-size:11px;font-weight:900;color:#8B6F47;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #E8D5B0">📦 修改現有商品</div><div id="eo-paid-bar"></div>`;
+  list.innerHTML=listHeader+window.eoSortUnpaidFirst(cOrders).map((x,idx)=>{
     const dp=x.discountPrice||x.unitPrice||0;
     const purchasedTag=x.orderType==="preorder"?(x.purchased?'<span style="font-size:9px;background:#D1FAE5;color:#065F46;border:1px solid #6EE7B7;padding:1px 6px;border-radius:4px">已買到</span>':'<span style="font-size:9px;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:1px 6px;border-radius:4px">待購入</span>'):"";
     const rowBg=x.orderType==="preorder"&&!x.purchased?"#F3F0FF":"white";
     const hideStyle=(!window.G.eoExpanded&&idx>=EO_COLLAPSE_N)?"display:none":"";
-    return `<div class="eo-collapsible-row" style="background:${rowBg};border:1.5px solid #DDBF8F;border-radius:12px;padding:12px 14px;margin-bottom:12px;${hideStyle};position:relative;box-shadow:0 1px 3px rgba(139,111,71,0.08)" data-oid="${x.id}">
+    return `<div class="eo-collapsible-row" style="background:${rowBg};border:1.5px solid #DDBF8F;border-radius:12px;padding:12px 14px;margin-bottom:12px;${hideStyle};position:relative;box-shadow:0 1px 3px rgba(139,111,71,0.08)" data-oid="${x.id}" data-paid="${(x.orderType==="quote"||x.status==="cancelled")?"":(window.orderIsPaid(x)?"1":"0")}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
         <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;flex:1;min-width:0">
           ${(()=>{
@@ -13271,6 +13309,7 @@ window.openEditOrd=function(oid,tripId){
           })()}
           ${x.spec?`<span style="font-size:11px;font-weight:700;color:#9C7A5A;background:#F5F0E8;border-radius:4px;padding:1px 6px">${x.spec}</span>`:""}
           ${purchasedTag}
+          ${window.eoPaidBtnHtml(x)}
           <span style="font-size:10px;font-weight:700;color:${scol[x.status]||"#9C7A5A"}">${sl[x.status]||""}</span>
         </div>
         <div style="position:relative;flex-shrink:0">
@@ -13365,6 +13404,14 @@ window.openEditOrd=function(oid,tripId){
       </div>
     </div>`;
   }).join("")+(!window.G.eoExpanded&&cOrders.length>EO_COLLAPSE_N?`<button id="eo-expand-btn" onclick="eoToggleExpand()" style="width:100%;margin-bottom:8px;background:#FDF6EC;color:#B08968;border:1px dashed #E8D5B0;border-radius:8px;padding:8px;font-size:12px;font-weight:700;cursor:pointer">▼ 展開查看／編輯其餘 ${cOrders.length-EO_COLLAPSE_N} 筆</button>`:"");
+
+  // 收款：這一趟「有收有沒收」時，預設只顯示還沒收款的那幾件，不用自己一件一件找；要看全部再按「全部」
+  window.G._eoPaidFilter=(function(){
+    const pay=cOrders.filter(o=>o.orderType!=="quote"&&o.status!=="cancelled");
+    const n=pay.filter(o=>window.orderIsPaid(o)).length;
+    return (n>0&&n<pay.length)?"unpaid":"all";
+  })();
+  window.eoRenderPaidBar();
 
   const el=document.getElementById("modal-eord");
   if(el){
@@ -14214,6 +14261,7 @@ window.renderCustomers=function(){
         <div style="text-align:right;flex-shrink:0">
           <div style="font-size:12px;font-weight:900;color:#3D2010">NT$${tot.toLocaleString()}</div>
           <span style="display:inline-block;margin-top:3px;font-size:10px;font-weight:700;background:${st.bg};color:${st.color};border:1px solid ${st.border};border-radius:99px;padding:1px 8px">${st.label}</span>
+          ${window.paidChipHtml(pickOid,tid,tripAll,tripAll.some(o=>!o.batchClosed))}
         </div>
       </div>`+detail;
     }).join("");
@@ -14473,6 +14521,7 @@ function renderInvExtraChips(){
   const chips=[
     {label:"尚未購買",active:window.G.orderFilter==="unpurchased",onclick:"toggleInvUnpurchased()"},
     {label:"冷藏",active:!!window.G.invColdOnly,onclick:"toggleInvColdOnly()"},
+    {label:"未收款",active:!!window.G.invUnpaidOnly,onclick:"toggleInvUnpaidOnly()"},
     {label:"未結案",active:!!window.G.invUnclosedOnly,onclick:"toggleInvUnclosedOnly()"},
     {label:"只看已結案",active:!!window.G.invShowClosedOnly,onclick:"toggleInvShowClosedOnly()"},
     {label:"尚未寄出",active:window.G.orderFilter==="notshipped",onclick:"setInvFilter(window.G.orderFilter==='notshipped'?'all':'notshipped')"},
@@ -14525,6 +14574,11 @@ window.renderInvoice=function(){
       }).map(o=>o.customerId||o.communityName||o.buyerName||"未知")
     );
     filtered=filtered.filter(o=>coldBuyerKeys.has(o.customerId||o.communityName||o.buyerName||"未知"));
+  }
+  // 只看未收款：只留「還有至少一筆沒結案、而且還沒收到款」的買家
+  if(window.G.invUnpaidOnly){
+    const unpaidKeys=new Set(getTripOrders().filter(o=>o.orderType!=="quote"&&o.status!=="cancelled"&&!o.batchClosed&&!window.orderIsPaid(o)).map(o=>o.customerId||o.communityName||o.buyerName||"未知"));
+    filtered=filtered.filter(o=>unpaidKeys.has(o.customerId||o.communityName||o.buyerName||"未知"));
   }
   // 只看未結案——只保留「還有至少一筆進行中(未結案)訂單」的買家，
   // 把整批都已經結案、不需要再天天看到的買家過濾掉，方便你聚焦在還要處理的客人身上
@@ -15131,6 +15185,7 @@ window.invTripHeadlines=function(orders,cid){
         <div style="text-align:right;flex-shrink:0">
           <div style="font-size:12px;font-weight:900;color:#3D2010">NT$${tot.toLocaleString()}</div>
           <span style="display:inline-block;margin-top:3px;font-size:10px;font-weight:700;background:${st.bg};color:${st.color};border:1px solid ${st.border};border-radius:99px;padding:1px 8px">${st.label}</span>
+          ${window.paidChipHtml(pick.id,tid,real,list.some(o=>!o.batchClosed))}
         </div>
         <span style="color:#C5A880;font-size:18px;flex-shrink:0">›</span>
       </div>
@@ -15139,6 +15194,152 @@ window.invTripHeadlines=function(orders,cid){
   }).join("");
   const moreBtn=(cid&&ids.length>HEAD_MAX)?`<button data-cid="${window.chEsc(cid)}" onclick="openCustHistory(this.dataset.cid)" style="width:100%;background:#EAF4FB;color:#1E5F8C;border:1px dashed #BEE0F5;border-radius:8px;padding:7px;font-size:11px;font-weight:700;cursor:pointer;margin-top:2px">📚 看全部 ${ids.length} 筆訂單 ›</button>`:"";
   return rowsHtml+moreBtn;
+};
+// ══ 匯款了沒（已收款／未收款）══════════════════════════════════════════
+// 跟「已寄出／面交」是各自獨立的：有人先面交、過很久才轉帳；也有人先轉帳、很久之後才面交。
+// 在訂單大標題上點一下「💰 未收款 ⇄ ✅ 已收款」就能切換，會一次套用在這位客人「這一趟」所有還沒結案的訂單。
+const PAID_FEATURE_TS=Date.parse("2026-10-20T00:00:00+08:00");
+window.orderIsPaid=function(o){
+  if(o.paid===true)return true;
+  if(o.paid===false)return false;
+  if(o.givenFromStock)return false;     // 從庫存直接給客人（面交）的：付了沒要你自己記
+  if(o.status==="settled")return true;  // 已付尾款
+  // 舊訂單（這個功能上線前建立的）：以前的流程是付完才寄，所以「已寄出」就當作已付過；
+  // 新訂單不這樣推測，因為面交可能是先給東西、之後才轉帳
+  if(o.status==="shipped")return (o.createdAt||0)<PAID_FEATURE_TS;
+  return false;
+};
+window.paidStateOf=function(list){
+  if(!list.length)return "na";
+  const n=list.filter(o=>window.orderIsPaid(o)).length;
+  return n===list.length?"all":(n===0?"none":"some");
+};
+window.paidChipHtml=function(oid,tid,list,interactive){
+  const st=window.paidStateOf(list);
+  if(st==="na")return "";
+  const amt=o=>(o.discountPrice||o.unitPrice||0)*(o.qty||1);
+  const paidAmt=list.filter(o=>window.orderIsPaid(o)).reduce((s,o)=>s+amt(o),0);
+  const allAmt=list.reduce((s,o)=>s+amt(o),0);
+  const paidN=list.filter(o=>window.orderIsPaid(o)).length;
+  const cfg={all:{t:"✅ 已收款",bg:"#DCFCE7",c:"#166534",b:"#86EFAC"},none:{t:"💰 未收款",bg:"#FFF1E6",c:"#C2410C",b:"#FDBA74"},some:{t:`◐ 已收 ${paidN}/${list.length} 件・NT$${paidAmt.toLocaleString()}／${allAmt.toLocaleString()}`,bg:"#FEF9C3",c:"#854D0E",b:"#FDE047"}}[st];
+  const base=`display:inline-block;font-size:10px;font-weight:700;background:${cfg.bg};color:${cfg.c};border:1px solid ${cfg.b};border-radius:99px;padding:1px 8px;`;
+  return `<div style="margin-top:4px">`+(interactive
+    ?`<button data-oid="${oid}" data-tid="${window.chEsc(tid)}" onclick="event.stopPropagation();togglePaidForTrip(this.dataset.oid,this.dataset.tid)" title="點一下全部切換；要一件一件看／改，點開這一趟訂單" style="${base}cursor:pointer">${cfg.t}</button>`
+    :`<span style="${base}">${cfg.t}</span>`)+`</div>`;
+};
+window.togglePaidForTrip=async function(oid,tid){
+  const o=window.G.orders.find(x=>x.id===oid);if(!o)return;
+  const list=window.G.orders.filter(x=>window.orderTripId(x)===tid&&window.sameCustomerOrder(o,x)&&x.orderType!=="quote"&&x.status!=="cancelled"&&!x.batchClosed);
+  if(!list.length)return;
+  const makePaid=!list.every(x=>window.orderIsPaid(x));
+  const now=Date.now();
+  try{
+    for(const x of list){
+      await fbUpd("orders",x.id,makePaid?{paid:true,paidAt:now}:{paid:false,paidAt:null});
+      x.paid=makePaid;x.paidAt=makePaid?now:null;
+    }
+    showToast(makePaid?`✅ 已標記為已收款（${list.length} 筆）`:`已改回未收款（${list.length} 筆）`);
+  }catch(e){console.error(e);showToast("儲存失敗，請再試一次","error");}
+  if(typeof renderCustomers==="function")renderCustomers();
+  if(typeof renderInvoice==="function")renderInvoice();
+};
+// 修改訂單視窗裡，每一件商品各自的收款按鈕（點一下只切換這一件）
+window.paidBtnStyle=function(paid){
+  return paid
+    ?{t:"✅ 已收款",css:"background:#DCFCE7;color:#166534;border:1px solid #86EFAC"}
+    :{t:"💰 未收款",css:"background:#FFF1E6;color:#C2410C;border:1px solid #FDBA74"};
+};
+window.eoPaidBtnHtml=function(x){
+  if(x.orderType==="quote"||x.status==="cancelled")return "";
+  const b=window.paidBtnStyle(window.orderIsPaid(x));
+  return `<button class="eo-paid-btn" data-oid="${x.id}" onclick="event.stopPropagation();togglePaidOne(this.dataset.oid)" title="點一下切換這一件的已收款／未收款" style="${b.css};font-size:10px;font-weight:700;border-radius:99px;padding:1px 8px;cursor:pointer">${b.t}</button>`;
+};
+// 標題下方的小字：這一趟已收幾件、多少錢
+window.eoRefreshPaidSummary=function(){
+  const sub=document.getElementById("eo-subtitle");if(!sub||window.G._eoSubBase==null)return;
+  const ids=new Set(window.G.activeEordOrderIds||[]);
+  const list=window.G.orders.filter(o=>ids.has(o.id)&&o.orderType!=="quote"&&o.status!=="cancelled");
+  if(!list.length){sub.textContent=window.G._eoSubBase;return;}
+  const amt=o=>(o.discountPrice||o.unitPrice||0)*(o.qty||1);
+  const paid=list.filter(o=>window.orderIsPaid(o));
+  sub.textContent=`${window.G._eoSubBase}・已收 ${paid.length}/${list.length} 件（NT$${paid.reduce((s,o)=>s+amt(o),0).toLocaleString()}／${list.reduce((s,o)=>s+amt(o),0).toLocaleString()}）`;
+};
+window.togglePaidOne=async function(oid){
+  const o=window.G.orders.find(x=>x.id===oid);if(!o)return;
+  if(o.batchClosed){showToast("這筆已結案，要改請先重新開啟","warning");return;}
+  const makePaid=!window.orderIsPaid(o);
+  try{
+    await fbUpd("orders",oid,makePaid?{paid:true,paidAt:Date.now()}:{paid:false,paidAt:null});
+    o.paid=makePaid;o.paidAt=makePaid?Date.now():null;
+  }catch(e){console.error(e);showToast("儲存失敗，請再試一次","error");return;}
+  // 只更新按鈕和小字，不重畫整個視窗（你還沒存的修改才不會不見）
+  const b=window.paidBtnStyle(makePaid);
+  document.querySelectorAll('.eo-paid-btn[data-oid="'+oid+'"]').forEach(btn=>{
+    btn.textContent=b.t;
+    btn.setAttribute("style",b.css+";font-size:10px;font-weight:700;border-radius:99px;padding:1px 8px;cursor:pointer");
+  });
+  document.querySelectorAll('#eo-order-list .eo-collapsible-row[data-oid="'+oid+'"]').forEach(r=>r.setAttribute("data-paid",makePaid?"1":"0"));
+  window.eoRenderPaidBar(true);
+  setTimeout(()=>window.eoApplyPaidFilter(),600); // 目前只顯示「未收款」時，剛收款的那件稍等一下才消失，方便你確認
+  window.eoRefreshPaidSummary();
+  if(typeof renderCustomers==="function")renderCustomers();
+  if(typeof renderInvoice==="function")renderInvoice();
+};
+// 修改訂單視窗：未收款排最前面
+window.eoSortUnpaidFirst=function(list){
+  const rank=o=>(o.orderType==="quote"||o.status==="cancelled")?1:(window.orderIsPaid(o)?2:0);
+  return list.map((o,i)=>({o,i})).sort((a,b)=>rank(a.o)-rank(b.o)||a.i-b.i).map(x=>x.o);
+};
+// 修改訂單視窗上方的篩選列：全部／未收款／已收款，以及「未收款的全部標為已收款」
+window.eoRenderPaidBar=function(skipApply){
+  const bar=document.getElementById("eo-paid-bar");if(!bar)return;
+  const ids=new Set(window.G.activeEordOrderIds||[]);
+  const pay=window.G.orders.filter(o=>ids.has(o.id)&&o.orderType!=="quote"&&o.status!=="cancelled");
+  if(!pay.length){bar.innerHTML="";return;}
+  const amt=o=>(o.discountPrice||o.unitPrice||0)*(o.qty||1);
+  const unpaid=pay.filter(o=>!window.orderIsPaid(o)),paid=pay.filter(o=>window.orderIsPaid(o));
+  const f=window.G._eoPaidFilter||"all";
+  const btn=(key,label,on)=>`<button onclick="eoSetPaidFilter('${key}')" style="font-size:12px;font-weight:700;border-radius:99px;padding:5px 12px;cursor:pointer;border:1.5px solid ${on?"#5C3A1E":"#E8D5B0"};background:${on?"#5C3A1E":"white"};color:${on?"#F5E6C8":"#5C3A1E"}">${label}</button>`;
+  bar.innerHTML=`<div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 10px">
+    ${btn("all",`全部 ${pay.length}`,f==="all")}
+    ${btn("unpaid",`💰 未收款 ${unpaid.length}（NT$${unpaid.reduce((s,o)=>s+amt(o),0).toLocaleString()}）`,f==="unpaid")}
+    ${btn("paid",`✅ 已收款 ${paid.length}`,f==="paid")}
+    ${unpaid.length?`<button onclick="eoMarkAllPaid()" style="margin-left:auto;font-size:11px;font-weight:700;color:#166534;background:#DCFCE7;border:1px solid #86EFAC;border-radius:99px;padding:5px 12px;cursor:pointer">✅ 未收款的全部標為已收款</button>`:""}
+  </div>`;
+  if(!skipApply)window.eoApplyPaidFilter();
+};
+window.eoSetPaidFilter=function(k){window.G._eoPaidFilter=k;window.eoRenderPaidBar();};
+window.eoApplyPaidFilter=function(){
+  const f=window.G._eoPaidFilter||"all";
+  document.querySelectorAll("#eo-order-list .eo-collapsible-row").forEach(r=>{
+    const p=r.getAttribute("data-paid"); // "1"已收／"0"未收／""＝不用收款（待報價、已取消）
+    r.style.display=(f==="all"||(f==="unpaid"&&p==="0")||(f==="paid"&&p==="1"))?"":"none";
+  });
+};
+window.eoMarkAllPaid=async function(){
+  const ids=new Set(window.G.activeEordOrderIds||[]);
+  const list=window.G.orders.filter(o=>ids.has(o.id)&&o.orderType!=="quote"&&o.status!=="cancelled"&&!o.batchClosed&&!window.orderIsPaid(o));
+  if(!list.length)return;
+  if(!confirm(`把這 ${list.length} 件未收款的，全部標為已收款嗎？`))return;
+  const now=Date.now();
+  try{
+    for(const o of list){await fbUpd("orders",o.id,{paid:true,paidAt:now});o.paid=true;o.paidAt=now;}
+  }catch(e){console.error(e);showToast("儲存失敗，請再試一次","error");return;}
+  const b=window.paidBtnStyle(true);
+  list.forEach(o=>{
+    document.querySelectorAll('#eo-order-list .eo-collapsible-row[data-oid="'+o.id+'"]').forEach(r=>r.setAttribute("data-paid","1"));
+    document.querySelectorAll('.eo-paid-btn[data-oid="'+o.id+'"]').forEach(btn=>{btn.textContent=b.t;btn.setAttribute("style",b.css+";font-size:10px;font-weight:700;border-radius:99px;padding:1px 8px;cursor:pointer");});
+  });
+  showToast(`✅ 已標記為已收款（${list.length} 件）`);
+  window.G._eoPaidFilter="all";
+  window.eoRenderPaidBar();
+  window.eoRefreshPaidSummary();
+  if(typeof renderCustomers==="function")renderCustomers();
+  if(typeof renderInvoice==="function")renderInvoice();
+};
+window.toggleInvUnpaidOnly=function(){
+  window.G.invUnpaidOnly=!window.G.invUnpaidOnly;
+  renderInvoice();
 };
 window.chGetOrders=function(cid){
   const c=window.G.customers.find(x=>x.id===cid);if(!c)return[];
@@ -15228,6 +15429,7 @@ window.chShowTrip=function(gi){
     const name=cleanProductName((prod&&prod.name)||o.productName||"商品");
     const chips=[
       chip(stl[o.status]||o.status||"","#F3F4F6","#6B7280"),
+      window.orderIsPaid(o)?chip("✅ 已收款","#DCFCE7","#166534"):chip("💰 未收款","#FFF1E6","#C2410C"),
       o.orderType==="preorder"?(o.purchased?chip("已買到","#DCFCE7","#166534"):chip("待購買","#FEF3C7","#92400E")):"",
       o.batchClosed?chip("🔒 已結案","#EAF4FB","#1E5F8C"):"",
       o.discountNote?chip(window.chEsc(o.discountNote),"#FDF6EC","#A08060"):""
@@ -17853,7 +18055,7 @@ window.qaFilterCusts=function(q){
     // 名稱寫清楚哪個是社群暱稱、哪個是LINE名稱（以前沒有社群暱稱時，開頭是空的、只剩「/ LINE名稱」，很難看懂）
     const nameHtml=nm?`<b>${nm}</b>`:`<b style="color:#B8A58C;font-weight:600">（無社群暱稱）</b>`;
     const lineHtml=c.lineName?`<span style="color:#9C7A5A;font-size:11px"> ・ LINE：${c.lineName}</span>`:"";
-    const dupTag=isDup?`<span onmousedown="event.preventDefault();event.stopPropagation();openMergeForCustomer('${c.id}')" ontouchend="event.preventDefault();event.stopPropagation();openMergeForCustomer('${c.id}')" style="margin-left:6px;font-size:10px;font-weight:700;background:#FEF3E2;color:#B45309;border:1px solid #F5C77E;border-radius:99px;padding:1px 8px;cursor:pointer;white-space:nowrap">⚠️ 疑似重複・去合併</span>`:"";
+    const dupTag=isDup?`<div style="margin-top:5px"><span onmousedown="event.preventDefault();event.stopPropagation();openMergeForCustomer('${c.id}')" ontouchend="event.preventDefault();event.stopPropagation();openMergeForCustomer('${c.id}')" style="display:inline-block;font-size:10px;font-weight:700;background:#FEF3E2;color:#B45309;border:1px solid #F5C77E;border-radius:99px;padding:2px 10px;cursor:pointer;white-space:nowrap">⚠️ 可能跟其他客人重複，點這裡看看（點名字就是選這位）</span></div>`:"";
     return `<div onmousedown="event.preventDefault();qaSelectCust('${c.id}','${escaped}','${escapedln}')" ontouchend="event.preventDefault();qaSelectCust('${c.id}','${escaped}','${escapedln}')"
       style="padding:11px 16px;cursor:pointer;font-size:13px;color:#3D2010;border-bottom:1px solid #F5EDE0;background:white">
       ${nameHtml}${lineHtml}${dupTag}
